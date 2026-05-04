@@ -1,0 +1,20 @@
+{
+  "name": "Gargottex V5",
+  "short_name": "Gargottex",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#130d09",
+  "theme_color": "#1f130d",
+  "icons": [
+    {
+      "src": "./assets/images/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/images/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
