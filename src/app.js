@@ -1971,6 +1971,27 @@ async function saveMediaForEntity(type, entity, file) {
   return entity;
 }
 
+async function deleteLootByCreatureId(creatureId) {
+  const db = await getDB(); // ta fonction existante d’accès à la DB
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("loot_items", "readwrite");
+    const store = tx.objectStore("loot_items");
+    const req = store.getAll();
+
+    req.onsuccess = () => {
+      const items = req.result || [];
+      items.forEach(item => {
+        if (item.creature_id === creatureId) {
+          store.delete(item.id);
+        }
+      });
+    };
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 async function saveEntityFromForm(type, form) {
   const existing = findById(type, form.dataset.id) || blankEntity(type);
   const values = Object.fromEntries(new FormData(form).entries());
@@ -2003,16 +2024,33 @@ async function saveEntityFromForm(type, form) {
   if (!entity.created_at) entity.created_at = nowISO();
 
   if (type === "creatures") {
-    const lootLines = String(values.loot_lines || "").trim();
-    entity.loot_items = parseLootLines(lootLines, entity.id, entity.name || "");
-    const existingLoot = (state.data.loot_items || []).filter(l => l.creature_id !== entity.id);
-    await putOne(type, entity);
-    await putMany("loot_items", [...existingLoot, ...entity.loot_items]);
-  } else if (type === "media_assets") {
-    await putOne(type, entity);
-  } else {
-    await putOne(type, entity);
+  const lootLines = String(values.loot_lines || "").trim();
+  const parsedLoot = parseLootLines(lootLines, entity.id, entity.name || "");
+
+  entity.loot_items = parsedLoot;
+
+  // 1. Sauvegarder la créature
+  await putOne("creatures", entity);
+
+  // 2. Supprimer UNIQUEMENT le loot de cette créature en base
+  await deleteLootByCreatureId(entity.id);
+
+  // 3. Insérer le nouveau loot
+  if (parsedLoot.length) {
+    await putMany(
+      "loot_items",
+      parsedLoot.map(l => ({
+        ...l,
+        creature_id: entity.id,
+        creature_name: entity.name || l.creature_name || ""
+      }))
+    );
   }
+} else if (type === "media_assets") {
+  await putOne(type, entity);
+} else {
+  await putOne(type, entity);
+}
 
   await refreshData();
   if (type === "dungeons") state.ui.generator.dungeonId = entity.id;
