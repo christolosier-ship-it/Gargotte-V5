@@ -2024,21 +2024,24 @@ async function saveEntityFromForm(type, form) {
 if (type === "creatures") {
   const lootLines = String(values.loot_lines || "").trim();
   const parsedLoot = parseLootLines(lootLines, entity.id, entity.name || "");
-
   entity.loot_items = parsedLoot;
 
-  // On garde les loot des autres créatures, puis on remplace ceux de la créature courante
-  const remainingLoot = (state.data.loot_items || []).filter(l => l.creature_id !== entity.id);
+  // On garde le loot des autres créatures
+  const keepLoot = (state.data.loot_items || []).filter(l => l.creature_id !== entity.id);
+
+  // On remplace proprement le loot de cette créature
+  const rebuiltLoot = [...keepLoot, ...parsedLoot].map(l => ({
+    ...l,
+    creature_id: entity.id,
+    creature_name: entity.name || l.creature_name || ""
+  }));
+
+  // Sécurité anti-doublon
+  const uniqueLoot = Array.from(new Map(rebuiltLoot.map(l => [l.id, l])).values());
 
   await putOne("creatures", entity);
-  await putMany("loot_items", [
-    ...remainingLoot,
-    ...parsedLoot.map(l => ({
-      ...l,
-      creature_id: entity.id,
-      creature_name: entity.name || l.creature_name || ""
-    }))
-  ]);
+  await clearStore("loot_items");
+  await putMany("loot_items", uniqueLoot);
 } else {
   await putOne(type, entity);
 }
