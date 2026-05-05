@@ -1853,22 +1853,32 @@ async function applyImportPreview() {
 
   await putMany(type, existing);
 
-  if (type === "creatures") {
-    const currentLoot = (state.data.loot_items || []).filter(l => !importedIds.has(l.creature_id));
-    const replacementLoot = [];
-    for (const row of rows) {
-      const key = entityConflictKey("creatures", row);
-      const creature = existing.find(c => buildConflictKeyFromEntity("creatures", c) === key);
-      if (!creature) continue;
-      const lootLines = String(row.loot || "").trim();
-      const parsed = parseLootLines(lootLines, creature.id, creature.name || "");
-      creature.loot_items = parsed;
-      replacementLoot.push(...parsed);
-    }
-    await clearStore("loot_items");
-    await putMany("loot_items", [...currentLoot, ...replacementLoot]);
+if (type === "creatures") {
+  const affectedCreatureIds = existing
+    .filter(c => rows.some(r => buildConflictKeyFromEntity("creatures", c) === entityConflictKey("creatures", r)))
+    .map(c => c.id);
+
+  const currentLoot = (state.data.loot_items || []).filter(l => !affectedCreatureIds.includes(l.creature_id));
+
+  const replacementLoot = [];
+  for (const row of rows) {
+    const key = entityConflictKey("creatures", row);
+    const creature = existing.find(c => buildConflictKeyFromEntity("creatures", c) === key);
+    if (!creature) continue;
+
+    const lootLines = String(row.loot || "").trim();
+    const parsed = parseLootLines(lootLines, creature.id, creature.name || "");
+    creature.loot_items = parsed;
+    replacementLoot.push(...parsed.map(l => ({
+      ...l,
+      creature_id: creature.id,
+      creature_name: creature.name || l.creature_name || ""
+    })));
   }
 
+  await clearStore("loot_items");
+  await putMany("loot_items", [...currentLoot, ...replacementLoot]);
+}
   state.ui.import.preview = null;
   await refreshData();
   toast(`📥 Import terminé (${getLabel(type)})`, "success");
