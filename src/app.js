@@ -2002,18 +2002,27 @@ async function saveEntityFromForm(type, form) {
   entity.updated_at = nowISO();
   if (!entity.created_at) entity.created_at = nowISO();
 
-  if (type === "creatures") {
-    const lootLines = String(values.loot_lines || "").trim();
-    entity.loot_items = parseLootLines(lootLines, entity.id, entity.name || "");
-    const existingLoot = (state.data.loot_items || []).filter(l => l.creature_id !== entity.id);
-    await putOne(type, entity);
-    await putMany("loot_items", [...existingLoot, ...entity.loot_items]);
-  } else if (type === "media_assets") {
-    await putOne(type, entity);
-  } else {
-    await putOne(type, entity);
-  }
+if (type === "creatures") {
+  const lootLines = String(values.loot_lines || "").trim();
+  const parsedLoot = parseLootLines(lootLines, entity.id, entity.name || "");
 
+  entity.loot_items = parsedLoot;
+
+  // On garde les loot des autres créatures, puis on remplace ceux de la créature courante
+  const remainingLoot = (state.data.loot_items || []).filter(l => l.creature_id !== entity.id);
+
+  await putOne("creatures", entity);
+  await putMany("loot_items", [
+    ...remainingLoot,
+    ...parsedLoot.map(l => ({
+      ...l,
+      creature_id: entity.id,
+      creature_name: entity.name || l.creature_name || ""
+    }))
+  ]);
+} else {
+  await putOne(type, entity);
+}
   await refreshData();
   if (type === "dungeons") state.ui.generator.dungeonId = entity.id;
   if (type === "dungeons") state.ui.brouhaha.dungeonId = entity.id;
