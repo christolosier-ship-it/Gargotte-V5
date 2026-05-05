@@ -810,11 +810,21 @@ function importRowToEntity(type, row, existing) {
 }
 
 function parseLootLines(text, creatureId, creatureName = "") {
-  const lines = String(text || "").split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const lines = String(text || "")
+    .split(/\n+/)
+    .map(l => l.trim())
+    .filter(Boolean);
+
   return lines.map(line => {
     const parts = line.split("|").map(p => p.trim());
+
+    const clean = (s) =>
+      slugify(String(s || ""))
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
     return {
-      id: uid("loot"),
+      id: `loot_${clean(creatureId)}_${clean(parts[0])}_${clean(parts[1])}_${clean(parts[2])}_${clean(parts[3])}`,
       creature_id: creatureId,
       creature_name: creatureName || findById("creatures", creatureId)?.name || "",
       name: parts[0] || "",
@@ -828,7 +838,6 @@ function parseLootLines(text, creatureId, creatureName = "") {
     };
   });
 }
-
 function getLootTextForCreature(creature) {
   return (creature?.loot_items || []).map(l => [l.name, l.type, l.effect || "", l.gold_value || 0].join("|")).join("\n");
 }
