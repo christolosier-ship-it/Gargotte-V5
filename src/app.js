@@ -1024,7 +1024,7 @@ function renderShell(content) {
       <button class="brand" data-action="go-home" title="Accueil">
         <img src="assets/images/logo-192.png" alt="Gargottex">
         <div>
-          <div class="brand-title">Gargottex V5.1</div>
+          <div class="brand-title">Gargottex V5.2</div>
           <div class="brand-subtitle">offline-first, local et têtu</div>
         </div>
       </button>
