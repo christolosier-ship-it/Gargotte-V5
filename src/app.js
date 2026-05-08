@@ -2721,9 +2721,26 @@ async function bootstrap() {
   bindEvents();
   render();
 
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+if ("serviceWorker" in navigator) {
+
+  const reg = await navigator.serviceWorker.register("./service-worker.js");
+
+  // force Safari à vérifier les updates
+  setInterval(() => {
+    reg.update().catch(() => {});
+  }, 15000);
+
+  // nouveau service worker détecté
+  if (reg.waiting) {
+    reg.waiting.postMessage({ type: "SKIP_WAITING" });
   }
+
+  // quand le nouveau SW prend le contrôle
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    window.location.reload();
+  });
+
+}
 
   if (navigator.storage?.persist) {
     navigator.storage.persist().catch(() => {});
