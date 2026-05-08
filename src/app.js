@@ -2417,18 +2417,6 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           return;
-        case "codex-creature-dungeon-filter":
-          state.ui.codexCreatureDungeonId = el.value;
-          state.ui.codexSelectedId = "";
-          await saveUiState(state.ui);
-          render();
-          return;
-        case "codex-hero-level-filter":
-          state.ui.codexHeroLevel = el.value;
-          state.ui.codexSelectedId = "";
-          await saveUiState(state.ui);
-          render();
-          return;
         case "select-codex":
           state.ui.codexType = btn.dataset.type;
           state.ui.codexSelectedId = btn.dataset.id;
@@ -2445,12 +2433,6 @@ function bindEvents() {
         case "set-workshop-type":
           state.ui.workshopType = btn.dataset.type;
           state.ui.workshopSelectedId = (state.data[state.ui.workshopType] || [])[0]?.id || "";
-          await saveUiState(state.ui);
-          render();
-          return;
-        case "atelier-creature-dungeon-filter":
-          state.ui.workshopCreatureDungeonId = el.value;
-          state.ui.workshopSelectedId = "";
           await saveUiState(state.ui);
           render();
           return;
@@ -2561,6 +2543,24 @@ function bindEvents() {
         case "generator-set-dungeon":
           state.ui.generator.dungeonId = el.value;
           state.ui.generator.result = null;
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "codex-creature-dungeon-filter":
+          state.ui.codexCreatureDungeonId = el.value;
+          state.ui.codexSelectedId = "";
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "codex-hero-level-filter":
+          state.ui.codexHeroLevel = el.value;
+          state.ui.codexSelectedId = "";
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "atelier-creature-dungeon-filter":
+          state.ui.workshopCreatureDungeonId = el.value;
+          state.ui.workshopSelectedId = "";
           await saveUiState(state.ui);
           render();
           return;
