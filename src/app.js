@@ -79,6 +79,15 @@ const TEMPLATE_HEADERS = {
   media_assets: ["id", "label", "file_name", "path", "mime_type", "entity_type", "entity_id"]
 };
 
+const CREATURE_CATEGORY_OPTIONS = [
+  { value: "basique", label: "Basique" },
+  { value: "tactique", label: "Tactique" },
+  { value: "speciale", label: "Spéciale" },
+  { value: "brute", label: "Brute" },
+  { value: "mini_boss", label: "Mini-Boss" },
+  { value: "boss", label: "Boss" }
+];
+
 const FORM_FIELDS = {
   dungeons: [
     { name: "name", label: "Nom", type: "text" },
@@ -188,15 +197,6 @@ const ENTITY_DOWNLOAD_FILES = {
   brouhaha_effects: "brouhaha.xlsx",
   media_assets: "media_assets.xlsx"
 };
-
-const CREATURE_CATEGORY_OPTIONS = [
-  { value: "basique", label: "Basique" },
-  { value: "tactique", label: "Tactique" },
-  { value: "speciale", label: "Spéciale" },
-  { value: "brute", label: "Brute" },
-  { value: "mini_boss", label: "Mini-Boss" },
-  { value: "boss", label: "Boss" }
-];
 
 const app = typeof document !== "undefined" ? document.getElementById("app") : null;
 
