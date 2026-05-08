@@ -646,7 +646,7 @@ function renderImageViewer() {
   `;
 }
 
-function blankEntity(type) {function blankEntity(type) {
+function blankEntity(type) {
   switch (type) {
     case "dungeons":
       return {
