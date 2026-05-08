@@ -91,7 +91,12 @@ const FORM_FIELDS = {
   creatures: [
     { name: "name", label: "Nom", type: "text" },
     { name: "dungeon_id", label: "Donjon", type: "select", options: "dungeons" },
-    { name: "category", label: "Catégorie", type: "text", placeholder: "basique / tactique / boss / mini_boss" },
+    {
+      name: "category",
+      label: "Catégorie",
+      type: "select",
+      options: CREATURE_CATEGORY_OPTIONS
+    },
     { name: "menace", label: "Menace", type: "number", min: 1, step: 1 },
     { name: "pv", label: "PV", type: "number", step: 1 },
     { name: "atk", label: "ATK", type: "number", step: 1 },
@@ -184,18 +189,31 @@ const ENTITY_DOWNLOAD_FILES = {
   media_assets: "media_assets.xlsx"
 };
 
+const CREATURE_CATEGORY_OPTIONS = [
+  { value: "basique", label: "Basique" },
+  { value: "tactique", label: "Tactique" },
+  { value: "speciale", label: "Spéciale" },
+  { value: "brute", label: "Brute" },
+  { value: "mini_boss", label: "Mini-Boss" },
+  { value: "boss", label: "Boss" }
+];
+
 const app = typeof document !== "undefined" ? document.getElementById("app") : null;
 
 const state = {
   ready: false,
   data: {},
   index: {},
+  imageViewer: null,
   ui: {
     view: "home",
     codexType: "creatures",
     codexSelectedId: "",
     workshopType: "creatures",
     workshopSelectedId: "",
+    codexCreatureDungeonId: "",
+    codexHeroLevel: "",
+    workshopCreatureDungeonId: "",
     generator: { dungeonId: "", floorIndex: 0, boss: false, miniBoss: false, result: null },
     brouhaha: { dungeonId: "", level: 0, history: [], drawn: [] },
     questsResult: null,
@@ -218,6 +236,9 @@ function defaultBlankUi() {
     codexSelectedId: "",
     workshopType: "creatures",
     workshopSelectedId: "",
+    codexCreatureDungeonId: "",
+    codexHeroLevel: "",
+    workshopCreatureDungeonId: "",
     generator: { dungeonId: "", floorIndex: 0, boss: false, miniBoss: false, result: null },
     brouhaha: { dungeonId: "", level: 0, history: [], drawn: [] },
     questsResult: null,
@@ -423,11 +444,28 @@ function getSearchIndexText(type, item) {
   return base.filter(Boolean).join(" ").toLowerCase();
 }
 
-function getFilteredList(type) {
+function getFilteredList(type, scope = "search") {
   const q = state.ui.globalSearch.trim().toLowerCase();
-  const list = state.data[type] || [];
-  if (!q) return list;
-  return list.filter(item => getSearchIndexText(type, item).includes(q));
+  let list = state.data[type] || [];
+
+  if (q) {
+    list = list.filter(item => getSearchIndexText(type, item).includes(q));
+  }
+
+  if (scope === "codex" || scope === "atelier") {
+    if (type === "creatures") {
+      const dungeonId = scope === "codex" ? state.ui.codexCreatureDungeonId : state.ui.workshopCreatureDungeonId;
+      if (dungeonId) list = list.filter(item => item.dungeon_id === dungeonId);
+    }
+    if (type === "heroes" && scope === "codex") {
+      const level = state.ui.codexHeroLevel;
+      if (level !== "" && level !== null && level !== undefined) {
+        list = list.filter(item => Number(item.level) === Number(level));
+      }
+    }
+  }
+
+  return list;
 }
 
 function getCurrentSelection(type, view) {
@@ -569,8 +607,46 @@ function buildConflictKeyFromEntity(type, entity) {
   return entityConflictKey(type, formatExportRow(type, entity));
 }
 
+function normalizeCreatureCategory(value) {
+  const cleaned = String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 
-function blankEntity(type) {
+  const allowed = new Set(CREATURE_CATEGORY_OPTIONS.map(opt => opt.value));
+  if (allowed.has(cleaned)) return cleaned;
+  if (cleaned === "mini-boss" || cleaned === "mini_bosses") return "mini_boss";
+  if (cleaned === "special" || cleaned === "speciale") return "speciale";
+  return "basique";
+}
+
+function openImageViewer(src, alt = "") {
+  if (!src) return;
+  state.imageViewer = { src, alt };
+  render();
+}
+
+function closeImageViewer() {
+  state.imageViewer = null;
+  render();
+}
+
+function renderImageViewer() {
+  if (!state.imageViewer?.src) return "";
+  const { src, alt } = state.imageViewer;
+  return `
+    <div class="image-viewer-overlay" data-action="close-image-viewer">
+      <div class="image-viewer-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(alt || "Image agrandie")}">
+        <button class="ghost image-viewer-close" type="button" data-action="close-image-viewer">✕</button>
+        <img src="${escapeHtml(src)}" alt="${escapeHtml(alt || "")}">
+      </div>
+    </div>
+  `;
+}
+
+function blankEntity(type) {function blankEntity(type) {
   switch (type) {
     case "dungeons":
       return {
@@ -718,7 +794,7 @@ function importRowToEntity(type, row, existing) {
       item.dungeon_name = String(row.dungeon_name || existing?.dungeon_name || "").trim();
       item.dungeon_id = findByName("dungeons", item.dungeon_name)?.id || existing?.dungeon_id || item.dungeon_id || "";
       item.dungeon_slug = slugify(item.dungeon_name);
-      item.category = String(row.category || existing?.category || "basique").trim() || "basique";
+      item.category = normalizeCreatureCategory(row.category || existing?.category || "basique");
       item.menace = clamp(row.menace ?? existing?.menace ?? 1, 1, 9999);
       item.pv = clamp(row.pv ?? existing?.pv ?? 0, 0, 9999);
       item.atk = clamp(row.atk ?? existing?.atk ?? 0, 0, 9999);
@@ -978,6 +1054,7 @@ function renderShell(content) {
       ${state.toasts.map(t => `<div class="toast ${t.tone}">${escapeHtml(t.message)}</div>`).join("")}
     </aside>
 
+    ${renderImageViewer()}
     ${state.ui.journalOpen ? renderJournalDrawer() : ""}
   </div>`;
 }
@@ -1079,8 +1156,8 @@ function statCard(label, value, icon) {
 
 function renderCodex() {
   const type = state.ui.codexType;
-  const items = getFilteredList(type);
-  const selected = getCurrentSelection(type, "codex");
+  const items = getFilteredList(type, "codex");
+  const selected = items.find(item => item.id === state.ui.codexSelectedId) || items[0] || null;
 
   return renderShell(`
     <section class="panel">
@@ -1091,11 +1168,14 @@ function renderCodex() {
         </div>
       </div>
 
+      <div class="panel-subtitle">
+        <span>${items.length} entrée(s)</span>
+        ${type === "creatures" ? renderCreatureDungeonFilter(state.ui.codexCreatureDungeonId, "codex-creature-dungeon-filter") : ""}
+        ${type === "heroes" ? renderHeroLevelFilter(state.ui.codexHeroLevel, "codex-hero-level-filter") : ""}
+      </div>
+
       <div class="two-col">
         <div class="list-column">
-          <div class="panel-subtitle">
-            <span>${items.length} entrée(s)</span>
-          </div>
           <div class="card-list">
             ${items.map(item => renderCodexCard(type, item, selected?.id === item.id)).join("") || `<div class="empty">Aucune donnée.</div>`}
           </div>
@@ -1114,7 +1194,9 @@ function renderCodexCard(type, item, active) {
   const image = codexImageFor(type, item);
   return `
     <button class="codex-card ${active ? "active" : ""}" data-action="select-codex" data-type="${type}" data-id="${item.id}">
-      <div class="card-img">${image ? `<img src="${escapeHtml(image)}" alt="">` : `<div class="placeholder">${escapeHtml((title || "?").slice(0,2).toUpperCase())}</div>`}</div>
+      <div class="card-img" data-action="open-image" data-src="${escapeHtml(image || "")}" data-alt="${escapeHtml(title || "")}">
+        ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(title || "")}" loading="lazy">` : `<div class="placeholder">${escapeHtml((title || "?").slice(0,2).toUpperCase())}</div>`}
+      </div>
       <div class="card-body">
         <strong>${escapeHtml(title)}</strong>
         <span>${escapeHtml(subtitle)}</span>
@@ -1156,6 +1238,30 @@ function codexImageFor(type, item) {
   return imageUrlForEntity(item);
 }
 
+function renderCreatureDungeonFilter(selectedId, action) {
+  return `
+    <label class="inline-filter">
+      <span>Donjon</span>
+      <select data-action="${action}">
+        <option value="">Tous</option>
+        ${state.data.dungeons.map(d => `<option value="${d.id}" ${String(selectedId || "") === String(d.id) ? "selected" : ""}>${escapeHtml(d.name)}</option>`).join("")}
+      </select>
+    </label>
+  `;
+}
+
+function renderHeroLevelFilter(selectedLevel, action) {
+  return `
+    <label class="inline-filter">
+      <span>Niveau</span>
+      <select data-action="${action}">
+        <option value="">Tous</option>
+        ${[1, 2, 3, 4].map(level => `<option value="${level}" ${String(selectedLevel || "") === String(level) ? "selected" : ""}>Niv ${level}</option>`).join("")}
+      </select>
+    </label>
+  `;
+}
+
 function renderCodexDetail(type, item) {
   switch (type) {
     case "creatures": return renderCreatureDetail(item, true);
@@ -1182,7 +1288,9 @@ function renderDungeonDetail(item, readOnly = false) {
           <div class="muted">${escapeHtml(item.slug || "")}</div>
         </div>
       </div>
-      <div class="detail-image">${item.image_path ? `<img src="${escapeHtml(item.image_path)}" alt="">` : `<div class="placeholder large">🏰</div>`}</div>
+      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(item.image_path || "")}" data-alt="${escapeHtml(item.name || "")}">
+        ${item.image_path ? `<img src="${escapeHtml(item.image_path)}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🏰</div>`}
+      </div>
       <p><strong>Description :</strong> ${escapeHtml(item.description || "—")}</p>
       <p><strong>Budgets :</strong> ${escapeHtml((item.floor_budgets || []).join(" · "))}</p>
       <p><strong>Créatures liées :</strong> ${creatureCount}</p>
@@ -1203,7 +1311,9 @@ function renderCreatureDetail(item) {
           <div class="muted">${escapeHtml(item.dungeon_name || "")}</div>
         </div>
       </div>
-      <div class="detail-image">${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="">` : `<div class="placeholder large">👹</div>`}</div>
+      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
+        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">👹</div>`}
+      </div>
       <div class="stat-grid">
         <div><strong>PV</strong><span>${item.pv || 0}</span></div>
         <div><strong>ATK</strong><span>${item.atk || 0}</span></div>
@@ -1227,7 +1337,7 @@ function renderCreatureDetail(item) {
 
 function renderLootList(list) {
   if (!list.length) return `<div class="empty small">Aucun loot.</div>`;
-  return `<div class="loot-list">${list.map(l => `<div class="loot-chip"><strong>${escapeHtml(l.name)}</strong><span>${escapeHtml(l.type || "")}</span><small>${escapeHtml(l.effect || "")}</small><em>${l.gold_value || 0} or</em></div>`).join("")}</div>`;
+  return `<div class="loot-list">${list.map(l => `<div class="loot-chip"><strong>${escapeHtml(l.name)}</strong><span>${escapeHtml(l.type || "")}${l.effect ? ` · ${escapeHtml(l.effect)}` : ""}</span><em>${l.gold_value || 0} or</em></div>`).join("")}</div>`;
 }
 
 function renderHeroDetail(item) {
@@ -1242,7 +1352,9 @@ function renderHeroDetail(item) {
           <div class="muted">${escapeHtml(item.role || "")}</div>
         </div>
       </div>
-      <div class="detail-image">${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="">` : `<div class="placeholder large">🛡️</div>`}</div>
+      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
+        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🛡️</div>`}
+      </div>
       <div class="stat-grid">
         <div><strong>PV</strong><span>${item.pv || 0}</span></div>
         <div><strong>ATK</strong><span>${item.atk || 0}</span></div>
@@ -1275,7 +1387,9 @@ function renderNpcDetail(item) {
           <div class="muted">${escapeHtml(item.role || "")}</div>
         </div>
       </div>
-      <div class="detail-image">${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="">` : `<div class="placeholder large">🍺</div>`}</div>
+      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
+        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🍺</div>`}
+      </div>
       <p><strong>Ton :</strong> ${escapeHtml(item.tone || "—")}</p>
       <p><strong>Lore :</strong> ${escapeHtml(item.lore || "—")}</p>
       <p><strong>Tags :</strong> ${escapeHtml(tagsToText(item.tags))}</p>
@@ -1293,7 +1407,9 @@ function renderQuestDetail(item) {
           <div class="muted">${escapeHtml(item.dungeon_name || "")} · ${escapeHtml(item.npc_name || "PNJ facultatif")}</div>
         </div>
       </div>
-      <div class="detail-image">${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="">` : `<div class="placeholder large">📜</div>`}</div>
+      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
+        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">📜</div>`}
+      </div>
       <p><strong>Description :</strong> ${escapeHtml(item.description || "—")}</p>
       <p><strong>Objectif :</strong> ${escapeHtml(item.objective || "—")}</p>
       <p><strong>Récompense :</strong> ${escapeHtml(item.reward || "—")}</p>
@@ -1313,7 +1429,9 @@ function renderLootDetail(item) {
           <div class="muted">${escapeHtml(creature?.name || item.creature_name || "")}</div>
         </div>
       </div>
-      <div class="detail-image">${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="">` : `<div class="placeholder large">🪙</div>`}</div>
+      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
+        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🪙</div>`}
+      </div>
       <p><strong>Type :</strong> ${escapeHtml(item.type || "—")}</p>
       <p><strong>Effet :</strong> ${escapeHtml(item.effect || "—")}</p>
       <p><strong>Valeur :</strong> ${item.gold_value || 0} or</p>
@@ -1357,7 +1475,9 @@ function renderMediaAssetDetail(asset) {
           <div class="muted">${escapeHtml(asset.path || "")}</div>
         </div>
       </div>
-      <div class="detail-image">${preview ? `<img src="${escapeHtml(preview)}" alt="">` : `<div class="placeholder large">🖼️</div>`}</div>
+      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(preview || "")}" data-alt="${escapeHtml(asset.label || asset.file_name || asset.id)}">
+        ${preview ? `<img src="${escapeHtml(preview)}" alt="${escapeHtml(asset.label || asset.file_name || asset.id)}" loading="lazy">` : `<div class="placeholder large">🖼️</div>`}
+      </div>
       <p><strong>Nom de fichier :</strong> ${escapeHtml(asset.file_name || "—")}</p>
       <p><strong>Type MIME :</strong> ${escapeHtml(asset.mime_type || "—")}</p>
       <p><strong>Entité :</strong> ${escapeHtml(asset.entity_type || "gallery")} · ${escapeHtml(asset.entity_id || "—")}</p>
@@ -1370,7 +1490,6 @@ function renderGenerator() {
   const floorBudgets = dungeon?.floor_budgets || [3, 5, 7, 9, 11];
   const floorIndex = clamp(state.ui.generator.floorIndex || 0, 0, Math.max(0, floorBudgets.length - 1));
   const budget = floorBudgets[floorIndex] || 0;
-  const currentCreatures = (state.data.creatures || []).filter(c => c.dungeon_id === dungeon?.id);
   const result = state.ui.generator.result;
 
   return renderShell(`
@@ -1407,21 +1526,12 @@ function renderGenerator() {
 
       <div class="generator-meta">
         ${statCard("Budget", budget, "⚔️")}
-        ${statCard("Créatures du donjon", currentCreatures.length, "👹")}
         ${statCard("Mode", state.ui.generator.boss ? "Boss" : state.ui.generator.miniBoss ? "Mini-boss" : "Normal", "🔥")}
       </div>
 
-      <div class="panel split">
-        <div>
-          <h3>Résultat</h3>
-          ${result ? renderEncounterResult(result) : `<div class="empty">Lance un tirage.</div>`}
-        </div>
-        <div>
-          <h3>Créatures disponibles</h3>
-          <div class="mini-list">
-            ${currentCreatures.map(c => `<div class="mini-chip">${escapeHtml(c.name)} · ${c.menace || 0}</div>`).join("") || `<div class="empty small">Aucune créature pour ce donjon.</div>`}
-          </div>
-        </div>
+      <div class="panel">
+        <h3>Résultat</h3>
+        ${result ? renderEncounterResult(result) : `<div class="empty">Lance un tirage.</div>`}
       </div>
     </section>
   `);
@@ -1443,8 +1553,17 @@ function renderEncounterResult(result) {
           <h3>${escapeHtml(result.dungeon_name)} · Étage ${Number(result.floor) + 1}</h3>
         </div>
       </div>
-      <div class="mini-list">
-        ${Array.from(counts.values()).map(entry => `<div class="encounter-row"><strong>${entry.count}× ${escapeHtml(entry.creature.name)}</strong><span>${entry.creature.menace || 0} menace</span></div>`).join("")}
+      <div class="mini-list encounter-list">
+        ${Array.from(counts.values()).map(entry => {
+          const img = imageUrlForEntity(entry.creature);
+          return `<div class="encounter-row">
+            <div class="encounter-thumb">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(entry.creature.name)}" loading="lazy">` : `<div class="placeholder">👹</div>`}</div>
+            <div class="encounter-body">
+              <strong>${entry.count}× ${escapeHtml(entry.creature.name)}</strong>
+              <span>${entry.creature.menace || 0} menace</span>
+            </div>
+          </div>`;
+        }).join("")}
       </div>
     </div>
   `;
@@ -1533,8 +1652,8 @@ function renderQuests() {
 
 function renderAtelier() {
   const type = state.ui.workshopType;
-  const items = getFilteredList(type);
-  const selected = getCurrentSelection(type, "atelier") || items[0] || null;
+  const items = getFilteredList(type, "atelier");
+  const selected = items.find(item => item.id === state.ui.workshopSelectedId) || items[0] || null;
 
   return renderShell(`
     <section class="panel">
@@ -1547,12 +1666,13 @@ function renderAtelier() {
         ${["dungeons","creatures","heroes","npcs","quests","loot_items","brouhaha_effects"].map(t => `<button class="tab ${t === type ? "active" : ""}" data-action="set-workshop-type" data-type="${t}">${getLabel(t)}</button>`).join("")}
       </div>
 
+      <div class="panel-subtitle">
+        <span>${items.length} entrée(s)</span>
+        ${type === "creatures" ? renderCreatureDungeonFilter(state.ui.workshopCreatureDungeonId, "atelier-creature-dungeon-filter") : ""}
+      </div>
+
       <div class="two-col workshop">
         <div class="list-column">
-          <div class="panel-subtitle">
-            <span>${items.length} entrée(s)</span>
-            <button class="ghost" data-action="new-item" data-type="${type}">＋ Nouveau</button>
-          </div>
           <div class="card-list">
             ${items.map(item => renderWorkshopCard(type, item, selected?.id === item.id)).join("") || `<div class="empty">Aucune donnée.</div>`}
           </div>
@@ -1599,9 +1719,14 @@ function renderWorkshopEditor(type, item) {
 
 function renderField(field, item) {
   if (field.type === "select") {
-    const options = field.options === "mediaEntityTypes"
-      ? ["gallery", "creatures", "heroes", "npcs", "quests", "dungeons", "loot_items"]
-      : (state.data[field.options] || []);
+    let options = [];
+    if (field.options === "mediaEntityTypes") {
+      options = ["gallery", "creatures", "heroes", "npcs", "quests", "dungeons", "loot_items"];
+    } else if (Array.isArray(field.options)) {
+      options = field.options;
+    } else {
+      options = state.data[field.options] || [];
+    }
     const currentValue = item[field.name] ?? "";
     return `
       <label class="${field.type === "textarea" ? "wide" : ""}">
@@ -1609,8 +1734,17 @@ function renderField(field, item) {
         <select name="${field.name}">
           ${field.allowEmpty ? `<option value="">—</option>` : ""}
           ${options.map(opt => {
-            const val = field.options === "mediaEntityTypes" ? opt : opt.id;
-            const label = field.options === "mediaEntityTypes" ? opt : (opt.name || opt.title || opt.hero_base_name || "");
+            const isStatic = typeof opt === "string" || (opt && typeof opt === "object" && "value" in opt);
+            const val = field.options === "mediaEntityTypes"
+              ? opt
+              : isStatic
+                ? (typeof opt === "string" ? opt : opt.value)
+                : opt.id;
+            const label = field.options === "mediaEntityTypes"
+              ? opt
+              : isStatic
+                ? (typeof opt === "string" ? opt : opt.label || opt.value)
+                : (opt.name || opt.title || opt.hero_base_name || "");
             const selected = String(val) === String(currentValue) ? "selected" : "";
             return `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(label)}</option>`;
           }).join("")}
@@ -2269,9 +2403,29 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           return;
+        case "open-image":
+          openImageViewer(btn.dataset.src, btn.dataset.alt || "");
+          return;
+        case "close-image-viewer":
+          if (btn.classList.contains("image-viewer-close") || ev.target === btn) {
+            closeImageViewer();
+          }
+          return;
         case "set-codex-type":
           state.ui.codexType = btn.dataset.type;
           state.ui.codexSelectedId = (state.data[state.ui.codexType] || [])[0]?.id || "";
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "codex-creature-dungeon-filter":
+          state.ui.codexCreatureDungeonId = el.value;
+          state.ui.codexSelectedId = "";
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "codex-hero-level-filter":
+          state.ui.codexHeroLevel = el.value;
+          state.ui.codexSelectedId = "";
           await saveUiState(state.ui);
           render();
           return;
@@ -2291,6 +2445,12 @@ function bindEvents() {
         case "set-workshop-type":
           state.ui.workshopType = btn.dataset.type;
           state.ui.workshopSelectedId = (state.data[state.ui.workshopType] || [])[0]?.id || "";
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "atelier-creature-dungeon-filter":
+          state.ui.workshopCreatureDungeonId = el.value;
+          state.ui.workshopSelectedId = "";
           await saveUiState(state.ui);
           render();
           return;
