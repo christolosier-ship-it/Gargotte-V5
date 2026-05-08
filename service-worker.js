@@ -57,17 +57,55 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   const req = event.request;
+
   if (req.method !== "GET") return;
+
   event.respondWith((async () => {
+
+    // Toujours essayer le réseau d'abord pour les fichiers JS/CSS/HTML
+    const isCriticalAsset =
+      req.url.includes(".js") ||
+      req.url.includes(".css") ||
+      req.url.includes(".html") ||
+      req.url.includes("manifest");
+
+    if (isCriticalAsset) {
+      try {
+        const fresh = await fetch(req, { cache: "no-store" });
+
+        const cache = await caches.open(CACHE);
+        cache.put(req, fresh.clone()).catch(() => {});
+
+        return fresh;
+      } catch (_) {
+        const cached = await caches.match(req);
+        if (cached) return cached;
+      }
+    }
+
+    // Pour le reste : cache first classique
     const cached = await caches.match(req);
     if (cached) return cached;
+
     try {
       const fresh = await fetch(req);
+
       const cache = await caches.open(CACHE);
       cache.put(req, fresh.clone()).catch(() => {});
+
       return fresh;
     } catch (_) {
-      return cached || new Response("Offline", { status: 503, headers: { "Content-Type": "text/plain" }});
+      return new Response("Offline", {
+        status: 503,
+        headers: { "Content-Type": "text/plain" }
+      });
     }
+
   })());
+});
+
+self.addEventListener("message", event => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
