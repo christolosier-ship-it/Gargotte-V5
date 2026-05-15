@@ -42,6 +42,7 @@ const ENTITY_ORDER = [
   "npcs",
   "quests",
   "loot_items",
+  "interactables",
   "brouhaha_effects",
   "media_assets"
 ];
@@ -53,6 +54,7 @@ const ENTITY_LABELS = {
   npcs: "PNJ",
   quests: "Quêtes",
   loot_items: "Loot",
+  interactables: "Objets",
   brouhaha_effects: "Brouhaha",
   media_assets: "Médias"
 };
@@ -64,6 +66,7 @@ const ENTITY_SHEETS = {
   npcs: "PNJ",
   quests: "Quêtes",
   loot_items: "Loot",
+  interactables: "Objets",
   brouhaha_effects: "Brouhaha",
   media_assets: "Médias"
 };
@@ -75,6 +78,7 @@ const TEMPLATE_HEADERS = {
   npcs: ["name", "race", "tone", "role", "lore", "tags", "image_path"],
   quests: ["name", "description", "objective", "reward", "difficulty", "npc_name", "dungeon_name", "tags", "image_path"],
   loot_items: ["creature_name", "name", "type", "effect", "gold_value", "tags", "image_path"],
+  interactables: ["name", "dungeon_name", "type", "hp", "actions_allowed", "effect", "image_path", "tags"],
   brouhaha_effects: ["level", "dungeon_name", "effect_text"],
   media_assets: ["id", "label", "file_name", "path", "mime_type", "entity_type", "entity_id"]
 };
@@ -168,6 +172,16 @@ const FORM_FIELDS = {
     { name: "tags", label: "Tags", type: "text", placeholder: "tag1, tag2" },
     { name: "image_path", label: "Image", type: "image" }
   ],
+  interactables: [
+    { name: "name", label: "Nom", type: "text" },
+    { name: "dungeon_id", label: "Donjon", type: "select", options: "dungeons" },
+    { name: "type", label: "Type", type: "text" },
+    { name: "hp", label: "PV", type: "number", min: 0, step: 1 },
+    { name: "actions_allowed", label: "Actions autorisées", type: "text", placeholder: "ouvrir, fermer, casser" },
+    { name: "effect", label: "Effet", type: "textarea", rows: 4 },
+    { name: "tags", label: "Tags", type: "text", placeholder: "tag1, tag2" },
+    { name: "image_path", label: "Image", type: "image" }
+  ],
   brouhaha_effects: [
     { name: "level", label: "Niveau", type: "number", min: 0, max: 12, step: 1 },
     { name: "dungeon_id", label: "Donjon (universel si vide)", type: "select", options: "dungeons", allowEmpty: true },
@@ -185,7 +199,7 @@ const FORM_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.slice();
-const APP_VERSION = "5.0.0";
+const APP_VERSION = "5.3.0";
 
 const ENTITY_DOWNLOAD_FILES = {
   dungeons: "dungeons.xlsx",
@@ -194,6 +208,7 @@ const ENTITY_DOWNLOAD_FILES = {
   npcs: "npcs.xlsx",
   quests: "quests.xlsx",
   loot_items: "loot.xlsx",
+  interactables: "interactables.xlsx",
   brouhaha_effects: "brouhaha.xlsx",
   media_assets: "media_assets.xlsx"
 };
@@ -594,6 +609,8 @@ function entityConflictKey(type, row) {
       return `${slugify(row.dungeon_name || "")}__${slugify(row.name || "")}`;
     case "loot_items":
       return `${slugify(row.creature_name || "")}__${slugify(row.name || "")}`;
+    case "interactables":
+      return `${slugify(row.dungeon_name || "")}__${slugify(row.name || "")}`;
     case "brouhaha_effects":
       return `${Number(row.level || 0)}__${slugify(row.dungeon_name || "universel")}__${slugify(row.effect_text || "")}`;
     case "media_assets":
@@ -657,6 +674,20 @@ function blankEntity(type) {
         floor_budgets: [3, 5, 7, 9, 11],
         base_floor_count: 5,
         boss_name: "",
+        tags: [],
+        image_path: ""
+      };
+    case "interactables":
+      return {
+        id: uid("interactable"),
+        dungeon_id: state.data.dungeons?.[0]?.id || "",
+        dungeon_name: state.data.dungeons?.[0]?.name || "",
+        name: "",
+        slug: "",
+        type: "",
+        hp: 1,
+        actions_allowed: "",
+        effect: "",
         tags: [],
         image_path: ""
       };
@@ -785,6 +816,18 @@ function importRowToEntity(type, row, existing) {
         : parseFloorBudgets(row.floor_budgets || existing?.floor_budgets || "3;5;7;9;11");
       item.base_floor_count = Number(existing?.base_floor_count || 5);
       item.boss_name = String(row.boss_name || existing?.boss_name || "").trim();
+      item.tags = tagsToArray(row.tags);
+      item.image_path = String(row.image_path || existing?.image_path || "").trim();
+      break;
+    case "interactables":
+      item.name = String(row.name || existing?.name || "").trim();
+      item.slug = slugify(item.name);
+      item.dungeon_name = String(row.dungeon_name || existing?.dungeon_name || "").trim();
+      item.dungeon_id = findByName("dungeons", item.dungeon_name)?.id || existing?.dungeon_id || item.dungeon_id || "";
+      item.type = String(row.type || existing?.type || "").trim();
+      item.hp = clamp(row.hp ?? existing?.hp ?? 1, 0, 9999);
+      item.actions_allowed = String(row.actions_allowed || existing?.actions_allowed || "").trim();
+      item.effect = String(row.effect || existing?.effect || "").trim();
       item.tags = tagsToArray(row.tags);
       item.image_path = String(row.image_path || existing?.image_path || "").trim();
       break;
@@ -992,6 +1035,17 @@ function normalizeTemplateRow(type, row) {
         tags: row.tags || "",
         image_path: row.image_path || ""
       };
+    case "interactables":
+      return {
+        name: row.name || "",
+        dungeon_name: row.dungeon_name || "",
+        type: row.type || "",
+        hp: row.hp || 1,
+        actions_allowed: row.actions_allowed || "",
+        effect: row.effect || "",
+        tags: row.tags || "",
+        image_path: row.image_path || ""
+      };
     case "brouhaha_effects":
       return {
         level: row.level || 0,
@@ -1024,7 +1078,7 @@ function renderShell(content) {
       <button class="brand" data-action="go-home" title="Accueil">
         <img src="assets/images/logo-192.png" alt="Gargottex">
         <div>
-          <div class="brand-title">Gargottex V5.2</div>
+          <div class="brand-title">Gargottex V5.3</div>
           <div class="brand-subtitle">offline-first, local et têtu</div>
         </div>
       </button>
@@ -1214,6 +1268,7 @@ function codexSubtitle(type, item) {
     case "quests": return `${escapeHtml(item.dungeon_name || "")} · ${escapeHtml(item.npc_name || "PNJ facultatif")}`;
     case "dungeons": return `${escapeHtml((item.floor_budgets || []).join(" · "))}`;
     case "loot_items": return `${escapeHtml(item.creature_name || "")} · ${item.gold_value || 0} or`;
+    case "interactables": return `${escapeHtml(item.dungeon_name || "")} · ${escapeHtml(item.type || "")}`;
     case "brouhaha_effects": return `Niv ${item.level ?? 0}`;
     case "media_assets": return `${escapeHtml(item.entity_type || "gallery")} · ${escapeHtml(item.path || "")}`;
     default: return "";
@@ -1227,6 +1282,7 @@ function codexBadge(type, item) {
     case "quests": return "⭐".repeat(clamp(item.difficulty || 1, 1, 5));
     case "dungeons": return "Donjon";
     case "loot_items": return item.type || "Loot";
+    case "interactables": return item.type || "Objet";
     case "brouhaha_effects": return `Effet niveau ${item.level ?? 0}`;
     case "media_assets": return item.mime_type || "Media";
     default: return "";
@@ -1270,6 +1326,7 @@ function renderCodexDetail(type, item) {
     case "quests": return renderQuestDetail(item, true);
     case "dungeons": return renderDungeonDetail(item, true);
     case "loot_items": return renderLootDetail(item, true);
+    case "interactables": return renderInteractableDetail(item, true);
     case "brouhaha_effects": return renderBrouhahaEffectDetail(item, true);
     case "media_assets": return renderMediaAssetDetail(item, true);
     default: return `<div class="empty">Aucune fiche.</div>`;
@@ -1439,6 +1496,30 @@ function renderLootDetail(item) {
   `;
 }
 
+function renderInteractableDetail(item) {
+  return `
+    <div class="detail-card">
+      <div class="detail-head">
+        <div>
+          <span class="badge">Objet</span>
+          <h3>${escapeHtml(item.name || "")}</h3>
+          <div class="muted">${escapeHtml(item.dungeon_name || "")}</div>
+        </div>
+      </div>
+      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
+        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🧱</div>`}
+      </div>
+      <div class="stat-grid">
+        <div><strong>Type</strong><span>${escapeHtml(item.type || "—")}</span></div>
+        <div><strong>PV</strong><span>${item.hp || 0}</span></div>
+        <div><strong>Actions</strong><span>${escapeHtml(item.actions_allowed || "—")}</span></div>
+      </div>
+      <p><strong>Effet :</strong> ${escapeHtml(item.effect || "—")}</p>
+      <p><strong>Tags :</strong> ${escapeHtml(tagsToText(item.tags))}</p>
+    </div>
+  `;
+}
+
 function renderBrouhahaEffectDetail(item) {
   return `
     <div class="detail-card">
@@ -1553,7 +1634,8 @@ function renderEncounterResult(result) {
           <h3>${escapeHtml(result.dungeon_name)} · Étage ${Number(result.floor) + 1}</h3>
         </div>
       </div>
-      <div class="mini-list encounter-list">
+      <div class="two-col">
+        <div class="mini-list encounter-list">
         ${Array.from(counts.values()).map(entry => {
           const img = imageUrlForEntity(entry.creature);
           return `<div class="encounter-row">
@@ -1564,6 +1646,19 @@ function renderEncounterResult(result) {
             </div>
           </div>`;
         }).join("")}
+        </div>
+        <div class="mini-list encounter-list">
+          ${(result.interactables || []).map(obj => {
+            const img = imageUrlForEntity(obj);
+            return `<div class="encounter-row">
+              <div class="encounter-thumb">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(obj.name)}" loading="lazy">` : `<div class="placeholder">🧱</div>`}</div>
+              <div class="encounter-body">
+                <strong>${escapeHtml(obj.name || "Objet")}</strong>
+                <span>${escapeHtml(obj.type || "Interactable")} · ${escapeHtml(obj.effect || "—")}</span>
+              </div>
+            </div>`;
+          }).join("") || `<div class="empty small">Aucun objet interactif.</div>`}
+        </div>
       </div>
     </div>
   `;
@@ -1663,7 +1758,7 @@ function renderAtelier() {
       </div>
 
       <div class="segmented wrap">
-        ${["dungeons","creatures","heroes","npcs","quests","loot_items","brouhaha_effects"].map(t => `<button class="tab ${t === type ? "active" : ""}" data-action="set-workshop-type" data-type="${t}">${getLabel(t)}</button>`).join("")}
+        ${["dungeons","creatures","heroes","npcs","quests","loot_items","interactables","brouhaha_effects"].map(t => `<button class="tab ${t === type ? "active" : ""}" data-action="set-workshop-type" data-type="${t}">${getLabel(t)}</button>`).join("")}
       </div>
 
       <div class="panel-subtitle">
@@ -2248,9 +2343,16 @@ function generateEncounter(dungeonId, floorIndex, bossChecked, miniBossChecked) 
     budget,
     used: selected.reduce((sum, c) => sum + Number(c.menace || 0), 0),
     creatures: selected,
+    interactables: buildEncounterInteractables(dungeon.id, budget),
     boss: !!bossChecked,
     miniBoss: !!miniBossChecked
   };
+}
+
+function buildEncounterInteractables(dungeonId, budget) {
+  const pool = (state.data.interactables || []).filter(i => i.dungeon_id === dungeonId);
+  const target = clamp(Math.floor(Number(budget || 0) / 3), 1, 6);
+  return shuffle(pool).slice(0, Math.min(pool.length, target));
 }
 
 function exactBudgetCombo(pool, remaining) {

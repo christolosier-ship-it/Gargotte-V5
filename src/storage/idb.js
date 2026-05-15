@@ -1,6 +1,6 @@
 
 const DB_NAME = "gargottex-v5-offline";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const STORE_DEFS = [
   { name: "meta", keyPath: "key" },
@@ -10,6 +10,7 @@ const STORE_DEFS = [
   { name: "npcs", keyPath: "id", indexes: ["slug", "name"] },
   { name: "quests", keyPath: "id", indexes: ["slug", "name", "dungeon_id", "npc_id"] },
   { name: "loot_items", keyPath: "id", indexes: ["slug", "name", "creature_id"] },
+  { name: "interactables", keyPath: "id", indexes: ["slug", "name", "dungeon_id", "type"] },
   { name: "brouhaha_effects", keyPath: "id", indexes: ["level", "dungeon_id"] },
   { name: "media_assets", keyPath: "id", indexes: ["entity_type", "entity_id", "path"] },
   { name: "logs", keyPath: "id", indexes: ["created_at", "level"] },
