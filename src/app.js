@@ -1654,7 +1654,6 @@ function renderEncounterResult(result) {
               <div class="encounter-thumb">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(obj.name)}" loading="lazy">` : `<div class="placeholder">🧱</div>`}</div>
               <div class="encounter-body">
                 <strong>${escapeHtml(obj.name || "Objet")}</strong>
-                <span>${escapeHtml(obj.type || "Interactable")} · ${escapeHtml(obj.effect || "—")}</span>
               </div>
             </div>`;
           }).join("") || `<div class="empty small">Aucun objet interactif.</div>`}
