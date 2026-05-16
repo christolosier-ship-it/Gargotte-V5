@@ -2013,6 +2013,17 @@ function renderImportExport() {
       <div class="export-buttons">
         ${ENTITY_ORDER.map(t => `<button class="secondary" data-action="export-entity" data-type="${t}">Exporter ${getLabel(t)}</button>`).join("")}
         <button class="primary" data-action="export-all">Exporter tout</button>
+        <button class="primary" data-action="export-backup">Exporter backup complet (JSON + images)</button>
+      </div>
+
+      <div class="panel-title compact">
+        <h3>Import backup complet</h3>
+      </div>
+      <div class="import-grid">
+        <label class="wide">
+          <span>Fichier backup JSON</span>
+          <input type="file" accept=".json" data-action="import-backup-file">
+        </label>
       </div>
 
       <div class="panel">
@@ -2513,6 +2524,104 @@ async function exportAllFile() {
   downloadBlob(blob, `gargottex_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
+async function blobToBase64(blob) {
+  if (!blob) return "";
+  const buffer = await blob.arrayBuffer();
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function base64ToBlob(base64, mime = "application/octet-stream") {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+async function exportFullBackupFile() {
+  const snapshot = {};
+  for (const type of ENTITY_ORDER) {
+    if (type === "media_assets") continue;
+    snapshot[type] = toTemplateRows(type, state.data[type] || []);
+  }
+  const mediaAssets = await Promise.all((state.data.media_assets || []).map(async (asset) => ({
+    id: asset.id,
+    label: asset.label || "",
+    file_name: asset.file_name || "",
+    path: asset.path || "",
+    thumb_path: asset.thumb_path || "",
+    mime_type: asset.mime_type || "image/webp",
+    entity_type: asset.entity_type || "gallery",
+    entity_id: asset.entity_id || "",
+    width: Number(asset.width || 0),
+    height: Number(asset.height || 0),
+    created_at: asset.created_at || "",
+    updated_at: asset.updated_at || "",
+    blob_base64: await blobToBase64(asset.blob),
+    thumb_blob_base64: await blobToBase64(asset.thumb_blob)
+  })));
+
+  const payload = {
+    format: "gargottex-backup",
+    version: 1,
+    exported_at: nowISO(),
+    app_version: APP_VERSION,
+    counts: Object.fromEntries(ENTITY_ORDER.map(type => [type, (state.data[type] || []).length])),
+    data: snapshot,
+    media_assets: mediaAssets
+  };
+  const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+  downloadBlob(blob, `gargottex_backup_${new Date().toISOString().slice(0, 10)}.json`);
+}
+
+async function importFullBackupFile(file) {
+  const raw = await file.text();
+  const payload = JSON.parse(raw);
+  if (payload?.format !== "gargottex-backup") throw new Error("Format backup invalide.");
+
+  for (const type of ENTITY_ORDER) {
+    if (type === "media_assets") continue;
+    const rows = Array.isArray(payload?.data?.[type]) ? payload.data[type] : [];
+    const current = state.data[type] || [];
+    const existingMap = new Map(current.map(item => [buildConflictKeyFromEntity(type, item), item]));
+    const entities = rows.map(row => {
+      const key = entityConflictKey(type, row || {});
+      const existing = existingMap.get(key);
+      return importRowToEntity(type, row || {}, existing);
+    });
+    await clearStore(type);
+    if (entities.length) await putMany(type, entities);
+  }
+
+  await clearStore("media_assets");
+  const medias = Array.isArray(payload.media_assets) ? payload.media_assets : [];
+  if (medias.length) {
+    await putMany("media_assets", medias.map(m => ({
+      id: m.id || uid("media"),
+      label: m.label || m.file_name || "",
+      file_name: m.file_name || "",
+      path: m.path || "",
+      thumb_path: m.thumb_path || "",
+      mime_type: m.mime_type || "image/webp",
+      entity_type: m.entity_type || "gallery",
+      entity_id: m.entity_id || "",
+      width: Number(m.width || 0),
+      height: Number(m.height || 0),
+      created_at: m.created_at || nowISO(),
+      updated_at: nowISO(),
+      blob: m.blob_base64 ? base64ToBlob(m.blob_base64, m.mime_type || "image/webp") : null,
+      thumb_blob: m.thumb_blob_base64 ? base64ToBlob(m.thumb_blob_base64, m.mime_type || "image/webp") : null,
+      image_path: m.path || ""
+    })));
+  }
+  await refreshData();
+}
+
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -2740,6 +2849,10 @@ function bindEvents() {
         case "export-all":
           await exportAllFile();
           return;
+        case "export-backup":
+          await exportFullBackupFile();
+          toast("🧳 Backup complet exporté", "success");
+          return;
         case "import-clear":
           state.ui.import.preview = null;
           await saveUiState(state.ui);
@@ -2852,6 +2965,16 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           toast("📥 Fichier analysé", "success");
+          return;
+        }
+        case "import-backup-file": {
+          const file = el.files?.[0];
+          if (!file) return;
+          await importFullBackupFile(file);
+          await saveUiState(state.ui);
+          render();
+          toast("♻️ Backup complet importé", "success");
+          el.value = "";
           return;
         }
       }
