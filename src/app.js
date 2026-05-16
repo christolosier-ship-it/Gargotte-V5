@@ -1818,6 +1818,7 @@ function renderAtelier() {
 
       <div class="panel-subtitle">
         <span>${items.length} entrée(s)</span>
+        <button class="primary" type="button" data-action="new-item" data-type="${type}">＋ Créer</button>
         ${type === "creatures" ? renderCreatureDungeonFilter(state.ui.workshopCreatureDungeonId, "atelier-creature-dungeon-filter") : ""}
       </div>
 
