@@ -229,7 +229,9 @@ const state = {
     workshopSelectedId: "",
     codexCreatureDungeonId: "",
     codexHeroLevel: "",
+    codexQuestDungeonId: "",
     workshopCreatureDungeonId: "",
+    workshopQuestDungeonId: "",
     generator: { dungeonId: "", floorIndex: 0, boss: false, miniBoss: false, result: null },
     brouhaha: { dungeonId: "", level: 0, history: [], drawn: [] },
     questsResult: null,
@@ -254,7 +256,9 @@ function defaultBlankUi() {
     workshopSelectedId: "",
     codexCreatureDungeonId: "",
     codexHeroLevel: "",
+    codexQuestDungeonId: "",
     workshopCreatureDungeonId: "",
+    workshopQuestDungeonId: "",
     generator: { dungeonId: "", floorIndex: 0, boss: false, miniBoss: false, result: null },
     brouhaha: { dungeonId: "", level: 0, history: [], drawn: [] },
     questsResult: null,
@@ -479,6 +483,29 @@ function getFilteredList(type, scope = "search") {
         list = list.filter(item => Number(item.level) === Number(level));
       }
     }
+    if (type === "quests") {
+      const dungeonId = scope === "codex" ? state.ui.codexQuestDungeonId : state.ui.workshopQuestDungeonId;
+      if (dungeonId) list = list.filter(item => item.dungeon_id === dungeonId);
+    }
+  }
+
+  if (type === "creatures" && (scope === "codex" || scope === "atelier")) {
+    const categoryOrder = { basique: 1, tactique: 2, speciale: 3, brute: 4, mini_boss: 5, boss: 6 };
+    list = [...list].sort((a, b) => {
+      const d = String(a.dungeon_name || "").localeCompare(String(b.dungeon_name || ""), "fr", { sensitivity: "base" });
+      if (d) return d;
+      const ca = categoryOrder[String(a.category || "").toLowerCase()] ?? 99;
+      const cb = categoryOrder[String(b.category || "").toLowerCase()] ?? 99;
+      if (ca !== cb) return ca - cb;
+      return String(a.name || "").localeCompare(String(b.name || ""), "fr", { sensitivity: "base" });
+    });
+  }
+  if (type === "heroes" && (scope === "codex" || scope === "atelier")) {
+    list = [...list].sort((a, b) => {
+      const n = String(a.hero_base_name || a.name || "").localeCompare(String(b.hero_base_name || b.name || ""), "fr", { sensitivity: "base" });
+      if (n) return n;
+      return Number(a.level || 0) - Number(b.level || 0);
+    });
   }
 
   return list;
@@ -1238,6 +1265,7 @@ function renderCodex() {
         <span>${items.length} entrée(s)</span>
         ${type === "creatures" ? renderCreatureDungeonFilter(state.ui.codexCreatureDungeonId, "codex-creature-dungeon-filter") : ""}
         ${type === "heroes" ? renderHeroLevelFilter(state.ui.codexHeroLevel, "codex-hero-level-filter") : ""}
+        ${type === "quests" ? renderQuestDungeonFilter(state.ui.codexQuestDungeonId, "codex-quest-dungeon-filter") : ""}
       </div>
 
       <div class="two-col encounter-columns">
@@ -1325,6 +1353,18 @@ function renderHeroLevelFilter(selectedLevel, action) {
       <select data-action="${action}">
         <option value="">Tous</option>
         ${[1, 2, 3, 4].map(level => `<option value="${level}" ${String(selectedLevel || "") === String(level) ? "selected" : ""}>Niv ${level}</option>`).join("")}
+      </select>
+    </label>
+  `;
+}
+
+function renderQuestDungeonFilter(selectedId, action) {
+  return `
+    <label class="inline-filter">
+      <span>Donjon</span>
+      <select data-action="${action}">
+        <option value="">Tous</option>
+        ${state.data.dungeons.map(d => `<option value="${d.id}" ${String(selectedId || "") === String(d.id) ? "selected" : ""}>${escapeHtml(d.name)}</option>`).join("")}
       </select>
     </label>
   `;
@@ -1820,6 +1860,7 @@ function renderAtelier() {
         <span>${items.length} entrée(s)</span>
         <button class="primary" type="button" data-action="new-item" data-type="${type}">＋ Créer</button>
         ${type === "creatures" ? renderCreatureDungeonFilter(state.ui.workshopCreatureDungeonId, "atelier-creature-dungeon-filter") : ""}
+        ${type === "quests" ? renderQuestDungeonFilter(state.ui.workshopQuestDungeonId, "atelier-quest-dungeon-filter") : ""}
       </div>
 
       <div class="two-col workshop">
@@ -2886,6 +2927,18 @@ function bindEvents() {
           return;
         case "atelier-creature-dungeon-filter":
           state.ui.workshopCreatureDungeonId = el.value;
+          state.ui.workshopSelectedId = "";
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "codex-quest-dungeon-filter":
+          state.ui.codexQuestDungeonId = el.value;
+          state.ui.codexSelectedId = "";
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "atelier-quest-dungeon-filter":
+          state.ui.workshopQuestDungeonId = el.value;
           state.ui.workshopSelectedId = "";
           await saveUiState(state.ui);
           render();
