@@ -19,6 +19,7 @@ import {
   buildXlsxWorkbookBlob,
   readXlsxFile
 } from "./utils/xlsx.js";
+import { makeZip, readZip, toBytes, fromBytes } from "./utils/zip.js";
 
 import {
   initDatabase,
@@ -2021,8 +2022,8 @@ function renderImportExport() {
       </div>
       <div class="import-grid">
         <label class="wide">
-          <span>Fichier(s) backup JSON</span>
-          <input type="file" accept=".json" data-action="import-backup-file" multiple>
+          <span>Fichier backup ZIP</span>
+          <input type="file" accept=".zip" data-action="import-backup-file">
         </label>
       </div>
 
@@ -2524,97 +2525,53 @@ async function exportAllFile() {
   downloadBlob(blob, `gargottex_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
-async function blobToBase64(blob) {
-  if (!blob) return "";
-  const buffer = await blob.arrayBuffer();
-  let binary = "";
-  const bytes = new Uint8Array(buffer);
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-  }
-  return btoa(binary);
-}
-
-function base64ToBlob(base64, mime = "application/octet-stream") {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return new Blob([bytes], { type: mime });
-}
-
 async function exportFullBackupFile() {
-  const snapshot = {};
-  for (const type of ENTITY_ORDER) {
-    if (type === "media_assets") continue;
-    snapshot[type] = toTemplateRows(type, state.data[type] || []);
-  }
-  const mediaAssets = (state.data.media_assets || []).map((asset) => ({
-    id: asset.id,
-    label: asset.label || "",
-    file_name: asset.file_name || "",
-    path: asset.path || "",
-    thumb_path: asset.thumb_path || "",
-    mime_type: asset.mime_type || "image/webp",
-    entity_type: asset.entity_type || "gallery",
-    entity_id: asset.entity_id || "",
-    width: Number(asset.width || 0),
-    height: Number(asset.height || 0),
-    created_at: asset.created_at || "",
-    updated_at: asset.updated_at || ""
+  const sheets = ENTITY_ORDER.map(type => ({
+    sheetName: ENTITY_SHEETS[type] || getLabel(type),
+    headers: sheetHeaders(type),
+    rows: toTemplateRows(type, state.data[type] || [])
   }));
-
-  const payload = {
-    format: "gargottex-backup-core",
+  const workbookBlob = buildXlsxWorkbookBlob(sheets);
+  const workbookBytes = new Uint8Array(await workbookBlob.arrayBuffer());
+  const mediaAssets = state.data.media_assets || [];
+  const manifest = {
+    format: "gargottex-backup-zip",
     version: 1,
     exported_at: nowISO(),
     app_version: APP_VERSION,
-    counts: Object.fromEntries(ENTITY_ORDER.map(type => [type, (state.data[type] || []).length])),
-    data: snapshot,
-    media_assets: mediaAssets
+    media_count: mediaAssets.length
   };
+  const files = [
+    { name: "manifest.json", data: toBytes(JSON.stringify(manifest)) },
+    { name: "data/export_all.xlsx", data: workbookBytes },
+    { name: "data/media_assets.json", data: toBytes(JSON.stringify(mediaAssets.map(a => ({
+      id: a.id, label: a.label, file_name: a.file_name, path: a.path, thumb_path: a.thumb_path,
+      mime_type: a.mime_type, entity_type: a.entity_type, entity_id: a.entity_id,
+      width: a.width, height: a.height, created_at: a.created_at, updated_at: a.updated_at
+    })))) }
+  ];
   const stamp = new Date().toISOString().slice(0, 10);
-  downloadBlob(new Blob([JSON.stringify(payload)], { type: "application/json" }), `gargottex_backup_core_${stamp}.json`);
-
-  const media = state.data.media_assets || [];
-  const chunkSize = 25;
-  for (let i = 0; i < media.length; i += chunkSize) {
-    const slice = media.slice(i, i + chunkSize);
-    const items = [];
-    for (const asset of slice) {
-      items.push({
-        id: asset.id,
-        mime_type: asset.mime_type || "image/webp",
-        blob_base64: await blobToBase64(asset.blob),
-        thumb_blob_base64: await blobToBase64(asset.thumb_blob)
-      });
-    }
-    const part = {
-      format: "gargottex-backup-media-chunk",
-      version: 1,
-      chunk_index: Math.floor(i / chunkSize) + 1,
-      chunk_total: Math.ceil(media.length / chunkSize),
-      items
-    };
-    downloadBlob(
-      new Blob([JSON.stringify(part)], { type: "application/json" }),
-      `gargottex_backup_media_part_${String(part.chunk_index).padStart(3, "0")}_of_${String(part.chunk_total).padStart(3, "0")}_${stamp}.json`
-    );
+  for (const asset of mediaAssets) {
+    const ext = (asset.mime_type || "image/webp").split("/")[1] || "bin";
+    if (asset.blob) files.push({ name: `media/original/${asset.id}.${ext}`, data: new Uint8Array(await asset.blob.arrayBuffer()) });
+    if (asset.thumb_blob) files.push({ name: `media/thumbs/${asset.id}.${ext}`, data: new Uint8Array(await asset.thumb_blob.arrayBuffer()) });
   }
+  const zipBytes = makeZip(files);
+  downloadBlob(new Blob([zipBytes], { type: "application/zip" }), `gargottex_backup_${stamp}.zip`);
 }
 
-async function importFullBackupFiles(files) {
-  const parsed = [];
-  for (const file of files) {
-    const raw = await file.text();
-    parsed.push(JSON.parse(raw));
-  }
-  const core = parsed.find(p => p?.format === "gargottex-backup-core");
-  if (!core) throw new Error("Backup core manquant.");
+async function importFullBackupFile(file) {
+  const zipFiles = await readZip(await file.arrayBuffer());
+  const manifest = JSON.parse(fromBytes(zipFiles["manifest.json"] || toBytes("{}")));
+  if (manifest?.format !== "gargottex-backup-zip") throw new Error("Format de backup ZIP invalide.");
+  const wbBytes = zipFiles["data/export_all.xlsx"];
+  if (!wbBytes) throw new Error("export_all.xlsx manquant dans le backup.");
+  const parsedXlsx = await readXlsxFile(wbBytes.buffer.slice(wbBytes.byteOffset, wbBytes.byteOffset + wbBytes.byteLength));
 
   for (const type of ENTITY_ORDER) {
-    if (type === "media_assets") continue;
-    const rows = Array.isArray(core?.data?.[type]) ? core.data[type] : [];
+    const wanted = (ENTITY_SHEETS[type] || getLabel(type)).trim().toLowerCase();
+    const sheet = (parsedXlsx.sheets || []).find(s => String(s.sheetName || "").trim().toLowerCase() === wanted);
+    const rows = (sheet?.rows || []).map(row => normalizeTemplateRow(type, row));
     const current = state.data[type] || [];
     const existingMap = new Map(current.map(item => [buildConflictKeyFromEntity(type, item), item]));
     const entities = rows.map(row => {
@@ -2626,21 +2583,15 @@ async function importFullBackupFiles(files) {
     if (entities.length) await putMany(type, entities);
   }
 
-  const medias = Array.isArray(core.media_assets) ? core.media_assets : [];
-  const chunkItems = parsed
-    .filter(p => p?.format === "gargottex-backup-media-chunk")
-    .flatMap(p => Array.isArray(p.items) ? p.items : []);
-  const chunkById = new Map(chunkItems.map(x => [x.id, x]));
-  const hasMediaChunks = chunkById.size > 0;
-  const existingMedia = state.data.media_assets || [];
-  const existingById = new Map(existingMedia.map(x => [x.id, x]));
-  const existingByPath = new Map(existingMedia.map(x => [x.path, x]));
+  const medias = JSON.parse(fromBytes(zipFiles["data/media_assets.json"] || toBytes("[]")));
   if (medias.length) {
-    const merged = medias.map(m => {
-      const prev = existingById.get(m.id) || existingByPath.get(m.path) || null;
-      const chunk = chunkById.get(m.id);
+    await clearStore("media_assets");
+    const rows = medias.map(m => {
+      const ext = (m.mime_type || "image/webp").split("/")[1] || "bin";
+      const orig = zipFiles[`media/original/${m.id}.${ext}`];
+      const thumb = zipFiles[`media/thumbs/${m.id}.${ext}`];
       return {
-      id: m.id || prev?.id || uid("media"),
+      id: m.id || uid("media"),
       label: m.label || m.file_name || "",
       file_name: m.file_name || "",
       path: m.path || "",
@@ -2652,24 +2603,13 @@ async function importFullBackupFiles(files) {
       height: Number(m.height || 0),
       created_at: m.created_at || nowISO(),
       updated_at: nowISO(),
-      blob: chunk?.blob_base64
-        ? base64ToBlob(chunk.blob_base64, m.mime_type || "image/webp")
-        : (hasMediaChunks ? null : (prev?.blob || null)),
-      thumb_blob: chunk?.thumb_blob_base64
-        ? base64ToBlob(chunk.thumb_blob_base64, m.mime_type || "image/webp")
-        : (hasMediaChunks ? null : (prev?.thumb_blob || null)),
+      blob: orig ? new Blob([orig], { type: m.mime_type || "image/webp" }) : null,
+      thumb_blob: thumb ? new Blob([thumb], { type: m.mime_type || "image/webp" }) : null,
       image_path: m.path || ""
     };});
-    if (hasMediaChunks) {
-      await clearStore("media_assets");
-      await putMany("media_assets", merged);
-    } else {
-      // Safe mode: core-only import keeps already present blobs to avoid image loss.
-      await putMany("media_assets", merged);
-    }
+    await putMany("media_assets", rows);
   }
   await refreshData();
-  return { hasMediaChunks, mediaCount: medias.length };
 }
 
 function downloadBlob(blob, filename) {
@@ -3018,13 +2958,12 @@ function bindEvents() {
           return;
         }
         case "import-backup-file": {
-          const files = Array.from(el.files || []);
-          if (!files.length) return;
-          const imported = await importFullBackupFiles(files);
+          const file = el.files?.[0];
+          if (!file) return;
+          await importFullBackupFile(file);
           await saveUiState(state.ui);
           render();
-          if (imported?.hasMediaChunks) toast("♻️ Backup complet importé (données + images)", "success");
-          else toast("♻️ Backup core importé (images conservées localement, chunks non fournis)", "warn");
+          toast("♻️ Backup ZIP importé (données + images)", "success");
           el.value = "";
           return;
         }
