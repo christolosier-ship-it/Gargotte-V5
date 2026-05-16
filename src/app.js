@@ -1605,10 +1605,7 @@ function renderGenerator() {
 
       <button class="primary giant" data-action="generate-encounter">🎲 GÉNÉRER</button>
 
-      <div class="generator-meta">
-        ${statCard("Budget", budget, "⚔️")}
-        ${statCard("Mode", state.ui.generator.boss ? "Boss" : state.ui.generator.miniBoss ? "Mini-boss" : "Normal", "🔥")}
-      </div>
+      <div class="generator-compact">Budget ${budget} | Mode ${state.ui.generator.boss ? "Boss" : state.ui.generator.miniBoss ? "Mini-boss" : "Normal"}</div>
 
       <div class="panel">
         <h3>Résultat</h3>
@@ -1636,31 +1633,78 @@ function renderEncounterResult(result) {
       </div>
       <div class="two-col">
         <div class="mini-list encounter-list">
+        <h4>Créatures</h4>
         ${Array.from(counts.values()).map(entry => {
           const img = imageUrlForEntity(entry.creature);
+          const isKilled = !!result.local?.killedCreatures?.[entry.creature.id];
           return `<div class="encounter-row">
             <div class="encounter-thumb">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(entry.creature.name)}" loading="lazy">` : `<div class="placeholder">👹</div>`}</div>
-            <div class="encounter-body">
+            <div class="encounter-body ${isKilled ? "is-killed" : ""}">
               <strong>${entry.count}× ${escapeHtml(entry.creature.name)}</strong>
               <span>${entry.creature.menace || 0} menace</span>
+              <button class="ghost tiny" data-action="encounter-open-creature" data-id="${entry.creature.id}">Détails</button>
             </div>
           </div>`;
         }).join("")}
         </div>
         <div class="mini-list encounter-list">
+          <h4>Objets interactifs</h4>
           ${(result.interactables || []).map(obj => {
             const img = imageUrlForEntity(obj);
             return `<div class="encounter-row">
               <div class="encounter-thumb">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(obj.name)}" loading="lazy">` : `<div class="placeholder">🧱</div>`}</div>
               <div class="encounter-body">
                 <strong>${escapeHtml(obj.name || "Objet")}</strong>
+                <button class="ghost tiny" data-action="encounter-open-object" data-id="${obj.id}">Détails</button>
               </div>
             </div>`;
           }).join("") || `<div class="empty small">Aucun objet interactif.</div>`}
         </div>
       </div>
+      ${(result.local?.panelType && result.local?.panelId) ? renderEncounterMiniPanel(result) : ""}
     </div>
   `;
+}
+
+function renderEncounterMiniPanel(result) {
+  if (result.local.panelType === "creature") {
+    const creature = (result.creatures || []).find(c => c.id === result.local.panelId);
+    if (!creature) return "";
+    const img = imageUrlForEntity(creature);
+    const lootResult = result.local.lastLoot?.[creature.id];
+    const lootText = lootResult ? (lootResult.type === "none" ? lootResult.text : `Loot: ${lootResult.text}`) : "Aucun tirage.";
+    return `<div class="subpanel">
+      <h4>Mini fiche créature</h4>
+      <div class="encounter-row">
+        <div class="encounter-thumb">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(creature.name)}">` : `<div class="placeholder">👹</div>`}</div>
+        <div class="encounter-body">
+          <strong>${escapeHtml(creature.name)}</strong>
+          <span>PV ${Number(creature.pv || 0)} · ATK ${Number(creature.atk || 0)} · DEF ${Number(creature.def || 0)}</span>
+          <span>${escapeHtml((creature.actions || creature.ai_behavior || "—"))}</span>
+          <button class="danger tiny" data-action="encounter-kill-creature" data-id="${creature.id}">Kill</button>
+          <span>${escapeHtml(lootText)}</span>
+        </div>
+      </div>
+    </div>`;
+  }
+  const obj = (result.interactables || []).find(x => x.id === result.local.panelId);
+  if (!obj) return "";
+  const img = imageUrlForEntity(obj);
+  const effectLine = result.local.lastEffect?.[obj.id] || "Aucun effet tiré.";
+  const hasEffect = String(obj.effect || "").trim().length > 0;
+  return `<div class="subpanel">
+    <h4>Mini fiche objet</h4>
+    <div class="encounter-row">
+      <div class="encounter-thumb">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(obj.name)}">` : `<div class="placeholder">🧱</div>`}</div>
+      <div class="encounter-body">
+        <strong>${escapeHtml(obj.name || "Objet")}</strong>
+        <span>Type ${escapeHtml(obj.type || "—")} · PV ${Number(obj.hp || 0)}</span>
+        <span>${escapeHtml(obj.actions_allowed || "—")}</span>
+        ${hasEffect ? `<button class="primary tiny" data-action="encounter-roll-effect" data-id="${obj.id}">Effet</button>` : ""}
+        <span>${escapeHtml(effectLine)}</span>
+      </div>
+    </div>
+  </div>`;
 }
 
 function renderBrouhaha() {
@@ -2343,9 +2387,36 @@ function generateEncounter(dungeonId, floorIndex, bossChecked, miniBossChecked) 
     used: selected.reduce((sum, c) => sum + Number(c.menace || 0), 0),
     creatures: selected,
     interactables: buildEncounterInteractables(dungeon.id, budget),
+    local: { panelType: "", panelId: "", killedCreatures: {}, lastLoot: {}, lastEffect: {} },
     boss: !!bossChecked,
     miniBoss: !!miniBossChecked
   };
+}
+
+function rollCreatureLoot(creature) {
+  const jokes = ["Rien… même pas une chaussette.", "Le monstre avait déjà tout vendu.", "Poches vides, ego intact."];
+  const loots = (creature?.loot_items || []).filter(Boolean);
+  const r = Math.random();
+  if (!loots.length || r < 0.8) return { type: "none", text: jokes[Math.floor(Math.random() * jokes.length)] };
+  if (loots.length === 1 || r < 0.9) return { type: "loot", text: `${loots[0].name || "Loot 1"}` };
+  return { type: "loot", text: `${(loots[1] || loots[0]).name || "Loot 2"}` };
+}
+
+function rollInteractableEffect(obj, dungeonId) {
+  const raw = String(obj?.effect || "").trim();
+  if (!raw) return "";
+  const rules = raw.split(/[\\/;\n|]/).map(x => x.trim()).filter(Boolean);
+  const byType = {
+    porte: ["ouvrir", "fermer"],
+    tonneau: ["casser", "exploser"],
+    statue: ["casser", "tomber sur case voisine"],
+    pilier: ["casser", "éboulement"]
+  };
+  const typeKey = String(obj.type || "").trim().toLowerCase();
+  const registry = byType[typeKey] || [];
+  const dungeonBoost = dungeonId ? [`${dungeonId}: ${rules[0] || registry[0] || raw}`] : [];
+  const pool = [...rules, ...registry, ...dungeonBoost].filter(Boolean);
+  return pool[Math.floor(Math.random() * pool.length)] || raw;
 }
 
 function buildEncounterInteractables(dungeonId, budget) {
@@ -2570,6 +2641,45 @@ function bindEvents() {
           else toast("🎲 Salle générée", "success");
           return;
         }
+        case "encounter-open-creature":
+          if (state.ui.generator.result && !state.ui.generator.result.error) {
+            state.ui.generator.result.local.panelType = "creature";
+            state.ui.generator.result.local.panelId = btn.dataset.id;
+            await saveUiState(state.ui);
+            render();
+          }
+          return;
+        case "encounter-open-object":
+          if (state.ui.generator.result && !state.ui.generator.result.error) {
+            state.ui.generator.result.local.panelType = "object";
+            state.ui.generator.result.local.panelId = btn.dataset.id;
+            await saveUiState(state.ui);
+            render();
+          }
+          return;
+        case "encounter-kill-creature":
+          if (state.ui.generator.result && !state.ui.generator.result.error) {
+            const id = btn.dataset.id;
+            const creature = (state.ui.generator.result.creatures || []).find(c => c.id === id);
+            if (creature) {
+              state.ui.generator.result.local.killedCreatures[id] = true;
+              state.ui.generator.result.local.lastLoot[id] = rollCreatureLoot(creature);
+            }
+            await saveUiState(state.ui);
+            render();
+          }
+          return;
+        case "encounter-roll-effect":
+          if (state.ui.generator.result && !state.ui.generator.result.error) {
+            const id = btn.dataset.id;
+            const obj = (state.ui.generator.result.interactables || []).find(x => x.id === id);
+            if (obj) {
+              state.ui.generator.result.local.lastEffect[id] = rollInteractableEffect(obj, state.ui.generator.result.dungeon_id);
+            }
+            await saveUiState(state.ui);
+            render();
+          }
+          return;
         case "brouhaha-plus":
           state.ui.brouhaha.level = clamp((state.ui.brouhaha.level || 0) + 1, 0, 12);
           await saveUiState(state.ui);
