@@ -1228,7 +1228,7 @@ function renderCodex() {
         ${type === "heroes" ? renderHeroLevelFilter(state.ui.codexHeroLevel, "codex-hero-level-filter") : ""}
       </div>
 
-      <div class="two-col">
+      <div class="two-col encounter-columns">
         <div class="list-column">
           <div class="card-list">
             ${items.map(item => renderCodexCard(type, item, selected?.id === item.id)).join("") || `<div class="empty">Aucune donnée.</div>`}
@@ -1631,7 +1631,7 @@ function renderEncounterResult(result) {
           <h3>${escapeHtml(result.dungeon_name)} · Étage ${Number(result.floor) + 1}</h3>
         </div>
       </div>
-      <div class="two-col">
+      <div class="two-col encounter-columns">
         <div class="mini-list encounter-list">
         <h4>Créatures</h4>
         ${Array.from(counts.values()).map(entry => {
