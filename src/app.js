@@ -574,6 +574,17 @@ function formatExportRow(type, entity) {
         tags: tagsToText(entity.tags),
         image_path: entity.image_path || ""
       };
+    case "interactables":
+      return {
+        name: entity.name || "",
+        dungeon_name: entity.dungeon_name || "",
+        type: entity.type || "",
+        hp: Number(entity.hp || 0),
+        actions_allowed: entity.actions_allowed || "",
+        effect: entity.effect || "",
+        image_path: entity.image_path || "",
+        tags: tagsToText(entity.tags)
+      };
     case "brouhaha_effects":
       return {
         level: Number(entity.level || 0),
