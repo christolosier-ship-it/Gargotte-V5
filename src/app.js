@@ -2626,15 +2626,21 @@ async function importFullBackupFiles(files) {
     if (entities.length) await putMany(type, entities);
   }
 
-  await clearStore("media_assets");
   const medias = Array.isArray(core.media_assets) ? core.media_assets : [];
   const chunkItems = parsed
     .filter(p => p?.format === "gargottex-backup-media-chunk")
     .flatMap(p => Array.isArray(p.items) ? p.items : []);
   const chunkById = new Map(chunkItems.map(x => [x.id, x]));
+  const hasMediaChunks = chunkById.size > 0;
+  const existingMedia = state.data.media_assets || [];
+  const existingById = new Map(existingMedia.map(x => [x.id, x]));
+  const existingByPath = new Map(existingMedia.map(x => [x.path, x]));
   if (medias.length) {
-    await putMany("media_assets", medias.map(m => ({
-      id: m.id || uid("media"),
+    const merged = medias.map(m => {
+      const prev = existingById.get(m.id) || existingByPath.get(m.path) || null;
+      const chunk = chunkById.get(m.id);
+      return {
+      id: m.id || prev?.id || uid("media"),
       label: m.label || m.file_name || "",
       file_name: m.file_name || "",
       path: m.path || "",
@@ -2646,12 +2652,24 @@ async function importFullBackupFiles(files) {
       height: Number(m.height || 0),
       created_at: m.created_at || nowISO(),
       updated_at: nowISO(),
-      blob: chunkById.get(m.id)?.blob_base64 ? base64ToBlob(chunkById.get(m.id).blob_base64, m.mime_type || "image/webp") : null,
-      thumb_blob: chunkById.get(m.id)?.thumb_blob_base64 ? base64ToBlob(chunkById.get(m.id).thumb_blob_base64, m.mime_type || "image/webp") : null,
+      blob: chunk?.blob_base64
+        ? base64ToBlob(chunk.blob_base64, m.mime_type || "image/webp")
+        : (hasMediaChunks ? null : (prev?.blob || null)),
+      thumb_blob: chunk?.thumb_blob_base64
+        ? base64ToBlob(chunk.thumb_blob_base64, m.mime_type || "image/webp")
+        : (hasMediaChunks ? null : (prev?.thumb_blob || null)),
       image_path: m.path || ""
-    })));
+    };});
+    if (hasMediaChunks) {
+      await clearStore("media_assets");
+      await putMany("media_assets", merged);
+    } else {
+      // Safe mode: core-only import keeps already present blobs to avoid image loss.
+      await putMany("media_assets", merged);
+    }
   }
   await refreshData();
+  return { hasMediaChunks, mediaCount: medias.length };
 }
 
 function downloadBlob(blob, filename) {
@@ -3002,10 +3020,11 @@ function bindEvents() {
         case "import-backup-file": {
           const files = Array.from(el.files || []);
           if (!files.length) return;
-          await importFullBackupFiles(files);
+          const imported = await importFullBackupFiles(files);
           await saveUiState(state.ui);
           render();
-          toast("♻️ Backup complet importé", "success");
+          if (imported?.hasMediaChunks) toast("♻️ Backup complet importé (données + images)", "success");
+          else toast("♻️ Backup core importé (images conservées localement, chunks non fournis)", "warn");
           el.value = "";
           return;
         }
