@@ -2021,8 +2021,8 @@ function renderImportExport() {
       </div>
       <div class="import-grid">
         <label class="wide">
-          <span>Fichier backup JSON</span>
-          <input type="file" accept=".json" data-action="import-backup-file">
+          <span>Fichier(s) backup JSON</span>
+          <input type="file" accept=".json" data-action="import-backup-file" multiple>
         </label>
       </div>
 
@@ -2549,7 +2549,7 @@ async function exportFullBackupFile() {
     if (type === "media_assets") continue;
     snapshot[type] = toTemplateRows(type, state.data[type] || []);
   }
-  const mediaAssets = await Promise.all((state.data.media_assets || []).map(async (asset) => ({
+  const mediaAssets = (state.data.media_assets || []).map((asset) => ({
     id: asset.id,
     label: asset.label || "",
     file_name: asset.file_name || "",
@@ -2561,13 +2561,11 @@ async function exportFullBackupFile() {
     width: Number(asset.width || 0),
     height: Number(asset.height || 0),
     created_at: asset.created_at || "",
-    updated_at: asset.updated_at || "",
-    blob_base64: await blobToBase64(asset.blob),
-    thumb_blob_base64: await blobToBase64(asset.thumb_blob)
-  })));
+    updated_at: asset.updated_at || ""
+  }));
 
   const payload = {
-    format: "gargottex-backup",
+    format: "gargottex-backup-core",
     version: 1,
     exported_at: nowISO(),
     app_version: APP_VERSION,
@@ -2575,18 +2573,48 @@ async function exportFullBackupFile() {
     data: snapshot,
     media_assets: mediaAssets
   };
-  const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-  downloadBlob(blob, `gargottex_backup_${new Date().toISOString().slice(0, 10)}.json`);
+  const stamp = new Date().toISOString().slice(0, 10);
+  downloadBlob(new Blob([JSON.stringify(payload)], { type: "application/json" }), `gargottex_backup_core_${stamp}.json`);
+
+  const media = state.data.media_assets || [];
+  const chunkSize = 25;
+  for (let i = 0; i < media.length; i += chunkSize) {
+    const slice = media.slice(i, i + chunkSize);
+    const items = [];
+    for (const asset of slice) {
+      items.push({
+        id: asset.id,
+        mime_type: asset.mime_type || "image/webp",
+        blob_base64: await blobToBase64(asset.blob),
+        thumb_blob_base64: await blobToBase64(asset.thumb_blob)
+      });
+    }
+    const part = {
+      format: "gargottex-backup-media-chunk",
+      version: 1,
+      chunk_index: Math.floor(i / chunkSize) + 1,
+      chunk_total: Math.ceil(media.length / chunkSize),
+      items
+    };
+    downloadBlob(
+      new Blob([JSON.stringify(part)], { type: "application/json" }),
+      `gargottex_backup_media_part_${String(part.chunk_index).padStart(3, "0")}_of_${String(part.chunk_total).padStart(3, "0")}_${stamp}.json`
+    );
+  }
 }
 
-async function importFullBackupFile(file) {
-  const raw = await file.text();
-  const payload = JSON.parse(raw);
-  if (payload?.format !== "gargottex-backup") throw new Error("Format backup invalide.");
+async function importFullBackupFiles(files) {
+  const parsed = [];
+  for (const file of files) {
+    const raw = await file.text();
+    parsed.push(JSON.parse(raw));
+  }
+  const core = parsed.find(p => p?.format === "gargottex-backup-core");
+  if (!core) throw new Error("Backup core manquant.");
 
   for (const type of ENTITY_ORDER) {
     if (type === "media_assets") continue;
-    const rows = Array.isArray(payload?.data?.[type]) ? payload.data[type] : [];
+    const rows = Array.isArray(core?.data?.[type]) ? core.data[type] : [];
     const current = state.data[type] || [];
     const existingMap = new Map(current.map(item => [buildConflictKeyFromEntity(type, item), item]));
     const entities = rows.map(row => {
@@ -2599,7 +2627,11 @@ async function importFullBackupFile(file) {
   }
 
   await clearStore("media_assets");
-  const medias = Array.isArray(payload.media_assets) ? payload.media_assets : [];
+  const medias = Array.isArray(core.media_assets) ? core.media_assets : [];
+  const chunkItems = parsed
+    .filter(p => p?.format === "gargottex-backup-media-chunk")
+    .flatMap(p => Array.isArray(p.items) ? p.items : []);
+  const chunkById = new Map(chunkItems.map(x => [x.id, x]));
   if (medias.length) {
     await putMany("media_assets", medias.map(m => ({
       id: m.id || uid("media"),
@@ -2614,8 +2646,8 @@ async function importFullBackupFile(file) {
       height: Number(m.height || 0),
       created_at: m.created_at || nowISO(),
       updated_at: nowISO(),
-      blob: m.blob_base64 ? base64ToBlob(m.blob_base64, m.mime_type || "image/webp") : null,
-      thumb_blob: m.thumb_blob_base64 ? base64ToBlob(m.thumb_blob_base64, m.mime_type || "image/webp") : null,
+      blob: chunkById.get(m.id)?.blob_base64 ? base64ToBlob(chunkById.get(m.id).blob_base64, m.mime_type || "image/webp") : null,
+      thumb_blob: chunkById.get(m.id)?.thumb_blob_base64 ? base64ToBlob(chunkById.get(m.id).thumb_blob_base64, m.mime_type || "image/webp") : null,
       image_path: m.path || ""
     })));
   }
@@ -2851,7 +2883,7 @@ function bindEvents() {
           return;
         case "export-backup":
           await exportFullBackupFile();
-          toast("🧳 Backup complet exporté", "success");
+          toast("🧳 Backup exporté (core + parties médias)", "success");
           return;
         case "import-clear":
           state.ui.import.preview = null;
@@ -2968,9 +3000,9 @@ function bindEvents() {
           return;
         }
         case "import-backup-file": {
-          const file = el.files?.[0];
-          if (!file) return;
-          await importFullBackupFile(file);
+          const files = Array.from(el.files || []);
+          if (!files.length) return;
+          await importFullBackupFiles(files);
           await saveUiState(state.ui);
           render();
           toast("♻️ Backup complet importé", "success");
