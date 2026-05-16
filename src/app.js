@@ -1357,8 +1357,8 @@ function renderDungeonDetail(item, readOnly = false) {
           <div class="muted">${escapeHtml(item.slug || "")}</div>
         </div>
       </div>
-      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(item.image_path || "")}" data-alt="${escapeHtml(item.name || "")}">
-        ${item.image_path ? `<img src="${escapeHtml(item.image_path)}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🏰</div>`}
+      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
+        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🏰</div>`}
       </div>
       <p><strong>Description :</strong> ${escapeHtml(item.description || "—")}</p>
       <p><strong>Budgets :</strong> ${escapeHtml((item.floor_budgets || []).join(" · "))}</p>
