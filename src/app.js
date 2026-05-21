@@ -200,7 +200,9 @@ const FORM_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.slice();
-const APP_VERSION = "5.3.0";
+const APP_VERSION = "5.4.0";
+let backupBusy = false;
+let searchDebounceTimer = null;
 
 const ENTITY_DOWNLOAD_FILES = {
   dungeons: "dungeons.xlsx",
@@ -2568,6 +2570,9 @@ async function exportAllFile() {
 }
 
 async function exportFullBackupFile() {
+  if (backupBusy) throw new Error("Un export/import backup est déjà en cours.");
+  backupBusy = true;
+  try {
   const sheets = ENTITY_ORDER.map(type => ({
     sheetName: ENTITY_SHEETS[type] || getLabel(type),
     headers: sheetHeaders(type),
@@ -2593,16 +2598,25 @@ async function exportFullBackupFile() {
     })))) }
   ];
   const stamp = new Date().toISOString().slice(0, 10);
+  let mediaStep = 0;
   for (const asset of mediaAssets) {
+    mediaStep++;
     const ext = (asset.mime_type || "image/webp").split("/")[1] || "bin";
     if (asset.blob) files.push({ name: `media/original/${asset.id}.${ext}`, data: new Uint8Array(await asset.blob.arrayBuffer()) });
     if (asset.thumb_blob) files.push({ name: `media/thumbs/${asset.id}.${ext}`, data: new Uint8Array(await asset.thumb_blob.arrayBuffer()) });
+    if (mediaStep % 12 === 0) await new Promise(resolve => setTimeout(resolve, 0));
   }
   const zipBytes = makeZip(files);
   downloadBlob(new Blob([zipBytes], { type: "application/zip" }), `gargottex_backup_${stamp}.zip`);
+  } finally {
+    backupBusy = false;
+  }
 }
 
 async function importFullBackupFile(file) {
+  if (backupBusy) throw new Error("Un export/import backup est déjà en cours.");
+  backupBusy = true;
+  try {
   const zipFiles = await readZip(await file.arrayBuffer());
   const manifest = JSON.parse(fromBytes(zipFiles["manifest.json"] || toBytes("{}")));
   if (manifest?.format !== "gargottex-backup-zip") throw new Error("Format de backup ZIP invalide.");
@@ -2623,6 +2637,7 @@ async function importFullBackupFile(file) {
     });
     await clearStore(type);
     if (entities.length) await putMany(type, entities);
+    await new Promise(resolve => setTimeout(resolve, 0));
   }
 
   const medias = JSON.parse(fromBytes(zipFiles["data/media_assets.json"] || toBytes("[]")));
@@ -2652,6 +2667,9 @@ async function importFullBackupFile(file) {
     await putMany("media_assets", rows);
   }
   await refreshData();
+  } finally {
+    backupBusy = false;
+  }
 }
 
 function downloadBlob(blob, filename) {
@@ -2883,7 +2901,7 @@ function bindEvents() {
           return;
         case "export-backup":
           await exportFullBackupFile();
-          toast("🧳 Backup exporté (core + parties médias)", "success");
+          toast("🧳 Backup ZIP exporté", "success");
           return;
         case "import-clear":
           state.ui.import.preview = null;
@@ -2972,11 +2990,6 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           return;
-        case "search":
-          state.ui.globalSearch = el.value;
-          await saveUiState(state.ui);
-          render();
-          return;
         case "import-type":
           state.ui.import.type = el.value;
           await saveUiState(state.ui);
@@ -3032,8 +3045,11 @@ function bindEvents() {
     if (!(el instanceof HTMLElement)) return;
     if (el.dataset.action === "search") {
       state.ui.globalSearch = el.value;
-      await saveUiState(state.ui);
-      render();
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(async () => {
+        await saveUiState(state.ui);
+        render();
+      }, 160);
       return;
     }
   });
