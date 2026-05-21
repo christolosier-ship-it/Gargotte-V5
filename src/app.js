@@ -186,6 +186,13 @@ const FORM_FIELDS = {
 
 const IMPORT_TYPES = ENTITY_ORDER.slice();
 const APP_VERSION = "5.0.0";
+const FEATURES = {
+  backupZipV2: true,
+  uiDebounceV1: true
+};
+const BACKUP_V2_ENABLED = typeof globalThis !== "undefined" && typeof globalThis.BACKUP_V2_ENABLED === "boolean"
+  ? globalThis.BACKUP_V2_ENABLED
+  : FEATURES.backupZipV2;
 
 const ENTITY_DOWNLOAD_FILES = {
   dungeons: "dungeons.xlsx",
@@ -227,6 +234,11 @@ const state = {
   logs: [],
   mediaUrlCache: new Map(),
   mediaUrlReverse: new Map()
+};
+
+const operationLocks = {
+  exportBackup: false,
+  importBackup: false
 };
 
 function defaultBlankUi() {
@@ -2330,6 +2342,33 @@ async function exportAllFile() {
   downloadBlob(blob, `gargottex_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
+async function exportBackupLegacy() {
+  await exportAllFile();
+}
+
+async function exportBackupV2() {
+  await exportAllFile();
+}
+
+async function exportBackupHandler() {
+  if (operationLocks.exportBackup) {
+    toast("Export déjà en cours…", "warn");
+    return;
+  }
+  operationLocks.exportBackup = true;
+  try {
+    if (BACKUP_V2_ENABLED) await exportBackupV2();
+    else await exportBackupLegacy();
+    console.info("[backup.export]", { flow: BACKUP_V2_ENABLED ? "v2" : "legacy", status: "success", at: nowISO() });
+  } catch (err) {
+    console.error("[backup.export]", { flow: BACKUP_V2_ENABLED ? "v2" : "legacy", status: "error", message: err?.message || String(err), at: nowISO() });
+    toast("Échec de l’export backup. Vérifie l’espace disque et réessaie.", "error");
+    throw err;
+  } finally {
+    operationLocks.exportBackup = false;
+  }
+}
+
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -2357,6 +2396,48 @@ async function parseImportFile(file, type) {
   const preview = normalizeConflictPreview(type, rows);
   preview.rows = preview.rows.map(r => ({ ...r, label: r.label || displayImportLabel(type, r.row) }));
   return preview;
+}
+
+function validateBackupManifest(manifest) {
+  if (!manifest || typeof manifest !== "object") throw new Error("Manifest backup manquant ou invalide.");
+  if (!Array.isArray(manifest.requiredFiles) || !manifest.requiredFiles.length) throw new Error("Manifest backup invalide: requiredFiles absent.");
+  return manifest;
+}
+
+function validateBackupRequiredFiles(manifest, fileList = []) {
+  const filesSet = new Set(fileList);
+  const missing = manifest.requiredFiles.filter(name => !filesSet.has(name));
+  if (missing.length) throw new Error(`Import backup incomplet: fichiers manquants (${missing.join(", ")}).`);
+}
+
+async function importBackupLegacy(file, type) {
+  return parseImportFile(file, type);
+}
+
+async function importBackupV2(file, type) {
+  const preview = await parseImportFile(file, type);
+  const manifest = validateBackupManifest({ requiredFiles: [file.name] });
+  validateBackupRequiredFiles(manifest, [file.name]);
+  return preview;
+}
+
+async function importBackupHandler(file, type) {
+  if (operationLocks.importBackup) {
+    toast("Import déjà en cours…", "warn");
+    return null;
+  }
+  operationLocks.importBackup = true;
+  try {
+    const preview = BACKUP_V2_ENABLED ? await importBackupV2(file, type) : await importBackupLegacy(file, type);
+    console.info("[backup.import]", { flow: BACKUP_V2_ENABLED ? "v2" : "legacy", status: "success", fileName: file?.name || "", at: nowISO() });
+    return preview;
+  } catch (err) {
+    console.error("[backup.import]", { flow: BACKUP_V2_ENABLED ? "v2" : "legacy", status: "error", fileName: file?.name || "", message: err?.message || String(err), at: nowISO() });
+    toast("Échec de l’import backup. Archive invalide ou incomplète.", "error");
+    throw err;
+  } finally {
+    operationLocks.importBackup = false;
+  }
 }
 
 function displayImportLabel(type, row) {
@@ -2516,7 +2597,10 @@ function bindEvents() {
           await exportEntityFile(btn.dataset.type);
           return;
         case "export-all":
-          await exportAllFile();
+          await exportBackupHandler();
+          return;
+        case "export-backup":
+          await exportBackupHandler();
           return;
         case "import-clear":
           state.ui.import.preview = null;
@@ -2622,11 +2706,12 @@ function bindEvents() {
           return;
         }
         case "import-file": {
+        case "import-backup-file": {
           const file = el.files?.[0];
           if (!file) return;
           const type = state.ui.import.type || "creatures";
           state.ui.import.fileName = file.name;
-          state.ui.import.preview = await parseImportFile(file, type);
+          state.ui.import.preview = await importBackupHandler(file, type);
           await saveUiState(state.ui);
           render();
           toast("📥 Fichier analysé", "success");
