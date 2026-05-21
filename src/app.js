@@ -202,6 +202,7 @@ const FORM_FIELDS = {
 const IMPORT_TYPES = ENTITY_ORDER.slice();
 const APP_VERSION = "5.4.0";
 let backupBusy = false;
+const MEDIA_PAGE_SIZE = 80;
 let searchDebounceTimer = null;
 
 const ENTITY_DOWNLOAD_FILES = {
@@ -239,7 +240,7 @@ const state = {
     questsResult: null,
     questDungeonId: "",
     import: { type: "creatures", fileName: "", preview: null },
-    media: { filterType: "gallery", filterEntity: "", fileQueueName: "" },
+    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", page: 1, pageSize: 80, atelierOnlyUnused: false },
     journalOpen: false,
     globalSearch: ""
   },
@@ -266,7 +267,7 @@ function defaultBlankUi() {
     questsResult: null,
     questDungeonId: "",
     import: { type: "creatures", fileName: "", preview: null },
-    media: { filterType: "gallery", filterEntity: "", fileQueueName: "" },
+    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", page: 1, pageSize: 80, atelierOnlyUnused: false },
     journalOpen: false,
     globalSearch: ""
   };
@@ -1112,6 +1113,50 @@ function toTemplateRows(type, list) {
   return list.map(entity => formatExportRow(type, entity));
 }
 
+
+
+function ensureProgressState() {
+  if (!state.ui.progress) state.ui.progress = { open: false, title: "", stage: "", done: 0, total: 0, percent: 0, error: "" };
+}
+
+function updateProgress(patch = {}) {
+  ensureProgressState();
+  state.ui.progress = { ...state.ui.progress, ...patch };
+  render();
+}
+
+function renderProgressOverlay() {
+  ensureProgressState();
+  const p = state.ui.progress;
+  if (!p.open) return "";
+  return `<div class="image-viewer-overlay"><div class="image-viewer-panel" role="dialog" aria-modal="true"><h3>${escapeHtml(p.title || "Traitement en cours")}</h3><p>${escapeHtml(p.stage || "Préparation")}</p><progress max="100" value="${Number(p.percent || 0)}"></progress><div class="muted">${Number(p.done || 0)}/${Number(p.total || 0)} · ${Number(p.percent || 0)}%</div>${p.error ? `<div class="toast error">${escapeHtml(p.error)}</div>` : ""}</div></div>`;
+}
+
+function collectUsedMediaReferences() {
+  const refs = new Map();
+  const fields = ["image_path","image","imageId","mediaId","portrait","thumbnail","photo","illustration","icon","avatar","path"];
+  const stores = ["dungeons","creatures","heroes","npcs","quests","loot_items","interactables","media_assets"];
+  for (const store of stores) {
+    for (const entity of (state.data[store] || [])) {
+      for (const f of fields) {
+        const v = entity?.[f];
+        if (!v || typeof v !== "string") continue;
+        const key = v.trim();
+        if (!key) continue;
+        const arr = refs.get(key) || [];
+        arr.push(`${store}:${entity.id}`);
+        refs.set(key, arr);
+      }
+    }
+  }
+  return refs;
+}
+
+function mediaUsageForAsset(asset, refs) {
+  const hits = new Set([...(refs.get(asset.path) || []), ...(asset.thumb_path ? (refs.get(asset.thumb_path) || []) : []), ...(refs.get(asset.id) || [])]);
+  return Array.from(hits);
+}
+
 function renderShell(content) {
   return `
   <div class="shell">
@@ -1119,7 +1164,7 @@ function renderShell(content) {
       <button class="brand" data-action="go-home" title="Accueil">
         <img src="assets/images/logo-192.png" alt="Gargottex">
         <div>
-          <div class="brand-title">Gargottex V5.3</div>
+          <div class="brand-title">Gargottex V5.4</div>
           <div class="brand-subtitle">offline-first, local et têtu</div>
         </div>
       </button>
@@ -1150,6 +1195,7 @@ function renderShell(content) {
     </aside>
 
     ${renderImageViewer()}
+    ${renderProgressOverlay()}
     ${state.ui.journalOpen ? renderJournalDrawer() : ""}
   </div>`;
 }
@@ -1855,7 +1901,7 @@ function renderAtelier() {
       </div>
 
       <div class="segmented wrap">
-        ${["dungeons","creatures","heroes","npcs","quests","loot_items","interactables","brouhaha_effects"].map(t => `<button class="tab ${t === type ? "active" : ""}" data-action="set-workshop-type" data-type="${t}">${getLabel(t)}</button>`).join("")}
+        ${["dungeons","creatures","heroes","npcs","quests","loot_items","interactables","brouhaha_effects","media_assets"].map(t => `<button class="tab ${t === type ? "active" : ""}" data-action="set-workshop-type" data-type="${t}">${getLabel(t)}</button>`).join("")}
       </div>
 
       <div class="panel-subtitle">
@@ -1885,7 +1931,7 @@ function renderWorkshopCard(type, item, active) {
   const image = type === "media_assets" ? thumbUrlForAsset(item) : codexImageFor(type, item);
   return `
     <button class="codex-card ${active ? "active" : ""}" data-action="select-workshop" data-type="${type}" data-id="${item.id}">
-      <div class="card-img">${image ? `<img src="${escapeHtml(image)}" alt="">` : `<div class="placeholder">${escapeHtml((title || "?").slice(0,2).toUpperCase())}</div>`}</div>
+      <div class="card-img">${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy">` : `<div class="placeholder">${escapeHtml((title || "?").slice(0,2).toUpperCase())}</div>`}</div>
       <div class="card-body">
         <strong>${escapeHtml(title)}</strong>
         <span>${escapeHtml(subtitle)}</span>
@@ -1989,9 +2035,16 @@ function renderField(field, item) {
 
 function renderMedia() {
   const filterType = state.ui.media.filterType || "gallery";
-  const assets = filterType === "gallery"
+  const allAssets = filterType === "gallery"
     ? state.data.media_assets || []
     : (state.data.media_assets || []).filter(a => a.entity_type === filterType);
+  const refs = collectUsedMediaReferences();
+  const orphanOnly = !!state.ui.media.atelierOnlyUnused;
+  const filtered = orphanOnly ? allAssets.filter(a => mediaUsageForAsset(a, refs).length === 0) : allAssets;
+  const pageSize = Number(state.ui.media.pageSize || MEDIA_PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const page = clamp(Number(state.ui.media.page || 1), 1, totalPages);
+  const assets = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   return renderShell(`
     <section class="panel">
@@ -2021,11 +2074,11 @@ function renderMedia() {
           </select>
         </label>`}
         <input type="file" accept="image/*" multiple data-action="media-upload">
-        <button class="ghost" data-action="media-refresh">Rafraîchir</button>
+        <label class="toggle"><input type="checkbox" data-action="media-filter-unused" ${orphanOnly ? 'checked' : ''}><span>Orphelins uniquement</span></label><button class="ghost" data-action="media-delete-unused">Supprimer tous les orphelins</button><button class="ghost" data-action="media-refresh">Rafraîchir</button>
       </div>
 
       <div class="gallery">
-        ${assets.map(asset => renderMediaAssetCard(asset, false)).join("") || `<div class="empty">Aucune image.</div>`}
+        ${assets.map(asset => `<div>${renderMediaAssetCard(asset, false)}<div class="muted">${mediaUsageForAsset(asset, refs).length ? "utilisé" : "orphelin"} ${(!asset.blob && !asset.thumb_blob) ? "· vide/corrompu" : ""}</div><button class="danger tiny" data-action="media-delete-one" data-id="${asset.id}">Supprimer</button></div>`).join("") || `<div class="empty">Aucune image.</div>`}<div class="panel-subtitle"><span>Page ${page}/${totalPages} · ${filtered.length} média(s)</span><button class="ghost" data-action="media-page" data-page="${page-1}">◀</button><button class="ghost" data-action="media-page" data-page="${page+1}">▶</button></div>
       </div>
     </section>
   `);
@@ -2216,7 +2269,9 @@ async function applyImportPreview() {
   }
 
   state.ui.import.preview = null;
+  updateProgress({ stage: "Finalisation", done: 98, total: 100, percent: 98 });
   await refreshData();
+  updateProgress({ stage: "Terminé", done: 100, total: 100, percent: 100 });
   toast(`📥 Import terminé (${getLabel(type)})`, "success");
 }
 
@@ -2561,6 +2616,7 @@ async function exportEntityFile(type) {
 
 async function exportAllFile() {
   const sheets = ENTITY_ORDER.map(type => ({
+
     sheetName: ENTITY_SHEETS[type] || getLabel(type),
     headers: sheetHeaders(type),
     rows: toTemplateRows(type, state.data[type] || [])
@@ -2570,10 +2626,12 @@ async function exportAllFile() {
 }
 
 async function exportFullBackupFile() {
+  updateProgress({ open: true, title: "Export backup", stage: "Préparation", done: 0, total: 100, percent: 0, error: "" });
   if (backupBusy) throw new Error("Un export/import backup est déjà en cours.");
   backupBusy = true;
   try {
   const sheets = ENTITY_ORDER.map(type => ({
+
     sheetName: ENTITY_SHEETS[type] || getLabel(type),
     headers: sheetHeaders(type),
     rows: toTemplateRows(type, state.data[type] || [])
@@ -2598,32 +2656,44 @@ async function exportFullBackupFile() {
     })))) }
   ];
   const stamp = new Date().toISOString().slice(0, 10);
+  updateProgress({ stage: "Export des entités", done: 20, total: 100, percent: 20 });
   let mediaStep = 0;
   for (const asset of mediaAssets) {
     mediaStep++;
+    const pct = 20 + Math.round((mediaStep / Math.max(1, mediaAssets.length)) * 70);
+    updateProgress({ stage: "Export des médias", done: pct, total: 100, percent: pct });
     const ext = (asset.mime_type || "image/webp").split("/")[1] || "bin";
     if (asset.blob) files.push({ name: `media/original/${asset.id}.${ext}`, data: new Uint8Array(await asset.blob.arrayBuffer()) });
     if (asset.thumb_blob) files.push({ name: `media/thumbs/${asset.id}.${ext}`, data: new Uint8Array(await asset.thumb_blob.arrayBuffer()) });
     if (mediaStep % 12 === 0) await new Promise(resolve => setTimeout(resolve, 0));
   }
+  updateProgress({ stage: "Finalisation", done: 95, total: 100, percent: 95 });
   const zipBytes = makeZip(files);
   downloadBlob(new Blob([zipBytes], { type: "application/zip" }), `gargottex_backup_${stamp}.zip`);
+  updateProgress({ stage: "Terminé", done: 100, total: 100, percent: 100 });
+  } catch (err) {
+    updateProgress({ stage: "Erreur", error: err?.message || String(err) });
+    throw err;
   } finally {
     backupBusy = false;
+    setTimeout(() => { updateProgress({ open: false, error: "" }); }, 400);
   }
 }
 
 async function importFullBackupFile(file) {
+  updateProgress({ open: true, title: "Import backup", stage: "Préparation", done: 0, total: 100, percent: 0, error: "" });
   if (backupBusy) throw new Error("Un export/import backup est déjà en cours.");
   backupBusy = true;
   try {
   const zipFiles = await readZip(await file.arrayBuffer());
+  updateProgress({ stage: "Validation", done: 10, total: 100, percent: 10 });
   const manifest = JSON.parse(fromBytes(zipFiles["manifest.json"] || toBytes("{}")));
   if (manifest?.format !== "gargottex-backup-zip") throw new Error("Format de backup ZIP invalide.");
   const wbBytes = zipFiles["data/export_all.xlsx"];
   if (!wbBytes) throw new Error("export_all.xlsx manquant dans le backup.");
   const parsedXlsx = await readXlsxFile(wbBytes.buffer.slice(wbBytes.byteOffset, wbBytes.byteOffset + wbBytes.byteLength));
 
+  let step = 0;
   for (const type of ENTITY_ORDER) {
     const wanted = (ENTITY_SHEETS[type] || getLabel(type)).trim().toLowerCase();
     const sheet = (parsedXlsx.sheets || []).find(s => String(s.sheetName || "").trim().toLowerCase() === wanted);
@@ -2637,9 +2707,12 @@ async function importFullBackupFile(file) {
     });
     await clearStore(type);
     if (entities.length) await putMany(type, entities);
+    step++;
+    updateProgress({ stage: "Import des entités", done: 10 + Math.round((step / ENTITY_ORDER.length) * 60), total: 100, percent: 10 + Math.round((step / ENTITY_ORDER.length) * 60) });
     await new Promise(resolve => setTimeout(resolve, 0));
   }
 
+  updateProgress({ stage: "Import des médias", done: 72, total: 100, percent: 72 });
   const medias = JSON.parse(fromBytes(zipFiles["data/media_assets.json"] || toBytes("[]")));
   if (medias.length) {
     await clearStore("media_assets");
@@ -2665,10 +2738,15 @@ async function importFullBackupFile(file) {
       image_path: m.path || ""
     };});
     await putMany("media_assets", rows);
+    updateProgress({ stage: "Import des médias", done: 95, total: 100, percent: 95 });
   }
   await refreshData();
+  } catch (err) {
+    updateProgress({ stage: "Erreur", error: err?.message || String(err) });
+    throw err;
   } finally {
     backupBusy = false;
+    setTimeout(() => { updateProgress({ open: false, error: "" }); }, 400);
   }
 }
 
@@ -2890,6 +2968,32 @@ function bindEvents() {
           render();
           return;
         }
+        case "media-page":
+          state.ui.media.page = clamp(Number(btn.dataset.page || 1), 1, 9999);
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "media-delete-one": {
+          const asset = findById("media_assets", btn.dataset.id);
+          if (!asset) return;
+          const refs = collectUsedMediaReferences();
+          const used = mediaUsageForAsset(asset, refs).filter(x => !x.startsWith("media_assets:"));
+          if (used.length) { toast("Média utilisé, suppression bloquée.", "warn"); return; }
+          if (!confirm("Supprimer ce média ?")) return;
+          await deleteOne("media_assets", asset.id);
+          await refreshData();
+          toast("Média supprimé", "success");
+          return;
+        }
+        case "media-delete-unused": {
+          if (!confirm("Supprimer tous les médias orphelins ?")) return;
+          const refs = collectUsedMediaReferences();
+          const toDelete = (state.data.media_assets || []).filter(a => mediaUsageForAsset(a, refs).filter(x => !x.startsWith("media_assets:")).length === 0);
+          for (const asset of toDelete) await deleteOne("media_assets", asset.id);
+          await refreshData();
+          toast(`Suppression terminée: ${toDelete.length}`, "success");
+          return;
+        }
         case "media-refresh":
           await refreshData();
           return;
@@ -2998,11 +3102,19 @@ function bindEvents() {
         case "media-filter-type":
           state.ui.media.filterType = el.value;
           state.ui.media.filterEntity = "";
+          state.ui.media.page = 1;
           await saveUiState(state.ui);
           render();
           return;
         case "media-filter-entity":
           state.ui.media.filterEntity = el.value;
+          state.ui.media.page = 1;
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "media-filter-unused":
+          state.ui.media.atelierOnlyUnused = el.checked;
+          state.ui.media.page = 1;
           await saveUiState(state.ui);
           render();
           return;
