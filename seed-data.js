@@ -2226,6 +2226,7 @@ globalThis.GARGOTTEX_SEED = {
       ]
     }
   ],
+  "interactables": [],
   "brouhaha_effects": [
     {
       "id": "brouhaha_2_universel_test",

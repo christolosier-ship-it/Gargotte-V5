@@ -1,5 +1,5 @@
 
-const CACHE = "gargottex-v5-2";
+const CACHE = "gargottex-v5-3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -36,6 +36,7 @@ const ASSETS = [
   "./templates/heroes.xlsx",
   "./templates/loot.csv",
   "./templates/loot.xlsx",
+  "./templates/interactables.csv",
   "./templates/npcs.csv",
   "./templates/npcs.xlsx",
   "./templates/quests.csv",
