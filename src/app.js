@@ -19,6 +19,7 @@ import {
   buildXlsxWorkbookBlob,
   readXlsxFile
 } from "./utils/xlsx.js";
+import { makeZip, readZip, toBytes, fromBytes } from "./utils/zip.js";
 
 import {
   initDatabase,
@@ -193,6 +194,8 @@ const FEATURES = {
 const BACKUP_V2_ENABLED = typeof globalThis !== "undefined" && typeof globalThis.BACKUP_V2_ENABLED === "boolean"
   ? globalThis.BACKUP_V2_ENABLED
   : FEATURES.backupZipV2;
+const BACKUP_BATCH_SIZE = 20;
+const BACKUP_REQUIRED_FILES = ["manifest.json", "data/export_all.xlsx", "data/media_assets.json"];
 
 const ENTITY_DOWNLOAD_FILES = {
   dungeons: "dungeons.xlsx",
@@ -2347,7 +2350,7 @@ async function exportBackupLegacy() {
 }
 
 async function exportBackupV2() {
-  await exportAllFile();
+  await exportFullBackupFile();
 }
 
 async function exportBackupHandler() {
@@ -2401,6 +2404,10 @@ async function parseImportFile(file, type) {
 function validateBackupManifest(manifest) {
   if (!manifest || typeof manifest !== "object") throw new Error("Manifest backup manquant ou invalide.");
   if (!Array.isArray(manifest.requiredFiles) || !manifest.requiredFiles.length) throw new Error("Manifest backup invalide: requiredFiles absent.");
+  if (manifest.formatVersion !== 1) throw new Error("Manifest backup invalide: formatVersion non supporté.");
+  if (!manifest.layout || manifest.layout.mediaOriginalPrefix !== "media/original/" || manifest.layout.mediaThumbsPrefix !== "media/thumbs/") {
+    throw new Error("Manifest backup invalide: layout média incorrect.");
+  }
   return manifest;
 }
 
@@ -2415,10 +2422,99 @@ async function importBackupLegacy(file, type) {
 }
 
 async function importBackupV2(file, type) {
-  const preview = await parseImportFile(file, type);
-  const manifest = validateBackupManifest({ requiredFiles: [file.name] });
-  validateBackupRequiredFiles(manifest, [file.name]);
-  return preview;
+  return importFullBackupFile(file);
+}
+
+function yieldUiTick() {
+  return new Promise(r => setTimeout(r, 0));
+}
+
+async function exportFullBackupFile() {
+  const sheets = ENTITY_ORDER.map(type => ({
+    sheetName: ENTITY_SHEETS[type] || getLabel(type),
+    headers: sheetHeaders(type),
+    rows: toTemplateRows(type, state.data[type] || [])
+  }));
+  const xlsxBlob = buildXlsxWorkbookBlob(sheets);
+  const mediaAssets = (state.data.media_assets || []).map(asset => ({ ...asset, blob: null, thumb_blob: null }));
+  const zipEntries = [
+    { name: "data/export_all.xlsx", data: new Uint8Array(await xlsxBlob.arrayBuffer()) },
+    { name: "data/media_assets.json", data: toBytes(JSON.stringify(mediaAssets, null, 2)) }
+  ];
+  const mediaList = state.data.media_assets || [];
+  for (let i = 0; i < mediaList.length; i += BACKUP_BATCH_SIZE) {
+    const batch = mediaList.slice(i, i + BACKUP_BATCH_SIZE);
+    for (const asset of batch) {
+      if (asset.blob) zipEntries.push({ name: `media/original/${asset.id}`, data: new Uint8Array(await asset.blob.arrayBuffer()) });
+      if (asset.thumb_blob) zipEntries.push({ name: `media/thumbs/${asset.id}`, data: new Uint8Array(await asset.thumb_blob.arrayBuffer()) });
+    }
+    await yieldUiTick();
+  }
+  const manifest = {
+    formatVersion: 1,
+    createdAt: nowISO(),
+    appVersion: APP_VERSION,
+    requiredFiles: BACKUP_REQUIRED_FILES,
+    layout: {
+      workbookPath: "data/export_all.xlsx",
+      mediaAssetsPath: "data/media_assets.json",
+      mediaOriginalPrefix: "media/original/",
+      mediaThumbsPrefix: "media/thumbs/"
+    }
+  };
+  zipEntries.unshift({ name: "manifest.json", data: toBytes(JSON.stringify(manifest, null, 2)) });
+  const zipBlob = new Blob([makeZip(zipEntries)], { type: "application/zip" });
+  downloadBlob(zipBlob, `gargottex_backup_${new Date().toISOString().slice(0, 10)}.zip`);
+}
+
+async function importFullBackupFile(file) {
+  const files = await readZip(await file.arrayBuffer());
+  const fileList = Object.keys(files);
+  const manifest = validateBackupManifest(JSON.parse(fromBytes(files["manifest.json"] || new Uint8Array())));
+  validateBackupRequiredFiles(manifest, fileList);
+
+  const workbookBuffer = files["data/export_all.xlsx"].buffer.slice(files["data/export_all.xlsx"].byteOffset, files["data/export_all.xlsx"].byteOffset + files["data/export_all.xlsx"].byteLength);
+  const parsed = await readXlsxFile(workbookBuffer);
+  const entitiesCount = {};
+  for (const type of ENTITY_ORDER) {
+    if (type === "media_assets") continue;
+    const wanted = (ENTITY_SHEETS[type] || getLabel(type)).trim().toLowerCase();
+    const sheet = (parsed.sheets || []).find(s => String(s.sheetName || "").trim().toLowerCase() === wanted);
+    const rows = (sheet?.rows || []).map(row => normalizeTemplateRow(type, row));
+    entitiesCount[type] = rows.length;
+    await clearStore(type);
+    if (rows.length) await putMany(type, rows.map(r => importRowToEntity(type, r, null)));
+  }
+
+  const mediaRows = JSON.parse(fromBytes(files["data/media_assets.json"] || new Uint8Array()));
+  let mediaOk = 0;
+  let mediaMissing = 0;
+  const restoredMedia = [];
+  for (let i = 0; i < mediaRows.length; i += BACKUP_BATCH_SIZE) {
+    const batch = mediaRows.slice(i, i + BACKUP_BATCH_SIZE);
+    for (const row of batch) {
+      const original = files[`media/original/${row.id}`];
+      const thumb = files[`media/thumbs/${row.id}`];
+      if (!original || !thumb) {
+        mediaMissing += 1;
+        console.warn("[backup.import] media manquant", { id: row.id, hasOriginal: !!original, hasThumb: !!thumb });
+      } else {
+        mediaOk += 1;
+      }
+      restoredMedia.push({
+        ...row,
+        blob: original ? new Blob([original], { type: row.mime_type || "application/octet-stream" }) : null,
+        thumb_blob: thumb ? new Blob([thumb], { type: row.mime_type || "application/octet-stream" }) : null
+      });
+    }
+    await yieldUiTick();
+  }
+  await clearStore("media_assets");
+  if (restoredMedia.length) await putMany("media_assets", restoredMedia);
+  await refreshData();
+  const totalEntities = Object.values(entitiesCount).reduce((sum, n) => sum + n, 0);
+  toast(`✅ Import terminé: ${totalEntities} entités, ${mediaOk} images OK, ${mediaMissing} images manquantes.`, mediaMissing ? "warn" : "success");
+  return { rows: [], total: totalEntities, mediaOk, mediaMissing };
 }
 
 async function importBackupHandler(file, type) {
