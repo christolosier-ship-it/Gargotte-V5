@@ -18,7 +18,8 @@ Premier vertical slice jouable du jeu de plateau numérique, développé sous **
 - Seize créatures de Bastognac, dont le Baron Pas-Très-Terrifiant.
 - Brouhaha 0–12, apparitions, catastrophes du décor et réduction par tour calme.
 - Tables poussables, barils explosifs, piliers, grilles, torches et cases dangereuses.
-- Export Web/PWA adapté à Safari sur iPhone.
+- Export Web monothread adapté à Safari sur iPhone.
+- Installation complète en PWA prévue après création du jeu d'icônes raster dédié.
 
 ## Lancer dans Godot
 
