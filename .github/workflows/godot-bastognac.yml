@@ -7,6 +7,12 @@ on:
     paths:
       - "godot-bastognac/**"
       - ".github/workflows/godot-bastognac.yml"
+  pull_request:
+    branches:
+      - V5.3
+    paths:
+      - "godot-bastognac/**"
+      - ".github/workflows/godot-bastognac.yml"
   workflow_dispatch:
 
 permissions:
@@ -69,6 +75,7 @@ jobs:
           path: site
 
   deploy:
+    if: github.event_name == 'push'
     needs: build
     runs-on: ubuntu-latest
     environment:
