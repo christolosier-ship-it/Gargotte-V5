@@ -1,0 +1,94 @@
+name: Build and deploy Bastognac
+
+on:
+  push:
+    branches:
+      - V5.3
+    paths:
+      - "godot-bastognac/**"
+      - ".github/workflows/godot-bastognac.yml"
+  pull_request:
+    branches:
+      - V5.3
+    paths:
+      - "godot-bastognac/**"
+      - ".github/workflows/godot-bastognac.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6.3
+        shell: bash
+        run: |
+          set -euxo pipefail
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_linux.x86_64.zip
+          unzip -q Godot_v4.6.3-stable_linux.x86_64.zip
+          mv Godot_v4.6.3-stable_linux.x86_64 godot
+          chmod +x godot
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_export_templates.tpz
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.6.3.stable"
+          mkdir -p /tmp/godot-templates
+          unzip -q Godot_v4.6.3-stable_export_templates.tpz -d /tmp/godot-templates
+          cp -R /tmp/godot-templates/templates/. "$HOME/.local/share/godot/export_templates/4.6.3.stable/"
+
+      - name: Parse project and run smoke test
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./godot --headless --path godot-bastognac --editor --quit
+          ./godot --headless --path godot-bastognac --script game/SmokeTest.gd
+
+      - name: Export Web build
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p godot-bastognac/build/web
+          ./godot --headless --path godot-bastognac --export-release "Web" build/web/index.html
+
+      - name: Prepare complete Pages site
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p site
+          rsync -a \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='godot-bastognac/' \
+            --exclude='site/' \
+            ./ site/
+          mkdir -p site/bastognac
+          cp -R godot-bastognac/build/web/. site/bastognac/
+          touch site/.nojekyll
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gargotte-bastognac-web
+          path: godot-bastognac/build/web
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
