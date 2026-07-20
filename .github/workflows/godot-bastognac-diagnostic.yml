@@ -1,0 +1,57 @@
+name: Diagnose Bastognac Web export
+
+on:
+  pull_request:
+    branches:
+      - V5.3
+    paths:
+      - "godot-bastognac/**"
+      - ".github/workflows/godot-bastognac-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot and templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_linux.x86_64.zip
+          unzip -q Godot_v4.6.3-stable_linux.x86_64.zip
+          mv Godot_v4.6.3-stable_linux.x86_64 godot
+          chmod +x godot
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_export_templates.tpz
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.6.3.stable"
+          unzip -q Godot_v4.6.3-stable_export_templates.tpz -d /tmp/godot-templates
+          cp -R /tmp/godot-templates/templates/. "$HOME/.local/share/godot/export_templates/4.6.3.stable/"
+          find "$HOME/.local/share/godot/export_templates" -maxdepth 3 -type f | sort > template-files.txt
+          ./godot --version > godot-version.txt
+
+      - name: Diagnose export
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p godot-bastognac/build/web
+          set +e
+          ./godot --headless --verbose --path godot-bastognac --export-release "Web" build/web/index.html > export.log 2>&1
+          code=$?
+          echo "$code" > export-exit-code.txt
+          exit 0
+
+      - name: Upload diagnostic bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: bastognac-export-diagnostic
+          path: |
+            export.log
+            export-exit-code.txt
+            godot-version.txt
+            template-files.txt
+            godot-bastognac/export_presets.cfg
+          if-no-files-found: error
