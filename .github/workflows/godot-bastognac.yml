@@ -1,0 +1,80 @@
+name: Build and deploy Bastognac
+
+on:
+  push:
+    branches:
+      - game/bastognac-godot-v1
+    paths:
+      - "godot-bastognac/**"
+      - ".github/workflows/godot-bastognac.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.6.3
+        shell: bash
+        run: |
+          set -euxo pipefail
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_linux.x86_64.zip
+          unzip -q Godot_v4.6.3-stable_linux.x86_64.zip
+          mv Godot_v4.6.3-stable_linux.x86_64 godot
+          chmod +x godot
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_export_templates.tpz
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.6.3.stable"
+          mkdir -p /tmp/godot-templates
+          unzip -q Godot_v4.6.3-stable_export_templates.tpz -d /tmp/godot-templates
+          cp -R /tmp/godot-templates/templates/. "$HOME/.local/share/godot/export_templates/4.6.3.stable/"
+
+      - name: Parse project and run smoke test
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./godot --headless --path godot-bastognac --editor --quit
+          ./godot --headless --path godot-bastognac --script game/SmokeTest.gd
+
+      - name: Export Web build
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p godot-bastognac/build/web
+          ./godot --headless --path godot-bastognac --export-release "Web" build/web/index.html
+
+      - name: Prepare Pages site
+        shell: bash
+        run: |
+          mkdir -p site/bastognac
+          cp -R godot-bastognac/build/web/. site/bastognac/
+          printf '%s' '<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gargotte & Va-Nu-Pieds</title></head><body style="margin:0;background:#17100d;color:#f5e7c8;font-family:system-ui;display:grid;min-height:100vh;place-items:center;text-align:center"><main><h1>Gargotte & Va-Nu-Pieds</h1><p>Le Château de Bastognac vous attend.</p><p><a style="color:#e7b85c;font-size:1.4rem" href="./bastognac/">Jouer maintenant</a></p></main></body></html>' > site/index.html
+          touch site/.nojekyll
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gargotte-bastognac-web
+          path: godot-bastognac/build/web
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
