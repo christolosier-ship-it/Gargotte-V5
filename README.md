@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./assets/images/logo.png" alt="Gargottex logo" width="112" height="112" />
+  <img src="./assets/images/Berthold.png" alt="Gargottex logo" width="112" height="112" />
 
 # Gargottex
 
