@@ -1,0 +1,14 @@
+# Local environment / secrets
+.env
+.env.local
+.env*.local
+
+# InsForge local link and admin credentials
+# .insforge/project.json contains the project API key and must never be committed.
+.insforge/
+
+# Node tooling
+node_modules/
+
+# OS files
+.DS_Store
