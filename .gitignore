@@ -3,9 +3,10 @@
 .env.local
 .env*.local
 
-# InsForge local link and admin credentials
-# .insforge/project.json contains the project API key and must never be committed.
-.insforge/
+# Neon local project context
+# `neon link` writes local project/branch context here; keep it out of Git.
+.neon
+.neon/
 
 # Node tooling
 node_modules/
