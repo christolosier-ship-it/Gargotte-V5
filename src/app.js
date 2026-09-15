@@ -1,3 +1,4 @@
+import { mountAccount } from "./cloud/account.js";
 
 import {
   uid,
@@ -34,7 +35,7 @@ import {
   appendLog,
   getLogs,
   transaction
-} from "./storage/idb.js";
+} from "./data/repository.js";
 
 const ENTITY_ORDER = [
   "dungeons",
@@ -3125,6 +3126,7 @@ async function bootstrap() {
   wireGlobalErrors();
   bindEvents();
   render();
+  mountAccount().catch(console.error);
 
 if ("serviceWorker" in navigator) {
 

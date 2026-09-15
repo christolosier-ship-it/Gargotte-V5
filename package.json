@@ -1,0 +1,33 @@
+{
+  "name": "gargottex",
+  "version": "6.0.0",
+  "description": "Gargottex local-first PWA",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:e2e": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/christolosier-ship-it/Gargotte-V5.git"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/christolosier-ship-it/Gargotte-V5/issues"
+  },
+  "homepage": "https://github.com/christolosier-ship-it/Gargotte-V5#readme",
+  "dependencies": {
+    "@neondatabase/neon-js": "0.7.0-beta"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "esbuild": "0.28.2",
+    "fake-indexeddb": "6.2.5"
+  },
+  "private": true
+}

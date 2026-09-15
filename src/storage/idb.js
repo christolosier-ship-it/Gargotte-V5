@@ -63,33 +63,36 @@ async function withTx(storeNames, mode, fn) {
   const db = await openDatabase();
   const tx = db.transaction(storeNames, mode);
   const stores = Object.fromEntries(storeNames.map(name => [name, tx.objectStore(name)]));
-  const result = await fn(stores, tx);
-  await txDone(tx);
-  return result;
+  const done = txDone(tx);
+  try {
+    const result = await fn(stores, tx);
+    await done;
+    return result;
+  } catch (error) {
+    try { tx.abort(); } catch {}
+    await done.catch(() => {});
+    throw error;
+  }
 }
 
 export async function initDatabase(seed) {
   await openDatabase();
 
-  const dungeonsCount = await withTx(["dungeons"], "readonly", async ({ dungeons }) => reqToPromise(dungeons.count()));
-  if (dungeonsCount === 0) {
-    await withTx(STORE_DEFS.map(s => s.name), "readwrite", async (stores) => {
-      for (const def of STORE_DEFS) {
-        if (def.name === "meta" || def.name === "logs") continue;
-        const rows = Array.isArray(seed?.[def.name]) ? seed[def.name] : [];
-        for (const row of rows) stores[def.name].put(structuredClone(row));
+  const business = STORE_DEFS.filter(s => !['meta','logs'].includes(s.name)).map(s => s.name);
+  await withTx([...business, 'meta'], 'readwrite', async stores => {
+    const marker = await reqToPromise(stores.meta.get('initialized'));
+    let count = 0;
+    for (const name of business) count += await reqToPromise(stores[name].count());
+    // Never use "no dungeons" as proof that an existing database is empty.
+    if (!marker && count === 0 && !globalThis.GARGOTTEX_CONFIG?.neonUrl) {
+      for (const name of business) {
+        for (const row of seed?.[name] || []) stores[name].put(structuredClone(row));
       }
-      stores.meta.put({ key: "ui_state", value: null });
-      stores.meta.put({ key: "app_version", value: "5.0.0" });
-    });
-  } else {
-    await withTx(["meta"], "readwrite", async ({ meta }) => {
-      const current = await reqToPromise(meta.get("app_version"));
-      if (!current) meta.put({ key: "app_version", value: "5.0.0" });
-      const ui = await reqToPromise(meta.get("ui_state"));
-      if (!ui) meta.put({ key: "ui_state", value: null });
-    });
-  }
+    }
+    stores.meta.put({ key:'initialized', value:true });
+    if (!await reqToPromise(stores.meta.get('app_version'))) stores.meta.put({key:'app_version',value:'6.0.0'});
+    if (!await reqToPromise(stores.meta.get('ui_state'))) stores.meta.put({key:'ui_state',value:null});
+  });
 }
 
 export async function getAll(storeName) {

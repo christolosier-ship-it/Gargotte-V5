@@ -1,5 +1,5 @@
 
-const CACHE = "gargottex-v5-3";
+const CACHE = "gargottex-v6-phase1";
 const ASSETS = [
   "./",
   "./index.html",
@@ -11,6 +11,9 @@ const ASSETS = [
   "./src/utils/zip.js",
   "./src/utils/xlsx.js",
   "./src/storage/idb.js",
+  "./config.js",
+  "./src/data/repository.js",
+  "./src/cloud/account.js",
   "./assets/images/logo-192.png",
   "./assets/images/logo-512.png",
   "./assets/images/logo.png",
@@ -59,7 +62,7 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   const req = event.request;
 
-  if (req.method !== "GET") return;
+  if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
 
   event.respondWith((async () => {
 
