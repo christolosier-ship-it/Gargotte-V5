@@ -31,7 +31,7 @@ Créer/administrer le compte personnel via Neon ; aucune inscription dans l’in
 - Les suppressions distantes sont des tombstones. L’historique conserve l’état précédent.
 - Une édition locale en attente prime sur une révision reçue. En concurrence, la dernière synchronisation acceptée devient courante ; les états remplacés restent en historique.
 - Un premier compte lie atomiquement cette copie locale à son propriétaire. Pour un autre compte, utiliser un autre profil de navigateur ; aucune réaffectation silencieuse des données.
-- Les médias existants restent locaux, y compris lors d’un import de métadonnées. Aucun backend images.
+- Les médias existants restent locaux, y compris lors d’un import de métadonnées. La fondation Postgres des originaux existe désormais sur une branche enfant ; le moteur média de Phase 2 reste à développer, voir `V6-MEDIA-FONDATION.md`.
 
 ## Migration de l’iPad
 
@@ -44,7 +44,7 @@ Sur une nouvelle origine, transférer un export ; la nouvelle URL ne peut pas li
 3. Vérifier les neuf catégories : donjons, créatures, héros, PNJ, quêtes, loot, interactables, Brouhaha et métadonnées médias.
 4. Sur la destination, importer ce JSON. L’import valide tout le fichier avant une transaction de fusion. Les identifiants correspondants sont remplacés après confirmation, les autres fiches restent présentes. Un JSON invalide n’écrit rien.
 5. Se connecter au compte personnel. Attendre « Synchronisé » et vérifier les comptages et des fiches représentatives.
-6. Sur un nouveau navigateur, se connecter : les fiches sont reconstruites depuis Neon. Les images locales ne sont pas synchronisées.
+6. Sur un nouveau navigateur, se connecter : les fiches sont reconstruites depuis Neon. Les images locales ne sont pas encore synchronisées à la gate Phase 1 ; ne pas considérer la migration complète avant le transfert/vérification média de Phase 2 et son inventaire en Phase 3.
 7. Conserver l’ancienne installation tant que cette comparaison n’est pas terminée.
 
 Si l’ancienne origine ne propose pas encore l’export JSON, elle doit recevoir l’outil d’export avant le changement d’origine. Le code V6 peut être servi sur cette origine avec `config.js` vide : la couche locale et les exports restent opérationnels sans Neon. Ne pas considérer un XLSX ancien comme la preuve des données actuelles de l’iPad.

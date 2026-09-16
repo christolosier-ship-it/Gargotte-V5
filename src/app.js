@@ -1,3 +1,4 @@
+import { originalMediaFields } from './data/media-original.js';
 import { createSyncEngine, neonTransport } from './cloud/sync.js';
 import { exportStructuredBackup, importStructuredBackup } from './data/backup.js';
 import { mountAccount } from "./cloud/account.js";
@@ -2299,9 +2300,15 @@ function resolveTargetEntityFromMediaForm() {
 async function storeMediaFile(file, entityType = "gallery", entityId = "") {
   const safe = safeFilename(file.name);
   const unique = `${safe}_${uid("img").split("_").pop()}`;
-  const main = await fileToOptimizedBlob(file, 1600, 0.84);
+  const originalUrl = URL.createObjectURL(file);
+  let dimensions;
+  try {
+    const image = await loadImage(originalUrl);
+    dimensions = {width:image.naturalWidth || image.width, height:image.naturalHeight || image.height};
+  } finally { URL.revokeObjectURL(originalUrl); }
   const thumb = await fileToOptimizedBlob(file, 512, 0.78);
-  const path = `assets/images/${entityType}/${unique}.webp`;
+  const extension = file.name.match(/\.([a-zA-Z0-9]{1,10})$/)?.[1] || "bin";
+  const path = `assets/images/${entityType}/${unique}.${extension}`;
   const thumbPath = `assets/images/${entityType}/thumbs/${unique}.webp`;
 
   const media = {
@@ -2310,13 +2317,11 @@ async function storeMediaFile(file, entityType = "gallery", entityId = "") {
     file_name: file.name,
     path,
     thumb_path: thumbPath,
-    mime_type: "image/webp",
+    ...originalMediaFields(file, dimensions),
     entity_type: entityType,
     entity_id: entityId || "",
-    blob: main.blob,
     thumb_blob: thumb.blob,
-    width: main.width,
-    height: main.height,
+    thumb_mime_type: thumb.blob.type,
     created_at: nowISO(),
     updated_at: nowISO()
   };
@@ -2598,7 +2603,7 @@ async function exportFullBackupFile() {
     { name: "data/export_all.xlsx", data: workbookBytes },
     { name: "data/media_assets.json", data: toBytes(JSON.stringify(mediaAssets.map(a => ({
       id: a.id, label: a.label, file_name: a.file_name, path: a.path, thumb_path: a.thumb_path,
-      mime_type: a.mime_type, entity_type: a.entity_type, entity_id: a.entity_id,
+      mime_type: a.mime_type, thumb_mime_type: a.thumb_mime_type, byte_size: a.byte_size, entity_type: a.entity_type, entity_id: a.entity_id,
       width: a.width, height: a.height, created_at: a.created_at, updated_at: a.updated_at
     })))) }
   ];
@@ -2608,7 +2613,8 @@ async function exportFullBackupFile() {
     mediaStep++;
     const ext = (asset.mime_type || "image/webp").split("/")[1] || "bin";
     if (asset.blob) files.push({ name: `media/original/${asset.id}.${ext}`, data: new Uint8Array(await asset.blob.arrayBuffer()) });
-    if (asset.thumb_blob) files.push({ name: `media/thumbs/${asset.id}.${ext}`, data: new Uint8Array(await asset.thumb_blob.arrayBuffer()) });
+    const thumbExt = (asset.thumb_mime_type || asset.mime_type || "image/webp").split("/")[1] || "bin";
+    if (asset.thumb_blob) files.push({ name: `media/thumbs/${asset.id}.${thumbExt}`, data: new Uint8Array(await asset.thumb_blob.arrayBuffer()) });
     if (mediaStep % 12 === 0) await new Promise(resolve => setTimeout(resolve, 0));
   }
   const zipBytes = makeZip(files);
@@ -2651,7 +2657,8 @@ async function importFullBackupFile(file) {
     const rows = medias.map(m => {
       const ext = (m.mime_type || "image/webp").split("/")[1] || "bin";
       const orig = zipFiles[`media/original/${m.id}.${ext}`];
-      const thumb = zipFiles[`media/thumbs/${m.id}.${ext}`];
+      const thumbExt = (m.thumb_mime_type || m.mime_type || "image/webp").split("/")[1] || "bin";
+      const thumb = zipFiles[`media/thumbs/${m.id}.${thumbExt}`];
       return {
       id: m.id || uid("media"),
       label: m.label || m.file_name || "",
@@ -2666,7 +2673,9 @@ async function importFullBackupFile(file) {
       created_at: m.created_at || nowISO(),
       updated_at: nowISO(),
       blob: orig ? new Blob([orig], { type: m.mime_type || "image/webp" }) : null,
-      thumb_blob: thumb ? new Blob([thumb], { type: m.mime_type || "image/webp" }) : null,
+      thumb_blob: thumb ? new Blob([thumb], { type: m.thumb_mime_type || m.mime_type || "image/webp" }) : null,
+      thumb_mime_type: m.thumb_mime_type || m.mime_type || "image/webp",
+      byte_size: orig?.byteLength || m.byte_size || 0,
       image_path: m.path || ""
     };});
     await putMany("media_assets", rows);

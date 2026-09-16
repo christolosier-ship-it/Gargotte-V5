@@ -2,11 +2,20 @@
 
 ## État au 16 septembre 2026
 
-**Gates 1 et 2 validées pour le périmètre initial (données structurées uniquement). Phase 3 partiellement validée ; V6 non déclarée terminée.**
+**Gate Phase 1 révisée VALIDÉE : fondation données + originaux médias sur branche isolée. Arrêt à cette gate demandé par l’utilisateur. Phase 2 médias non engagée ; V6 non terminée.**
 
-### Divergence du document détectée à la reprise
+### Nouvelle spécification confirmée — reprise Phase 1 médias
 
-Le document de référence sur `V5.3` (`8ff289d` à la vérification) demande désormais les originaux médias dans Postgres, upload reprenable et contrôle SHA-256. Le document de la branche technique, utilisé jusqu’ici, interdit explicitement leur synchronisation (§2.6 et §9). Ces deux périmètres sont incompatibles. La validation acquise ne couvre pas les nouvelles gates média ; aucune implémentation média distante ni promotion ne sera présentée comme terminée. Choix utilisateur nécessaire avant d’adopter la nouvelle spécification. Les documents UI et le document technique modifiés en parallèle n’ont pas été remplacés ni fusionnés silencieusement.
+L’utilisateur a confirmé le 16 septembre la sauvegarde des originaux médias dans Postgres et demandé un arrêt à la prochaine gate validée. La spécification actuelle de `V5.3` est intégrée à la branche technique ; les documents UI sont conservés tels quels, sans implémentation de refonte.
+
+Les tests HTTP avec JWT réels sont tous réussis : reconstruction multi-chunks, PNG (58 161 octets) et JPEG (352 290 octets) bit-identiques, hash erroné jamais vérifié, morceaux invalides/manquants refusés, refus anonyme/autre compte/usurpation et tombstones. Les douze tables ont la RLS active, sans lecture anonyme ni suppression physique cliente.
+
+La fondation média est décrite dans `V6-MEDIA-FONDATION.md`. Nouvelle branche Neon `br-falling-violet-b4am8hbo`, enfant de la branche technique, migration `20260916121000_media_originals.sql`. Deux tables `media_originals` / `media_blob_chunks`, octets immuables, morceaux 256 Kio, vérification serveur SHA-256 et isolation propriétaire. Aucun déploiement du schéma média sur le parent ou la production.
+
+Les nouveaux imports locaux conservent désormais les fichiers originaux sans resize/recompression ; les miniatures restent des dérivés. Neuf tests locaux et build passent. La limite initiale de vérification distante est de 64 Mio par original, sans limitation ni effacement de la copie locale.
+
+Les gates initiales ci-dessous restent des preuves de synchronisation structurée. La Phase 2 révisée (outbox/transferts/restauration médias) n’est pas engagée. La Phase 3 révisée reste à faire après cette Phase 2.
+
 La production Neon et les données de l’iPad n’ont pas été modifiées. Aucune refonte UI/UX ni modification du contenu métier.
 
 - Référence Git : `V5.3`, commit initial `a2bb065`.
@@ -53,9 +62,9 @@ Repository local, enregistrement métier + outbox atomiques, bootstrap des donn�
 - Le test du service worker est simulé : il ne remplace pas l’installation PWA et le lancement en mode avion sur iPad.
 - Les données seed de test ont conservé leurs champs, relations et comptages (138 entrées). Ce résultat ne prouve pas la migration des données actuellement présentes dans l’iPad. Le XLSX joint de mai n’est pas une sauvegarde certifiée de l’installation actuelle.
 
-## Étapes nécessitant l’utilisateur avant clôture
+## Étapes restantes après cette gate
 
-1. Confirmation de promotion des deux migrations sur la production, après préparation/contrôle des prérequis Auth + Data API, conformément au §4.4. Configurer ensuite Vercel avec l’URL publique de production et le compte personnel.
+1. Développer et valider la Phase 2 révisée des médias avant toute promotion. Les trois migrations restent sur des branches isolées. Configurer ensuite la cible finale et le compte personnel à l’étape de promotion.
 2. Depuis l’installation iPad actuelle : export JSON structuré, import/bootstrap selon la procédure, comparaison des neuf comptages et de fiches représentatives. Conserver l’ancienne origine et IndexedDB.
 3. Installation/lancement PWA sur l’iPad, mode avion avec créations/modifications/suppressions, reconnexion et contrôle Neon. Vérifier aussi la reconstruction d’un second appareil avec le compte personnel.
 4. Après ces preuves : valider gate 3, actualiser ce document et rendre la PR finale prête à fusionner.

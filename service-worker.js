@@ -15,6 +15,7 @@ const ASSETS = [
   "./src/data/repository.js",
   "./src/data/structured.js",
   "./src/data/backup.js",
+  "./src/data/media-original.js",
   "./src/cloud/sync.js",
   "./src/cloud/account.js",
   "./assets/images/logo-192.png",
