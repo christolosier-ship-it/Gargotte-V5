@@ -2,41 +2,45 @@
 
 ## 0. Objet du document
 
-Ce document est la **source de vérité unique** pour la refactorisation technique de Gargottex vers une architecture :
+Ce document est la **source de vérité technique** pour la refactorisation V6 de Gargottex vers une architecture :
 
-- **GitHub** : code source, migrations SQL, documentation et historique du projet ;
-- **Neon / Lakebase Postgres** : sauvegarde distante et synchronisation des données structurées du Codex ;
+- **GitHub** : code source, migrations SQL, documentation et historique ;
+- **Vercel** : distribution de la PWA ;
+- **IndexedDB** : base de travail locale, offline et immédiate ;
+- **Neon / Lakebase Postgres** : sauvegarde distante et synchronisation des données structurées **et des originaux médias** ;
 - **Neon Managed Better Auth** : authentification privée ;
-- **Neon Data API** : accès client sécurisé aux données via PostgreSQL, `GRANT` et RLS ;
-- **Vercel** : hébergement de la PWA ;
-- **IndexedDB** : copie locale de travail, fonctionnement hors ligne et file d’attente de synchronisation.
+- **Neon Data API** : accès client sécurisé aux données structurées via PostgreSQL, `GRANT` et RLS.
 
-La refactorisation doit préserver la vocation de Gargottex : **codex personnel de consultation, d’édition, de réglage et d’équilibrage du jeu Gargotte & Va-Nu-Pieds**.
+La V6 doit préserver la vocation de Gargottex : **codex personnel de consultation, d’édition, de réglage et d’équilibrage de Gargotte & Va-Nu-Pieds**, utilisable sans réseau.
 
-Le but n’est pas de transformer Gargottex en application cloud dépendante du réseau. Le but est de sécuriser les données éditées dans l’application sans perdre son fonctionnement local-first.
+Le cloud n’est pas le moteur de l’application. Il protège et synchronise ce qui existe localement.
 
-Neon remplace InsForge et Supabase dans cette architecture. Pour les tâches backend, privilégier les outils Neon disponibles dans ChatGPT / MCP et les outils officiels Neon. Ne pas introduire un second backend en parallèle sans décision explicitement documentée.
+Principe directeur :
+
+> **Local d’abord, sauvegarde distante ensuite, aucune perte de qualité des médias.**
+
+Neon remplace InsForge et Supabase dans cette architecture. Aucun second backend de données ou de médias ne doit être ajouté sans décision explicitement documentée.
 
 ---
 
 # 1. État actuel à préserver
 
-Branche de référence au démarrage du chantier : `V5.3`.
+Branche de référence du chantier : `V5.3`.
 
 Architecture actuelle principale :
 
-- PWA statique en HTML/CSS/JavaScript ES Modules ;
+- PWA HTML/CSS/JavaScript ES Modules ;
 - pas de framework applicatif ;
 - données persistées dans IndexedDB via `src/storage/idb.js` ;
 - logique applicative principalement dans `src/app.js` ;
 - données initiales dans `seed-data.js` ;
 - service worker dans `service-worker.js` ;
 - imports/exports XLSX existants ;
-- fonctions JSON à conserver/compléter selon l’état réel du code ;
-- médias stockés localement, notamment sous forme de `Blob` / `thumb_blob` dans `media_assets` ;
-- fonctionnement hors ligne après installation de la PWA.
+- fonctions JSON à conserver/compléter ;
+- médias actuellement stockés localement, notamment sous forme de `Blob` / `thumb_blob` dans `media_assets` ;
+- fonctionnement hors ligne après installation.
 
-Stores métier IndexedDB existants :
+Stores existants :
 
 - `dungeons`
 - `creatures`
@@ -50,7 +54,7 @@ Stores métier IndexedDB existants :
 - `meta`
 - `logs`
 
-Les formes de données réelles du code existant, les relations, les champs d’import et les comportements actuels restent la référence. Ne pas inventer un nouveau modèle métier si le modèle existant peut être repris proprement.
+Les formes de données réelles du code, les relations, les champs d’import et les comportements existants restent la référence. Ne pas inventer un nouveau modèle métier lorsque le modèle actuel peut être repris proprement.
 
 ---
 
@@ -69,32 +73,36 @@ IndexedDB immédiatement
       ↓
 interface mise à jour
       ↓
-outbox de synchronisation
+outbox
       ↓
 Neon dès que possible
 ```
 
 Une coupure réseau ne doit pas empêcher :
 
-- la consultation des données déjà locales ;
-- la modification d’une fiche ;
-- l’ajout d’une entrée ;
-- la suppression d’une entrée ;
-- l’utilisation normale du Codex hors fonctions nécessitant explicitement le réseau.
+- consultation des données locales ;
+- création ;
+- modification ;
+- suppression ;
+- utilisation du Codex ;
+- utilisation des outils de partie ;
+- ajout ou consultation d’un média déjà présent localement.
 
 ## 2.2 Aucune perte de données
 
 La migration ne doit jamais écraser aveuglément les données existantes de l’iPad.
 
-Tant que la migration et la synchronisation Neon ne sont pas validées, IndexedDB reste une source de récupération valide.
+Tant que la migration et la synchronisation Neon ne sont pas entièrement validées, l’ancienne copie IndexedDB reste une source de récupération valide.
 
 Aucune étape ne doit nécessiter d’effacer les données du navigateur pour « repartir proprement ».
 
 ## 2.3 Neon ne remplace pas IndexedDB
 
-Neon devient la sauvegarde distante et la source partagée de référence entre installations, mais **IndexedDB reste la base de travail locale de la PWA**.
+Neon devient la sauvegarde distante et la référence partagée entre installations.
 
-L’interface ne doit pas faire dépendre chaque lecture ou chaque saisie d’un aller-retour réseau.
+**IndexedDB reste la base de travail locale de la PWA.**
+
+Les lectures ordinaires et les saisies ne doivent pas dépendre d’un aller-retour réseau.
 
 ## 2.4 Application privée
 
@@ -103,66 +111,75 @@ Gargottex est une application personnelle.
 Prévoir :
 
 - Neon Managed Better Auth ;
-- un usage privé ;
-- aucune inscription publique nécessaire dans l’application ;
-- Neon Data API uniquement pour les accès client nécessaires ;
-- RLS active sur toutes les tables métier exposées ;
-- privilèges SQL `GRANT` limités aux opérations nécessaires ;
-- aucun accès métier accordé au rôle `anonymous` ;
-- aucune chaîne de connexion PostgreSQL, aucun mot de passe de rôle et aucune clé d’administration dans le navigateur, le dépôt, le service worker ou une variable Vercel publique ;
-- la sécurité des données doit reposer sur Auth + privilèges PostgreSQL + RLS.
+- usage privé ;
+- aucune inscription publique nécessaire ;
+- RLS active sur toutes les tables exposées ;
+- privilèges SQL `GRANT` limités ;
+- aucun accès métier au rôle `anonymous` ;
+- aucune chaîne de connexion PostgreSQL, mot de passe de rôle ou clé d’administration dans le navigateur, le dépôt, le service worker ou une variable Vercel publique ;
+- sécurité basée sur Auth + PostgreSQL + RLS.
 
-Avec Neon Data API, l’identité applicative est extraite du JWT via `auth.user_id()`. Ne pas réutiliser les patterns Supabase/InsForge `auth.uid()`.
+Avec Neon Data API, l’identité applicative est extraite du JWT via `auth.user_id()`.
 
-## 2.5 Pas de refonte UI/UX dans ce chantier
+## 2.5 Pas de refonte UI/UX dans le chantier technique
 
-La refonte visuelle du Codex fera l’objet d’un chantier séparé.
+La refonte UI/UX est documentée séparément dans `docs/REFONTE-UI-UX-V6.md` et les étapes `UI-*`.
 
-Sont autorisées ici uniquement les modifications UI indispensables au fonctionnement technique, par exemple :
+Sont autorisées dans le chantier technique uniquement les modifications UI indispensables au fonctionnement :
 
-- écran/état de connexion ;
-- indication discrète de synchronisation ;
-- message d’erreur de synchronisation ;
-- éventuelle action de reprise/import nécessaire à la migration.
+- connexion ;
+- statut local/synchronisation ;
+- erreur de synchronisation ;
+- progression de transfert média ;
+- migration/restauration nécessaire à la V6.
 
-Ne pas redessiner le Codex, l’Atelier, la navigation, les cartes, les formulaires ou le design global.
+## 2.6 Médias originaux : aucune perte de qualité
 
-## 2.6 Images hors synchronisation cloud
+La V6 **sauvegarde les originaux médias dans Postgres**.
 
-Les images ne doivent **pas** être migrées vers Neon Object Storage dans cette refactorisation.
+Règle absolue :
 
-Conserver leur fonctionnement local actuel autant que possible.
+> **Le fichier original distant doit être identique octet pour octet au fichier original local.**
 
-Les métadonnées nécessaires au Codex peuvent être synchronisées, mais les champs binaires suivants ne doivent jamais être envoyés dans Postgres :
+Interdictions sur l’original :
 
-- `blob`
-- `thumb_blob`
+- aucun resize ;
+- aucune recompression ;
+- aucune conversion automatique JPEG/WebP/AVIF ;
+- aucune réduction de qualité ;
+- aucune substitution de l’original par une miniature.
 
-Les références comme `image_path`, noms de fichiers, labels, dimensions et autres métadonnées utiles peuvent être conservées/synchronisées.
+L’intégrité est vérifiée par **SHA-256**.
 
-L’archivage des images est géré manuellement par l’utilisateur hors de ce chantier.
+Une miniature est un dérivé d’affichage : elle peut être générée, supprimée ou régénérée sans modifier l’original.
 
-## 2.7 Exports indépendants du cloud
+## 2.7 Pas de second stockage média
 
-À conserver impérativement :
+La cible V6 n’utilise pas un bucket séparé comme source de vérité média.
 
-- export XLSX existant ;
-- export XLSX global et/ou par catégorie selon les capacités actuelles ;
-- export JSON complet des **données structurées** du Codex ;
-- imports correspondants lorsqu’ils existent ou sont nécessaires à la restauration/migration.
+Les originaux sont sauvegardés dans **Neon Postgres**, avec une représentation binaire `BYTEA` directe ou chunkée selon les contraintes techniques réelles du chemin d’upload.
 
-Les exports ne doivent pas nécessiter Neon lorsqu’une copie locale des données est disponible.
+Neon Object Storage n’est pas requis par cette architecture.
 
-L’export JSON complet ne doit pas contenir :
+## 2.8 Exports indépendants du cloud
 
-- les `Blob` d’images ;
-- les miniatures binaires ;
-- les tokens d’authentification ;
-- les chaînes de connexion ;
-- les secrets ;
-- les stores techniques de synchronisation, sauf justification explicite et documentée.
+À conserver :
 
-Le système ZIP lourd existant n’est **pas** un objectif de cette refactorisation.
+- XLSX existant ;
+- XLSX global/par catégorie selon les capacités réelles ;
+- JSON complet des **données structurées** ;
+- imports correspondants.
+
+L’export JSON structuré ne contient pas :
+
+- originaux binaires ;
+- miniatures binaires ;
+- tokens ;
+- secrets ;
+- connexions ;
+- stores techniques de synchronisation.
+
+Cette séparation n’empêche pas les originaux d’être sauvegardés dans Neon. JSON et sauvegarde média sont deux mécanismes distincts.
 
 ---
 
@@ -170,7 +187,7 @@ Le système ZIP lourd existant n’est **pas** un objectif de cette refactorisat
 
 ```text
                          GitHub
-             code / docs / migrations SQL
+                code / docs / migrations
                            │
                            ▼
                          Vercel
@@ -179,62 +196,53 @@ Le système ZIP lourd existant n’est **pas** un objectif de cette refactorisat
                    ┌── Gargottex ──┐
                    │               │
               IndexedDB          Neon
-              local-first     Lakebase Postgres
-                   │               │
-                   │         Auth + Data API
-                   │               │
+              local-first     Postgres
+                   │          ┌────┴───────────┐
+                   │          │ données métier │
+                   │          │ médias originaux│
+                   │          └────┬───────────┘
                    └──── sync ─────┘
 
-                     ↕
-                  XLSX / JSON
-
-Images : conservation locale + sauvegarde manuelle externe
+                   ↕ XLSX / JSON structuré
 ```
 
 Responsabilités :
 
 | Composant | Responsabilité |
 |---|---|
-| GitHub | code, migrations, documentation, historique technique |
+| GitHub | code, migrations, documentation, historique |
 | Vercel | distribution de la PWA |
-| IndexedDB | données locales immédiatement disponibles, offline, outbox |
-| Neon Lakebase Postgres | sauvegarde distante, synchronisation, historique d’équilibrage |
-| Neon Managed Better Auth | contrôle d’accès personnel |
-| Neon Data API | accès REST/PostgREST aux données depuis la PWA, avec JWT et RLS |
-| `@neondatabase/neon-js` | client navigateur combinant Auth et Data API |
-| Outils Neon / MCP | projets, branches, migrations, SQL, Auth, Data API, diagnostics |
-| XLSX / JSON | exports portables et restauration manuelle |
-| Images locales | affichage et usage actuel, sans cloud média dans cette V6 |
+| IndexedDB | données et médias locaux, offline, outbox |
+| Neon Postgres | sauvegarde distante données + originaux médias |
+| Better Auth | contrôle d’accès personnel |
+| Data API / chemin média sécurisé | accès distant depuis la PWA |
+| XLSX / JSON | exports structurés portables |
 
-## 3.1 Intégration Neon dans la PWA
+## 3.1 Intégration Neon
 
-Le projet actuel est une PWA JavaScript ES Modules sans framework. Cette simplicité doit être conservée autant que possible.
+Le projet reste une PWA JavaScript ES Modules sans framework applicatif.
 
-Pour Auth + Data API, utiliser le SDK officiel :
+SDK cible pour Auth + Data API :
 
 ```bash
 npm install @neondatabase/neon-js
 ```
 
-Le client doit utiliser une **URL HTTPS Neon sans identifiants PostgreSQL** prévue pour `@neondatabase/neon-js`. Le SDK dérive les endpoints Auth et Data API lorsque la configuration Neon le permet.
+Le navigateur ne reçoit jamais :
 
-Exemple conceptuel :
+- `DATABASE_URL` ;
+- `DATABASE_URL_UNPOOLED` ;
+- mot de passe PostgreSQL ;
+- clé d’administration Neon.
 
-```js
-import { createClient } from '@neondatabase/neon-js';
+Si un chemin serveur Vercel minimal est nécessaire pour transférer proprement les binaires tout en gardant les secrets hors navigateur, il est autorisé à condition :
 
-const neon = createClient(PUBLIC_NEON_DATABASE_URL);
-```
-
-Ne jamais transmettre au navigateur `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, un mot de passe Postgres ou une clé d’administration.
-
-Si l’utilisation propre du package npm nécessite l’ajout d’un outillage de build minimal, cet ajout est autorisé à condition :
-
-- de ne pas introduire de framework applicatif ;
-- de ne pas réécrire l’UI existante ;
-- de rester compatible avec Vercel et la PWA ;
-- de conserver le service worker et l’offline ;
-- de documenter clairement la commande de build et les fichiers ajoutés.
+- de rester strictement limité au besoin média ;
+- d’exiger l’identité authentifiée ;
+- de respecter RLS / propriété utilisateur ;
+- de ne pas créer un second stockage ;
+- de stocker au final l’original dans Postgres ;
+- de ne jamais réencoder l’original.
 
 ---
 
@@ -242,7 +250,7 @@ Si l’utilisation propre du package npm nécessite l’ajout d’un outillage d
 
 ## 4.1 Tables métier
 
-Créer dans Lakebase Postgres des tables correspondant aux entités métier IndexedDB existantes :
+Créer les tables correspondant aux entités existantes :
 
 - `dungeons`
 - `creatures`
@@ -252,435 +260,453 @@ Créer dans Lakebase Postgres des tables correspondant aux entités métier Inde
 - `loot_items`
 - `interactables`
 - `brouhaha_effects`
-- `media_assets` pour les **métadonnées uniquement**
+- `media_assets`
 
-Le schéma exact doit être dérivé du code réel (`src/app.js`, `src/storage/idb.js`, `seed-data.js`, imports XLSX/JSON), afin d’éviter toute perte ou transformation silencieuse d’un champ existant.
+Conserver les identifiants métier existants autant que possible.
 
-Chaque table synchronisée doit disposer au minimum de métadonnées techniques adaptées, par exemple :
+Chaque table synchronisée dispose au minimum de métadonnées adaptées :
 
 - `user_id`
 - `created_at`
 - `updated_at`
-- `deleted_at` si la stratégie de suppression douce est retenue
-
-Pour les données accessibles via la Data API, `user_id` doit être compatible avec la valeur retournée par `auth.user_id()`.
-
-Conserver les identifiants métier existants lorsque c’est possible afin de préserver les relations et les imports/exports.
+- `deleted_at` si suppression douce
 
 Les relations existantes (`dungeon_id`, `creature_id`, `npc_id`, etc.) doivent rester cohérentes.
 
-Les tables applicatives restent dans `public` sauf raison technique documentée. Ne pas modifier manuellement le schéma géré `neon_auth`.
+## 4.2 Métadonnées média
 
-## 4.2 Data API, privilèges SQL et RLS
+`media_assets` conserve les métadonnées métier du média, par exemple :
 
-Le Neon Data API délègue la sécurité à PostgreSQL :
+- `id`
+- `user_id`
+- `label`
+- `file_name`
+- `mime_type`
+- `entity_type`
+- `entity_id`
+- `width`
+- `height`
+- `byte_size`
+- `sha256`
+- `created_at`
+- `updated_at`
+- `deleted_at`
 
-1. `GRANT` définit les tables/opérations accessibles au rôle ;
-2. RLS définit les lignes accessibles à l’utilisateur.
+Les champs exacts doivent être adaptés au code réel et aux migrations existantes.
 
-Le rôle principal pour Gargottex est `authenticated`.
+## 4.3 Originaux médias
 
-Ne pas accorder les tables métier au rôle `anonymous`.
+Stocker le binaire séparément des métadonnées afin que la synchronisation ordinaire du Codex ne transporte pas les images lourdes.
 
-Modèle de politique attendu :
+Architecture recommandée :
+
+```text
+media_assets
+  1 ─── 1 media_originals
+            1 ─── n media_blob_chunks
+```
+
+`media_originals` peut contenir :
+
+- `media_id`
+- `user_id`
+- `byte_size`
+- `sha256`
+- `chunk_size`
+- `chunk_count`
+- état de sauvegarde / date de vérification si utile.
+
+`media_blob_chunks` peut contenir :
+
+- `media_id`
+- `chunk_index`
+- `data BYTEA`
+- hash de chunk optionnel ;
+- contrainte unique `(media_id, chunk_index)`.
+
+Si les limites réelles du chemin réseau permettent un unique `BYTEA`, l’implémentation peut être simplifiée. Le découpage en chunks est préféré dès qu’il améliore :
+
+- reprise après interruption ;
+- limites de payload ;
+- mémoire navigateur ;
+- progression de transfert.
+
+Le chunking ne change **aucun octet** du fichier original.
+
+## 4.4 Miniatures
+
+Les miniatures sont des dérivés.
+
+Elles peuvent :
+
+- rester uniquement dans IndexedDB ;
+- être sauvegardées séparément pour accélérer un nouvel appareil ;
+- être régénérées depuis l’original.
+
+Elles ne remplacent jamais `media_originals`.
+
+## 4.5 Intégrité
+
+À l’ajout d’un média :
+
+1. calculer le SHA-256 de l’original ;
+2. conserver taille/MIME/dimensions ;
+3. enregistrer localement ;
+4. transférer l’original ;
+5. reconstituer/vérifier côté distant selon l’implémentation ;
+6. considérer le média « sauvegardé » uniquement lorsque le SHA-256 distant correspond à l’original local.
+
+Sur restauration :
+
+1. télécharger l’original ;
+2. reconstituer les chunks dans l’ordre ;
+3. calculer SHA-256 ;
+4. comparer au hash enregistré ;
+5. écrire dans IndexedDB seulement comme copie vérifiée ou signaler explicitement l’erreur.
+
+## 4.6 Data API, privilèges et RLS
+
+Le rôle applicatif principal est `authenticated`.
+
+Ne pas accorder de données métier ou média au rôle `anonymous`.
+
+Modèle de politique :
 
 ```sql
 ALTER TABLE public.example ENABLE ROW LEVEL SECURITY;
-
-GRANT USAGE ON SCHEMA public TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.example TO authenticated;
 
 CREATE POLICY "owner_select" ON public.example
   FOR SELECT TO authenticated
   USING ((SELECT auth.user_id()) = user_id);
-
-CREATE POLICY "owner_insert" ON public.example
-  FOR INSERT TO authenticated
-  WITH CHECK ((SELECT auth.user_id()) = user_id);
-
-CREATE POLICY "owner_update" ON public.example
-  FOR UPDATE TO authenticated
-  USING ((SELECT auth.user_id()) = user_id)
-  WITH CHECK ((SELECT auth.user_id()) = user_id);
-
-CREATE POLICY "owner_delete" ON public.example
-  FOR DELETE TO authenticated
-  USING ((SELECT auth.user_id()) = user_id);
 ```
 
-Si le schéma utilise des séquences/identity, vérifier également les privilèges nécessaires sur les séquences.
+Les policies équivalentes INSERT/UPDATE/DELETE doivent garantir la propriété utilisateur.
 
-État attendu :
+Les tables média et chunks sont soumises aux mêmes exigences de sécurité.
 
-- RLS désactivée : **interdit** sur une table métier exposée ;
-- RLS activée sans policy : accès bloqué, acceptable temporairement pendant construction ;
-- RLS activée + policies propriétaire : cible finale.
+## 4.7 Historique d’équilibrage
 
-Le projet étant personnel, ne pas construire une couche multi-tenant complexe au-delà de l’isolation correcte par `user_id`.
+Conserver une table `entity_revisions` pour les données métier structurées.
 
-## 4.3 Historique d’équilibrage
+Ne pas dupliquer les binaires dans chaque révision. Les originaux médias sont versionnés uniquement si une future exigence l’impose explicitement.
 
-Ajouter un mécanisme d’historique permettant de conserver les versions successives des données métier.
+## 4.8 Migrations branch-first
 
-Une table générique `entity_revisions` est recommandée, contenant au minimum :
+Tout changement de schéma, index, trigger, fonction, grant ou RLS est versionné dans GitHub et testé sur une branche Neon temporaire avant promotion.
 
-- propriétaire (`user_id`) ;
-- type d’entité ;
-- identifiant de l’entité ;
-- type d’opération (`insert`, `update`, `delete`) ;
-- snapshot JSON de l’état concerné ;
-- date de création ;
-- éventuellement numéro de révision.
-
-Le mécanisme doit éviter les révisions inutiles lors d’écritures strictement identiques.
-
-La restauration visuelle d’une ancienne version n’est pas obligatoire dans cette V6, mais les données doivent être exploitables ultérieurement.
-
-## 4.4 Migrations et branche-first Neon
-
-Les changements de schéma, indexes, triggers, fonctions, grants et policies RLS doivent être versionnés dans GitHub.
-
-Le workflow cible est **branch-first** : ne pas tester une migration directement sur la branche Neon de production.
-
-Pour les opérations exécutées depuis ChatGPT avec `@Neon` :
-
-1. résoudre le projet `Gargottex` et sa branche par défaut ;
-2. préparer le SQL versionné ;
-3. utiliser `prepare_database_migration` pour appliquer le changement sur une branche temporaire ;
-4. inspecter le schéma et exécuter les tests sur cette branche ;
-5. présenter le résultat ;
-6. demander confirmation avant `complete_database_migration` avec application sur la branche parent ;
-7. supprimer/abandonner proprement la branche temporaire si la migration est refusée.
-
-Pour un workflow CLI/CI, une branche Neon dédiée peut être créée et les migrations doivent utiliser une connexion **directe non poolée**. La connexion poolée est réservée au trafic applicatif serveur.
-
-Les fichiers de migration restent dans le dépôt, par exemple :
-
-```text
-migrations/
-  20260916090000_create-gargottex-schema.sql
-  20260916093000_add-entity-revisions.sql
-```
-
-Une migration déjà appliquée devient de l’historique : ne pas la réécrire silencieusement.
+Une migration déjà appliquée devient historique et n’est pas réécrite silencieusement.
 
 ---
 
 # 5. Couche locale et synchronisation
 
-## 5.1 Isoler l’accès aux données
+## 5.1 Séparation des responsabilités
 
-Ne pas éparpiller les appels Neon dans les composants/rendus de l’application.
+Ne pas éparpiller les appels Neon dans les rendus.
 
 Créer une couche claire entre :
 
-- l’UI / logique métier ;
-- le stockage local IndexedDB ;
-- le moteur de synchronisation distante.
+- UI / logique métier ;
+- IndexedDB ;
+- synchronisation structurée ;
+- synchronisation média.
 
-Réutiliser `src/storage/idb.js` au lieu de le contourner ou de le remplacer brutalement.
+## 5.2 Outbox structurée
 
-Les opérations métier principales doivent pouvoir passer par une API cohérente de repository/service :
-
-- lecture ;
-- création ;
-- mise à jour ;
-- suppression ;
-- import en volume.
-
-La couche distante utilise `@neondatabase/neon-js` et vérifie systématiquement les retours `{ data, error }`.
-
-## 5.2 Outbox IndexedDB
-
-Ajouter les stores techniques nécessaires, par exemple :
+Stores techniques possibles :
 
 - `sync_outbox`
 - `sync_meta`
-- éventuellement un store de conflits/erreurs si l’implémentation le justifie
+- store de conflits/erreurs si nécessaire.
 
-Une modification locale et son événement d’outbox doivent être enregistrés de façon aussi atomique que possible.
+Une entrée contient au minimum : entité, id, opération, payload utile, date, retry, erreur.
 
-Une entrée d’outbox doit permettre de connaître au minimum :
+## 5.3 Outbox média
 
-- entité concernée ;
-- identifiant ;
-- opération ;
-- payload structuré si nécessaire ;
-- date locale ;
-- état/retry ;
-- dernière erreur éventuelle.
+Les originaux ne doivent pas être sérialisés dans une grosse entrée JSON d’outbox.
 
-Ne jamais placer les blobs d’images dans l’outbox distante.
+L’outbox média référence le média local :
 
-## 5.3 Ordre de synchronisation
+```text
+media_id
+operation
+sha256
+byte_size
+progress / chunk_index
+retry
+last_error
+```
 
-À la reconnexion ou au démarrage authentifié :
+Le binaire reste dans IndexedDB et est lu par portions lors du transfert.
 
-1. traiter les écritures locales en attente ;
-2. confirmer leur écriture distante Neon ;
-3. retirer de l’outbox uniquement les opérations effectivement confirmées ;
-4. récupérer ensuite les changements distants utiles ;
-5. mettre à jour IndexedDB sans créer artificiellement une nouvelle opération d’outbox pour un changement provenant du serveur.
+## 5.4 Ordre de synchronisation
 
-Une erreur réseau ne doit pas faire perdre une opération locale.
+À la reconnexion :
 
-Prévoir un retry raisonnable et éviter les boucles infinies.
+1. conserver toutes les écritures locales ;
+2. pousser les données structurées ;
+3. pousser/reprendre les médias en attente ;
+4. confirmer les écritures distantes ;
+5. retirer de l’outbox uniquement ce qui est confirmé ;
+6. récupérer les changements distants ;
+7. mettre à jour IndexedDB sans recréer artificiellement des événements sortants.
 
-Pour les imports massifs, regrouper les opérations plutôt que d’envoyer une requête par champ ou par cellule.
+Une erreur média ne bloque pas la synchronisation des données structurées.
 
-## 5.4 Suppressions
+## 5.5 Téléchargement sur nouvel appareil
 
-Les suppressions doivent se propager entre installations.
+Le bootstrap privilégie :
 
-Une stratégie de suppression douce (`deleted_at`) côté Neon est recommandée afin que :
+1. Auth ;
+2. métadonnées structurées ;
+3. reconstruction immédiate du Codex ;
+4. miniatures disponibles ;
+5. originaux à la demande ou en arrière-plan.
 
-- une suppression hors ligne puisse être synchronisée ;
-- une nouvelle installation puisse connaître l’état supprimé ;
-- l’historique reste récupérable.
+Un média distant non encore local est un état normal :
 
-Les éléments marqués supprimés ne doivent pas réapparaître dans le Codex normal.
+```text
+Métadonnées disponibles
+Original sauvegardé dans Neon
+Original pas encore téléchargé sur cet appareil
+```
 
-## 5.5 Pull incrémental
+Prévoir une action de téléchargement individuel et, si l’implémentation le permet raisonnablement, une action de récupération en lot pour préparer l’usage offline.
 
-Éviter de recharger l’intégralité du Codex à chaque synchronisation.
+## 5.6 Suppressions
 
-Utiliser `updated_at` et/ou un curseur de synchronisation dans `sync_meta` afin de récupérer les changements distants depuis la dernière synchronisation validée.
+Les suppressions métier et média doivent se propager.
 
-Le premier bootstrap d’un nouvel appareil peut naturellement charger l’ensemble des données nécessaires.
+Une suppression hors ligne est conservée dans l’outbox jusqu’à confirmation distante.
 
-## 5.6 Conflits
+La suppression du média ne doit jamais supprimer accidentellement une autre entité partageant un hash identique si une déduplication physique est implémentée.
 
-Gargottex est une application personnelle, principalement utilisée par un seul utilisateur. Ne pas introduire un système collaboratif disproportionné.
+## 5.7 Pull incrémental
 
-Politique cible simple :
+Utiliser `updated_at` et/ou curseur de synchronisation. Ne pas recharger tout le Codex ni tous les originaux à chaque synchronisation.
 
-- les modifications locales sont toujours conservées jusqu’à confirmation distante ;
-- en cas de concurrence entre appareils, appliquer une politique déterministe et documentée ;
-- l’état remplacé doit rester récupérable via l’historique de révisions.
+## 5.8 Conflits
 
-Une stratégie « dernière synchronisation validée » peut être retenue si elle est testée et documentée.
+Gargottex est personnel. Utiliser une politique déterministe et documentée sans construire un système collaboratif disproportionné.
+
+Pour les médias, deux fichiers différents ne doivent jamais être fusionnés. Un remplacement de fichier crée une nouvelle version logique du média ou remplace explicitement l’original après confirmation selon l’implémentation retenue.
 
 ---
 
 # 6. Authentification
 
-Utiliser Neon Managed Better Auth avec le minimum d’interface nécessaire.
-
-Cible :
+Utiliser Neon Managed Better Auth avec interface minimale :
 
 - compte personnel ;
 - session persistante ;
-- pas de création de compte publique dans l’application ;
-- accès aux données distantes uniquement après authentification ;
-- fonctionnement local existant protégé pendant la migration.
+- pas d’inscription publique ;
+- accès distant après authentification ;
+- fonctionnement local préservé.
 
-L’activation Auth est faite sur la branche Neon cible. Les données et la configuration Auth sont branch-aware : les environnements de test ne doivent pas contaminer la production.
-
-Le code client peut utiliser le client combiné `@neondatabase/neon-js` :
-
-```js
-const result = await neon.auth.signIn.email({ email, password });
-const session = await neon.auth.getSession();
-await neon.auth.signOut();
-```
-
-Ne pas exposer de bouton d’inscription publique si ce n’est pas nécessaire. Le compte Gargottex peut être créé/administré directement via Neon.
-
-Au démarrage, distinguer :
-
-- session en cours de chargement ;
-- session active ;
-- utilisateur réellement déconnecté.
-
-Ne jamais stocker de mot de passe, token permanent ou secret Postgres dans IndexedDB.
-
-**Note de maturité :** Managed Better Auth évolue rapidement. Au moment d’exécuter la Phase 1, vérifier sa disponibilité et sa configuration sur la région du projet créée par l’utilisateur avant de figer l’implémentation.
+Ne jamais stocker mot de passe, secret Postgres ou token permanent dans IndexedDB.
 
 ---
 
-# 7. Migration des données actuelles de l’iPad
+# 7. Migration V5 → V6
 
-## 7.1 Point critique : changement d’origine
+## 7.1 Changement d’origine
 
-IndexedDB est lié à l’origine web.
+IndexedDB est lié à l’origine web. Une nouvelle URL ne peut pas lire directement l’IndexedDB de l’ancienne origine.
 
-Si Gargottex passe d’une URL actuelle à une nouvelle URL Vercel, la nouvelle PWA **ne pourra pas lire directement l’IndexedDB de l’ancienne origine**.
+## 7.2 Migration des données structurées
 
-Ne jamais considérer qu’un changement d’hébergement transfère automatiquement les données locales.
-
-## 7.2 Stratégie de migration
-
-Avant la bascule définitive :
+Avant bascule :
 
 1. conserver l’ancienne version accessible ;
-2. produire depuis l’ancienne installation un **export JSON complet des données structurées**, sans blobs d’images ;
-3. vérifier que l’export contient toutes les entités métier attendues ;
-4. importer ce JSON dans la version V6 ou fournir un chemin de bootstrap équivalent ;
-5. écrire ces données dans IndexedDB V6 ;
-6. synchroniser vers Neon ;
-7. vérifier les comptages par type d’entité et un échantillon de relations/champs ;
-8. seulement après validation, considérer la nouvelle installation comme référence.
+2. produire l’export JSON structuré ;
+3. vérifier comptages/relations ;
+4. importer dans la V6 ;
+5. écrire dans IndexedDB V6 ;
+6. synchroniser vers Neon.
 
-Ne pas détruire l’ancienne IndexedDB avant cette validation.
+## 7.3 Migration des médias
 
-## 7.3 Cas de bootstrap
+La migration V6 doit **également sécuriser les originaux médias**.
+
+Avant de considérer l’ancienne installation comme abandonnable :
+
+1. inventorier tous les médias locaux ;
+2. calculer taille + SHA-256 ;
+3. transférer chaque original sans réencodage ;
+4. vérifier le hash distant ;
+5. marquer le média `local + sauvegardé + vérifié` ;
+6. produire un bilan : total, sauvegardés, en attente, erreurs ;
+7. ne pas considérer la migration terminée tant qu’un média attendu n’est pas soit sauvegardé, soit explicitement documenté comme irrécupérable.
+
+## 7.4 Cas de bootstrap
 
 ### Local rempli + Neon vide
 
-Cas typique de migration initiale : les données locales deviennent la base initiale distante sans être écrasées par un dataset vide.
+Le local initialise Neon sans être écrasé, données et médias compris.
 
 ### Local vide + Neon rempli
 
-Cas d’un nouvel appareil : récupérer les données Neon après authentification et reconstruire la copie locale.
+Reconstruire les données locales puis récupérer les originaux média à la demande / en lot.
 
 ### Local rempli + Neon rempli
 
-Ne jamais faire un `clear()` destructif par défaut. Appliquer la stratégie de synchronisation définie et préserver l’historique.
+Aucun `clear()` destructif par défaut. Synchroniser, comparer hashes média et préserver l’état local tant que la sauvegarde distante n’est pas confirmée.
 
 ---
 
-# 8. Imports / exports XLSX et JSON
+# 8. Imports / exports
 
 ## 8.1 XLSX
 
-Conserver les fonctionnalités XLSX existantes et leurs colonnes métier.
+Conserver les colonnes et comportements existants.
 
-Un import validé doit :
-
-1. normaliser/valider comme aujourd’hui ;
-2. écrire dans IndexedDB ;
-3. créer les opérations de synchronisation correspondantes ;
-4. être envoyé ensuite vers Neon ;
-5. ne pas casser les relations existantes.
-
-Pour les imports en masse, privilégier les traitements batch.
+Un import validé écrit localement puis génère les opérations de synchronisation correspondantes.
 
 ## 8.2 JSON
 
-Garantir un export JSON complet et portable de toutes les données structurées du Codex.
+Le JSON reste le format portable des **données structurées**.
 
-Ce format sert notamment :
+Il sert à :
 
-- à la migration V5 → V6 ;
-- aux archives manuelles ;
-- à une restauration sans dépendance à Neon ;
-- aux échanges techniques futurs.
+- migration ;
+- archive structurée ;
+- restauration sans dépendance à Neon ;
+- échanges techniques.
 
-Prévoir un numéro/version de format dans l’export.
+Il ne contient pas les binaires médias.
 
-L’import JSON doit valider la structure avant d’écrire et ne doit jamais effacer silencieusement des données existantes en cas de fichier invalide.
+## 8.3 Médias
+
+La sauvegarde distante des originaux est assurée par Neon/Postgres, indépendamment du JSON.
+
+Un éventuel export manuel des originaux pourra être ajouté séparément, mais il n’est pas nécessaire pour considérer la sauvegarde distante V6 fonctionnelle.
 
 ---
 
 # 9. Médias / images
 
-Le chantier V6 **ne comprend pas** de backend média.
+## 9.1 Source de vérité
 
-Règles :
+Pour un appareil actif, IndexedDB est la copie de travail immédiate.
 
-- aucun bucket Neon Object Storage à créer dans cette phase ;
-- aucun upload automatique d’image vers Neon ;
-- aucun blob stocké dans Postgres ;
-- conserver les médias locaux actuels tant que cela ne bloque pas la refactorisation ;
-- synchroniser uniquement les métadonnées utiles si nécessaire ;
-- conserver `image_path` et les références métier ;
-- ne pas inclure les images binaires dans le JSON de sauvegarde structurée.
+Pour la sauvegarde inter-appareils, Neon Postgres conserve l’original vérifié.
 
-L’utilisateur gère séparément la sauvegarde manuelle des images.
+## 9.2 États média minimum
+
+Chaque média doit pouvoir être qualifié sans ambiguïté :
+
+- `local_only` : original local non encore sauvegardé ;
+- `uploading` : transfert en cours ;
+- `local_remote_verified` : local et distant identiques, hash vérifié ;
+- `remote_only` : original sauvegardé dans Neon, absent localement ;
+- `downloading` : restauration en cours ;
+- `sync_error` : erreur de transfert ;
+- `missing` : original attendu mais indisponible.
+
+Les noms techniques exacts peuvent varier. Le sens UX doit rester celui-ci.
+
+## 9.3 Déduplication
+
+SHA-256 peut servir à détecter des doublons.
+
+La déduplication est autorisée seulement si :
+
+- aucune relation métier n’est perdue ;
+- supprimer une référence ne supprime pas un original encore utilisé ;
+- l’original restitué reste bit-identique.
+
+Elle n’est pas obligatoire pour la V6.
+
+## 9.4 Qualité
+
+Aucun pipeline d’optimisation ne peut modifier l’original.
+
+Les optimisations concernent uniquement :
+
+- miniatures ;
+- cache ;
+- ordre de chargement ;
+- chunking de transfert ;
+- lazy loading.
 
 ---
 
 # 10. Vercel et PWA
 
-Déployer Gargottex sur Vercel sans réécrire inutilement l’application dans un framework.
-
 Préserver :
 
-- manifest PWA ;
-- installation sur iPad/iPhone/Android/desktop ;
+- manifest ;
+- installation iPhone/iPad/Android/desktop ;
 - service worker ;
-- fonctionnement offline du shell ;
-- stratégie de mise à jour évitant les vieux caches fantômes.
+- shell offline ;
+- stratégie de mise à jour fiable.
 
-Adapter le service worker si nécessaire pour les nouveaux modules, mais ne pas précharger une quantité excessive de données ou de médias.
+Ne pas précharger tous les originaux médias dans le service worker.
 
-Ne jamais mettre un secret serveur dans un fichier servi au navigateur.
-
-Configuration cliente autorisée : uniquement les endpoints/URLs HTTPS publics nécessaires au SDK Neon.
-
-Configuration interdite côté client :
-
-- `DATABASE_URL` ;
-- `DATABASE_URL_UNPOOLED` ;
-- mot de passe PostgreSQL ;
-- API key Neon de gestion ;
-- credential serveur ou clé ayant des privilèges d’administration.
+Les originaux restaurés sont conservés dans IndexedDB, pas dans un cache HTTP opaque comme seule copie locale.
 
 ---
 
 # 11. Organisation du chantier
 
-Créer une branche de travail dédiée, par exemple :
+Branche technique dédiée recommandée :
 
 `refactor/v6-neon-local-first`
 
-Ne pas développer directement sur `V5.3` si une branche de travail est disponible.
+La documentation UI/UX canonique reste sur `V5.3/docs/`.
 
-La refactorisation reste organisée en **3 phases**.
+La refactorisation technique conserve trois phases.
 
 ## Phase 1 — Fondation Neon et abstraction data
 
 Objectifs :
 
-- audit ciblé du code pertinent ;
-- résolution du projet Neon `Gargottex` et de sa branche par défaut ;
-- activation/configuration de Managed Better Auth ;
-- activation/configuration de Neon Data API ;
-- migrations SQL versionnées ;
-- tables + relations ;
+- audit code ;
+- Auth ;
+- Data API ;
+- migrations ;
+- tables métier ;
+- tables média ;
 - `GRANT` + RLS ;
-- historique de révisions ;
-- intégration minimale de `@neondatabase/neon-js` ;
-- abstraction repository/service ;
-- IndexedDB existante toujours opérationnelle.
+- historique structuré ;
+- repository/service ;
+- IndexedDB toujours opérationnelle.
 
-Pour chaque changement structurel Neon :
-
-1. préparer la migration sur une branche temporaire ;
-2. inspecter/tester ;
-3. contrôler Auth/Data API/RLS ;
-4. ne promouvoir vers la branche par défaut qu’après validation explicite.
-
-**Gate Phase 1 :** l’application fonctionne toujours localement et le schéma distant est sécurisé avant de poursuivre.
+**Gate Phase 1 :** fonctionnement local intact, schéma distant sécurisé, modèle média original validé sur branche Neon temporaire.
 
 ## Phase 2 — Synchronisation local-first
 
 Objectifs :
 
-- outbox locale ;
+- outbox structurée ;
+- outbox média ;
 - push/retry ;
+- upload chunké si nécessaire ;
+- vérification SHA-256 ;
 - pull incrémental ;
+- téléchargements à la demande ;
 - suppressions ;
 - bootstrap local/distant ;
-- imports écrivant via le nouveau chemin ;
-- XLSX/JSON sans régression ;
-- statut de synchronisation minimal si nécessaire.
+- imports ;
+- statuts de synchronisation.
 
-**Gate Phase 2 :** édition online et offline testée, aucune opération locale perdue lors d’une panne réseau simulée.
+**Gate Phase 2 :** données et médias testés online/offline, aucune opération locale perdue, original distant bit-identique.
 
-## Phase 3 — Migration, Vercel et validation finale
+## Phase 3 — Migration, Vercel et validation
 
 Objectifs :
 
-- chemin de migration JSON V5 → V6 ;
-- validation des données ;
-- déploiement Vercel ;
-- contrôle PWA/offline ;
+- migration données V5 → V6 ;
+- migration médias locaux → Postgres ;
+- vérification hashes ;
+- nouvel appareil ;
+- PWA/offline ;
 - CI/tests ;
 - documentation finale ;
-- PR propre vers la branche de référence.
+- PR propre.
 
-**Gate Phase 3 :** validation complète avant de considérer la refactorisation terminée.
+**Gate Phase 3 :** validation complète des données **et des originaux médias** avant clôture.
 
 ---
 
@@ -688,106 +714,104 @@ Objectifs :
 
 ## 12.1 Données locales
 
-- ouverture avec IndexedDB existante ;
-- lecture des entités ;
+- lecture ;
 - création ;
 - édition ;
 - suppression ;
 - rechargement sans perte.
 
-## 12.2 Synchronisation online
+## 12.2 Synchronisation structurée online/offline
 
-- modification locale visible immédiatement ;
-- synchronisation Neon confirmée ;
-- rechargement sans perte ;
-- données distantes cohérentes.
+- modification visible immédiatement localement ;
+- panne réseau ;
+- opérations conservées ;
+- retry ;
+- Neon cohérent ;
+- aucune duplication anormale.
 
-## 12.3 Synchronisation offline
+## 12.3 Média : upload original
 
-- couper le réseau ;
-- effectuer plusieurs créations/modifications/suppressions ;
-- vérifier leur présence locale ;
-- rétablir le réseau ;
-- vérifier la vidange correcte de l’outbox ;
-- vérifier les données Neon ;
-- aucune opération perdue ou dupliquée anormalement.
+Pour plusieurs formats et tailles représentatives :
 
-## 12.4 Nouvel appareil / navigateur vierge
+- ajouter le média localement ;
+- calculer SHA-256 ;
+- couper/reprendre le réseau pendant upload ;
+- terminer le transfert ;
+- vérifier taille distante ;
+- vérifier SHA-256 distant ;
+- confirmer bit-identité.
+
+Aucun test n’est valide si l’image a été recompressée.
+
+## 12.4 Média : nouvel appareil
 
 - IndexedDB vide ;
-- connexion au compte Neon Auth ;
-- récupération des données via Data API ;
-- reconstruction du Codex local ;
-- fonctionnement ensuite hors ligne.
+- authentification ;
+- récupération des métadonnées ;
+- statut `remote_only` ;
+- téléchargement de l’original ;
+- vérification SHA-256 ;
+- création de miniature éventuelle ;
+- fonctionnement hors ligne après récupération.
 
-Les images locales non synchronisées peuvent être absentes sur ce nouvel appareil : ce point est accepté dans cette V6.
+## 12.5 Média : erreurs
 
-## 12.5 Suppression
+Tester :
 
-- supprimer une entité ;
-- synchroniser ;
-- vérifier qu’elle ne réapparaît pas après pull/rechargement ;
-- vérifier l’historique nécessaire.
+- réseau interrompu ;
+- chunk manquant ;
+- hash invalide ;
+- quota local insuffisant ;
+- média distant absent ;
+- retry sans duplication.
 
-## 12.6 Exports
+Une erreur média ne doit jamais supprimer l’original local sain.
 
-- export XLSX valide ;
-- export JSON complet valide ;
-- absence de blobs/secrets dans JSON ;
-- import d’un export de test ;
-- relations et comptages conservés.
+## 12.6 Suppression
 
-## 12.7 Migration V5 → V6
+- suppression locale ;
+- tombstone/outbox ;
+- propagation distante ;
+- absence de résurrection après pull ;
+- absence d’impact sur un média partagé par hash si déduplication.
 
-Comparer au minimum les comptages avant/après pour :
+## 12.7 Exports
 
-- donjons ;
-- créatures ;
-- héros ;
-- PNJ ;
-- quêtes ;
-- loot ;
-- interactables ;
-- Brouhaha ;
-- métadonnées médias si migrées.
+- XLSX valide ;
+- JSON structuré valide ;
+- aucun binaire/secrets dans JSON ;
+- import de restauration ;
+- relations conservées.
 
-Contrôler plusieurs fiches représentatives contenant :
+## 12.8 Migration V5 → V6
 
-- stats ;
-- lore long ;
-- relations ;
-- tags ;
-- champs optionnels ;
-- chemins d’images.
+Comparer comptages des entités et inventaire média.
 
-## 12.8 PWA
+Pour les médias, comparer au minimum :
+
+- nombre attendu ;
+- nom ;
+- taille ;
+- MIME ;
+- SHA-256 ;
+- relation métier.
+
+## 12.9 PWA
 
 - installation ;
-- lancement depuis l’écran d’accueil ;
-- shell disponible hors ligne ;
-- absence de régression critique du service worker ;
-- mise à jour de version sans rester bloqué sur d’anciens assets.
+- offline ;
+- mise à jour ;
+- pas de téléchargement massif involontaire ;
+- originaux téléchargés accessibles hors ligne.
 
-## 12.9 Sécurité
+## 12.10 Sécurité
 
-- RLS active sur toutes les tables métier exposées ;
-- `GRANT` limités aux opérations nécessaires ;
-- aucune table métier accessible au rôle `anonymous` ;
-- accès propriétaire basé sur `auth.user_id()` ;
-- aucune connexion PostgreSQL ou clé d’administration exposée ;
-- aucun secret commité dans GitHub ;
-- test négatif avec client non authentifié ;
-- test positif avec le compte Gargottex autorisé.
-
-## 12.10 Backend Neon
-
-- projet `Gargottex` clairement identifié ;
-- branche par défaut clairement identifiée ;
-- Managed Better Auth opérationnel ;
-- Data API opérationnelle ;
-- migrations versionnées et testées sur branches temporaires ;
-- schéma distant conforme ;
-- diagnostics sans erreur bloquante pertinente.
+- RLS sur tables métier et média ;
+- rôle anonymous sans accès ;
+- propriété via `auth.user_id()` ;
+- aucun secret client ;
+- test négatif non authentifié ;
+- test positif compte Gargottex.
 
 ---
 
@@ -795,108 +819,83 @@ Contrôler plusieurs fiches représentatives contenant :
 
 Ne pas profiter de cette refactorisation pour :
 
-- refaire l’UI/UX du Codex ;
-- modifier la direction artistique ;
-- changer les règles du jeu ;
-- rééquilibrer les statistiques métier ;
+- refaire l’UI/UX ;
+- modifier les règles du jeu ;
+- rééquilibrer les statistiques ;
 - réécrire le lore ;
-- renommer les créatures ou donjons ;
-- migrer les images vers Neon Object Storage ;
-- réparer en profondeur l’ancien système ZIP lourd ;
-- introduire un framework frontend sans nécessité démontrée ;
-- réécrire entièrement l’application ;
-- modifier des workflows GitHub sans rapport avec Gargottex ;
-- transformer Gargottex en produit multi-utilisateur/collaboratif ;
-- ajouter Neon Functions, Object Storage ou AI Gateway sans besoin direct de cette V6.
+- renommer les entités ;
+- introduire un framework frontend sans nécessité ;
+- transformer Gargottex en produit collaboratif ;
+- ajouter un second backend de stockage média ;
+- convertir/recompresser automatiquement les originaux ;
+- construire un système complet de versions binaires médias sans besoin explicite.
 
-Les données métier doivent être migrées, pas « améliorées » silencieusement.
+Neon Object Storage n’est pas nécessaire dans la cible actuelle, puisque la décision verrouillée est de conserver les originaux dans Postgres.
 
 ---
 
 # 14. Discipline de modification
 
-Avant une modification structurelle, comprendre les chemins de lecture/écriture réellement utilisés par l’application.
+Avant tout changement structurel :
 
-Pour les gros fichiers comme `src/app.js`, identifier d’abord les fonctions et dépendances concernées.
-
-Pour Neon :
-
-- utiliser les branches temporaires pour tester les migrations ;
-- ne jamais appliquer une migration destructive directement sur la branche par défaut ;
-- utiliser une connexion directe/non poolée pour migrations et outils d’administration ;
-- ne jamais mettre une chaîne de connexion PostgreSQL dans le client ;
-- utiliser Data API + Auth pour les accès navigateur ;
-- vérifier systématiquement `{ data, error }` côté SDK ;
-- vérifier le projet et la branche avant toute écriture backend.
-
-Après chaque phase :
-
+- comprendre les chemins réels de lecture/écriture ;
+- utiliser une branche Neon temporaire ;
+- versionner les migrations ;
+- tester RLS ;
+- vérifier le projet/branche avant écriture ;
 - relire les diffs ;
-- exécuter les tests pertinents ;
-- vérifier les effets de bord ;
-- maintenir un état clair de ce qui est terminé et de ce qui reste à faire.
+- préserver l’ancienne donnée tant que la nouvelle copie n’est pas validée.
 
-La fiabilité et l’absence de perte de données priment sur la vitesse.
+Pour un média original :
+
+> **ne jamais supprimer ou remplacer la dernière copie saine avant confirmation du hash de la nouvelle copie.**
 
 ---
 
 # 15. Livrables attendus
 
-À la fin du chantier, le dépôt doit contenir au minimum :
+À la fin du chantier :
 
-- migrations SQL Neon versionnées ;
-- policies RLS et grants SQL versionnés ;
-- code Neon Auth nécessaire ;
-- intégration `@neondatabase/neon-js` documentée ;
-- couche repository/data claire ;
-- moteur de synchronisation local-first ;
-- stores IndexedDB techniques nécessaires ;
-- exports XLSX préservés ;
-- export/import JSON structuré validé ;
-- documentation de migration V5 → V6 ;
-- documentation de configuration Neon/Vercel sans secret ;
-- fichier d’exemple des variables publiques nécessaires ;
-- tests ou scripts de validation adaptés ;
-- mise à jour raisonnable du README une fois le comportement final confirmé.
-
-Une PR finale doit expliquer :
-
-- l’architecture retenue ;
-- les fichiers principaux modifiés ;
-- la stratégie de synchronisation ;
-- la stratégie de migration ;
-- les migrations Neon appliquées ;
-- les tests exécutés ;
-- les limites connues.
+- migrations SQL ;
+- grants/RLS ;
+- Auth ;
+- repository local-first ;
+- synchronisation structurée ;
+- tables et synchronisation média ;
+- upload/reprise des originaux ;
+- vérification SHA-256 ;
+- téléchargement/restauration nouvel appareil ;
+- XLSX ;
+- JSON structuré ;
+- migration V5 → V6 données + médias ;
+- documentation Neon/Vercel ;
+- tests ;
+- README mis à jour une fois le comportement réellement validé.
 
 ---
 
 # 16. Définition de « terminé »
 
-La V6 data/cloud est considérée terminée lorsque :
+La V6 data/cloud est terminée lorsque :
 
 1. Gargottex reste pleinement utilisable localement ;
-2. les données structurées sont sauvegardées dans Neon Lakebase Postgres ;
-3. les modifications hors ligne sont synchronisées à la reconnexion ;
-4. un nouvel appareil peut reconstruire le Codex depuis Neon après authentification ;
-5. les suppressions se propagent correctement ;
-6. les révisions d’équilibrage sont conservées ;
-7. les exports XLSX et JSON fonctionnent ;
-8. les images ne sont pas envoyées dans Neon ;
-9. la migration des données V5 de l’iPad est documentée et testable sans perte ;
-10. la PWA fonctionne sur Vercel et conserve son mode offline ;
-11. Auth, privilèges SQL et RLS empêchent l’accès non autorisé ;
-12. aucune chaîne de connexion ou clé admin Neon n’est exposée côté client ;
-13. aucun contenu métier n’a été modifié involontairement ;
-14. les contrôles GitHub/CI pertinents sont verts ;
-15. la PR finale est prête à être relue puis fusionnée.
+2. les données structurées sont sauvegardées dans Neon ;
+3. les originaux médias sont sauvegardés dans Postgres **sans aucune perte de qualité** ;
+4. le SHA-256 confirme l’identité local/distant ;
+5. les modifications offline se synchronisent à la reconnexion ;
+6. un nouvel appareil reconstruit le Codex et peut récupérer les originaux ;
+7. les suppressions se propagent correctement ;
+8. les révisions structurées sont conservées ;
+9. XLSX et JSON fonctionnent ;
+10. la migration V5 de l’iPad est testable sans perte de données ni d’images ;
+11. la PWA fonctionne sur Vercel et offline ;
+12. Auth, GRANT et RLS empêchent les accès non autorisés ;
+13. aucun secret n’est exposé ;
+14. aucun contenu métier n’a été modifié involontairement ;
+15. CI/contrôles pertinents sont verts.
 
 ---
 
-# 17. Instruction de lancement pour le prochain chantier
+# 17. Instruction de lancement
 
-Dans un nouveau fil Work / GPT-6 Astra, l’instruction de départ peut rester courte :
-
-> Tu travailles sur `christolosier-ship-it/Gargotte-V5`. Exécute intégralement `docs/REFACTORISATION-V6-LOCAL-FIRST-NEON.md`. Utilise GitHub, Neon et Vercel selon le document. Respecte les trois phases et leurs gates, préserve les données existantes et ne lance pas la refonte UI/UX. Utilise une approche branch-first pour les changements de base de données. Poursuis jusqu’à validation complète de la refactorisation ou jusqu’à un véritable blocage externe nécessitant une action utilisateur.
-
-Le présent document contient les décisions d’architecture. Ne redéfinir une décision que si l’état réel du code ou les capacités réelles de Neon la rendent techniquement invalide ; dans ce cas, documenter clairement la raison et choisir l’alternative la moins disruptive.
+> Tu travailles sur `christolosier-ship-it/Gargotte-V5`. Exécute intégralement `docs/REFACTORISATION-V6-LOCAL-FIRST-NEON.md`. Utilise GitHub, Neon et Vercel selon le document. Respecte les trois phases et leurs gates, préserve les données existantes et les médias originaux sans aucune recompression. Utilise une approche branch-first pour les changements de base de données. Poursuis jusqu’à validation complète ou jusqu’à un véritable blocage externe nécessitant une action utilisateur.
