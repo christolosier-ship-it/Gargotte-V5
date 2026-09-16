@@ -1,3 +1,5 @@
+import { createSyncEngine, neonTransport } from './cloud/sync.js';
+import { exportStructuredBackup, importStructuredBackup } from './data/backup.js';
 import { mountAccount } from "./cloud/account.js";
 
 import {
@@ -2059,6 +2061,8 @@ function renderImportExport() {
       <div class="export-buttons">
         ${ENTITY_ORDER.map(t => `<button class="secondary" data-action="export-entity" data-type="${t}">Exporter ${getLabel(t)}</button>`).join("")}
         <button class="primary" data-action="export-all">Exporter tout</button>
+        <button class="primary" data-action="export-json">Exporter les données JSON (sans images)</button>
+        <label>Importer les données JSON <input type="file" accept=".json" data-action="import-json"></label>
         <button class="primary" data-action="export-backup">Exporter backup complet (JSON + images)</button>
       </div>
 
@@ -2900,6 +2904,9 @@ function bindEvents() {
         case "export-all":
           await exportAllFile();
           return;
+        case "export-json":
+          downloadBlob(new Blob([JSON.stringify(await exportStructuredBackup(),null,2)],{type:'application/json'}),`gargottex_structure_${new Date().toISOString().slice(0,10)}.json`);
+          return;
         case "export-backup":
           await exportFullBackupFile();
           toast("🧳 Backup ZIP exporté", "success");
@@ -3025,6 +3032,16 @@ function bindEvents() {
           toast("📥 Fichier analysé", "success");
           return;
         }
+        case "import-json": {
+          const file=ev.target.files?.[0];
+          if(!file) return;
+          const input=JSON.parse(await file.text());
+          if(!confirm('Fusionner cette sauvegarde avec les données locales ? Les fiches de même identifiant seront remplacées. Les autres fiches et les images locales seront conservées.')) return;
+          const counts=await importStructuredBackup(input);
+          await refreshData();
+          toast(`JSON importé : ${Object.values(counts).reduce((a,b)=>a+b,0)} fiches`, 'success');
+          return;
+        }
         case "import-backup-file": {
           const file = el.files?.[0];
           if (!file) return;
@@ -3126,7 +3143,18 @@ async function bootstrap() {
   wireGlobalErrors();
   bindEvents();
   render();
-  mountAccount().catch(console.error);
+  let syncEngine;
+  mountAccount({ onSession: async (client,user,onStatus) => {
+    syncEngine?.stop();
+    if (user) {
+      syncEngine=createSyncEngine({ userId:user.id,transport:neonTransport(client,user.id),onStatus,
+        onData:async()=>{
+          hydrateState(await loadAllData());
+          if (!document.activeElement?.matches('input,textarea,select')) render();
+        } });
+      syncEngine.start();
+    }
+  } }).catch(console.error);
 
 if ("serviceWorker" in navigator) {
 

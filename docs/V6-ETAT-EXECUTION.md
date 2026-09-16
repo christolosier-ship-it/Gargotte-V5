@@ -71,3 +71,17 @@ Vérifier dans Neon Console, sur **la branche de travail**, Data API > Settings 
 4. Phase 3 : migration JSON, export/import XLSX, preview Vercel, tests PWA, CI et documentation finale.
 
 L’interface Auth actuelle ne connecte encore aucun moteur de synchronisation. Elle indique seulement l’état du compte. Le README de la version stable reste inchangé tant que le comportement final n’est pas validé.
+
+## Reprise du 16 septembre 2026 — remplace l’état bloqué ci-dessus
+
+Le rejet `jwk not found` n’est plus reproduit après renouvellement des sessions. Aucune désactivation de sécurité.
+**Gates 1 et 2 validées ; phase 3 en cours.**
+
+Tests réels avec deux comptes de la branche isolée : Auth/JWT, lecture/écriture propriétaire, refus anonyme et autre compte, refus d’usurpation, historique protégé, tombstones, rejet de blobs et déduplication.
+Tests du moteur avec SDK réel : panne simulée, reprise/confirmation, reconstruction d’une installation vide, champs imbriqués et suppressions.
+Correction SQL versionnée `20260916070000_revision_after_upsert.sql` appliquée et testée : répéter un upsert ne crée pas de révision fantôme.
+Six tests automatisés locaux passent, incluant aller-retour JSON complet du seed et export/import XLSX (accents, texte long, colonnes métier). Build réussi.
+
+Implémentation phase 2 : outbox atomique, propriétaire local, envois en lots, retry, pull paginé par révisions, tombstones, merge JSON et statut minimal. Aucun changement des règles, statistiques, lore ou direction artistique.
+Le projet Vercel existant est `gargotte-v5` (`prj_Tmg6QSlA1JF2bkMZdCPiFmfhP0DC`). Preview et contrôles GitHub à vérifier avant clôture.
+La production Neon reste inchangée. La promotion, le compte personnel et la validation des données actuelles de l’iPad restent à effectuer.

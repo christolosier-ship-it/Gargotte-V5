@@ -13,6 +13,9 @@ const ASSETS = [
   "./src/storage/idb.js",
   "./config.js",
   "./src/data/repository.js",
+  "./src/data/structured.js",
+  "./src/data/backup.js",
+  "./src/cloud/sync.js",
   "./src/cloud/account.js",
   "./assets/images/logo-192.png",
   "./assets/images/logo-512.png",
@@ -47,14 +50,14 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).catch(() => {}));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
+    await Promise.all(keys.filter(k => k.startsWith("gargottex-") && k !== CACHE).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
@@ -78,7 +81,7 @@ self.addEventListener("fetch", event => {
         const fresh = await fetch(req, { cache: "no-store" });
 
         const cache = await caches.open(CACHE);
-        cache.put(req, fresh.clone()).catch(() => {});
+        if (fresh.ok) cache.put(req, fresh.clone()).catch(() => {});
 
         return fresh;
       } catch (_) {
@@ -95,7 +98,7 @@ self.addEventListener("fetch", event => {
       const fresh = await fetch(req);
 
       const cache = await caches.open(CACHE);
-      cache.put(req, fresh.clone()).catch(() => {});
+      if (fresh.ok) cache.put(req, fresh.clone()).catch(() => {});
 
       return fresh;
     } catch (_) {

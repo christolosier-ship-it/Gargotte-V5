@@ -1,8 +1,11 @@
+import { ENTITY_TYPES, structuredData } from '../data/structured.js';
 
 const DB_NAME = "gargottex-v5-offline";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const STORE_DEFS = [
+  { name: "sync_outbox", keyPath: "seq", autoIncrement: true },
+  { name: "sync_meta", keyPath: "key" },
   { name: "meta", keyPath: "key" },
   { name: "dungeons", keyPath: "id", indexes: ["slug", "name"] },
   { name: "creatures", keyPath: "id", indexes: ["slug", "name", "dungeon_id", "category"] },
@@ -42,7 +45,7 @@ function openDatabase() {
       const db = req.result;
       for (const def of STORE_DEFS) {
         if (db.objectStoreNames.contains(def.name)) continue;
-        const store = db.createObjectStore(def.name, { keyPath: def.keyPath });
+        const store = db.createObjectStore(def.name, { keyPath: def.keyPath, autoIncrement: !!def.autoIncrement });
         for (const idx of def.indexes || []) {
           if (Array.isArray(idx)) {
             store.createIndex(idx[0], idx[1], { unique: !!idx[2] });
@@ -53,7 +56,15 @@ function openDatabase() {
       }
     };
 
-    req.onsuccess = () => resolve(req.result);
+    req.onblocked = () => {
+      const host = typeof document !== 'undefined' && document.getElementById('app');
+      if (host) host.textContent = 'Mise à jour locale : fermez les autres onglets Gargottex, puis revenez ici. Vos données sont conservées.';
+    };
+    req.onsuccess = () => {
+      const db=req.result;
+      db.onversionchange=()=>{db.close();dbPromise=null;};
+      resolve(db);
+    };
     req.onerror = () => reject(req.error || new Error("Unable to open IndexedDB"));
   });
   return dbPromise;
@@ -78,7 +89,7 @@ async function withTx(storeNames, mode, fn) {
 export async function initDatabase(seed) {
   await openDatabase();
 
-  const business = STORE_DEFS.filter(s => !['meta','logs'].includes(s.name)).map(s => s.name);
+  const business = ENTITY_TYPES;
   await withTx([...business, 'meta'], 'readwrite', async stores => {
     const marker = await reqToPromise(stores.meta.get('initialized'));
     let count = 0;
@@ -103,40 +114,112 @@ export async function getById(storeName, id) {
   return await withTx([storeName], "readonly", async ({ [storeName]: store }) => reqToPromise(store.get(id)));
 }
 
+function wakeSync() {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('gargottex-local-write'));
+}
+function enqueue(outbox, storeName, item, operation) {
+  outbox.add({ entity:storeName, id:item.id, operation, payload:structuredData(item),
+    created_at:new Date().toISOString(), attempts:0, last_error:null });
+}
 export async function putOne(storeName, item) {
-  const clone = structuredClone(item);
-  await withTx([storeName], "readwrite", async ({ [storeName]: store }) => { store.put(clone); });
+  const [clone] = await putMany(storeName,[item]);
   return clone;
 }
-
 export async function putMany(storeName, items) {
-  const clones = items.map(v => structuredClone(v));
-  await withTx([storeName], "readwrite", async ({ [storeName]: store }) => {
-    for (const item of clones) store.put(item);
+  const clones = items.map(v=>structuredClone(v));
+  const sync = ENTITY_TYPES.includes(storeName);
+  await withTx(sync ? [storeName,'sync_outbox'] : [storeName], 'readwrite', async stores => {
+    for (const item of clones) {
+      const old = await reqToPromise(stores[storeName].get(item.id ?? item.key));
+      stores[storeName].put(item);
+      if (sync && JSON.stringify(structuredData(old)) !== JSON.stringify(structuredData(item))) enqueue(stores.sync_outbox,storeName,item,'upsert');
+    }
   });
+  if (sync) wakeSync();
   return clones;
 }
-
-export async function deleteOne(storeName, id) {
-  await withTx([storeName], "readwrite", async ({ [storeName]: store }) => { store.delete(id); });
+export async function deleteOne(storeName,id) {
+  return deleteWhere(storeName, row => row.id===id);
 }
-
 export async function clearStore(storeName) {
-  await withTx([storeName], "readwrite", async ({ [storeName]: store }) => { store.clear(); });
+  if (ENTITY_TYPES.includes(storeName)) return deleteWhere(storeName,()=>true);
+  await withTx([storeName],'readwrite',async stores=>{stores[storeName].clear();});
 }
-
-export async function deleteWhere(storeName, predicate) {
-  return await withTx([storeName], "readwrite", async ({ [storeName]: store }) => {
-    const rows = await reqToPromise(store.getAll());
-    let count = 0;
-    for (const row of rows) {
-      if (predicate(row)) {
-        store.delete(row.id);
-        count++;
-      }
+export async function deleteWhere(storeName,predicate) {
+  const sync = ENTITY_TYPES.includes(storeName);
+  const count = await withTx(sync ? [storeName,'sync_outbox'] : [storeName],'readwrite',async stores=>{
+    const rows = await reqToPromise(stores[storeName].getAll());
+    let count=0;
+    for(const row of rows) if(predicate(row)) {
+      stores[storeName].delete(row.id);
+      if(sync) enqueue(stores.sync_outbox,storeName,row,'delete');
+      count++;
     }
     return count;
   });
+  if(sync) wakeSync();
+  return count;
+}
+// First account binding is atomic with bootstrap; another account must use another browser profile.
+export async function bindSyncOwner(userId) {
+  return withTx([...ENTITY_TYPES,'sync_meta','sync_outbox'],'readwrite',async stores=>{
+    const current = await reqToPromise(stores.sync_meta.get('owner'));
+    if(current && current.value!==userId) throw new Error('Cette copie locale appartient à un autre compte. Utilisez un autre profil de navigateur.');
+    if(current) return;
+    const pending=await reqToPromise(stores.sync_outbox.getAll());
+    for(const type of ENTITY_TYPES) {
+      for(const row of await reqToPromise(stores[type].getAll())) {
+        if(!pending.some(p=>p.entity===type&&p.id===row.id)) enqueue(stores.sync_outbox,type,row,'upsert');
+      }
+    }
+    stores.sync_meta.put({key:'owner',value:userId});
+  });
+}
+export async function confirmOutbox(seqs) {
+  await withTx(['sync_outbox'],'readwrite',async stores=>{ for(const seq of seqs) stores.sync_outbox.delete(seq); });
+}
+export async function recordSyncFailure(seqs,error) {
+  await withTx(['sync_outbox'],'readwrite',async stores=>{
+    for(const seq of seqs) {
+      const row=await reqToPromise(stores.sync_outbox.get(seq));
+      if(row) stores.sync_outbox.put({...row,attempts:row.attempts+1,last_error:String(error).slice(0,300)});
+    }
+  });
+}
+export async function applyRemoteRevisions(revisions,userId) {
+  await withTx([...ENTITY_TYPES,'sync_meta','sync_outbox'],'readwrite',async stores=>{
+    const owner=await reqToPromise(stores.sync_meta.get('owner'));
+    if(owner?.value!==userId) throw new Error('Compte de synchronisation incohérent');
+    const pending=await reqToPromise(stores.sync_outbox.getAll());
+    for(const revision of revisions) {
+      const {entity_type:type,entity_id:id,snapshot}=revision;
+      if(!ENTITY_TYPES.includes(type)||revision.user_id!==userId||snapshot?.user_id!==userId||snapshot?.id!==id||snapshot?.data?.id!==id) throw new Error('Révision distante invalide');
+      if(!pending.some(p=>p.entity===type&&p.id===id)) {
+        if(snapshot.deleted_at) stores[type].delete(id);
+        else {
+          const row=structuredData(snapshot.data);
+          if(type==='media_assets') {
+            const local=await reqToPromise(stores[type].get(id));
+            for(const key of ['blob','thumb_blob']) if(local?.[key]) row[key]=local[key];
+          }
+          stores[type].put(row);
+        }
+      }
+      stores.sync_meta.put({key:'cursor',value:String(revision.revision_id)});
+    }
+  });
+}
+export async function mergeStructuredData(data) {
+  await withTx([...ENTITY_TYPES,'sync_outbox'],'readwrite',async stores=>{
+    for(const type of ENTITY_TYPES) for(const row of data[type]) {
+      const old=await reqToPromise(stores[type].get(row.id));
+      const next=structuredClone(row);
+      if(type==='media_assets') for(const key of ['blob','thumb_blob']) if(old?.[key]) next[key]=old[key];
+      stores[type].put(next);
+      if(JSON.stringify(structuredData(old))!==JSON.stringify(row)) enqueue(stores.sync_outbox,type,row,'upsert');
+    }
+  });
+  wakeSync();
 }
 
 export async function saveUiState(ui) {
@@ -166,7 +249,7 @@ export async function getLogs(limit = 100) {
 }
 
 export async function loadAllData() {
-  const names = STORE_DEFS.filter(s => s.name !== "meta" && s.name !== "logs").map(s => s.name);
+  const names = ENTITY_TYPES;
   const data = {};
   await withTx(names, "readonly", async (stores) => {
     for (const name of names) data[name] = await reqToPromise(stores[name].getAll());
