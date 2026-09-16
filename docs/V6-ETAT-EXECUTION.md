@@ -1,87 +1,63 @@
 # V6 Neon — état d’exécution
 
-## État au 15 septembre 2026
+## État au 16 septembre 2026
 
-**Phase 1 en cours, gate NON validée. Phases 2 et 3 non engagées.**
-Aucune promotion Neon, aucune migration des données de l’iPad et aucun déploiement Vercel.
-Branche de référence Git : `V5.3`, commit initial `a2bb065`.
-Branche de travail Git : `refactor/v6-neon-local-first`.
+**Gates 1 et 2 validées pour le périmètre initial (données structurées uniquement). Phase 3 partiellement validée ; V6 non déclarée terminée.**
 
-## Environnement isolé
+### Divergence du document détectée à la reprise
 
+Le document de référence sur `V5.3` (`8ff289d` à la vérification) demande désormais les originaux médias dans Postgres, upload reprenable et contrôle SHA-256. Le document de la branche technique, utilisé jusqu’ici, interdit explicitement leur synchronisation (§2.6 et §9). Ces deux périmètres sont incompatibles. La validation acquise ne couvre pas les nouvelles gates média ; aucune implémentation média distante ni promotion ne sera présentée comme terminée. Choix utilisateur nécessaire avant d’adopter la nouvelle spécification. Les documents UI et le document technique modifiés en parallèle n’ont pas été remplacés ni fusionnés silencieusement.
+La production Neon et les données de l’iPad n’ont pas été modifiées. Aucune refonte UI/UX ni modification du contenu métier.
+
+- Référence Git : `V5.3`, commit initial `a2bb065`.
+- Travail Git : `refactor/v6-neon-local-first`, PR #9.
 - Projet Neon : `Gargottex` / `young-bread-85335056`.
-- Branche par défaut : `production` / `br-odd-union-b4smjq0r` (non modifiée).
-- Branche de travail : `refactor-v6-neon-local-first` / `br-wandering-bread-b48avojm`.
+- Production par défaut : `br-odd-union-b4smjq0r`.
+- Branche isolée, enfant de production : `br-wandering-bread-b48avojm`.
 - Base : `neondb`.
-- Auth : `https://ep-wild-thunder-b47hzi12.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth`.
-- Data API : `https://ep-wild-thunder-b47hzi12.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1`.
-- URL publique cliente : `https://ep-wild-thunder-b47hzi12.c-6.us-east-2.aws.neon.tech/neondb`.
+- URL cliente publique de test : `https://ep-wild-thunder-b47hzi12.c-6.us-east-2.aws.neon.tech/neondb`.
+- Vercel : projet `gargotte-v5`, `prj_Tmg6QSlA1JF2bkMZdCPiFmfhP0DC`.
+- Preview : https://gargotte-v5-git-refactor-v6-neon-local-first-christo5.vercel.app (protection Vercel conservée).
 
-Data API activée avec `auth_provider: neon_auth`, `add_default_grants: false`.
-Deux comptes jetables `@example.invalid` ont été créés uniquement sur cette branche pour les tests.
-Aucun compte personnel et aucune donnée métier réelle n’ont été importés.
+## Phase 1 — validée
 
-## Travail réalisé
+Neuf tables métier JSONB conservent tous les champs et identifiants existants ; relations conservées et indexées sans ajouter de FK qui rejetteraient des références historiques. RLS propriétaire sur les dix tables métier/historique, aucun accès anonyme, aucune suppression physique cliente. Révisions append-only, états précédents, tombstones et rejet récursif des blobs.
 
-- Migration `20260915223000_gargottex_foundation.sql` appliquée en transaction sur la branche isolée.
-- Neuf tables métier : fiches structurées complètes dans `data jsonb`, identifiants conservés, clé primaire `(user_id,id)`.
-- Relations existantes conservées dans JSONB et indexées ; pas de nouvelles FK strictes qui rejetteraient des références optionnelles/historiques. Validation applicative des relations encore à réaliser.
-- Métadonnées serveur distinctes des champs métier : dates, tombstone et révision.
-- RLS sur les dix tables métier/historique ; aucun accès anonyme ; pas de suppression physique accordée au client.
-- Trigger de révisions privé, contrôle explicite du propriétaire, états précédents conservés ; mise à jour identique sans nouvelle révision. Comportement réel via JWT encore NON validé.
-- Rejet SQL récursif de `blob` et `thumb_blob`.
-- Repository local intermédiaire, transaction IndexedDB annulée en cas d’exception.
-- Correction du bootstrap : une catégorie Donjons vide n’autorise plus à réécrire les autres données. Une installation cloud vierge n’est pas alimentée automatiquement avec les exemples.
-- Interface technique de connexion minimale (sans inscription), SDK officiel bundlé avec esbuild.
-- SW limité aux requêtes de même origine pour éviter tout cache Auth/Data API.
+Auth Managed Better Auth et Data API (`auth_provider: neon_auth`, `add_default_grants: false`) opérationnels sur la branche de travail. Deux comptes jetables `@example.invalid` y servent uniquement aux tests. Aucun compte personnel ni dataset réel importé.
 
-### Adaptation du mécanisme de préparation
+Le blocage initial `jwk not found` du 15 septembre n’est plus reproduit après renouvellement des sessions. Les tests HTTP réels ont validé lecture/écriture propriétaire, refus anonyme/autre compte/usurpation, historique protégé et rejet des blobs. Aucune sécurité désactivée pour les obtenir.
 
-`prepare_database_migration` cible automatiquement la branche par défaut et ne permet pas de choisir le parent.
-La production n’a pas la Data API et ne possède donc ni `auth.user_id()` ni le rôle `authenticated`, prérequis du SQL.
-La préparation a été faite sur une branche dédiée issue de production : provisionnement Data API sur cette branche, puis exécution transactionnelle du SQL versionné via `run_sql_transaction`.
-Aucun SQL applicatif n’a été exécuté en production. Avant toute promotion, préparer une migration révisable avec les prérequis Data API et demander la confirmation prévue au §4.4 du plan.
+Migrations appliquées uniquement sur la branche isolée :
 
-## Vérifications obtenues
+1. `20260915223000_gargottex_foundation.sql`.
+2. `20260916070000_revision_after_upsert.sql` : audit AFTER écriture pour supprimer les révisions fantômes d’un upsert identique.
 
-- `npm test` : tests locaux de CRUD, conservation des champs, rollback transactionnel, absence de réensemencement destructif.
-- `npm run build` : réussi, SDK navigateur bundlé.
-- SQL distant : RLS active sur les dix tables, lecture anonyme et suppression physique cliente interdites.
-- Auth réel : création des deux comptes, session HTTP 200 et JWT fourni.
-- Le `kid` du JWT est présent dans le JWKS public de la même branche.
+### Adaptation de la préparation Neon
 
-## Blocage externe reproductible
+`prepare_database_migration` cible automatiquement la branche par défaut sans paramètre de parent. La production n’a pas les prérequis Data API (`auth.user_id()`, rôle `authenticated`). Une branche dédiée issue de production a donc été créée ; Data API y a été provisionnée et le SQL versionné exécuté avec `run_sql_transaction`.
 
-La première écriture via Data API avec ce JWT renvoie :
+Avant promotion : préparer le résultat révisable avec les prérequis Data API et obtenir la confirmation explicite exigée au §4.4 du plan. Ne pas remplacer production par la branche contenant les comptes et données de test.
 
-```json
-{"message":"jwk not found","code":null,"detail":null,"hint":null}
-```
+## Phase 2 — validée
 
-HTTP 400. La requête n’atteint pas les tests d’isolation métier.
-Tentatives : refresh de schéma, cache JWT à zéro, recréation Data API avec JWKS explicite de la même branche (même échec). Configuration finalement rétablie à `neon_auth`, sans grants globaux.
-Ne pas contourner cette erreur en supprimant RLS, en utilisant un rôle propriétaire ou en exposant un secret Postgres.
-Vérifier dans Neon Console, sur **la branche de travail**, Data API > Settings > Authentication, l’association du fournisseur Managed Better Auth avec le JWKS ci-dessus. Si elle est correcte, transmettre l’erreur au support Neon avec les identifiants projet/branche.
+Repository local, enregistrement métier + outbox atomiques, bootstrap des données existantes, liaison à un propriétaire, envoi batch, confirmation exacte, retry, pull paginé, suppressions douces, fusion JSON non destructive. Dernière synchronisation validée gagnante, état remplacé récupérable dans les révisions. Les médias binaires restent exclusivement locaux.
 
-## À reprendre après résolution
+`scripts/verify-neon.mjs` a passé avec le SDK officiel et des JWT réels : panne réseau simulée, reprise sans perte, upsert identique sans révision supplémentaire, reconstruction d’une installation vide, champs imbriqués et tombstones. Les secrets de test sont hors dépôt.
 
-1. Renouveler les JWT des comptes de test, vérifier écriture/lecture propriétaire, refus autre compte/anonyme/usurpation, déduplication des révisions, tombstones, rejet des blobs et protection de l’historique.
-2. Vérifier l’application dans le navigateur et l’ouverture d’une vraie base V5 existante ; le téléchargement Chromium a rencontré des timeouts dans cet environnement.
-3. Revoir les diffs, valider la gate Phase 1, puis seulement développer la Phase 2 (outbox atomique, retry, pull incrémental, gestion multi-appareils, imports).
-4. Phase 3 : migration JSON, export/import XLSX, preview Vercel, tests PWA, CI et documentation finale.
+## Phase 3 — preuves obtenues et limites
 
-L’interface Auth actuelle ne connecte encore aucun moteur de synchronisation. Elle indique seulement l’état du compte. Le README de la version stable reste inchangé tant que le comportement final n’est pas validé.
+- Huit tests `npm test` réussis : CRUD/rollback, outbox/reprise/concurrence, export/import JSON complet, XLSX avec accents et texte long, mise à niveau réelle du schéma IndexedDB 2 vers 3 sous fake-indexeddb avec blobs/indexes/préférences préservés, fallback offline du service worker et exclusion Auth/API du cache.
+- `npm run build` réussi ; SDK bundlé, cache versionné par hash des assets, aucune chaîne PostgreSQL dans le client.
+- GitHub Actions vert sur `b349341` (run `35063411290`). Contrôles du dernier commit à consulter dans la PR.
+- Preview Vercel `b349341` READY ; interface vérifiée dans Chrome : création et modification de fiche en mode local, rechargement conservant nom et lore, actions d’export XLSX/JSON et restauration présentes. Aucune erreur applicative observée.
+- Le test du service worker est simulé : il ne remplace pas l’installation PWA et le lancement en mode avion sur iPad.
+- Les données seed de test ont conservé leurs champs, relations et comptages (138 entrées). Ce résultat ne prouve pas la migration des données actuellement présentes dans l’iPad. Le XLSX joint de mai n’est pas une sauvegarde certifiée de l’installation actuelle.
 
-## Reprise du 16 septembre 2026 — remplace l’état bloqué ci-dessus
+## Étapes nécessitant l’utilisateur avant clôture
 
-Le rejet `jwk not found` n’est plus reproduit après renouvellement des sessions. Aucune désactivation de sécurité.
-**Gates 1 et 2 validées ; phase 3 en cours.**
+1. Confirmation de promotion des deux migrations sur la production, après préparation/contrôle des prérequis Auth + Data API, conformément au §4.4. Configurer ensuite Vercel avec l’URL publique de production et le compte personnel.
+2. Depuis l’installation iPad actuelle : export JSON structuré, import/bootstrap selon la procédure, comparaison des neuf comptages et de fiches représentatives. Conserver l’ancienne origine et IndexedDB.
+3. Installation/lancement PWA sur l’iPad, mode avion avec créations/modifications/suppressions, reconnexion et contrôle Neon. Vérifier aussi la reconstruction d’un second appareil avec le compte personnel.
+4. Après ces preuves : valider gate 3, actualiser ce document et rendre la PR finale prête à fusionner.
 
-Tests réels avec deux comptes de la branche isolée : Auth/JWT, lecture/écriture propriétaire, refus anonyme et autre compte, refus d’usurpation, historique protégé, tombstones, rejet de blobs et déduplication.
-Tests du moteur avec SDK réel : panne simulée, reprise/confirmation, reconstruction d’une installation vide, champs imbriqués et suppressions.
-Correction SQL versionnée `20260916070000_revision_after_upsert.sql` appliquée et testée : répéter un upsert ne crée pas de révision fantôme.
-Six tests automatisés locaux passent, incluant aller-retour JSON complet du seed et export/import XLSX (accents, texte long, colonnes métier). Build réussi.
-
-Implémentation phase 2 : outbox atomique, propriétaire local, envois en lots, retry, pull paginé par révisions, tombstones, merge JSON et statut minimal. Aucun changement des règles, statistiques, lore ou direction artistique.
-Le projet Vercel existant est `gargotte-v5` (`prj_Tmg6QSlA1JF2bkMZdCPiFmfhP0DC`). Preview et contrôles GitHub à vérifier avant clôture.
-La production Neon reste inchangée. La promotion, le compte personnel et la validation des données actuelles de l’iPad restent à effectuer.
+Voir `docs/V6-MIGRATION-CONFIGURATION.md` pour les commandes, les origines, les endpoints publics et le protocole de migration.

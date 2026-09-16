@@ -203,7 +203,7 @@ const FORM_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.slice();
-const APP_VERSION = "5.4.0";
+const APP_VERSION = "6.0.0";
 let backupBusy = false;
 let searchDebounceTimer = null;
 
@@ -1122,7 +1122,7 @@ function renderShell(content) {
       <button class="brand" data-action="go-home" title="Accueil">
         <img src="assets/images/logo-192.png" alt="Gargottex">
         <div>
-          <div class="brand-title">Gargottex V5.3</div>
+          <div class="brand-title">Gargottex V6</div>
           <div class="brand-subtitle">offline-first, local et têtu</div>
         </div>
       </button>
@@ -1184,7 +1184,7 @@ function renderHome() {
       <div class="hero-text">
         <span class="eyebrow">Fantasy cartoon absurde</span>
         <h1>Le codex tavernier de Gargottex</h1>
-        <p>Un registre local, rapide et sans cloud, pour gérer donjons, créatures, loot, héros, PNJ, quêtes, Brouhaha et médias.</p>
+        <p>Un registre local et rapide, avec sauvegarde distante après connexion, pour gérer donjons, créatures, loot, héros, PNJ, quêtes, Brouhaha et médias.</p>
         <div class="hero-actions">
           <button class="primary" data-action="set-view" data-view="generator">🎲 Générer</button>
           <button class="secondary" data-action="set-view" data-view="brouhaha">🔥 Brouhaha</button>
