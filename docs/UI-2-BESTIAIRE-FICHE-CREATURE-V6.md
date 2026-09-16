@@ -241,11 +241,27 @@ Les liens contextuels suivent les règles générales de UI-3 et doivent conserv
 
 # 9. Responsive
 
+Les seuils globaux appartiennent à UI-1/UI-6. Les proportions ci-dessous sont propres au Bestiaire et restent indicatives.
+
 ## Desktop
 
 Sans sélection : collection large.
 
-Avec sélection : collection + fiche, avec illustration importante. Un rail Liés est possible uniquement si la largeur reste confortable.
+Avec sélection :
+
+```text
+Sidebar | Collection | Illustration | Fiche
+```
+
+Repères :
+
+- collection : environ 22 à 28 % de l'espace de travail ;
+- illustration : environ 35 à 40 % de la zone fiche lorsque la largeur le permet ;
+- fiche : reste de la zone de détail.
+
+Sur très grand desktop seulement, un rail Liés peut s'ajouter s'il ne comprime pas la fiche.
+
+La collection et la fiche peuvent avoir des scrolls indépendants afin d'éviter les sauts lors d'un changement de sélection.
 
 ## Tablette paysage
 

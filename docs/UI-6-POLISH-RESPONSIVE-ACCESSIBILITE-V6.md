@@ -59,29 +59,35 @@ Valider toutes les zones UI-1 à UI-5 :
 
 # 3. Matrice responsive
 
-Tester au minimum :
+Les valeurs suivantes servent de **cibles de validation UI-6**. Elles ne remplacent pas les breakpoints du design system.
 
 ## Téléphone
 
-- étroit ;
-- courant ;
-- grand téléphone.
+Tester au minimum :
+
+- étroit : environ 320 à 360 px ;
+- courant : environ 390 px ;
+- grand téléphone : environ 430 px.
 
 Vérifier : pas de débordement involontaire, navigation utilisable, actions non masquées, clavier virtuel, bottom nav, sheets et images.
 
 ## Tablette
 
-- iPad portrait ;
-- iPad paysage ;
+Tester au minimum :
+
+- portrait : environ 768 à 834 px ;
+- paysage : environ 1024 à 1194 px ;
 - rotation en cours d'usage.
 
 Vérifier : rail, master-detail quand prévu, drawer en portrait, formulaires, illustrations, tactiles et conservation de contexte.
 
 ## Desktop
 
-- étroit ;
-- courant ;
-- large.
+Tester au minimum :
+
+- étroit : environ 1200 à 1366 px ;
+- courant : environ 1440 à 1600 px ;
+- large : 1920 px et plus.
 
 Vérifier : sidebar, largeur de lecture, master-detail, clavier, focus, densité et espaces vides.
 
@@ -197,11 +203,7 @@ Un smoke test TalkBack peut être ajouté lors du contrôle Android si disponibl
 
 ## 7.4 Texte, zoom et reflow
 
-Tester :
-
-- zoom navigateur progressif ;
-- agrandissement du texte ;
-- reflow jusqu'à un équivalent de forte magnification sur les parcours essentiels.
+Tester au minimum les paliers de zoom usuels 100 %, 125 %, 150 % et 200 %, puis un scénario de reflow à forte magnification sur les parcours essentiels.
 
 Objectifs :
 
@@ -267,6 +269,14 @@ Automatiser les contrôles détectables : noms accessibles, rôles, labels, stru
 
 Captures ciblées seulement sur les vues structurantes : Accueil, Bestiaire, fiche Créature, fiche Donjon, Générateur, Brouhaha, Atelier, Médias, Import preview.
 
+Tailles de référence recommandées :
+
+- 390 x 844 ;
+- environ 820 x 1180 ;
+- environ 1180 x 820 ;
+- 1366 x 768 ;
+- 1920 x 1080.
+
 Une baseline n'est mise à jour qu'après changement intentionnel validé.
 
 ---
@@ -283,7 +293,23 @@ Objectifs fonctionnels :
 - aucun chargement massif d'originaux ;
 - pas de rerender inutile d'une grosse collection à chaque frappe.
 
-Les Web Vitals et Lighthouse peuvent être utilisés comme indicateurs. Une baisse est analysée avant toute concession sur le contenu ou la qualité média.
+## Indicateurs Web Vitals
+
+Sur un scénario de référence raisonnable :
+
+- CLS cible <= 0,10 ;
+- INP cible <= 200 ms ;
+- LCP cible <= 2,5 s lorsque la mesure est pertinente.
+
+## Lighthouse
+
+Seuils de vigilance, non absolus :
+
+- Performance >= 80 ;
+- Accessibilité >= 95 ;
+- Best Practices >= 90.
+
+Une baisse est analysée avant toute concession sur le contenu ou la qualité média.
 
 ---
 
