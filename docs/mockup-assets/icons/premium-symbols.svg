@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <style>
+      .o{fill:none;stroke:currentColor;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+      .f{fill:currentColor;stroke:none}
+      .thin{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+
+    <symbol id="cat-basic" viewBox="0 0 64 64">
+      <path class="o" d="M32 7 51 21 44 48 32 57 20 48 13 21Z"/>
+      <path class="thin" d="m13 21 19 8 19-8M32 29v28M20 48l12-19 12 19"/>
+      <circle class="f" cx="32" cy="29" r="3"/>
+    </symbol>
+
+    <symbol id="cat-tactical" viewBox="0 0 64 64">
+      <circle class="o" cx="32" cy="32" r="20"/>
+      <circle class="thin" cx="32" cy="32" r="9"/>
+      <path class="o" d="M32 6v11M32 47v11M6 32h11M47 32h11"/>
+      <path class="thin" d="m18 18 7 7m14 14 7 7m0-28-7 7M25 39l-7 7"/>
+      <circle class="f" cx="32" cy="32" r="3"/>
+    </symbol>
+
+    <symbol id="cat-special" viewBox="0 0 64 64">
+      <path class="o" d="m32 5 6.5 17.5L56 29l-17.5 6.5L32 58l-6.5-22.5L8 29l17.5-6.5Z"/>
+      <path class="thin" d="m32 14 3.5 11.5L47 29l-11.5 3.5L32 46l-3.5-13.5L17 29l11.5-3.5Z"/>
+      <circle class="f" cx="32" cy="29" r="3"/>
+    </symbol>
+
+    <symbol id="cat-brute" viewBox="0 0 64 64">
+      <path class="o" d="M13 18h30l8 8v12H34l-6 18H17l6-18H13Z"/>
+      <path class="thin" d="M19 18v20m24-20-5 20M23 45h10M30 18l4 9-7 6 8 5"/>
+      <path class="f" d="M47 24h7v17h-7z"/>
+    </symbol>
+
+    <symbol id="cat-miniboss" viewBox="0 0 64 64">
+      <path class="o" d="M9 22 20 33l12-20 12 20 11-11-5 27H14Z"/>
+      <path class="thin" d="M16 41h32M25 35h14"/>
+      <circle class="f" cx="32" cy="22" r="3.5"/>
+      <circle class="f" cx="18" cy="28" r="2.5"/>
+      <circle class="f" cx="46" cy="28" r="2.5"/>
+    </symbol>
+
+    <symbol id="cat-boss" viewBox="0 0 64 64">
+      <path class="o" d="M16 20c0-9 7-15 16-15s16 6 16 15v8c0 6-3 11-8 14v10l-8 6-8-6V42c-5-3-8-8-8-14Z"/>
+      <path class="thin" d="M17 17 8 9m39 8 9-8M20 24l7 5-8 5m25-10-7 5 8 5M25 43h14M28 48v7m8-7v7"/>
+      <path class="f" d="m23 30 5 2-4 4-5-2zm18 0-5 2 4 4 5-2z"/>
+    </symbol>
+
+    <symbol id="stat-hp" viewBox="0 0 64 64">
+      <path class="o" d="M32 54S10 42 10 24c0-9 6-15 14-15 5 0 8 2 8 7 0-5 3-7 8-7 8 0 14 6 14 15 0 18-22 30-22 30Z"/>
+      <path class="thin" d="M16 29h10l4-9 6 18 4-9h8"/>
+    </symbol>
+
+    <symbol id="stat-atk" viewBox="0 0 64 64">
+      <path class="o" d="m13 51 17-17M22 17l25 34M13 13l13 4-8 8Zm38 0-13 4 8 8Z"/>
+      <path class="thin" d="m26 38-7 7m19-7 7 7"/>
+    </symbol>
+
+    <symbol id="stat-def" viewBox="0 0 64 64">
+      <path class="o" d="M32 6 51 13v16c0 13-7 22-19 29C20 51 13 42 13 29V13Z"/>
+      <path class="thin" d="M32 13v35m-13-22h26"/>
+    </symbol>
+
+    <symbol id="stat-range" viewBox="0 0 64 64">
+      <circle class="o" cx="28" cy="36" r="18"/>
+      <circle class="thin" cx="28" cy="36" r="9"/>
+      <path class="o" d="M36 28 54 10m-9 1h9v9"/>
+      <circle class="f" cx="28" cy="36" r="3"/>
+    </symbol>
+
+    <symbol id="stat-actions" viewBox="0 0 64 64">
+      <path class="o" d="M23 8c6 0 10 5 10 12v8c0 7-4 12-10 12S13 35 13 28v-8C13 13 17 8 23 8Zm21 17c5 0 8 4 8 10v6c0 7-3 11-8 11s-8-4-8-11v-6c0-6 3-10 8-10Z"/>
+      <path class="thin" d="M18 16h10M17 24h12m11 8h8"/>
+    </symbol>
+
+    <symbol id="stat-threat" viewBox="0 0 64 64">
+      <path class="o" d="M32 7 57 54H7Z"/>
+      <path class="thin" d="M32 21v16"/>
+      <circle class="f" cx="32" cy="46" r="3"/>
+    </symbol>
+
+    <symbol id="stat-base" viewBox="0 0 64 64">
+      <ellipse class="o" cx="32" cy="34" rx="22" ry="13"/>
+      <path class="thin" d="M10 34v8c0 7 10 13 22 13s22-6 22-13v-8M18 30h28"/>
+    </symbol>
+
+    <symbol id="stat-ai" viewBox="0 0 64 64">
+      <path class="o" d="M8 32s9-16 24-16 24 16 24 16-9 16-24 16S8 32 8 32Z"/>
+      <circle class="o" cx="32" cy="32" r="7"/>
+      <path class="thin" d="M32 20v5m12-1-5 4m-14 8-5 4m24 0-5-4M20 24l5 4"/>
+    </symbol>
+
+    <symbol id="stat-loot" viewBox="0 0 64 64">
+      <path class="o" d="M21 16h22l-5 9c9 5 14 14 14 22 0 8-8 11-20 11S12 55 12 47c0-8 5-17 14-22Z"/>
+      <path class="thin" d="M24 25h16m-18 9h20M32 36v14m-6-7h12"/>
+    </symbol>
+
+    <symbol id="stat-lore" viewBox="0 0 64 64">
+      <path class="o" d="M8 14c10-4 17-2 24 3v34c-7-5-14-7-24-3Zm48 0c-10-4-17-2-24 3v34c7-5 14-7 24-3Z"/>
+      <path class="thin" d="M32 18v33M14 24c5-1 9 0 13 2m-13 8c5-1 9 0 13 2m23-12c-5-1-9 0-13 2m13 8c-5-1-9 0-13 2"/>
+    </symbol>
+
+    <symbol id="stat-dungeon" viewBox="0 0 64 64">
+      <path class="o" d="M8 56V18h10v8h8V18h12v8h8v-8h10v38ZM24 56V41c0-6 3-10 8-10s8 4 8 10v15"/>
+      <path class="thin" d="M13 12V6m38 6V6M26 12V6m12 6V6"/>
+    </symbol>
+  </defs>
+</svg>
