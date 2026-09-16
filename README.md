@@ -18,9 +18,9 @@
 
 Gargottex est une application web autonome conçue pour accompagner les parties de **Gargotte & Va-Nu-Pieds**. Elle centralise le contenu du jeu, aide à préparer les donjons et permet d’improviser rapidement créatures, quêtes, objets et effets de Brouhaha pendant une session.
 
-L’application fonctionne dans le navigateur et enregistre immédiatement les modifications dans IndexedDB. La V6 ajoute, après connexion, une sauvegarde des données structurées dans Neon et leur synchronisation entre installations. Les nouveaux fichiers médias conservent leurs octets originaux localement. Leur transfert automatique vers Neon sera ajouté en phase 2.
+L’application fonctionne dans le navigateur et enregistre immédiatement les modifications dans IndexedDB. La V6 ajoute, après connexion, une sauvegarde des données structurées et des originaux médias dans Neon. Les transferts reprennent après interruption et les originaux sont vérifiés par SHA-256, sans recompression.
 
-**État V6 :** gate Phase 1 révisée validée ; fondation Postgres des originaux testée sur branche isolée. La synchronisation structurée existe, la synchronisation des originaux reste à développer. Voir [l’état d’exécution](./docs/V6-ETAT-EXECUTION.md), [le modèle média](./docs/V6-MEDIA-FONDATION.md) et [la procédure de migration/configuration](./docs/V6-MIGRATION-CONFIGURATION.md).
+**État V6 :** gate Phase 2 révisée validée sur branche isolée ; migration iPad et promotion restent en Phase 3. Voir [l’état d’exécution](./docs/V6-ETAT-EXECUTION.md), [la synchronisation média](./docs/V6-MEDIA-SYNCHRONISATION.md) et [la procédure de migration/configuration](./docs/V6-MIGRATION-CONFIGURATION.md).
 
 > [!NOTE]
 > Gargottex est un outil de préparation et d’assistance au meneur de jeu. Il ne remplace pas les règles officielles ni l’arbitrage de la table.
@@ -123,7 +123,7 @@ Toutes les informations sont conservées dans la base IndexedDB locale `gargotte
 
 La consultation et l’édition locales ne nécessitent pas de compte. Après connexion, une outbox envoie les données structurées à Neon via Auth + Data API ; les privilèges SQL et RLS les isolent par propriétaire. Les suppressions sont synchronisées et les états remplacés conservés dans l’historique.
 
-À cette gate, les images et miniatures ne sont pas encore transférées par la PWA. La cible confirmée sauvegarde les originaux dans Postgres après vérification SHA-256 ; les miniatures restent des dérivés locaux. Les exports JSON et XLSX fonctionnent depuis la copie locale. Ne placez jamais de chaîne PostgreSQL ni de secret d’administration dans la configuration cliente ; seule `PUBLIC_NEON_DATABASE_URL`, une URL HTTPS publique, est autorisée.
+Après connexion, les originaux (jusqu’à 64 Mio par fichier) sont sauvegardés dans Postgres et vérifiés par SHA-256 ; les miniatures restent des dérivés locaux. Les originaux plus volumineux restent locaux avec une erreur explicite. Sur un nouvel appareil, leur récupération est individuelle depuis Médias. Les exports JSON et XLSX restent structurés, sans binaires, et fonctionnent depuis la copie locale. Ne placez jamais de chaîne PostgreSQL ni de secret d’administration dans la configuration cliente ; seule `PUBLIC_NEON_DATABASE_URL`, une URL HTTPS publique, est autorisée.
 
 ## Architecture
 

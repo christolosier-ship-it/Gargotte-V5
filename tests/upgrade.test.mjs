@@ -30,7 +30,7 @@ test('upgrade of a populated V5 schema preserves records, indexes, preferences a
   assert.equal(await media.blob.text(),'original');
   assert.equal(await media.thumb_blob.text(),'miniature');
   await db.transaction(['heroes'],'readonly', ({heroes}, transaction) => {
-    assert.equal(transaction.db.version,3);
+    assert.equal(transaction.db.version,4);
     assert.ok(heroes.indexNames.contains('name'));
   });
   await db.bindSyncOwner('upgrade-test-owner');

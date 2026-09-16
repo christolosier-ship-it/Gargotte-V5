@@ -40,4 +40,8 @@ export async function mountAccount({ onSession = async () => {} } = {}) {
   });
   try { await refresh(); }
   catch(e) { status.textContent = 'Mode local — connexion indisponible'; message.textContent = e.message; }
+  // An offline cold start must recover the session when the network returns.
+  window.addEventListener('online', () => {
+    refresh().catch(e => {status.textContent='Mode local — connexion indisponible';message.textContent=e.message;});
+  });
 }

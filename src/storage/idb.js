@@ -1,9 +1,11 @@
 import { ENTITY_TYPES, structuredData } from '../data/structured.js';
 
 const DB_NAME = "gargottex-v5-offline";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 const STORE_DEFS = [
+  { name: "sync_media_outbox", keyPath: "id" },
+  { name: "sync_media_state", keyPath: "id" },
   { name: "sync_outbox", keyPath: "seq", autoIncrement: true },
   { name: "sync_meta", keyPath: "key" },
   { name: "meta", keyPath: "key" },
@@ -128,10 +130,18 @@ export async function putOne(storeName, item) {
 export async function putMany(storeName, items) {
   const clones = items.map(v=>structuredClone(v));
   const sync = ENTITY_TYPES.includes(storeName);
-  await withTx(sync ? [storeName,'sync_outbox'] : [storeName], 'readwrite', async stores => {
+  await withTx(sync ? [...new Set([storeName,'sync_outbox',...(storeName==='media_assets'?['sync_media_outbox','sync_media_state']:[])])] : [storeName], 'readwrite', async stores => {
     for (const item of clones) {
       const old = await reqToPromise(stores[storeName].get(item.id ?? item.key));
+      if(storeName==='media_assets' && old?.blob && !item.blob) {
+        item.blob=old.blob;
+        if(!item.thumb_blob && old.thumb_blob)item.thumb_blob=old.thumb_blob;
+      }
       stores[storeName].put(item);
+      if(storeName==='media_assets' && item.blob instanceof Blob) {
+        stores.sync_media_outbox.put({id:item.id,token:crypto.randomUUID(),attempts:0,chunk_index:0});
+        stores.sync_media_state.put({id:item.id,status:'local_only'});
+      }
       if (sync && JSON.stringify(structuredData(old)) !== JSON.stringify(structuredData(item))) enqueue(stores.sync_outbox,storeName,item,'upsert');
     }
   });
@@ -147,11 +157,12 @@ export async function clearStore(storeName) {
 }
 export async function deleteWhere(storeName,predicate) {
   const sync = ENTITY_TYPES.includes(storeName);
-  const count = await withTx(sync ? [storeName,'sync_outbox'] : [storeName],'readwrite',async stores=>{
+  const count = await withTx(sync ? [storeName,'sync_outbox',...(storeName==='media_assets'?['sync_media_outbox','sync_media_state']:[])] : [storeName],'readwrite',async stores=>{
     const rows = await reqToPromise(stores[storeName].getAll());
     let count=0;
     for(const row of rows) if(predicate(row)) {
       stores[storeName].delete(row.id);
+      if(storeName==='media_assets') {stores.sync_media_outbox.delete(row.id);stores.sync_media_state.delete(row.id);}
       if(sync) enqueue(stores.sync_outbox,storeName,row,'delete');
       count++;
     }
@@ -187,14 +198,15 @@ export async function recordSyncFailure(seqs,error) {
   });
 }
 export async function applyRemoteRevisions(revisions,userId) {
-  await withTx([...ENTITY_TYPES,'sync_meta','sync_outbox'],'readwrite',async stores=>{
+  await withTx([...ENTITY_TYPES,'sync_meta','sync_outbox','sync_media_outbox'],'readwrite',async stores=>{
     const owner=await reqToPromise(stores.sync_meta.get('owner'));
     if(owner?.value!==userId) throw new Error('Compte de synchronisation incohérent');
     const pending=await reqToPromise(stores.sync_outbox.getAll());
     for(const revision of revisions) {
       const {entity_type:type,entity_id:id,snapshot}=revision;
       if(!ENTITY_TYPES.includes(type)||revision.user_id!==userId||snapshot?.user_id!==userId||snapshot?.id!==id||snapshot?.data?.id!==id) throw new Error('Révision distante invalide');
-      if(!pending.some(p=>p.entity===type&&p.id===id)) {
+      const mediaPending=type==='media_assets' && await reqToPromise(stores.sync_media_outbox.get(id));
+      if(!pending.some(p=>p.entity===type&&p.id===id) && !mediaPending) {
         if(snapshot.deleted_at) stores[type].delete(id);
         else {
           const row=structuredData(snapshot.data);
@@ -220,6 +232,50 @@ export async function mergeStructuredData(data) {
     }
   });
   wakeSync();
+}
+
+// Media state is technical, never included in structured exports or cloud revisions.
+export async function mediaSnapshot(id) {
+ return withTx(['media_assets','sync_media_outbox','sync_meta'],'readonly',async s=>({
+  asset:await reqToPromise(s.media_assets.get(id)),
+  operation:await reqToPromise(s.sync_media_outbox.get(id)),
+  owner:(await reqToPromise(s.sync_meta.get('owner')))?.value
+ }));
+}
+export async function bootstrapMedia(userId) {
+ return withTx(['media_assets','sync_media_outbox','sync_media_state','sync_meta'],'readwrite',async s=>{
+  if((await reqToPromise(s.sync_meta.get('owner')))?.value!==userId) throw new Error('Compte média incohérent');
+  for(const asset of await reqToPromise(s.media_assets.getAll())) {
+   if(asset.blob instanceof Blob && !await reqToPromise(s.sync_media_outbox.get(asset.id)) &&
+      (await reqToPromise(s.sync_media_state.get(asset.id)))?.status!=='local_remote_verified') {
+    s.sync_media_outbox.put({id:asset.id,token:crypto.randomUUID(),attempts:0,chunk_index:0});
+   }
+  }
+ });
+}
+export async function updateMediaProgress(userId,id,token,patch,confirmed=false) {
+ return withTx(['media_assets','sync_media_outbox','sync_media_state','sync_meta'],'readwrite',async s=>{
+  if((await reqToPromise(s.sync_meta.get('owner')))?.value!==userId) throw new Error('Compte média incohérent');
+  if(!await reqToPromise(s.media_assets.get(id))) return false;
+  const op=await reqToPromise(s.sync_media_outbox.get(id));
+  if((op?.token || null)!==(token || null)) return false;
+  s.sync_media_state.put({id,...patch});
+  if(op) {
+   if(confirmed) s.sync_media_outbox.delete(id);
+   else s.sync_media_outbox.put({...op,...patch,attempts:op.attempts+(patch.status==='sync_error'?1:0)});
+  }
+  return true;
+ });
+}
+export async function installVerifiedMedia(userId,id,expected,blob,sha256) {
+ return withTx(['media_assets','sync_media_outbox','sync_media_state','sync_meta'],'readwrite',async s=>{
+  if((await reqToPromise(s.sync_meta.get('owner')))?.value!==userId) throw new Error('Compte média incohérent');
+  const current=await reqToPromise(s.media_assets.get(id));
+  if(!current || current.blob || await reqToPromise(s.sync_media_outbox.get(id)) ||
+     JSON.stringify(structuredData(current))!==JSON.stringify(expected)) throw new Error('Média modifié pendant le téléchargement ; copie locale conservée');
+  s.media_assets.put({...current,blob});
+  s.sync_media_state.put({id,status:'local_remote_verified',sha256,byte_size:blob.size});
+ });
 }
 
 export async function saveUiState(ui) {

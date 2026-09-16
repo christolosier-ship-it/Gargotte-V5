@@ -2,7 +2,15 @@
 
 ## État au 16 septembre 2026
 
-**Gate Phase 1 révisée VALIDÉE : fondation données + originaux médias sur branche isolée. Arrêt à cette gate demandé par l’utilisateur. Phase 2 médias non engagée ; V6 non terminée.**
+**Gate Phase 2 révisée VALIDÉE : données structurées et originaux médias, reprise après interruption et restauration vérifiée. Arrêt demandé à cette gate ; Phase 3 non clôturée, V6 non terminée.**
+
+## Reprise Phase 2 — remplace l’arrêt Phase 1 ci-dessous
+
+L’utilisateur a autorisé la poursuite jusqu’à la gate 2. IndexedDB passe à la version 4 sans effacement : file média par génération, statuts, bootstrap des originaux locaux, transfert chunké reprenable, contrôle SHA-256 et téléchargement individuel. Les erreurs médias n’empêchent pas le pull structuré. Aucun nouveau SQL et aucune promotion : les tests et la preview utilisent `br-falling-violet-b4am8hbo`.
+
+Quinze tests locaux passent, y compris corruptions, morceaux manquants, quotas, concurrence, protection des originaux et limite de taille. Le moteur a passé les tests SDK/Neon réels : réponse perdue après chunk accepté, reprise sans doublon, reconstruction du JPEG identique, suppression sans résurrection. Build réussi. CI et preview finales : voir PR #9. Détails dans `V6-MEDIA-SYNCHRONISATION.md`.
+
+Les lignes suivantes conservent les preuves historiques de la Phase 1 et du chantier structuré. Les mentions « Phase 2 non engagée » décrivent cet ancien checkpoint, pas l’état courant.
 
 ### Nouvelle spécification confirmée — reprise Phase 1 médias
 

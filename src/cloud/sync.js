@@ -15,7 +15,7 @@ export function neonTransport(client,userId) {
   }
  };
 }
-export function createSyncEngine({userId,transport,onStatus=()=>{},onData=()=>{}}) {
+export function createSyncEngine({userId,transport,onStatus=()=>{},onData=()=>{},media}) {
  let stopped=false, running=null, timer=null, failures=0;
  async function cycle() {
   await bindSyncOwner(userId);
@@ -33,6 +33,9 @@ export function createSyncEngine({userId,transport,onStatus=()=>{},onData=()=>{}
    await confirmOutbox(batch.map(x=>x.seq));
    pending=await getAll('sync_outbox');
   }
+  if(!stopped && media) {
+   try {await media.run();} catch(error) {onStatus(`Médias en attente — ${error.message}`);}
+  }
   while(!stopped) {
    const cursor=(await getById('sync_meta','cursor'))?.value || '0';
    const rows=await transport.pull(cursor);
@@ -43,7 +46,11 @@ export function createSyncEngine({userId,transport,onStatus=()=>{},onData=()=>{}
    if(rows.length<100) break;
   }
   failures=0;
-  if(!stopped) onStatus((await getAll('sync_outbox')).length ? 'Modifications locales en attente' : 'Synchronisé');
+  const mediaIds=new Set((await getAll('media_assets')).map(row=>row.id));
+  const mediaErrors=(await getAll('sync_media_state')).some(row=>mediaIds.has(row.id)&&['missing','sync_error'].includes(row.status));
+  if(!stopped) onStatus((await getAll('sync_outbox')).length ? 'Modifications locales en attente' :
+   (await getAll('sync_media_outbox')).length ? 'Données synchronisées — médias en attente' :
+   mediaErrors ? 'Données synchronisées — médias à vérifier' : 'Synchronisé');
  }
  async function run() {
   if(stopped) return;

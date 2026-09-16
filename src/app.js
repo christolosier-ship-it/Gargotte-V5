@@ -1,5 +1,6 @@
 import { originalMediaFields } from './data/media-original.js';
 import { createSyncEngine, neonTransport } from './cloud/sync.js';
+import { createMediaEngine, neonMediaTransport } from './cloud/media.js';
 import { exportStructuredBackup, importStructuredBackup } from './data/backup.js';
 import { mountAccount } from "./cloud/account.js";
 
@@ -27,6 +28,7 @@ import { makeZip, readZip, toBytes, fromBytes } from "./utils/zip.js";
 
 import {
   initDatabase,
+  getAll,
   loadAllData,
   loadUiState,
   saveUiState,
@@ -1593,12 +1595,21 @@ function renderBrouhahaEffectDetail(item) {
   `;
 }
 
+let mediaEngine=null, cancelMedia=()=>{}, mediaStatuses={};
+function mediaSyncControls(asset) {
+ const info=mediaStatuses[asset.id] || {status:asset.blob?'local_only':'missing'};
+ const labels={local_only:'Original local — sauvegarde en attente',uploading:'Envoi de l’original',local_remote_verified:'Original sauvegardé et vérifié',remote_only:'Original distant — à télécharger',downloading:'Téléchargement',sync_error:'Erreur média — copie saine conservée',missing:'Original indisponible ou non encore sauvegardé'};
+ return `<div class="muted">${escapeHtml(labels[info.status]||info.status)}${info.chunk_index?` · ${info.chunk_index} morceau(x)`:''}</div>
+ ${info.last_error?`<div role="status">${escapeHtml(info.last_error)}</div>`:''}
+ ${!asset.blob && mediaEngine?`<button data-action="media-download" data-id="${escapeHtml(asset.id)}" ${info.status==='downloading'?'disabled':''}>Récupérer l’original</button>`:''}`;
+}
 function renderMediaAssetCard(asset, active = false) {
   const img = thumbUrlForAsset(asset);
   return `
     <figure class="gallery-item ${active ? "active" : ""}">
       ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(asset.label || asset.file_name || "")}" loading="lazy">` : `<div class="placeholder large">🖼️</div>`}
       <figcaption>${escapeHtml(asset.label || asset.file_name || asset.path || asset.id)}</figcaption>
+      ${mediaSyncControls(asset)}
     </figure>
   `;
 }
@@ -1618,6 +1629,7 @@ function renderMediaAssetDetail(asset) {
         ${preview ? `<img src="${escapeHtml(preview)}" alt="${escapeHtml(asset.label || asset.file_name || asset.id)}" loading="lazy">` : `<div class="placeholder large">🖼️</div>`}
       </div>
       <p><strong>Nom de fichier :</strong> ${escapeHtml(asset.file_name || "—")}</p>
+      ${mediaSyncControls(asset)}
       <p><strong>Type MIME :</strong> ${escapeHtml(asset.mime_type || "—")}</p>
       <p><strong>Entité :</strong> ${escapeHtml(asset.entity_type || "gallery")} · ${escapeHtml(asset.entity_id || "—")}</p>
     </div>
@@ -2230,6 +2242,7 @@ async function refreshData() {
   const raw = await loadAllData();
   hydrateState(raw);
   state.logs = await getLogs(100);
+  mediaStatuses=Object.fromEntries((await getAll('sync_media_state')).map(row=>[row.id,row]));
   await saveUiState(state.ui);
   render();
 }
@@ -2748,6 +2761,14 @@ function bindEvents() {
     const action = btn.dataset.action;
     try {
       switch (action) {
+        case "media-download": {
+          if(!mediaEngine) throw new Error('Connexion requise pour récupérer un original');
+          const engine=mediaEngine;
+          const work=()=>engine.download(btn.dataset.id);
+          await (navigator.locks ? navigator.locks.request('gargottex-sync',work) : work());
+          await refreshData();
+          return;
+        }
         case "go-home":
         case "set-view":
           state.ui.view = btn.dataset.view || "home";
@@ -3155,8 +3176,16 @@ async function bootstrap() {
   let syncEngine;
   mountAccount({ onSession: async (client,user,onStatus) => {
     syncEngine?.stop();
+    cancelMedia();mediaEngine=null;
     if (user) {
+      let cancelled=false;cancelMedia=()=>{cancelled=true;};
+      mediaEngine=createMediaEngine({userId:user.id,transport:neonMediaTransport(client,user.id),isStopped:()=>cancelled,
+        onChange:async()=>{
+          mediaStatuses=Object.fromEntries((await getAll('sync_media_state')).map(row=>[row.id,row]));
+          if(!document.activeElement?.matches('input,textarea,select')) render();
+        }});
       syncEngine=createSyncEngine({ userId:user.id,transport:neonTransport(client,user.id),onStatus,
+        media:mediaEngine,
         onData:async()=>{
           hydrateState(await loadAllData());
           if (!document.activeElement?.matches('input,textarea,select')) render();

@@ -9,7 +9,7 @@ for (const path of ['index.html','styles.css','manifest.webmanifest','seed-data.
 await build({ entryPoints:['src/cloud/client.js'], bundle:true, format:'esm', platform:'browser', target:['safari16'], outfile:'dist/src/cloud/client.js', minify:true });
 // This public endpoint is intentionally restricted to the dedicated development branch.
 const previewBranch = process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_GIT_COMMIT_REF === 'refactor/v6-neon-local-first';
-const neonUrl = process.env.PUBLIC_NEON_DATABASE_URL || (previewBranch ? 'https://ep-wild-thunder-b47hzi12.c-6.us-east-2.aws.neon.tech/neondb' : '');
+const neonUrl = process.env.PUBLIC_NEON_DATABASE_URL || (previewBranch ? 'https://ep-billowing-union-b4sgvbcf.c-6.us-east-2.aws.neon.tech/neondb' : '');
 if (process.env.VERCEL_ENV === 'production' && !neonUrl) throw new Error('Configure PUBLIC_NEON_DATABASE_URL for production after Neon migration approval');
 if (neonUrl) {
  const url = new URL(neonUrl);
