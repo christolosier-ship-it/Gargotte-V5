@@ -1,0 +1,139 @@
+const ICON_BASE='./mockup-assets/icons/';
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const catMeta={
+  basique:{label:'Basique',color:'var(--basic)',sigil:'Sigil_Basique.webp'},
+  tactique:{label:'Tactique',color:'var(--tactical)',sigil:'Sigil_Tactique.webp'},
+  speciale:{label:'Spéciale',color:'var(--special)',sigil:'Sigil_Speciale.webp'},
+  brute:{label:'Brute',color:'var(--brute)',sigil:'Sigil_Brute.webp'},
+  mini_boss:{label:'Mini-boss',color:'var(--mini)',sigil:'Sigil_MiniBoss.webp'},
+  boss:{label:'Boss',color:'var(--boss)',sigil:'Sigil_Boss.webp'}
+};
+const creatures=[
+  {id:'rainette',name:'Rainette Voltigeuse',cat:'speciale',img:'../assets/images/rainette.jpeg',dungeon:'Les Marécages Infectés',threat:2,base:'32',pv:7,atk:3,def:2,range:3,actions:2,ability:'Bond électrique',copy:'Bondit par-dessus un obstacle puis décharge une impulsion sur la première cible rencontrée.',ai:'Harcele les flancs, cherche les cases libres et évite les engagements prolongés.',loot:['Glande conductrice','2 or'],lore:'Une rainette élevée dans les cuves de cuivre finit toujours par développer une opinion très ferme sur la foudre.',tags:['amphibie','mobile','électrique']},
+  {id:'trixie',name:'Gobeline Turbo-Coude',cat:'tactique',img:'../assets/images/trixie.jpeg',dungeon:'Le Cabaret des Joyeuses',threat:2,base:'32',pv:8,atk:3,def:4,range:1,actions:2,ability:'Turbo-Coude',copy:'Une percée courte, brutale et précise qui repousse la cible.',ai:'Cherche un angle, protège les unités plus fragiles et punit les passages étroits.',loot:['Coude renforcé','1 or'],lore:'Elle a appris très tôt qu’un comptoir est surtout une ligne droite qui mérite d’être traversée vite.',tags:['gobeline','charge','support']},
+  {id:'berthold',name:'Videur du Cellier',cat:'brute',img:'../assets/images/berthold.png',dungeon:'Le Cabaret des Joyeuses',threat:4,base:'40',pv:12,atk:5,def:3,range:1,actions:2,ability:'Pas de velours',copy:'Avance sans détour et verrouille la zone devant lui.',ai:'Avance vers la cible la plus résistante et frappe ce qui bloque le passage.',loot:['Clef du cellier','3 or'],lore:'Il n’a jamais perdu une bagarre de taverne. Il n’a jamais compris qu’elles pouvaient être évitées.',tags:['brute','blocage','cabaret']},
+  {id:'bard',name:'Maître du Comptoir',cat:'mini_boss',img:'../assets/images/bard.png',dungeon:'Le Cabaret des Joyeuses',threat:5,base:'60',pv:16,atk:5,def:4,range:2,actions:3,ability:'Dernière tournée',copy:'Accélère le rythme et transforme le comptoir en zone dangereuse.',ai:'Protège la zone centrale, change de cible rapidement et punit les regroupements.',loot:['Chope du patron','5 or'],lore:'On ne sait pas s’il tient le bar ou si le bar le tient. Dans les deux cas, personne ne discute l’addition.',tags:['élite','zone','cabaret']},
+  {id:'demon',name:'Démon de la Réserve',cat:'boss',img:'../assets/images/demon.png',dungeon:'Enfer de la Sobriété',threat:6,base:'80',pv:24,atk:6,def:5,range:3,actions:3,ability:'Cave infernale',copy:'À haut Brouhaha, ses attaques gagnent en zone et ignorent une partie de la défense.',ai:'Alterne pression de zone, poursuite et attaque massive sur les cibles vulnérables.',loot:['Corne calcinée','8 or'],lore:'On dit qu’il n’a jamais payé son addition. Personne n’a encore osé vérifier.',tags:['boss','démon','zone']},
+  {id:'gundrade',name:'Gundrade la Tenace',cat:'basique',img:'../assets/images/gundrade.jpeg',dungeon:'Le Château de Bastognac',threat:1,base:'32',pv:6,atk:2,def:3,range:1,actions:2,ability:'Tenir la ligne',copy:'Gagne +1 DEF tant qu’un allié est adjacent.',ai:'Bloque les passages et protège les unités tactiques.',loot:['Boucle de ceinture','1 or'],lore:'Elle a reçu l’ordre de tenir le couloir. Elle prend les ordres au pied de la lettre.',tags:['garde','blocage','bastognac']}
+];
+let selectedCreature=localStorage.getItem('mockup:selectedCreature')||'rainette';
+let bestiaryMode=localStorage.getItem('mockup:bestiaryMode')||'gallery';
+let currentView='home';
+let currentCodex='creatures';
+let dirty=false;
+let encounter={rainette:2,trixie:1};
+let bhLevel=7;
+let questIndex=0;
+const sessionQuests=[
+  {name:'Le tonneau qui savait trop',difficulty:'Moyenne',npc:'Mirette la Serveuse',desc:'Un tonneau a entendu une conversation qu’il n’aurait jamais dû entendre.',objective:'Retrouver le tonneau avant que les gobelins du cellier ne le mettent en perce.',reward:'3 or · faveur du Cabaret'},
+  {name:'La clé sous la mousse',difficulty:'Facile',npc:'Bibi le Brasseur',desc:'Une clé de réserve a disparu entre deux fûts et trois versions contradictoires.',objective:'Fouiller deux zones du donjon puis rapporter la clé au comptoir.',reward:'2 or · chope gratuite'},
+  {name:'La grenouille de trop',difficulty:'Difficile',npc:'Rainette',desc:'Une cousine de Rainette s’est installée dans le mauvais alambic.',objective:'Évacuer la créature sans briser la cuve.',reward:'5 or · composant alchimique'}
+];
+function emblem(src,cls='chip-logo',alt=''){return `<img class="emblem-img ${cls}" src="${ICON_BASE+src}" alt="${alt}">`}
+function utilIcon(id,cls='icon'){return `<svg class="${cls}" aria-hidden="true"><use href="#${id}"/></svg>`}
+function catChip(cat){const m=catMeta[cat];return `<span class="chip cat ${cat}">${emblem(m.sigil,'chip-logo','')}<span>${m.label}</span></span>`}
+function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(showToast.t);showToast.t=setTimeout(()=>t.classList.remove('show'),2600)}
+function show(view){
+  if(dirty && currentView==='atelier' && view!=='atelier') return openUnsaved(view);
+  currentView=view;
+  $$('.page').forEach(p=>p.classList.toggle('active',p.id===view));
+  $$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view || (b.dataset.view==='game'&&['generator','brouhaha'].includes(view)) || (b.dataset.view==='plus'&&['more','atelier','media','importexport','mockup'].includes(view))));
+  history.replaceState(null,'','#'+view);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function initNav(){
+  $$('[data-view]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
+  const hash=location.hash.replace('#','');
+  if(hash && $('#'+hash)) show(hash); else show('home');
+}
+function renderBestiary(){
+  const host=$('#bestiary-collection');
+  if(!host)return;
+  $('#mode-gallery').classList.toggle('active',bestiaryMode==='gallery');
+  $('#mode-list').classList.toggle('active',bestiaryMode==='list');
+  if(bestiaryMode==='gallery'){
+    host.innerHTML=`<div class="gallery-grid">${creatures.map(c=>`<button class="gallery-card ${c.cat}" data-creature="${c.id}"><img src="${c.img}" alt=""><div class="gallery-copy"><div class="row-name">${c.name}</div><div class="row-sub">${c.dungeon}</div><div class="row-meta">${catChip(c.cat)}<span class="chip neutral">Menace ${c.threat}</span></div></div></button>`).join('')}</div>`;
+  }else{
+    host.innerHTML=`<div class="creature-list">${creatures.map(c=>`<button class="creature-row ${c.cat} ${c.id===selectedCreature?'selected':''}" data-creature="${c.id}"><div class="thumb"><img src="${c.img}" alt=""></div><div><div class="row-name">${c.name}</div><div class="row-sub">${c.dungeon}</div><div class="row-meta">${catChip(c.cat)}<span class="row-stats">PV ${c.pv} · ATK ${c.atk} · DEF ${c.def} · ☠ ${c.threat}</span></div></div></button>`).join('')}</div>`;
+  }
+  $$('[data-creature]',host).forEach(b=>b.onclick=()=>{selectedCreature=b.dataset.creature;localStorage.setItem('mockup:selectedCreature',selectedCreature);renderCreature();if(matchMedia('(max-width:767px)').matches){$('#creature-detail').scrollIntoView({behavior:'smooth'})}});
+}
+function renderCreature(){
+  const c=creatures.find(x=>x.id===selectedCreature)||creatures[0],m=catMeta[c.cat];
+  const host=$('#creature-detail');if(!host)return;
+  host.innerHTML=`<article class="sheet ${c.cat}"><div class="art"><div class="art-frame"></div><button class="btn iconbtn fullscreen-btn" id="full-image" aria-label="Ouvrir l’image en plein écran">${utilIcon('i-expand')}</button><div class="figure"><img src="${c.img}" alt="Illustration de ${c.name}"></div></div><div class="detail"><div class="identity"><div><button class="dungeon btn tertiary" data-codex="dungeons">${emblem('Icone_Gameplay_DONJON.webp','dungeon-logo','')}<span>${c.dungeon}</span></button><h2 class="creature-name">${c.name}</h2><div class="row wrap">${catChip(c.cat)}<span class="chip neutral">${emblem('Icone_Gameplay_MENACE.webp')}Menace ${c.threat}</span><span class="chip neutral">${emblem('Icone_Gameplay_SOCLE.webp')}Socle ${c.base} mm</span></div></div><div class="sigil">${emblem(m.sigil,'sigil-logo','Sigil '+m.label)}</div></div><div class="stats"><div class="stat">${emblem('Icone_Gameplay_PV.webp','stat-logo')}<b>${c.pv}</b><span>PV</span></div><div class="stat">${emblem('Icone_Gameplay_ATK.webp','stat-logo')}<b>${c.atk}</b><span>ATK</span></div><div class="stat">${emblem('Icone_Gameplay_DEF.webp','stat-logo')}<b>${c.def}</b><span>DEF</span></div><div class="stat">${emblem('Icone_Gameplay_ZONE.webp','stat-logo')}<b>${c.range}</b><span>Portée / Zone</span></div><div class="stat">${emblem('Icone_Gameplay_ACTION.webp','stat-logo')}<b>${c.actions}</b><span>Actions</span></div></div><section class="ability"><div class="caps">Capacité signature</div><h3>${c.ability}</h3><p>${c.copy}</p></section><div class="sections"><section class="section"><h4>${emblem('Icone_Gameplay_COMPORTEMENT.webp','section-logo')}Comportement</h4><p>${c.ai}</p></section><section class="section"><h4>${emblem('Icone_Gameplay_BUTIN.webp','section-logo')}Butin</h4><div class="loot-items">${c.loot.map(x=>`<button class="loot-item" data-codex="loot">${x}</button>`).join('')}</div></section><section class="section lore"><h4>${emblem('Icone_Gameplay_LORE.webp','section-logo')}Lore</h4><p>${c.lore}</p></section></div><div class="tags">${c.tags.map(t=>`<span class="chip neutral">${t}</span>`).join('')}</div><div class="related"><div class="row" style="justify-content:space-between"><h4 class="serif" style="margin:0">Entités liées</h4><span class="small muted">Même donjon puis relations explicites</span></div><div class="related-grid"><button class="related-card" data-codex="dungeons"><b>${c.dungeon}</b><div class="small muted">Donjon</div></button><button class="related-card" data-codex="loot"><b>${c.loot[0]}</b><div class="small muted">Loot</div></button><button class="related-card" data-codex="quests"><b>Le tonneau qui savait trop</b><div class="small muted">Quête liée</div></button></div></div></div></article>`;
+  $('#full-image').onclick=()=>openImage(c.img,c.name);
+  $$('[data-codex]',host).forEach(b=>b.onclick=()=>openCodex(b.dataset.codex));
+}
+function setBestiaryMode(mode){bestiaryMode=mode;localStorage.setItem('mockup:bestiaryMode',mode);renderBestiary()}
+function openCodex(type){show('codex');currentCodex=type;renderCodexType(type)}
+function renderCodexType(type){
+  currentCodex=type;
+  $$('.codex-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.codex===type));
+  $$('.entity-demo').forEach(x=>x.classList.remove('active'));
+  const target=$('#codex-'+type);if(target)target.classList.add('active');
+  $('#bestiary-controls').classList.toggle('hidden',type!=='creatures');
+  if(type==='creatures'){renderBestiary();renderCreature()}
+}
+function initCodex(){
+  $$('.codex-tabs button').forEach(b=>b.onclick=()=>renderCodexType(b.dataset.codex));
+  $('#mode-gallery').onclick=()=>setBestiaryMode('gallery');$('#mode-list').onclick=()=>setBestiaryMode('list');
+  $$('[data-see-all]').forEach(b=>b.onclick=()=>{renderCodexType(b.dataset.seeAll);showToast('Collection ouverte avec filtre Donjon conservé')});
+  $$('.hero-level').forEach(b=>b.onclick=()=>{$$('.hero-level').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#hero-level-label').textContent=b.dataset.level;$('#hero-pv').textContent=Number(b.dataset.level)*2+8;$('#hero-atk').textContent=Math.ceil(Number(b.dataset.level)/2)+2});
+}
+function initGenerator(){
+  $$('.enc-mode').forEach(b=>b.onclick=()=>{$$('.enc-mode').forEach(x=>x.classList.remove('active'));b.classList.add('active')});
+  $('#generate').onclick=()=>{encounter={rainette:2,trixie:1};renderEncounter();showToast('Rencontre générée localement')};
+  renderEncounter();
+}
+function renderEncounter(){
+  const host=$('#encounter-results');if(!host)return;
+  const entries=Object.entries(encounter);
+  host.innerHTML=entries.map(([id,qty])=>{const c=creatures.find(x=>x.id===id);return `<div class="result-card ${qty===0?'done':''}"><div class="encounter-row"><img src="${c.img}" alt=""><div><b class="serif" style="font-size:20px">${c.name}</b><div class="small muted">PV ${c.pv} · ATK ${c.atk} · DEF ${c.def} · ${c.ability}</div></div><div class="row"><span class="qty">×${qty}</span><button class="btn smallbtn" data-open-creature="${id}">Fiche</button><button class="btn smallbtn" data-eliminate="${id}" ${qty===0?'disabled':''}>Éliminer</button></div></div>${qty===0?'<div class="loot-reveal">Groupe terminé. Tous les tirages de Butin ont été effectués.</div>':''}</div>`}).join('');
+  $$('[data-eliminate]',host).forEach(b=>b.onclick=()=>{const id=b.dataset.eliminate;if(encounter[id]>0){encounter[id]--;renderEncounter();showToast('1 occurrence éliminée · Butin tiré une seule fois')}});
+  $$('[data-open-creature]',host).forEach(b=>b.onclick=()=>{selectedCreature=b.dataset.openCreature;renderCreature();openCodex('creatures')});
+}
+function initBrouhaha(){
+  const update=()=>{$('#bh-level').textContent=bhLevel;$('#bh-meter').value=bhLevel;$('#bh-state').textContent=bhLevel>=10?'Critique':bhLevel>=7?'Élevé':bhLevel>=4?'Agité':'Calme'};
+  $('#bh-minus').onclick=()=>{bhLevel=Math.max(0,bhLevel-1);update()};$('#bh-plus').onclick=()=>{bhLevel=Math.min(12,bhLevel+1);update()};
+  $('#bh-draw').onclick=()=>{const effects=['Une table se renverse au pire endroit.','Les clients chantent faux et couvrent les ordres.','Une chope traverse la salle sans propriétaire apparent.','Le sol devient glissant près du comptoir.'];const effect=effects[Math.floor(Math.random()*effects.length)];$('#bh-current').textContent=effect;$('#bh-history').insertAdjacentHTML('afterbegin',`<div class="history-item"><b>Niveau ${bhLevel}</b><div>${effect}</div></div>`)};
+  $('#bh-reset').onclick=()=>openConfirm('Réinitialiser le Brouhaha ?','Le niveau et l’historique de session seront remis à zéro. Le Codex ne sera pas modifié.',()=>{bhLevel=0;update();$('#bh-history').innerHTML='';$('#bh-current').textContent='Aucun effet tiré.'});update();
+}
+function renderQuest(){const q=sessionQuests[questIndex];$('#session-quest').innerHTML=`<div class="eyebrow">Quête de session</div><h2>${q.name}</h2><div class="row wrap"><span class="chip neutral">${q.difficulty}</span><span class="chip neutral">${q.npc}</span></div><p>${q.desc}</p><div class="quest-grid"><div class="objective"><b>Objectif</b><div class="small">${q.objective}</div></div><div class="objective"><b>Récompense</b><div class="small">${q.reward}</div></div></div>`}
+function initQuests(){renderQuest();$('#reroll-quest').onclick=()=>{questIndex=(questIndex+1)%sessionQuests.length;renderQuest();showToast('Nouvelle quête tirée sans confirmation')};$('#quest-codex').onclick=()=>openCodex('quests')}
+function initAtelier(){
+  $$('#atelier-form input,#atelier-form select,#atelier-form textarea').forEach(el=>el.addEventListener('input',()=>setDirty(true)));
+  $('#save-entity').onclick=()=>{setDirty(false);$('#save-state').innerHTML='<span class="syncdot"></span>Enregistré localement · synchronisation distante en cours';setTimeout(()=>{$('#save-state').innerHTML='<span class="syncdot"></span>Enregistré localement · Synchronisé avec Neon';showToast('Enregistrement local confirmé, puis synchronisation distante')},700)};
+  $('#delete-entity').onclick=()=>openConfirm('Supprimer Rainette Voltigeuse ?','Action destructive volontaire. Les impacts connus seraient listés ici avant confirmation.',()=>showToast('Démonstration : aucune donnée réellement supprimée'));
+}
+function setDirty(v){dirty=v;$('#dirty-state').classList.toggle('hidden',!v);$('#save-state').textContent=v?'Modifications non enregistrées':'Enregistré localement · Synchronisé avec Neon'}
+function openUnsaved(target){openConfirm('Modifications non enregistrées','Choisissez Enregistrer avant de quitter, ou quittez sans enregistrer.',()=>{dirty=false;setDirty(false);show(target)},'Quitter sans enregistrer')}
+function initMedia(){
+  $$('.media-filter').forEach(b=>b.onclick=()=>{$$('.media-filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');const f=b.dataset.mediaFilter;$$('.media-card').forEach(c=>c.classList.toggle('hidden',f!=='all'&&!c.dataset.state.includes(f)))});
+  $$('.media-card').forEach(c=>c.onclick=()=>{$('#media-detail-title').textContent=c.dataset.title;$('#media-detail-status').textContent=c.dataset.status;$('#media-detail-image').src=c.querySelector('img').src;$('#media-detail-panel').classList.remove('hidden');$('#media-detail-panel').scrollIntoView({behavior:'smooth'})});
+  $('#download-original').onclick=()=>showToast('Téléchargement de l’original, puis contrôle d’intégrité');
+  $('#remove-local').onclick=()=>openConfirm('Retirer de cet appareil ?','Disponible seulement si une copie distante saine et vérifiée existe. Le rattachement métier est conservé.',()=>showToast('Le média deviendrait remote_only'));
+  $('#delete-media').onclick=()=>openConfirm('Supprimer définitivement le média ?','Suppression forte, distincte de Retirer de cet appareil. Présence locale et distante affichées avant confirmation.',()=>showToast('Démonstration : aucune suppression réelle'));
+}
+function initImport(){
+  $('#preview-import').onclick=()=>{$('#import-preview').classList.remove('hidden');$('#confirm-import').disabled=false;showToast('Preview calculée, aucune écriture effectuée')};
+  $('#confirm-import').onclick=()=>showToast('12 lignes importables seraient écrites. 2 erreurs resteraient exclues.');
+}
+function openImage(src,alt){$('#image-modal-img').src=src;$('#image-modal-img').alt=alt;$('#image-modal').classList.add('open')}
+function openConfirm(title,copy,onConfirm,confirmLabel='Confirmer'){$('#confirm-title').textContent=title;$('#confirm-copy').textContent=copy;$('#confirm-ok').textContent=confirmLabel;$('#confirm-modal').classList.add('open');$('#confirm-ok').onclick=()=>{closeOverlay('#confirm-modal');onConfirm&&onConfirm()}}
+function closeOverlay(sel){$(sel).classList.remove('open')}
+function initOverlays(){
+  $$('[data-close]').forEach(b=>b.onclick=()=>closeOverlay(b.dataset.close));
+  $$('.drawer-backdrop,.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open')}));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){$$('.drawer-backdrop.open,.modal-backdrop.open').forEach(x=>x.classList.remove('open'))}});
+  $('#open-search').onclick=()=>$('#search-modal').classList.add('open');$('#open-sync').onclick=()=>$('#sync-drawer').classList.add('open');
+}
+function initSearch(){
+  const input=$('#global-search-input');input.oninput=()=>{const q=input.value.trim().toLowerCase();const results=creatures.filter(c=>!q||c.name.toLowerCase().includes(q)||c.dungeon.toLowerCase().includes(q)).slice(0,5);$('#search-results').innerHTML=results.map(c=>`<button class="related-card" data-search-creature="${c.id}"><b>${c.name}</b><div class="small muted">Créature · ${c.dungeon}</div></button>`).join('')+`<button class="related-card" data-search-codex="dungeons"><b>Le Cabaret des Joyeuses</b><div class="small muted">Donjon</div></button>`;$$('[data-search-creature]').forEach(b=>b.onclick=()=>{selectedCreature=b.dataset.searchCreature;closeOverlay('#search-modal');renderCreature();openCodex('creatures')});$$('[data-search-codex]').forEach(b=>b.onclick=()=>{closeOverlay('#search-modal');openCodex(b.dataset.searchCodex)})};input.dispatchEvent(new Event('input'))
+}
+function initMockup(){
+  $$('.mockup-nav button').forEach(b=>b.onclick=()=>{const target=$(b.dataset.jump);if(target)target.scrollIntoView({behavior:'smooth',block:'start'})});
+}
+function initMore(){ $$('#more [data-view]').forEach(b=>b.onclick=()=>show(b.dataset.view)) }
+function init(){initNav();initCodex();renderCodexType('creatures');initGenerator();initBrouhaha();initQuests();initAtelier();initMedia();initImport();initOverlays();initSearch();initMockup();initMore()}
+document.addEventListener('DOMContentLoaded',init);
