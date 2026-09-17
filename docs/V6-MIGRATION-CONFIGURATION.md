@@ -1,56 +1,49 @@
-# Configuration et migration V6
+# V6 — configuration Google Drive et migration GitHub Pages
 
-## Construire et servir
+## Statut
 
-Node 24, `npm ci`, `npm test`, `npm run build`. Servir **dist/**, jamais la racine en production.
-La PWA conserve ses modules JavaScript, sans framework. esbuild bundle uniquement le client Neon et ses dépendances.
-`PUBLIC_NEON_DATABASE_URL` est une URL **HTTPS sans identifiants**, par exemple `https://ep-….c-6.us-east-2.aws.neon.tech/neondb`.
-Aucune connexion `postgres://`, clé d’administration, mot de passe ou session ne va dans le build.
+Procédure cible à implémenter. Le runtime hérité utilise encore Neon ; ne pas suivre cette procédure comme si Drive était déjà disponible. [Plan](REFACTORISATION-V6-LOCAL-FIRST-GOOGLE-DRIVE.md), [état](V6-ETAT-EXECUTION.md), [ancienne procédure Neon](archive/neon/V6-MIGRATION-CONFIGURATION.md).
 
-La preview de `refactor/v6-neon-local-first` possède un fallback public explicitement limité à cette branche de test.
-La production exige une variable `PUBLIC_NEON_DATABASE_URL` configurée ; le build refuse son absence pour ne pas publier silencieusement une V6 sans cloud.
-Ajouter chaque domaine de déploiement utilisé aux domaines autorisés Neon Auth. Ne pas désactiver la protection des previews Vercel.
+## Configuration Google, action propriétaire
 
-## Migrations Neon
+1. Créer ou choisir un projet Google Cloud dédié ; activer Google Drive API et Google Picker API si le sélecteur est utilisé.
+2. Configurer l'écran de consentement pour l'usage personnel et les permissions minimales. Vérifier les contraintes du statut test/publication ; ne pas promettre de sessions permanentes.
+3. Créer un client OAuth de type Web. Origine JavaScript de production : https://christolosier-ship-it.github.io (sans chemin). Ajouter uniquement les origines de test réellement utilisées, dont localhost avec son port.
+4. Configurer drive.file et le parcours de sélection explicite ; tester les fichiers existants par lots. Ne pas supposer d'autorisation récursive du dossier. Toute permission plus large doit être décidée séparément.
+5. Fournir au build uniquement le Client ID public et, si nécessaire, la clé Picker publique restreinte. Les noms exacts des paramètres seront fixés par l'implémentation ; aucune variable Drive n'existe encore dans le code.
+6. Autoriser le compte dans Safari et la PWA installée, puis tester expiration, révocation et changement de compte.
 
-Les deux premières migrations sont appliquées uniquement à la branche de travail `br-wandering-bread-b48avojm`. Sa branche enfant `br-falling-violet-b4am8hbo` inclut aussi la troisième migration des originaux et constitue désormais la cible de preview/test Phase 2.
-La deuxième déplace l’écriture de l’historique après l’opération SQL finale : `ON CONFLICT` ne crée donc aucune révision fantôme.
-La branche production nécessite d’abord Auth + Data API, sans grants globaux, puis les migrations en ordre chronologique.
-Ne pas rejouer un fichier déjà appliqué. Ne pas réécrire l’historique. La promotion nécessite la confirmation prévue dans le plan.
-Créer/administrer le compte personnel via Neon ; aucune inscription dans l’interface Gargottex.
+Aucun secret OAuth, mot de passe, refresh token ou URL de session de transfert dans le dépôt. Le connecteur de conversation ne configure ni le client Google Cloud ni le consentement de la PWA.
 
-## Synchronisation
+## Build et publication futurs
 
-- Même nom de base IndexedDB V5, version portée à 4 ; aucun store métier effacé pendant l’upgrade.
-- Les opérations métier et leur outbox sont enregistrées dans une seule transaction locale.
-- Les événements immuables contiennent les métadonnées structurées, jamais les blobs. Confirmation par numéro exact d’événement.
-- Envois par lots jusqu’à 50 fiches distinctes d’une même catégorie, en respectant l’ordre des opérations.
-- Les erreurs restent dans l’outbox avec compteur et dernière erreur ; retry exponentiel plafonné à cinq minutes, réveil au retour réseau.
-- Pull incrémental paginé depuis `entity_revisions`, avec curseur local transactionnel ; appliquer une révision distante ne recrée pas d’outbox.
-- Le verrou transactionnel serveur par propriétaire sérialise l’attribution des révisions ; les curseurs ne dépendent pas des horloges des appareils.
-- Les suppressions distantes sont des tombstones. L’historique conserve l’état précédent.
-- Une édition locale en attente prime sur une révision reçue. En concurrence, la dernière synchronisation acceptée devient courante ; les états remplacés restent en historique.
-- Un premier compte lie atomiquement cette copie locale à son propriétaire. Pour un autre compte, utiliser un autre profil de navigateur ; aucune réaffectation silencieuse des données.
-- Les originaux locaux sont conservés et sauvegardés par morceaux après connexion ; reprise, hash et restauration sont décrits dans `V6-MEDIA-SYNCHRONISATION.md`. Les erreurs ne détruisent aucune copie saine.
+Le build actuel utilise Node 24, npm ci, npm test et npm run build, et produit dist/. Il bundle Neon et contient des conditions Vercel : les remplacer avant publication Drive, sans présenter la documentation comme un correctif du runtime.
 
-## Migration de l’iPad
+Prévoir une publication de l'artefact dist/ sur GitHub Pages via Actions, avec chemins relatifs sous /Gargotte-V5/, manifest et scope préservés, cache versionné et activation cohérente des assets. L'URL de production reste https://christolosier-ship-it.github.io/Gargotte-V5/.
 
-**Ne pas effacer les données Safari ni désinstaller l’ancienne PWA pendant la migration.**
-IndexedDB appartient à l’origine web. Sur la même origine, l’upgrade conserve les stores existants.
-Sur une nouvelle origine, transférer un export ; la nouvelle URL ne peut pas lire l’ancienne IndexedDB.
+Aucune modification Pages, variable, déploiement ou ressource distante n'est effectuée par cette livraison documentaire.
 
-1. Garder l’ancienne installation et ses sauvegardes accessibles.
-2. Sur une installation équipée de l’export V6, Import/Export → « Exporter les données JSON (sans images) ».
-3. Vérifier les neuf catégories : donjons, créatures, héros, PNJ, quêtes, loot, interactables, Brouhaha et métadonnées médias.
-4. Sur la destination, importer ce JSON. L’import valide tout le fichier avant une transaction de fusion. Les identifiants correspondants sont remplacés après confirmation, les autres fiches restent présentes. Un JSON invalide n’écrit rien.
-5. Se connecter au compte personnel. Attendre « Synchronisé » et vérifier les comptages et des fiches représentatives.
-6. Vérifier que chaque original attendu est « sauvegardé et vérifié », sans erreur média. Sur un nouveau navigateur, les fiches sont reconstruites ; récupérer les originaux individuellement depuis Médias et contrôler taille/hash et relations. L’inventaire réel est une preuve de Phase 3, pas encore réalisée.
-7. Conserver l’ancienne installation tant que cette comparaison n’est pas terminée.
+## Migration locale et sources
 
-Si l’ancienne origine ne propose pas encore l’export JSON, elle doit recevoir l’outil d’export avant le changement d’origine. Le code V6 peut être servi sur cette origine avec `config.js` vide : la couche locale et les exports restent opérationnels sans Neon. Ne pas considérer un XLSX ancien comme la preuve des données actuelles de l’iPad.
+Ne pas désinstaller la PWA ni effacer Safari. La même origine et le même nom IndexedDB facilitent la continuité, mais le parcours réel de la PWA installée doit être testé. Une preview sur une autre origine utilise une autre base.
 
-## Vérifications reproductibles
+1. Inventorier sur l'installation réelle les neuf catégories, IDs, relations et médias avant toute écriture de migration. Garder une sauvegarde structurée XLSX/JSON accessible ; ne pas imposer le ZIP global.
+2. Préserver les blobs locaux actuels. Utiliser le XLSX récent comme source de rapprochement ; un ancien export ne prouve pas l'état actuel.
+3. Identifier les fichiers Drive autorisés, exclure Old et descendants. Ne pas importer les donjons supplémentaires absents du dataset sans décision métier.
+4. Réutiliser les associations déjà confirmées dans l'inventaire privé. Ne pas résoudre les homonymes seulement par nom ; vérifier contexte du donjon, IDs et relations.
+5. Distinguer original local V5 et source Drive : s'ils diffèrent, conserver les deux provenances sans écrasement implicite.
+6. Faire la migration par petits lots reprenables. Acquitter les originaux après taille/hash vérifiés ; enregistrer les écarts.
+7. Restaurer sur un appareil vierge depuis Drive, sans réinjecter de seed. Comparer comptages, relations et médias.
+8. Sur l'iPad installé, tester mode avion, éditions, fermeture/réouverture, retour réseau et mise à jour applicative.
 
-`npm test` couvre stockage, transactions, panne réseau, écriture concurrente à un envoi, bootstrap, tombstones, préservation de blobs locaux, isolation du compte et exports.
-`scripts/verify-neon.mjs` vérifie le transport réel contre une **branche jetable explicitement fournie**, avec un fichier local de comptes de test contenant id/JWT. Les secrets ne sont pas committés et aucun compte réel n’est utilisé.
-Les tests navigateur/PWA et la comparaison des données réelles de l’iPad complètent ces tests automatisés ; leur état exact figure dans `V6-ETAT-EXECUTION.md`.
+## Récupération et exploitation
+
+Les snapshots/checkpoints et le journal doivent permettre de restaurer un état cohérent. Une donnée supprimée manuellement sur Drive ne doit pas provoquer l'effacement de sa dernière copie locale. Aucun nettoyage automatique des sources ou sauvegardes dans la première version.
+
+Un rollback de code ne doit pas ouvrir une base locale avec une version inférieure incompatible ; fournir un correctif compatible ou une procédure de récupération vérifiée. Ne pas proposer « vider les données » comme dépannage.
+
+Afficher séparément état des données et état des médias ; proposer reconnexion quand nécessaire. Le quota compte les copies gérées et sauvegardes ; surveiller également le quota iPad. Les originaux disponibles hors ligne sont uniquement ceux déjà téléchargés.
+
+## Gates
+
+Configuration réelle et test iPad = gate 1 ; synchronisation complète à deux appareils = gate 2 ; dataset personnel, nouvel appareil et déploiement validés = gate 3. Aucune n'est actuellement validée. Ne retirer les ressources historiques qu'à l'occasion d'une tâche ultérieure explicite.

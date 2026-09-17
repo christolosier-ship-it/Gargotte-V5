@@ -1,40 +1,44 @@
-# Phase 2 — synchronisation des originaux
+# V6 — synchronisation Drive des données et originaux
 
-## Périmètre et gate
+## Statut et périmètre
 
-La Phase 2 révisée ajoute les transferts automatiques, leur reprise et la récupération à la demande. Aucun schéma SQL supplémentaire : les trois migrations de la Phase 1 suffisent. La preview utilise maintenant la branche isolée `br-falling-violet-b4am8hbo` (projet `young-bread-85335056`). Production inchangée.
+Contrat cible non implémenté. [Plan canonique](REFACTORISATION-V6-LOCAL-FIRST-GOOGLE-DRIVE.md). Les [preuves Neon de phase 2](archive/neon/V6-MEDIA-SYNCHRONISATION.md) sont historiques.
 
-## Enregistrement et transfert
+## Données structurées
 
-- IndexedDB version 4 conserve le même nom et tous les stores existants. Ajout de `sync_media_outbox` et `sync_media_state`, exclus des exports JSON et des révisions métier.
-- Une écriture média locale et son événement technique sont atomiques. L’événement référence l’id et une génération unique, jamais les octets. L’original reste dans `media_assets.blob`.
-- Les anciens médias locaux sont inventoriés automatiquement au premier passage authentifié. Un champ binaire absent d’un import de métadonnées ne remplace pas un original local.
-- Les données structurées sont envoyées d’abord ; jusqu’à trois originaux sont traités par cycle, puis le pull structuré reprend même si un média échoue. Les moins souvent tentés passent en priorité pour éviter qu’un fichier bloqué affame les autres.
-- SHA-256 calculé localement, morceaux de 256 Kio. Le moteur compare les morceaux déjà présents : une réponse perdue après insertion ne provoque pas de duplication. Un manifeste ou morceau divergent produit une erreur, sans écraser une copie saine.
-- Seule la confirmation du hash et de la taille par le serveur retire l’événement correspondant exactement à sa génération. Une modification concurrente ne peut pas être acquittée par l’ancien transfert.
-- Retry aux cycles suivants (15 secondes lorsque les données structurées fonctionnent ; backoff structuré jusqu’à cinq minutes en cas de panne générale), réveil au retour réseau. Un démarrage hors ligne retente aussi la récupération de session au retour réseau.
-- Arrêt de session contrôlé entre les étapes ; verrou inter-onglets lorsque `navigator.locks` est disponible.
+Conserver l'écriture locale + outbox atomique. Remplacer le journal SQL par des lots immuables d'opérations avec IDs stables, parents et versions de schéma. Les curseurs Drive sont opaques : ne pas les convertir en revision_id numérique.
 
-## Restauration
+Valider et appliquer les lots avec déduplication avant avancement transactionnel du curseur. Le flux changes est un mécanisme de découverte ; le journal métier contient les états nécessaires à la restauration. Les checkpoints sont immuables et indiquent exactement les opérations couvertes.
 
-Les métadonnées arrivent sans téléchargement massif des binaires. Les cartes et fiches Médias indiquent les états `local_only`, `uploading`, `local_remote_verified`, `remote_only`, `downloading`, `sync_error`, `missing` en français.
+L'acquittement vise uniquement la génération envoyée. Une réponse perdue après acceptation doit être résolue par l'identité stable du fichier/lot, sans nouvelle opération logique. Les éditions concurrentes conservent leurs deux versions ; leur résolution est un nouvel événement. Un tombstone ne détruit pas une édition ou un original local non sauvegardé.
 
-« Récupérer l’original » télécharge un média à la demande. Le moteur vérifie le manifeste, la taille de chaque morceau, le quota estimé et le SHA-256 complet. Il écrit ensuite le Blob dans une transaction locale sans créer d’événement sortant. Une modification/suppression concurrente, un hash invalide, un morceau manquant ou une erreur de quota empêche l’installation de la copie reçue. L’original distant n’est jamais supprimé par cet échec.
+## Upload média
 
-Les originaux téléchargés sont disponibles dans IndexedDB hors ligne. La miniature peut manquer sur un nouvel appareil ; l’original est utilisé pour l’affichage, sans réencodage. Pas de récupération en lot à cette étape.
+1. Lire l'original et la génération en attente, vérifier propriétaire et espace cible.
+2. Calculer taille et SHA-256 en respectant le budget mémoire.
+3. Démarrer/reprendre un upload Drive ; persister son état technique local sans exposer l'URL de session dans les logs/exports.
+4. Après interruption, interroger l'état distant. Si la session a expiré, reprendre avec la même identité logique et une nouvelle session contrôlée.
+5. Vérifier taille et hash distants ; relire le fichier si le checksum indépendant n'est pas disponible.
+6. Confirmer seulement la génération exacte, puis publier la disponibilité du binaire. Une fiche ne doit pas annoncer un original vérifié tant que cette étape n'a pas réussi.
 
-## Suppressions, conflits et limites
+Les erreurs d'un média n'empêchent pas les échanges structurés. Borner le nombre de transferts, réessayer avec backoff et conserver les erreurs visibles. Expiration OAuth : arrêter proprement et demander une reconnexion sans perdre l'outbox. Les sessions de transfert restent des données sensibles.
 
-La suppression explicite locale retire les opérations média en attente dans la même transaction que le tombstone structuré. Le serveur masque manifestes et morceaux des médias supprimés. Un tombstone reçu ne détruit pas un original local encore en attente de sauvegarde : le conflit reste visible et récupérable.
+## Téléchargement et offline
 
-Un original existant est immuable par identifiant. L’import d’un nouveau fichier produit déjà un nouvel id média ; une tentative de remplacer les octets sous un ancien id est signalée en erreur. Aucun partage physique par hash.
+Récupérer d'abord les métadonnées. Télécharger un fichier ou un lot de donjon à la demande, avec progression et annulation. Vérifier taille et SHA-256 avant installation transactionnelle dans IndexedDB ; détecter une édition/suppression concurrente.
 
-La limite distante reste **64 Mio par original**. Un fichier plus gros est gardé localement, en file d’attente avec une erreur explicite, jamais considéré comme sauvegardé. La vérification rassemble au maximum 64 Mio en mémoire côté client et serveur. Les fichiers précédemment recompressés par V5 restent conservés tels qu’ils existent.
+Une coupure conserve les copies saines. La reprise partielle doit être testée ou, à défaut, reprendre uniquement le fichier courant avec un message clair ; ne jamais prétendre disposer d'une reprise au dernier octet sans preuve. Ne pas charger tous les originaux en RAM.
 
-## Preuves
+États : local_only, uploading, remote_only, downloading, local_remote_verified, sync_error, missing ; ajouter un état de conflit explicite si nécessaire. Le statut structuré « synchronisé » ne masque pas un média en erreur. Les miniatures restent des dérivés régénérables.
 
-- `npm test` : 15 tests, couvrant notamment interruption après acceptation distante, reprise sans doublons, ancien acquittement face à une modification locale, hash corrompu, chunk manquant, quota estimé insuffisant, exception `QuotaExceededError` pendant la transaction simulée, original >64 Mio, isolation du compte et protection de la dernière copie locale devant un tombstone/import de métadonnées.
-- `scripts/verify-media-sync.mjs` exécuté avec le SDK Neon et des JWT réels sur la branche isolée : coupure après un chunk accepté, reprise n’envoyant que le chunk manquant, SHA-256 serveur, téléchargement JPEG bit-identique, persistance sans outbox parasite, suppression et absence de résurrection.
-- `npm run build` inclut le nouveau module dans le cache PWA. Les contrôles du commit final et la preview sont consignés dans la PR #9.
+## Concurrence et suppressions
 
-La **gate 2 révisée est validée par ces tests de moteur local et de transport réel**. L’installation PWA sur l’iPad, le parcours avec le compte personnel, la migration des données et médias réels et la promotion restent en Phase 3. Aucune de ces validations utilisateur n’est présentée comme déjà réalisée.
+Les verrous inter-onglets sont locaux à un appareil, pas des verrous Drive distribués. La sécurité multi-appareils repose sur les IDs d'opérations, parents, journaux immuables et déduplication. Ne pas résoudre par simple horodatage du dernier appareil.
+
+La suppression métier publie un tombstone. Une suppression manuelle dans Drive génère une anomalie récupérable ; elle ne doit pas effacer automatiquement les données locales. La purge physique et la compaction du journal sont hors de la première livraison.
+
+## Gate 2
+
+Tests sur deux installations : édition/édition et édition/suppression hors ligne, horloges décalées, réponse perdue après acceptation, retry, token expiré/révoqué, changement de compte, pagination, bootstrap vide, checkpoints, absence de seed parasite, import/export, quota local/Drive, corruption, source supprimée et restauration bit-identique.
+
+Confirmer la cohérence du dataset et de ses relations après convergence. Le mode fermé/suspendu n'offre aucune garantie de transfert ; reprendre au retour dans l'application.
