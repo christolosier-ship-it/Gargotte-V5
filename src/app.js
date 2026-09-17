@@ -1,3 +1,8 @@
+import { originalMediaFields } from './data/media-original.js';
+import { createSyncEngine, neonTransport } from './cloud/sync.js';
+import { createMediaEngine, neonMediaTransport } from './cloud/media.js';
+import { exportStructuredBackup, importStructuredBackup } from './data/backup.js';
+import { mountAccount } from "./cloud/account.js";
 
 import {
   uid,
@@ -23,6 +28,7 @@ import { makeZip, readZip, toBytes, fromBytes } from "./utils/zip.js";
 
 import {
   initDatabase,
+  getAll,
   loadAllData,
   loadUiState,
   saveUiState,
@@ -34,7 +40,7 @@ import {
   appendLog,
   getLogs,
   transaction
-} from "./storage/idb.js";
+} from "./data/repository.js";
 
 const ENTITY_ORDER = [
   "dungeons",
@@ -200,7 +206,7 @@ const FORM_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.slice();
-const APP_VERSION = "5.4.0";
+const APP_VERSION = "6.0.0";
 let backupBusy = false;
 let searchDebounceTimer = null;
 
@@ -1119,7 +1125,7 @@ function renderShell(content) {
       <button class="brand" data-action="go-home" title="Accueil">
         <img src="assets/images/logo-192.png" alt="Gargottex">
         <div>
-          <div class="brand-title">Gargottex V5.3</div>
+          <div class="brand-title">Gargottex V6</div>
           <div class="brand-subtitle">offline-first, local et têtu</div>
         </div>
       </button>
@@ -1181,7 +1187,7 @@ function renderHome() {
       <div class="hero-text">
         <span class="eyebrow">Fantasy cartoon absurde</span>
         <h1>Le codex tavernier de Gargottex</h1>
-        <p>Un registre local, rapide et sans cloud, pour gérer donjons, créatures, loot, héros, PNJ, quêtes, Brouhaha et médias.</p>
+        <p>Un registre local et rapide, avec sauvegarde distante après connexion, pour gérer donjons, créatures, loot, héros, PNJ, quêtes, Brouhaha et médias.</p>
         <div class="hero-actions">
           <button class="primary" data-action="set-view" data-view="generator">🎲 Générer</button>
           <button class="secondary" data-action="set-view" data-view="brouhaha">🔥 Brouhaha</button>
@@ -1589,12 +1595,21 @@ function renderBrouhahaEffectDetail(item) {
   `;
 }
 
+let mediaEngine=null, cancelMedia=()=>{}, mediaStatuses={};
+function mediaSyncControls(asset) {
+ const info=mediaStatuses[asset.id] || {status:asset.blob?'local_only':'missing'};
+ const labels={local_only:'Original local — sauvegarde en attente',uploading:'Envoi de l’original',local_remote_verified:'Original sauvegardé et vérifié',remote_only:'Original distant — à télécharger',downloading:'Téléchargement',sync_error:'Erreur média — copie saine conservée',missing:'Original indisponible ou non encore sauvegardé'};
+ return `<div class="muted">${escapeHtml(labels[info.status]||info.status)}${info.chunk_index?` · ${info.chunk_index} morceau(x)`:''}</div>
+ ${info.last_error?`<div role="status">${escapeHtml(info.last_error)}</div>`:''}
+ ${!asset.blob && mediaEngine?`<button data-action="media-download" data-id="${escapeHtml(asset.id)}" ${info.status==='downloading'?'disabled':''}>Récupérer l’original</button>`:''}`;
+}
 function renderMediaAssetCard(asset, active = false) {
   const img = thumbUrlForAsset(asset);
   return `
     <figure class="gallery-item ${active ? "active" : ""}">
       ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(asset.label || asset.file_name || "")}" loading="lazy">` : `<div class="placeholder large">🖼️</div>`}
       <figcaption>${escapeHtml(asset.label || asset.file_name || asset.path || asset.id)}</figcaption>
+      ${mediaSyncControls(asset)}
     </figure>
   `;
 }
@@ -1614,6 +1629,7 @@ function renderMediaAssetDetail(asset) {
         ${preview ? `<img src="${escapeHtml(preview)}" alt="${escapeHtml(asset.label || asset.file_name || asset.id)}" loading="lazy">` : `<div class="placeholder large">🖼️</div>`}
       </div>
       <p><strong>Nom de fichier :</strong> ${escapeHtml(asset.file_name || "—")}</p>
+      ${mediaSyncControls(asset)}
       <p><strong>Type MIME :</strong> ${escapeHtml(asset.mime_type || "—")}</p>
       <p><strong>Entité :</strong> ${escapeHtml(asset.entity_type || "gallery")} · ${escapeHtml(asset.entity_id || "—")}</p>
     </div>
@@ -2058,6 +2074,8 @@ function renderImportExport() {
       <div class="export-buttons">
         ${ENTITY_ORDER.map(t => `<button class="secondary" data-action="export-entity" data-type="${t}">Exporter ${getLabel(t)}</button>`).join("")}
         <button class="primary" data-action="export-all">Exporter tout</button>
+        <button class="primary" data-action="export-json">Exporter les données JSON (sans images)</button>
+        <label>Importer les données JSON <input type="file" accept=".json" data-action="import-json"></label>
         <button class="primary" data-action="export-backup">Exporter backup complet (JSON + images)</button>
       </div>
 
@@ -2224,6 +2242,7 @@ async function refreshData() {
   const raw = await loadAllData();
   hydrateState(raw);
   state.logs = await getLogs(100);
+  mediaStatuses=Object.fromEntries((await getAll('sync_media_state')).map(row=>[row.id,row]));
   await saveUiState(state.ui);
   render();
 }
@@ -2294,9 +2313,15 @@ function resolveTargetEntityFromMediaForm() {
 async function storeMediaFile(file, entityType = "gallery", entityId = "") {
   const safe = safeFilename(file.name);
   const unique = `${safe}_${uid("img").split("_").pop()}`;
-  const main = await fileToOptimizedBlob(file, 1600, 0.84);
+  const originalUrl = URL.createObjectURL(file);
+  let dimensions;
+  try {
+    const image = await loadImage(originalUrl);
+    dimensions = {width:image.naturalWidth || image.width, height:image.naturalHeight || image.height};
+  } finally { URL.revokeObjectURL(originalUrl); }
   const thumb = await fileToOptimizedBlob(file, 512, 0.78);
-  const path = `assets/images/${entityType}/${unique}.webp`;
+  const extension = file.name.match(/\.([a-zA-Z0-9]{1,10})$/)?.[1] || "bin";
+  const path = `assets/images/${entityType}/${unique}.${extension}`;
   const thumbPath = `assets/images/${entityType}/thumbs/${unique}.webp`;
 
   const media = {
@@ -2305,13 +2330,11 @@ async function storeMediaFile(file, entityType = "gallery", entityId = "") {
     file_name: file.name,
     path,
     thumb_path: thumbPath,
-    mime_type: "image/webp",
+    ...originalMediaFields(file, dimensions),
     entity_type: entityType,
     entity_id: entityId || "",
-    blob: main.blob,
     thumb_blob: thumb.blob,
-    width: main.width,
-    height: main.height,
+    thumb_mime_type: thumb.blob.type,
     created_at: nowISO(),
     updated_at: nowISO()
   };
@@ -2593,7 +2616,7 @@ async function exportFullBackupFile() {
     { name: "data/export_all.xlsx", data: workbookBytes },
     { name: "data/media_assets.json", data: toBytes(JSON.stringify(mediaAssets.map(a => ({
       id: a.id, label: a.label, file_name: a.file_name, path: a.path, thumb_path: a.thumb_path,
-      mime_type: a.mime_type, entity_type: a.entity_type, entity_id: a.entity_id,
+      mime_type: a.mime_type, thumb_mime_type: a.thumb_mime_type, byte_size: a.byte_size, entity_type: a.entity_type, entity_id: a.entity_id,
       width: a.width, height: a.height, created_at: a.created_at, updated_at: a.updated_at
     })))) }
   ];
@@ -2603,7 +2626,8 @@ async function exportFullBackupFile() {
     mediaStep++;
     const ext = (asset.mime_type || "image/webp").split("/")[1] || "bin";
     if (asset.blob) files.push({ name: `media/original/${asset.id}.${ext}`, data: new Uint8Array(await asset.blob.arrayBuffer()) });
-    if (asset.thumb_blob) files.push({ name: `media/thumbs/${asset.id}.${ext}`, data: new Uint8Array(await asset.thumb_blob.arrayBuffer()) });
+    const thumbExt = (asset.thumb_mime_type || asset.mime_type || "image/webp").split("/")[1] || "bin";
+    if (asset.thumb_blob) files.push({ name: `media/thumbs/${asset.id}.${thumbExt}`, data: new Uint8Array(await asset.thumb_blob.arrayBuffer()) });
     if (mediaStep % 12 === 0) await new Promise(resolve => setTimeout(resolve, 0));
   }
   const zipBytes = makeZip(files);
@@ -2646,7 +2670,8 @@ async function importFullBackupFile(file) {
     const rows = medias.map(m => {
       const ext = (m.mime_type || "image/webp").split("/")[1] || "bin";
       const orig = zipFiles[`media/original/${m.id}.${ext}`];
-      const thumb = zipFiles[`media/thumbs/${m.id}.${ext}`];
+      const thumbExt = (m.thumb_mime_type || m.mime_type || "image/webp").split("/")[1] || "bin";
+      const thumb = zipFiles[`media/thumbs/${m.id}.${thumbExt}`];
       return {
       id: m.id || uid("media"),
       label: m.label || m.file_name || "",
@@ -2661,7 +2686,9 @@ async function importFullBackupFile(file) {
       created_at: m.created_at || nowISO(),
       updated_at: nowISO(),
       blob: orig ? new Blob([orig], { type: m.mime_type || "image/webp" }) : null,
-      thumb_blob: thumb ? new Blob([thumb], { type: m.mime_type || "image/webp" }) : null,
+      thumb_blob: thumb ? new Blob([thumb], { type: m.thumb_mime_type || m.mime_type || "image/webp" }) : null,
+      thumb_mime_type: m.thumb_mime_type || m.mime_type || "image/webp",
+      byte_size: orig?.byteLength || m.byte_size || 0,
       image_path: m.path || ""
     };});
     await putMany("media_assets", rows);
@@ -2734,6 +2761,14 @@ function bindEvents() {
     const action = btn.dataset.action;
     try {
       switch (action) {
+        case "media-download": {
+          if(!mediaEngine) throw new Error('Connexion requise pour récupérer un original');
+          const engine=mediaEngine;
+          const work=()=>engine.download(btn.dataset.id);
+          await (navigator.locks ? navigator.locks.request('gargottex-sync',work) : work());
+          await refreshData();
+          return;
+        }
         case "go-home":
         case "set-view":
           state.ui.view = btn.dataset.view || "home";
@@ -2899,6 +2934,9 @@ function bindEvents() {
         case "export-all":
           await exportAllFile();
           return;
+        case "export-json":
+          downloadBlob(new Blob([JSON.stringify(await exportStructuredBackup(),null,2)],{type:'application/json'}),`gargottex_structure_${new Date().toISOString().slice(0,10)}.json`);
+          return;
         case "export-backup":
           await exportFullBackupFile();
           toast("🧳 Backup ZIP exporté", "success");
@@ -3024,6 +3062,16 @@ function bindEvents() {
           toast("📥 Fichier analysé", "success");
           return;
         }
+        case "import-json": {
+          const file=ev.target.files?.[0];
+          if(!file) return;
+          const input=JSON.parse(await file.text());
+          if(!confirm('Fusionner cette sauvegarde avec les données locales ? Les fiches de même identifiant seront remplacées. Les autres fiches et les images locales seront conservées.')) return;
+          const counts=await importStructuredBackup(input);
+          await refreshData();
+          toast(`JSON importé : ${Object.values(counts).reduce((a,b)=>a+b,0)} fiches`, 'success');
+          return;
+        }
         case "import-backup-file": {
           const file = el.files?.[0];
           if (!file) return;
@@ -3125,6 +3173,26 @@ async function bootstrap() {
   wireGlobalErrors();
   bindEvents();
   render();
+  let syncEngine;
+  mountAccount({ onSession: async (client,user,onStatus) => {
+    syncEngine?.stop();
+    cancelMedia();mediaEngine=null;
+    if (user) {
+      let cancelled=false;cancelMedia=()=>{cancelled=true;};
+      mediaEngine=createMediaEngine({userId:user.id,transport:neonMediaTransport(client,user.id),isStopped:()=>cancelled,
+        onChange:async()=>{
+          mediaStatuses=Object.fromEntries((await getAll('sync_media_state')).map(row=>[row.id,row]));
+          if(!document.activeElement?.matches('input,textarea,select')) render();
+        }});
+      syncEngine=createSyncEngine({ userId:user.id,transport:neonTransport(client,user.id),onStatus,
+        media:mediaEngine,
+        onData:async()=>{
+          hydrateState(await loadAllData());
+          if (!document.activeElement?.matches('input,textarea,select')) render();
+        } });
+      syncEngine.start();
+    }
+  } }).catch(console.error);
 
 if ("serviceWorker" in navigator) {
 

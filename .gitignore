@@ -1,15 +1,11 @@
-# Local environment / secrets
+node_modules/
+dist/
 .env
-.env.local
-.env*.local
-
-# Neon local project context
-# `neon link` writes local project/branch context here; keep it out of Git.
+.env.*
+!.env.example
+.vercel/
+test-results/
+playwright-report/
 .neon
 .neon/
-
-# Node tooling
-node_modules/
-
-# OS files
 .DS_Store

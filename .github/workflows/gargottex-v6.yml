@@ -1,0 +1,22 @@
+name: Gargottex V6 checks
+on:
+  pull_request:
+    branches: [V5.3]
+    paths: ['src/**', 'scripts/**', 'tests/**', 'migrations/**', 'package*.json', 'index.html', 'service-worker.js', 'vercel.json', '.github/workflows/gargottex-v6.yml']
+  push:
+    branches: [refactor/v6-neon-local-first]
+    paths: ['src/**', 'scripts/**', 'tests/**', 'migrations/**', 'package*.json', 'index.html', 'service-worker.js', 'vercel.json', '.github/workflows/gargottex-v6.yml']
+permissions:
+  contents: read
+jobs:
+  local-first:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build

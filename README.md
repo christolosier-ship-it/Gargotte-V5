@@ -8,7 +8,7 @@
 [![Offline first](https://img.shields.io/badge/PWA-Offline--first-6f4a2f?style=flat-square)](./service-worker.js)
 [![Vanilla JavaScript](https://img.shields.io/badge/JavaScript-ES%20Modules-F7DF1E?style=flat-square&logo=javascript&logoColor=000)](./src/app.js)
 [![IndexedDB](https://img.shields.io/badge/Storage-IndexedDB-4b3628?style=flat-square)](./src/storage/idb.js)
-[![No backend](https://img.shields.io/badge/Backend-None-2f7d32?style=flat-square)](#données-et-confidentialité)
+[![Neon](https://img.shields.io/badge/Sync-Neon-2f7d32?style=flat-square)](./docs/V6-MIGRATION-CONFIGURATION.md)
 
 [Présentation](#présentation) · [Fonctionnalités](#fonctionnalités) · [Démarrage](#démarrage-rapide) · [Architecture](#architecture)
 
@@ -18,7 +18,9 @@
 
 Gargottex est une application web autonome conçue pour accompagner les parties de **Gargotte & Va-Nu-Pieds**. Elle centralise le contenu du jeu, aide à préparer les donjons et permet d’improviser rapidement créatures, quêtes, objets et effets de Brouhaha pendant une session.
 
-L’application fonctionne entièrement dans le navigateur. Les données, images et préférences sont conservées localement dans IndexedDB, sans compte, sans API distante et sans backend.
+L’application fonctionne dans le navigateur et enregistre immédiatement les modifications dans IndexedDB. La V6 ajoute, après connexion, une sauvegarde des données structurées et des originaux médias dans Neon. Les transferts reprennent après interruption et les originaux sont vérifiés par SHA-256, sans recompression.
+
+**État V6 :** gate Phase 2 révisée validée sur branche isolée ; migration iPad et promotion restent en Phase 3. Voir [l’état d’exécution](./docs/V6-ETAT-EXECUTION.md), [la synchronisation média](./docs/V6-MEDIA-SYNCHRONISATION.md) et [la procédure de migration/configuration](./docs/V6-MIGRATION-CONFIGURATION.md).
 
 > [!NOTE]
 > Gargottex est un outil de préparation et d’assistance au meneur de jeu. Il ne remplace pas les règles officielles ni l’arbitrage de la table.
@@ -54,12 +56,15 @@ L’application fonctionne entièrement dans le navigateur. Les données, images
 
 ## Démarrage rapide
 
-Aucune installation npm ni étape de compilation n’est nécessaire.
+Node.js 24 est utilisé en CI. Le build minimal regroupe le SDK Neon et prépare le cache PWA. Sans URL Neon configurée, le build local fonctionne en mode local.
 
 ```bash
 git clone https://github.com/christolosier-ship-it/Gargotte-V5.git
 cd Gargotte-V5
-python3 -m http.server 8080
+npm ci
+npm test
+npm run build
+python3 -m http.server 8080 --directory dist
 ```
 
 Ouvrez ensuite `http://localhost:8080`.
@@ -116,15 +121,9 @@ Le service worker :
 
 Toutes les informations sont conservées dans la base IndexedDB locale `gargottex-v5-offline`.
 
-Le projet ne nécessite :
+La consultation et l’édition locales ne nécessitent pas de compte. Après connexion, une outbox envoie les données structurées à Neon via Auth + Data API ; les privilèges SQL et RLS les isolent par propriétaire. Les suppressions sont synchronisées et les états remplacés conservés dans l’historique.
 
-- aucun compte utilisateur ;
-- aucune clé API ;
-- aucun serveur applicatif ;
-- aucun service cloud ;
-- aucun suivi analytique pour fonctionner.
-
-Les données ne quittent pas le navigateur sauf lors d’un export ou d’un partage déclenché par l’utilisateur.
+Après connexion, les originaux (jusqu’à 64 Mio par fichier) sont sauvegardés dans Postgres et vérifiés par SHA-256 ; les miniatures restent des dérivés locaux. Les originaux plus volumineux restent locaux avec une erreur explicite. Sur un nouvel appareil, leur récupération est individuelle depuis Médias. Les exports JSON et XLSX restent structurés, sans binaires, et fonctionnent depuis la copie locale. Ne placez jamais de chaîne PostgreSQL ni de secret d’administration dans la configuration cliente ; seule `PUBLIC_NEON_DATABASE_URL`, une URL HTTPS publique, est autorisée.
 
 ## Architecture
 
@@ -217,7 +216,7 @@ Pour les ajouts en volume :
 Modifiez `seed-data.js` pour changer le contenu livré lors d’une première installation. Cette modification ne remplace pas automatiquement les données déjà présentes dans IndexedDB.
 
 > [!IMPORTANT]
-> Pour tester un nouveau jeu de données initiales, utilisez un profil de navigateur vierge ou effacez explicitement les données du site après avoir exporté toute progression utile.
+> Pour tester un nouveau jeu de données initiales, utilisez un profil de navigateur vierge sans effacer l’installation actuelle.
 
 ## Déploiement sur GitHub Pages
 
