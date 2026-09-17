@@ -412,7 +412,7 @@ Mineurs   : documentés et acceptés
 
 Vérifier notamment :
 
-- Objets du décor ;
+- Objets interactifs ;
 - Butin pour la section Créature / Loot pour la famille du Codex ;
 - Éliminer ;
 - Enregistrer ;
