@@ -322,15 +322,15 @@ function renderFamilyBrowser(type){
   host.innerHTML='<div class="family-toolbar"><div><div class="eyebrow">Collection</div><h2 class="serif">'+m.label+' <span class="small muted">· '+all.length+' exemples</span></h2></div><input class="field family-search" data-family-search="'+type+'" placeholder="Rechercher dans '+m.label.toLowerCase()+'…"><div class="segmented"><button class="'+(mode==='gallery'?'active':'')+'" data-family-mode="'+type+':gallery">'+utilIcon('i-grid','icon sm')+'</button><button class="'+(mode==='list'?'active':'')+'" data-family-mode="'+type+':list">'+utilIcon('i-list','icon sm')+'</button></div></div>'+
     '<div class="family-backbar" data-family-back="'+type+'"><b>'+m.label+'</b><span>· collection → fiche</span></div>'+
     '<div class="family-browser-shell"><aside class="family-collection panel"><div class="family-collection-grid '+mode+'" data-family-list="'+type+'">'+all.map(x=>familyCard(type,x,mode)).join('')+'</div></aside><div class="family-detail-host">'+(selected?familyDetail(type,selected):'')+'</div></div>';
-  $('[data-family-item]',host).forEach(b=>b.onclick=()=>selectFamilyItem(type,b.dataset.familyItem));
-  $('[data-family-mode]',host).forEach(b=>b.onclick=()=>{const next=b.dataset.familyMode.split(':')[1];familyMode[type]=next;localStorage.setItem('mockup:familyMode:'+type,next);renderFamilyBrowser(type);applyFamilyResponsive(type)});
+  $$('[data-family-item]',host).forEach(b=>b.onclick=()=>selectFamilyItem(type,b.dataset.familyItem));
+  $$('[data-family-mode]',host).forEach(b=>b.onclick=()=>{const next=b.dataset.familyMode.split(':')[1];familyMode[type]=next;localStorage.setItem('mockup:familyMode:'+type,next);renderFamilyBrowser(type);applyFamilyResponsive(type)});
   const search=$('[data-family-search]',host);if(search)search.oninput=()=>{
     const q=search.value.trim().toLowerCase(),list=$('[data-family-list]',host);
     list.innerHTML=all.filter(x=>(x.name+' '+familySubtitle(type,x)).toLowerCase().includes(q)).map(x=>familyCard(type,x,mode)).join('')||'<div class="empty-inline">Aucun résultat.</div>';
-    $('[data-family-item]',list).forEach(b=>b.onclick=()=>selectFamilyItem(type,b.dataset.familyItem));
+    $$('[data-family-item]',list).forEach(b=>b.onclick=()=>selectFamilyItem(type,b.dataset.familyItem));
   };
-  $('[data-see-all]',host).forEach(b=>b.onclick=()=>{renderCodexType(b.dataset.seeAll);showToast('Collection liée ouverte')});
-  $('[data-hero-level]',host).forEach(b=>b.onclick=()=>{heroLevelState[b.dataset.heroId]=Number(b.dataset.heroLevel);localStorage.setItem('mockup:heroLevel:'+b.dataset.heroId,b.dataset.heroLevel);renderFamilyBrowser(type);applyFamilyResponsive(type)});
+  $$('[data-see-all]',host).forEach(b=>b.onclick=()=>{renderCodexType(b.dataset.seeAll);showToast('Collection liée ouverte')});
+  $$('[data-hero-level]',host).forEach(b=>b.onclick=()=>{heroLevelState[b.dataset.heroId]=Number(b.dataset.heroLevel);localStorage.setItem('mockup:heroLevel:'+b.dataset.heroId,b.dataset.heroLevel);renderFamilyBrowser(type);applyFamilyResponsive(type)});
 }
 function selectFamilyItem(type,id){
   familySelected[type]=id;localStorage.setItem('mockup:familySelected:'+type,id);familyDetailOpen[type]=true;renderFamilyBrowser(type);applyFamilyResponsive(type);
@@ -363,13 +363,13 @@ function applyBestiaryResponsive(){
 }
 function openCodex(type){show('codex');renderCodexType(type)}
 function renderCodexType(type){
-  currentCodex=type;$('.codex-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.codex===type));$('.entity-demo').forEach(x=>x.classList.remove('active'));$('#codex-'+type)?.classList.add('active');
+  currentCodex=type;$$('.codex-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.codex===type));$$('.entity-demo').forEach(x=>x.classList.remove('active'));$('#codex-'+type)?.classList.add('active');
   $('#bestiary-controls')?.classList.toggle('hidden',type!=='creatures');
   if(type==='creatures'){renderBestiary();renderCreature();applyBestiaryResponsive()}
   else if(codexFamilyMeta[type]){renderFamilyBrowser(type);applyFamilyResponsive(type)}
 }
 function initCodex(){
-  $$('.codex-tabs button').forEach(b=>b.onclick=()=>renderCodexType(b.dataset.codex));
+  $$$('.codex-tabs button').forEach(b=>b.onclick=()=>renderCodexType(b.dataset.codex));
   $('#mode-gallery').onclick=()=>setBestiaryMode('gallery');$('#mode-list').onclick=()=>setBestiaryMode('list');
   $$('[data-see-all]').forEach(b=>b.onclick=()=>{renderCodexType(b.dataset.seeAll);showToast('Collection ouverte avec filtre Donjon conservé')});
   $$('.hero-level').forEach(b=>b.onclick=()=>{$$('.hero-level').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#hero-level-label').textContent=b.dataset.level;$('#hero-pv').textContent=Number(b.dataset.level)*2+8;$('#hero-atk').textContent=Math.ceil(Number(b.dataset.level)/2)+2});
