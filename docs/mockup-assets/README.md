@@ -40,3 +40,13 @@ Ces ressources peuvent être promues plus tard vers `assets/ui/` après validati
 ## Pictogrammes gameplay
 
 `PV`, `ATK`, `DEF`, `Portée/Zone`, `Actions`, `Menace`, `Socle`, `Comportement/IA`, `Butin`, `Lore`, `Donjon`.
+
+À créer : `Compétence`, `Héros`, `PNJ`, `Quête`, `Objet interactif`, `Brouhaha`.
+
+## Détourage des figurines
+
+Le moteur retenu pour les dérivés transparents de la maquette est **IS-Net / DIS** via `rembg`. Les originaux restent intacts ; seuls les fichiers de `creatures-transparent/` sont régénérés.
+
+## Lore
+
+Le panneau Lore combine `paper-warm.svg` avec une patine CSS légère : usure de papier, variation chaude et petites taches discrètes. La texture ne doit jamais réduire la lisibilité.
