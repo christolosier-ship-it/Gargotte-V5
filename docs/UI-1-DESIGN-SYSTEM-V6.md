@@ -169,6 +169,21 @@ Usage :
 - petit bandeau ;
 - pastille ou badge.
 
+## 4.3 Réutilisation de l'échelle couleur
+
+La même échelle de six couleurs est réutilisée pour deux systèmes supplémentaires afin de garder une lecture cohérente :
+
+| Niveau couleur | Loot | Quête |
+|---|---|---|
+| Basique / gris | Mauvais | Très facile |
+| Tactique / vert | Commun | Facile |
+| Spéciale / bleu | Inhabituel | Normale |
+| Brute / violet | Rare | Difficile |
+| Mini-boss / ambre | Épique | Très difficile |
+| Boss / rouge | Légendaire | Extrême |
+
+La couleur conserve uniquement un rôle de repère. Le libellé de rareté ou de difficulté reste toujours écrit ; la couleur seule n'est jamais suffisante.
+
 ---
 
 # 5. Typographies
@@ -478,9 +493,12 @@ Texture plus présente mais contrôlée pour :
 
 - couverture de donjon ;
 - lore ;
+- histoire / description narrative ;
 - capacité exceptionnelle ;
 - home ;
 - blocs narratifs spécifiques.
+
+Les blocs de **Lore, histoire et texte assimilé** utilisent un papier / parchemin **beige très clair**, nuancé, légèrement usé et taché. La matière doit rester réaliste mais discrète, avec un texte brun foncé à fort contraste.
 
 ## 10.2 Ressources
 
@@ -521,7 +539,7 @@ assets/textures/
   grain-dark.webp
   wood-dark.webp
   brass-aged.webp
-  paper-warm.webp
+  paper-aged-light.webp
   leather-dark.webp
 ```
 
