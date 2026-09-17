@@ -35,6 +35,7 @@ Principe directeur :
 19. Vider le journal demande confirmation et ne touche jamais au Codex.
 20. Aucun second backend média n'est introduit par l'UI.
 21. L'original média n'est jamais recompressé, redimensionné ou converti par l'interface.
+22. Pour les figurines qui nécessitent un fond transparent, **IS-Net / DIS** est le moteur de détourage de référence validé par la maquette. Le résultat est un dérivé d'affichage ; l'original reste intact.
 
 ---
 
@@ -44,7 +45,7 @@ Principe directeur :
 
 Le Codex consulte. L'Atelier crée, modifie et supprime.
 
-Familles éditables : Donjons, Créatures, Héros, PNJ, Quêtes, Loot, Objets du décor, Brouhaha.
+Familles éditables : Donjons, Créatures, Héros, PNJ, Quêtes, Loot, Objets interactifs, Brouhaha.
 
 ## 2.2 Desktop / tablette paysage
 
@@ -97,7 +98,7 @@ Exemple Créature :
 ```text
 Identité
 Gameplay
-Capacité
+Compétence
 IA / comportement
 Loot
 Lore
