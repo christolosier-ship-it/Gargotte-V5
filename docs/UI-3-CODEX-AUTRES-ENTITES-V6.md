@@ -85,6 +85,8 @@ Emblèmes dédiés à créer :
 
 Règle : ne pas détourner un pictogramme existant si sa sémantique diffère. Par exemple `MENACE` ne sert pas à représenter automatiquement la difficulté d'une Quête.
 
+Rareté de Loot et difficulté de Quête utilisent **texte + couleur** et ne nécessitent pas de nouvel emblème dédié.
+
 # 3. Donjons
 
 ## 3.1 Collection
@@ -175,7 +177,7 @@ La progression montre les autres niveaux de façon compacte, sans afficher plusi
 
 Le PNJ est une fiche narrative, jamais une Créature sans stats.
 
-Collection : Galerie par défaut, Liste en alternative. Chaque Loot ouvre sa propre fiche d'inspection. Une carte ouvre la fiche PNJ et le retour restitue la collection.
+Collection : Galerie par défaut, Liste en alternative. Une carte ouvre la fiche PNJ et le retour restitue la collection.
 
 Fiche :
 
@@ -222,6 +224,21 @@ Relations contextuelles
 
 L'Objectif doit être le bloc le plus repérable pendant une consultation rapide.
 
+## 6.1 Difficulté des Quêtes
+
+Six niveaux sont verrouillés et reprennent exactement la palette des catégories Créature :
+
+| Difficulté | Couleur source |
+|---|---|
+| Très facile | Basique |
+| Facile | Tactique |
+| Normale | Spéciale |
+| Difficile | Brute |
+| Très difficile | Mini-boss |
+| Extrême | Boss |
+
+Le libellé reste toujours visible en plus de la couleur.
+
 ---
 
 # 7. Loot
@@ -230,13 +247,27 @@ Loot représente un objet récupérable ou une récompense, distinct des Objets 
 
 Collection : Galerie par défaut, Liste en alternative.
 
-Aucune rareté n'est inventée.
+## 7.1 Rareté du Loot
+
+Six niveaux de rareté sont verrouillés et reprennent exactement la palette des catégories Créature :
+
+| Rareté | Couleur source |
+|---|---|
+| Mauvais | Basique |
+| Commun | Tactique |
+| Inhabituel | Spéciale |
+| Rare | Brute |
+| Épique | Mini-boss |
+| Légendaire | Boss |
+
+Le libellé reste toujours visible en plus de la couleur. La clé technique du futur champ de rareté sera fixée lors de l'évolution du modèle métier ; UI-3 verrouille ici la sémantique et la présentation.
 
 Fiche :
 
 ```text
 Illustration
 Nom
+Rareté
 Type
 Effet
 Valeur
@@ -399,7 +430,6 @@ UI-3 n'introduit pas implicitement :
 
 - `boss_creature_id` ;
 - `npc_dungeon_id` ;
-- rareté de Loot ;
 - nouvelles catégories ;
 - relation Héros -> Donjon ;
 - changement structurel uniquement motivé par la présentation.
