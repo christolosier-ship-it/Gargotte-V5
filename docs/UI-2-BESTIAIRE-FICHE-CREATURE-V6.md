@@ -32,10 +32,10 @@ UI-2 doit permettre de :
 3. Le dernier mode choisi est mémorisé localement.
 4. Desktop : collection visible lorsque la fiche est ouverte.
 5. Desktop sans sélection : la collection peut occuper tout l'espace de travail.
-6. Tablette paysage : rail + collection compacte + fiche.
-7. Tablette portrait : fiche prioritaire + drawer Bestiaire.
+6. Tablette, portrait comme paysage : `Bestiaire -> Fiche -> retour Bestiaire`, sans collection et fiche affichées côte à côte.
+7. Le retour tablette/téléphone restaure le contexte de collection sans perte de recherche, filtres, tri, vue ni scroll.
 8. Téléphone : `Bestiaire -> Fiche -> retour Bestiaire`.
-9. Identité, stats et capacité signature restent directement visibles sur mobile.
+9. Identité, stats et Compétence restent directement visibles sur mobile.
 10. Comportement, Butin, Lore et Liés peuvent être repliables sur mobile.
 11. Les créatures liées privilégient le même donjon puis les relations explicites.
 12. Un rail Liés permanent n'est autorisé que sur très grand desktop.
@@ -121,7 +121,7 @@ Hiérarchie verrouillée :
 2. Donjon / contexte
 3. Catégorie / Menace / Socle
 4. Statistiques
-5. Capacité signature
+5. Compétence
 6. Comportement / IA
 7. Butin
 8. Lore
@@ -152,9 +152,11 @@ Ordre stable :
 
 La Menace reste dans l'identité et n'est pas dupliquée dans la bande de stats.
 
-## 5.3 Capacité signature
+## 5.3 Compétence
 
-La capacité principale vient immédiatement après les stats et reste visible sans interaction supplémentaire sur tous les appareils.
+La compétence principale vient immédiatement après les stats et reste visible sans interaction supplémentaire sur tous les appareils.
+
+Elle reçoit un pictogramme dédié `Icone_Gameplay_COMPETENCE.webp`. Tant que cet asset n'existe pas, aucun pictogramme existant n'est détourné pour simuler cette sémantique.
 
 ## 5.4 Comportement / IA
 
@@ -174,6 +176,8 @@ Le terme **Butin** désigne la section de la fiche Créature. **Loot** reste le 
 
 Le Lore vient après le gameplay et reçoit le traitement éditorial défini par UI-1.
 
+Le panneau Lore utilise une matière de **papier / parchemin usé**, chaude mais lisible, avec de légères irrégularités et quelques taches discrètes. L'effet reste éditorial et contenu : pas de salissure forte, pas de contraste qui nuise au texte.
+
 ---
 
 # 6. Images et états média
@@ -186,6 +190,7 @@ Règles :
 - la fiche utilise l'original local lorsqu'il est disponible, ou un dérivé adapté à l'affichage ;
 - aucune optimisation UI ne remplace ni ne modifie l'original ;
 - les conversions WebP/AVIF éventuelles concernent uniquement les **dérivés d'affichage**, jamais l'original sauvegardé ;
+- pour les figurines détourées, le moteur de référence validé par la maquette est **IS-Net / DIS** via `rembg` ; il génère uniquement un dérivé transparent d'affichage et ne modifie jamais l'original ;
 - lazy-loading hors premier viewport ;
 - dimensions explicites pour limiter les sauts de layout ;
 - aucun chargement massif des originaux.
@@ -265,11 +270,15 @@ La collection et la fiche peuvent avoir des scrolls indépendants afin d'éviter
 
 ## Tablette paysage
 
-Master-detail compact. La Liste est particulièrement adaptée lorsque la Galerie devient trop serrée.
+Navigation séquentielle, comme sur téléphone : `Bestiaire -> Fiche -> retour Bestiaire`.
+
+Le Bestiaire utilise toute la largeur disponible pour la collection. Lorsqu'une créature est ouverte, la fiche prend à son tour toute la largeur utile. Le retour restaure la position et les filtres précédents.
 
 ## Tablette portrait
 
-Fiche prioritaire. Le Bestiaire vit dans un drawer qui conserve son état.
+Même navigation séquentielle : `Bestiaire -> Fiche -> retour Bestiaire`.
+
+Aucune composition côte à côte collection + fiche n'est utilisée sur tablette.
 
 ## Téléphone
 
@@ -279,7 +288,7 @@ Toujours ouverts :
 
 - identité ;
 - stats ;
-- capacité signature.
+- Compétence.
 
 Repliables si utile :
 
@@ -299,7 +308,7 @@ Gérer explicitement :
 - filtres sans résultat ;
 - média local absent mais distant disponible ;
 - média indisponible ;
-- capacité absente ;
+- Compétence absente ;
 - Butin absent ;
 - Lore absent ;
 - relation manquante ;
@@ -336,7 +345,7 @@ UI-2 est validée lorsque :
 3. la fiche hiérarchise correctement gameplay puis narration ;
 4. le retour restaure le contexte de collection ;
 5. le téléphone n'empile jamais collection complète puis fiche ;
-6. la tablette dispose d'un vrai comportement dédié ;
+6. la tablette utilise la navigation séquentielle `Bestiaire -> Fiche -> retour Bestiaire` sans collection et fiche côte à côte ;
 7. les états média local / distant / absent sont compréhensibles ;
 8. les boss multi-phases ne sont jamais regroupés sur une heuristique ambiguë ;
 9. aucune règle de stockage média ou token visuel n'est dupliquée ici.
