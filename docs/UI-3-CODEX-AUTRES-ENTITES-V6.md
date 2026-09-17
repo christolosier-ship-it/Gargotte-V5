@@ -4,7 +4,7 @@
 
 **VERROUILLÉ - source de vérité pour les autres entités du Codex**
 
-Ce document complète UI-2 sans recopier UI-1. Il définit les architectures métier de Donjons, Héros, PNJ, Quêtes, Loot, Objets du décor, Brouhaha référentiel et intégration contextuelle des Médias.
+Ce document complète UI-2 sans recopier UI-1. Il définit les architectures métier de Donjons, Héros, PNJ, Quêtes, Loot, Objets interactifs, Brouhaha référentiel et intégration contextuelle des Médias.
 
 Principe directeur :
 
@@ -17,7 +17,7 @@ Principe directeur :
 1. Donjon = hub narratif du Codex.
 2. Héros regroupés par `hero_base_name`.
 3. Un Héros affiche un niveau sélectionné et une progression.
-4. Le libellé utilisateur `Objets` devient **Objets du décor**.
+4. Le libellé utilisateur `Objets` devient **Objets interactifs**.
 5. Brouhaha se sépare en référentiel Codex et outil de session UI-4.
 6. Médias n'est pas une famille narrative du Codex mais une bibliothèque transversale.
 7. Les accents de donjon ne sont appliqués qu'aux relations fiables.
@@ -36,13 +36,36 @@ Principe directeur :
 | PNJ | Galerie | Liste | Galerie |
 | Quêtes | Liste | aucun obligatoire | Liste |
 | Loot | Galerie | Liste | Galerie |
-| Objets du décor | Liste | aucun obligatoire | Liste |
+| Objets interactifs | Liste | aucun obligatoire | Liste |
 | Brouhaha | Échelle / référentiel | aucun | Référentiel |
 | Médias | Galerie | vue compacte éventuelle | Galerie |
 
 Lorsque plusieurs modes existent, le dernier mode utilisé est mémorisé localement.
 
 ---
+
+## 2.1 Iconographie des familles
+
+La maquette réutilise d'abord les emblèmes déjà validés lorsqu'ils portent **exactement** le même sens.
+
+Réutilisation validée :
+
+- Donjon : `Icone_Gameplay_DONJON.webp` ;
+- Loot : `Icone_Gameplay_BUTIN.webp` ;
+- sections Lore / narration : `Icone_Gameplay_LORE.webp` ;
+- statistiques Héros et autres blocs compatibles : `PV`, `ATK`, `DEF`, `ACTION` ;
+- catégories Créature : sigils `Basique`, `Tactique`, `Spéciale`, `Brute`, `MiniBoss`, `Boss`.
+
+Emblèmes dédiés à créer :
+
+- `Icone_Gameplay_COMPETENCE.webp` ;
+- `Icone_Entite_HEROS.webp` ;
+- `Icone_Entite_PNJ.webp` ;
+- `Icone_Entite_QUETE.webp` ;
+- `Icone_Entite_OBJET_INTERACTIF.webp` ;
+- `Icone_Entite_BROUHAHA.webp`.
+
+Règle : ne pas détourner un pictogramme existant si sa sémantique diffère. Par exemple `MENACE` ne sert pas à représenter automatiquement la difficulté d'une Quête.
 
 # 3. Donjons
 
@@ -61,7 +84,7 @@ Budgets / progression d'étages
 Boss final
 Créatures
 Quêtes
-Objets du décor
+Objets interactifs
 Brouhaha du donjon
 Médias liés
 Métadonnées secondaires
@@ -181,7 +204,7 @@ L'Objectif doit être le bloc le plus repérable pendant une consultation rapide
 
 # 7. Loot
 
-Loot représente un objet récupérable ou une récompense, distinct des Objets du décor.
+Loot représente un objet récupérable ou une récompense, distinct des Objets interactifs.
 
 Collection : Galerie par défaut, Liste en alternative.
 
@@ -204,9 +227,9 @@ L'accent du donjon n'est utilisé que si la provenance peut être déterminée a
 
 ---
 
-# 8. Objets du décor
+# 8. Objets interactifs
 
-Le store technique reste `interactables`, mais le libellé utilisateur est **Objets du décor**.
+Le store technique reste `interactables`, mais le libellé utilisateur est **Objets interactifs**.
 
 Collection : Liste.
 
@@ -267,7 +290,7 @@ Règle fonctionnelle :
 - Donjon : oui ;
 - Créature : via relation donjon ;
 - Quête : via relation donjon ;
-- Objet du décor : via relation donjon ;
+- Objet interactif : via relation donjon ;
 - Brouhaha : si rattaché au donjon ;
 - Loot : uniquement via provenance fiable ;
 - Héros : neutre ;
@@ -285,7 +308,7 @@ Parcours naturels à préserver :
 ```text
 Donjon -> Créature
 Donjon -> Quête
-Donjon -> Objet du décor
+Donjon -> Objet interactif
 Donjon -> Brouhaha
 Créature -> Donjon
 Créature -> Loot
@@ -293,7 +316,7 @@ Quête -> Donjon
 Quête -> PNJ
 PNJ -> Quête
 Loot -> Créature
-Objet du décor -> Donjon
+Objet interactif -> Donjon
 Brouhaha -> Donjon
 ```
 
@@ -309,7 +332,7 @@ La recherche globale distingue clairement les types de résultats.
 
 Même si Médias est transversal, un média peut rester trouvable si l'indexation existante le supporte.
 
-Le libellé utilisateur est **Objet du décor**, sauf dans les formats techniques qui doivent conserver leurs clés existantes.
+Le libellé utilisateur est **Objet interactif**, sauf dans les formats techniques qui doivent conserver leurs clés existantes.
 
 ---
 
@@ -321,7 +344,7 @@ Comportements métier :
 
 - Donjon : page hub riche ;
 - Héros : fiche de progression ;
-- PNJ, Quêtes, Loot, Objets du décor : master-detail seulement lorsque la largeur le permet ;
+- PNJ, Quêtes, Loot, Objets interactifs : master-detail seulement lorsque la largeur le permet ;
 - tablette portrait : fiche prioritaire et collection en drawer si nécessaire ;
 - téléphone : `Collection -> Fiche -> Retour` ;
 - Brouhaha référentiel : page filtrable unique ;
@@ -368,7 +391,7 @@ UI-3 est validée lorsque :
 3. un Héros est perçu comme une identité évolutive ;
 4. le PNJ reste narratif ;
 5. la Quête Codex reste distincte du tirage de session ;
-6. Loot et Objets du décor sont immédiatement distinguables ;
+6. Loot et Objets interactifs sont immédiatement distinguables ;
 7. Brouhaha référentiel et Brouhaha de session sont séparés ;
 8. Médias reste transversal ;
 9. les relations contextuelles reposent sur les données existantes ;
