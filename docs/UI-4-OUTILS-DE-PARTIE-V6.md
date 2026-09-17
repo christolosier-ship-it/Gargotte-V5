@@ -123,7 +123,7 @@ Le résultat devient prioritaire. Les paramètres se compactent en résumé modi
 Le résultat distingue :
 
 - Créatures ;
-- Objets du décor.
+- Objets interactifs.
 
 Chaque entrée permet une ouverture rapide sans quitter la session.
 
@@ -144,7 +144,7 @@ Aucun tracker de PV individuel n'est introduit.
 
 Créature : image, nom, stats principales, capacité/comportement utile, ouverture fiche complète, `Éliminer`.
 
-Objet du décor : nom, type, PV, actions autorisées, effet, ouverture fiche complète.
+Objet interactif : nom, type, PV, actions autorisées, effet, ouverture fiche complète.
 
 La mini-fiche réutilise la grammaire du Codex au lieu d'inventer une seconde présentation.
 
