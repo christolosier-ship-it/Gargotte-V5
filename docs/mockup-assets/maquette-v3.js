@@ -12,6 +12,14 @@ const catMeta={
   mini_boss:{label:'Mini-boss',sigil:'Sigil_MiniBoss.webp'},
   boss:{label:'Boss',sigil:'Sigil_Boss.webp'}
 };
+const tierMeta={
+  basique:{loot:'Mauvais',quest:'Très facile'},
+  tactique:{loot:'Commun',quest:'Facile'},
+  speciale:{loot:'Inhabituel',quest:'Normale'},
+  brute:{loot:'Rare',quest:'Difficile'},
+  mini_boss:{loot:'Épique',quest:'Très difficile'},
+  boss:{loot:'Légendaire',quest:'Extrême'}
+};
 const creatures=[
   {id:'rainette',name:'Rainette Voltigeuse',cat:'speciale',img:'../assets/images/rainette.jpeg',displayImg:'./mockup-assets/creatures-transparent/rainette.png',dungeon:'Les Marécages Infectés',threat:2,base:'32',pv:7,atk:3,def:2,range:3,actions:2,ability:'Bond électrique',copy:'Bondit par-dessus un obstacle puis décharge une impulsion sur la première cible rencontrée.',ai:'Harcele les flancs, cherche les cases libres et évite les engagements prolongés.',loot:['Glande conductrice','2 or'],lore:'Une rainette élevée dans les cuves de cuivre finit toujours par développer une opinion très ferme sur la foudre.',tags:['amphibie','mobile','électrique']},
   {id:'trixie',name:'Gobeline Turbo-Coude',cat:'tactique',img:'../assets/images/trixie.jpeg',displayImg:'./mockup-assets/creatures-transparent/trixie.png',dungeon:'Le Cabaret des Joyeuses',threat:2,base:'32',pv:8,atk:3,def:4,range:1,actions:2,ability:'Turbo-Coude',copy:'Une percée courte, brutale et précise qui repousse la cible.',ai:'Cherche un angle, protège les unités plus fragiles et punit les passages étroits.',loot:['Coude renforcé','1 or'],lore:'Elle a appris très tôt qu’un comptoir est surtout une ligne droite qui mérite d’être traversée vite.',tags:['gobeline','charge','support']},
@@ -78,19 +86,20 @@ const codexNpcs=[
   {id:'trixie-pnj',name:'Trixie Casse-Noisette',race:'',tone:'',role:'',lore:'',image:'../assets/images/trixie.jpeg',tags:[]}
 ];
 const codexQuests=[
-  {id:'q1',name:'Le Bricoleur qui avait trop bu',npc:'Gaston Pince-Doigt, menuisier alcoolique',description:"Hier soir j’ai voulu réparer la grande table de la Chope Qui Colle… mais après la sixième pinte j’ai confondu la caisse à outils avec la caisse de bois pour le feu.",objective:'Ramener 3 sacs de vis rouillées',reward:'',difficulty:'',dungeon:'',image:null,tags:[]},
-  {id:'q2',name:'Concours officiel de lancer de caillou',npc:'Mireille Trois-Dents, organisatrice sportive',description:"Ce soir c’est le Grand Championnat de Lancer de Caillou de la Vallée. Malheureusement les participants ont déjà lancé tous les cailloux… sur l’arbitre.",objective:'Ramener 3 cailloux bien équilibrés',reward:'',difficulty:'',dungeon:'',image:null,tags:[]},
-  {id:'q3',name:'Le médecin du pauvre',npc:'Docteur Archibald Rafistol',description:"Je soigne les aventuriers cassés depuis des années. Le problème c’est qu’ils arrivent souvent avec moins de morceaux qu’au départ.",objective:'Ramener 2 os détachables',reward:'',difficulty:'',dungeon:'',image:null,tags:[]},
-  {id:'q4',name:'La machine à bière automatique',npc:'Berthold Ventrepin',description:"J’invente une machine qui sert la bière toute seule. Comme ça je pourrai enfin me concentrer sur mon activité principale : boire avec les clients.",objective:'Ramener 2 ressorts mystérieux',reward:'',difficulty:'',dungeon:'',image:null,tags:[]},
-  {id:'q5',name:'La Couronne qui Traîne',npc:'Brünhilda la Torgnole',description:"Hier j’ai discuté avec un gobelin qui prétendait être roi. Après trois chopes j’ai réglé la discussion avec un tabouret.",objective:'Ramener la couronne cabossée',reward:'',difficulty:'',dungeon:'',image:null,tags:[]}
+  {id:'q1',name:'Le Bricoleur qui avait trop bu',npc:'Gaston Pince-Doigt, menuisier alcoolique',description:"Hier soir j’ai voulu réparer la grande table de la Chope Qui Colle… mais après la sixième pinte j’ai confondu la caisse à outils avec la caisse de bois pour le feu.",objective:'Ramener 3 sacs de vis rouillées',reward:'',difficulty:'Très facile',difficultyTier:'basique',dungeon:'',image:null,tags:[]},
+  {id:'q2',name:'Concours officiel de lancer de caillou',npc:'Mireille Trois-Dents, organisatrice sportive',description:"Ce soir c’est le Grand Championnat de Lancer de Caillou de la Vallée. Malheureusement les participants ont déjà lancé tous les cailloux… sur l’arbitre.",objective:'Ramener 3 cailloux bien équilibrés',reward:'',difficulty:'Facile',difficultyTier:'tactique',dungeon:'',image:null,tags:[]},
+  {id:'q3',name:'Le médecin du pauvre',npc:'Docteur Archibald Rafistol',description:"Je soigne les aventuriers cassés depuis des années. Le problème c’est qu’ils arrivent souvent avec moins de morceaux qu’au départ.",objective:'Ramener 2 os détachables',reward:'',difficulty:'Normale',difficultyTier:'speciale',dungeon:'',image:null,tags:[]},
+  {id:'q4',name:'La machine à bière automatique',npc:'Berthold Ventrepin',description:"J’invente une machine qui sert la bière toute seule. Comme ça je pourrai enfin me concentrer sur mon activité principale : boire avec les clients.",objective:'Ramener 2 ressorts mystérieux',reward:'',difficulty:'Difficile',difficultyTier:'brute',dungeon:'',image:null,tags:[]},
+  {id:'q5',name:'La Couronne qui Traîne',npc:'Brünhilda la Torgnole',description:"Hier j’ai discuté avec un gobelin qui prétendait être roi. Après trois chopes j’ai réglé la discussion avec un tabouret.",objective:'Ramener la couronne cabossée',reward:'',difficulty:'Très difficile',difficultyTier:'mini_boss',dungeon:'',image:null,tags:[]},
+  {id:'q6',name:'Le musée du ridicule',npc:'Professeur Cornelius Bric-À-Brac',description:"Je prépare une exposition sur les objets les plus stupides jamais trouvés dans un donjon. Pour l’instant j’ai une cuillère trouée et une pierre molle.",objective:'Ramener 4 objets ridicules',reward:'',difficulty:'Extrême',difficultyTier:'boss',dungeon:'',image:null,tags:[]}
 ];
 const codexLoot=[
-  {id:'l1',name:'Sac de vis rouillées',source:'Gobelin Bricoleur',type:'Vendable',effect:'Objet utile',value:1,image:null,tags:['loot']},
-  {id:'l2',name:'Ressort mystérieux',source:'Gobelin Bricoleur',type:'Vendable',effect:'Objet bizarre',value:1,image:null,tags:['loot']},
-  {id:'l3',name:'Caillou bien équilibré',source:'Gobelin Lance-Tout',type:'Projectile',effect:'ATK 1 portée 3',value:0,image:null,tags:['loot']},
-  {id:'l4',name:'Touffe de poils magiques',source:'Balai Hanté',type:'Utilitaire',effect:'+1 déplacement gratuit',value:0,image:null,tags:['loot']},
-  {id:'l5',name:'Formulaire spectral',source:'Fantôme Bureaucrate',type:'Utilitaire',effect:'Ouvre un coffre gratuitement',value:0,image:null,tags:['loot']},
-  {id:'l6',name:'Œuf d’or',source:'Poule Démoniaque',type:'Projectile',effect:'ATK 2 ignore DEF portée 3 ou vendu',value:5,image:null,tags:['loot']}
+  {id:'l1',name:'Sac de vis rouillées',source:'Gobelin Bricoleur',type:'Vendable',effect:'Objet utile',value:1,rarity:'Mauvais',rarityTier:'basique',image:null,tags:['loot']},
+  {id:'l2',name:'Ressort mystérieux',source:'Gobelin Bricoleur',type:'Vendable',effect:'Objet bizarre',value:1,rarity:'Commun',rarityTier:'tactique',image:null,tags:['loot']},
+  {id:'l3',name:'Caillou bien équilibré',source:'Gobelin Lance-Tout',type:'Projectile',effect:'ATK 1 portée 3',value:0,rarity:'Inhabituel',rarityTier:'speciale',image:null,tags:['loot']},
+  {id:'l4',name:'Touffe de poils magiques',source:'Balai Hanté',type:'Utilitaire',effect:'+1 déplacement gratuit',value:0,rarity:'Rare',rarityTier:'brute',image:null,tags:['loot']},
+  {id:'l5',name:'Formulaire spectral',source:'Fantôme Bureaucrate',type:'Utilitaire',effect:'Ouvre un coffre gratuitement',value:0,rarity:'Épique',rarityTier:'mini_boss',image:null,tags:['loot']},
+  {id:'l6',name:'Œuf d’or',source:'Poule Démoniaque',type:'Projectile',effect:'ATK 2 ignore DEF portée 3 ou vendu',value:5,rarity:'Légendaire',rarityTier:'boss',image:null,tags:['loot']}
 ];
 const codexInteractables=[
   {id:'i1',name:'Tonneau',dungeon:'Le Château de Bastognac',type:'Conteneur',hp:3,actions:['Pousser','Casser','Lancer'],effect:'Objet physique utilisable pendant la rencontre.',image:null,tags:['exemple-maquette']},
@@ -244,20 +253,38 @@ function familyMedia(type,item,cls='family-media'){
     ? '<div class="'+cls+'"><img src="'+item.image+'" alt="Illustration de '+item.name+'"></div>'
     : '<div class="'+cls+' placeholder">'+familyMark(type,'family-mark')+'<span>Image / média</span></div>';
 }
+function itemTier(type,item){
+  if(type==='quests')return item.difficultyTier||null;
+  if(type==='loot')return item.rarityTier||null;
+  return null;
+}
+function tierBadge(kind,tier,label){
+  if(!tier)return '';
+  return '<span class="tier-badge '+tier+'"><i></i><span>'+(kind==='quest'?'Difficulté':'Rareté')+'</span><b>'+label+'</b></span>';
+}
+function tierLegend(type){
+  if(type!=='quests'&&type!=='loot')return '';
+  const kind=type==='quests'?'quest':'loot';
+  return '<div class="tier-legend"><span>'+(type==='quests'?'Difficulté des quêtes':'Rareté du loot')+'</span>'+
+    Object.entries(tierMeta).map(([tier,m])=>tierBadge(kind,tier,m[kind])).join('')+'</div>';
+}
 function familySubtitle(type,item){
   if(type==='dungeons')return 'Donjon '+item.number;
   if(type==='heroes')return (item.levels?.length||0)+' niveaux disponibles';
   if(type==='npcs')return [item.race,item.role].filter(Boolean).join(' · ')||'PNJ';
-  if(type==='quests')return item.npc||'Quête';
-  if(type==='loot')return [item.type,item.source].filter(Boolean).join(' · ');
+  if(type==='quests')return [item.difficulty,item.npc].filter(Boolean).join(' · ');
+  if(type==='loot')return [item.rarity,item.type,item.source].filter(Boolean).join(' · ');
   if(type==='interactables')return [item.type,item.dungeon].filter(Boolean).join(' · ');
   if(type==='brouhaha')return 'Niveau '+item.level+' · '+(item.dungeon||'Universel');
   return '';
 }
 function familyCard(type,item,mode){
-  return '<button class="family-card '+mode+'" data-family-item="'+item.id+'" style="--family:'+codexFamilyMeta[type].color+'">'+
+  const tier=itemTier(type,item);
+  const tierStyle=tier?'--tier:var(--'+({basique:'basic',tactique:'tactical',speciale:'special',brute:'brute',mini_boss:'mini',boss:'boss'}[tier])+');':'';
+  const badge=type==='quests'?tierBadge('quest',tier,item.difficulty):type==='loot'?tierBadge('loot',tier,item.rarity):'';
+  return '<button class="family-card '+mode+(tier?' tier-card '+tier:'')+'" data-family-item="'+item.id+'" style="--family:'+codexFamilyMeta[type].color+';'+tierStyle+'">'+
     familyMedia(type,item,'family-card-media')+
-    '<div class="family-card-copy"><div class="family-card-kicker">'+codexFamilyMeta[type].singular+'</div><strong>'+item.name+'</strong><span>'+familySubtitle(type,item)+'</span></div></button>';
+    '<div class="family-card-copy"><div class="family-card-kicker">'+codexFamilyMeta[type].singular+'</div><strong>'+item.name+'</strong>'+badge+'<span>'+familySubtitle(type,item)+'</span></div></button>';
 }
 function dungeonDetail(d){
   const floors=d.floorBudgets?.length
@@ -288,13 +315,15 @@ function npcDetail(n){
     '<section class="npc-relations"><div class="eyebrow">Relations utiles</div><button class="btn smallbtn" data-see-all="quests">Voir les quêtes associées</button></section></div></article>';
 }
 function questDetail(q){
-  return '<article class="quest-sheet-proposal family-detail-card">'+familyMedia('quests',q,'quest-banner')+
-    '<div class="quest-contract"><div class="quest-meta"><span>'+(q.difficulty||'Difficulté non renseignée')+'</span><span>'+(q.dungeon||'Donjon non renseigné')+'</span></div><h2>'+q.name+'</h2><div class="quest-giver">Commanditaire / PNJ : <b>'+(q.npc||'—')+'</b></div><p class="quest-story">'+(q.description||'')+'</p>'+
+  const tier=q.difficultyTier||'basique';
+  return '<article class="quest-sheet-proposal family-detail-card tier-detail '+tier+'">'+familyMedia('quests',q,'quest-banner')+
+    '<div class="quest-contract"><div class="quest-meta"><span>'+tierBadge('quest',tier,q.difficulty||tierMeta[tier].quest)+'</span><span>'+(q.dungeon||'Donjon non renseigné')+'</span></div><h2>'+q.name+'</h2><div class="quest-giver">Commanditaire / PNJ : <b>'+(q.npc||'—')+'</b></div><p class="quest-story">'+(q.description||'')+'</p>'+
     '<div class="quest-objective"><span>Objectif</span><strong>'+(q.objective||'—')+'</strong></div><div class="quest-reward"><span>Récompense</span><b>'+(q.reward||'Non renseignée dans cet exemple source')+'</b></div></div></article>';
 }
 function lootDetail(l){
-  return '<article class="loot-sheet-proposal family-detail-card"><div class="loot-stage">'+familyMedia('loot',l,'loot-object')+'<div class="loot-value"><b>'+(l.value??'—')+'</b><span>or</span></div></div>'+
-    '<div class="loot-ledger"><div class="eyebrow">'+(l.type||'Loot')+'</div><h2>'+l.name+'</h2><div class="loot-effect"><span>Effet</span><strong>'+(l.effect||'—')+'</strong></div><div class="loot-source"><span>Créature source</span><button class="btn tertiary" data-see-all="creatures">'+(l.source||'—')+'</button></div></div></article>';
+  const tier=l.rarityTier||'basique';
+  return '<article class="loot-sheet-proposal family-detail-card tier-detail '+tier+'"><div class="loot-stage">'+familyMedia('loot',l,'loot-object')+'<div class="loot-value"><b>'+(l.value??'—')+'</b><span>or</span></div></div>'+
+    '<div class="loot-ledger">'+tierBadge('loot',tier,l.rarity||tierMeta[tier].loot)+'<div class="eyebrow">'+(l.type||'Loot')+'</div><h2>'+l.name+'</h2><div class="loot-effect"><span>Effet</span><strong>'+(l.effect||'—')+'</strong></div><div class="loot-source"><span>Créature source</span><button class="btn tertiary" data-see-all="creatures">'+(l.source||'—')+'</button></div></div></article>';
 }
 function interactableDetail(o){
   return '<article class="interactable-sheet-proposal family-detail-card"><div class="blueprint-media">'+familyMedia('interactables',o,'blueprint-object')+'<div class="blueprint-label">Zone image / schéma</div></div>'+
@@ -320,6 +349,7 @@ function renderFamilyBrowser(type){
   const mode=familyMode[type];
   host.style.setProperty('--family',m.color);
   host.innerHTML='<div class="family-toolbar"><div><div class="eyebrow">Collection</div><h2 class="serif">'+m.label+' <span class="small muted">· '+all.length+' exemples</span></h2></div><input class="field family-search" data-family-search="'+type+'" placeholder="Rechercher dans '+m.label.toLowerCase()+'…"><div class="segmented"><button class="'+(mode==='gallery'?'active':'')+'" data-family-mode="'+type+':gallery">'+utilIcon('i-grid','icon sm')+'</button><button class="'+(mode==='list'?'active':'')+'" data-family-mode="'+type+':list">'+utilIcon('i-list','icon sm')+'</button></div></div>'+
+    tierLegend(type)+
     '<div class="family-backbar" data-family-back="'+type+'"><b>'+m.label+'</b><span>· collection → fiche</span></div>'+
     '<div class="family-browser-shell"><aside class="family-collection panel"><div class="family-collection-grid '+mode+'" data-family-list="'+type+'">'+all.map(x=>familyCard(type,x,mode)).join('')+'</div></aside><div class="family-detail-host">'+(selected?familyDetail(type,selected):'')+'</div></div>';
   $$('[data-family-item]',host).forEach(b=>b.onclick=()=>selectFamilyItem(type,b.dataset.familyItem));
