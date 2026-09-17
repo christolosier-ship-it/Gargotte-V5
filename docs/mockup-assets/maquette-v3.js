@@ -369,7 +369,7 @@ function renderCodexType(type){
   else if(codexFamilyMeta[type]){renderFamilyBrowser(type);applyFamilyResponsive(type)}
 }
 function initCodex(){
-  $$$('.codex-tabs button').forEach(b=>b.onclick=()=>renderCodexType(b.dataset.codex));
+  $('.codex-tabs button').forEach(b=>b.onclick=()=>renderCodexType(b.dataset.codex));
   $('#mode-gallery').onclick=()=>setBestiaryMode('gallery');$('#mode-list').onclick=()=>setBestiaryMode('list');
   $$('[data-see-all]').forEach(b=>b.onclick=()=>{renderCodexType(b.dataset.seeAll);showToast('Collection ouverte avec filtre Donjon conservé')});
   $$('.hero-level').forEach(b=>b.onclick=()=>{$$('.hero-level').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#hero-level-label').textContent=b.dataset.level;$('#hero-pv').textContent=Number(b.dataset.level)*2+8;$('#hero-atk').textContent=Math.ceil(Number(b.dataset.level)/2)+2});
