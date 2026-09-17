@@ -1,0 +1,100 @@
+name: Mockup BiRefNet ViTMatte cutouts
+
+on:
+  push:
+    branches: [V5.3]
+    paths:
+      - '.github/workflows/mockup-birefnet-vitmatte-test.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout V5.3
+        uses: actions/checkout@v4
+        with:
+          ref: V5.3
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install BiRefNet and ViTMatte tooling
+        run: python -m pip install --disable-pip-version-check "rembg[cpu]" pillow
+
+      - name: Generate BiRefNet + ViTMatte transparent derivatives
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/gargotte-vitmatte
+          mkdir -p /tmp/gargotte-vitmatte/raw /tmp/gargotte-vitmatte/cropped
+
+          declare -A SOURCES=(
+            [rainette]='assets/images/rainette.jpeg'
+            [trixie]='assets/images/trixie.jpeg'
+            [berthold]='assets/images/berthold.png'
+            [bard]='assets/images/bard.png'
+            [demon]='assets/images/demon.png'
+            [gundrade]='assets/images/gundrade.jpeg'
+          )
+
+          for id in rainette trixie berthold bard demon gundrade; do
+            echo "ViTMatte processing: $id"
+            rembg i -m birefnet-general -vm "${SOURCES[$id]}" "/tmp/gargotte-vitmatte/raw/$id.png"
+          done
+
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          raw_dir = Path('/tmp/gargotte-vitmatte/raw')
+          out_dir = Path('/tmp/gargotte-vitmatte/cropped')
+          out_dir.mkdir(parents=True, exist_ok=True)
+
+          def crop_alpha(im: Image.Image, threshold=8, pad_ratio=0.045):
+              im = im.convert('RGBA')
+              alpha = im.getchannel('A')
+              mask = alpha.point(lambda a: 255 if a > threshold else 0)
+              bbox = mask.getbbox()
+              if not bbox:
+                  return im
+              x0, y0, x1, y1 = bbox
+              w, h = x1 - x0, y1 - y0
+              pad = max(12, round(max(w, h) * pad_ratio))
+              x0 = max(0, x0 - pad)
+              y0 = max(0, y0 - pad)
+              x1 = min(im.width, x1 + pad)
+              y1 = min(im.height, y1 + pad)
+              return im.crop((x0, y0, x1, y1))
+
+          ids = ['rainette','trixie','berthold','bard','demon','gundrade']
+          for creature_id in ids:
+              src = raw_dir / f'{creature_id}.png'
+              with Image.open(src) as im:
+                  out = crop_alpha(im)
+                  alpha = out.getchannel('A')
+                  if alpha.getextrema()[0] == 255:
+                      raise SystemExit(f'{creature_id}: output has no transparency')
+                  dest = out_dir / f'{creature_id}.png'
+                  out.save(dest, format='PNG', optimize=True)
+                  print(f'{creature_id}: size={out.size} alpha={alpha.getextrema()}')
+          PY
+
+          # Only replace the mockup derivatives after all six have succeeded.
+          cp /tmp/gargotte-vitmatte/cropped/*.png docs/mockup-assets/creatures-transparent/
+
+      - name: Commit ViTMatte derivatives and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/mockup-assets/creatures-transparent
+          git rm .github/workflows/mockup-birefnet-vitmatte-test.yml
+          git commit -m "docs(mockup): test BiRefNet ViTMatte creature cutouts"
+          git push origin HEAD:V5.3
