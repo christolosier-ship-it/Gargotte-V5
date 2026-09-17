@@ -14,16 +14,18 @@ Principe directeur :
 
 # 1. Décisions verrouillées
 
-1. Donjon = hub narratif du Codex.
-2. Héros regroupés par `hero_base_name`.
-3. Un Héros affiche un niveau sélectionné et une progression.
-4. Le libellé utilisateur `Objets` devient **Objets interactifs**.
-5. Brouhaha se sépare en référentiel Codex et outil de session UI-4.
-6. Médias n'est pas une famille narrative du Codex mais une bibliothèque transversale.
-7. Les accents de donjon ne sont appliqués qu'aux relations fiables.
-8. Aucun changement de modèle métier n'est introduit par UI-3.
-9. Chaque famille utilise le mode de collection adapté à son usage.
-10. Une donnée absente réduit la fiche au lieu de créer une zone vide.
+1. Toutes les familles UI-3 sont des **collections de plusieurs éléments** ; aucune n'est conçue comme une fiche singleton.
+2. Le parcours commun est `Collection (Galerie/Liste) -> Fiche -> Retour collection`, avec restauration du contexte.
+3. Donjon = hub narratif du Codex, mais chaque Donjon appartient d'abord à une collection.
+4. Héros regroupés par `hero_base_name`.
+5. Un Héros affiche un niveau sélectionné et une progression.
+6. Le libellé utilisateur `Objets` devient **Objets interactifs**.
+7. Brouhaha se sépare en référentiel Codex et outil de session UI-4.
+8. Médias n'est pas une famille narrative du Codex mais une bibliothèque transversale.
+9. Les accents de donjon ne sont appliqués qu'aux relations fiables.
+10. Aucun changement de modèle métier n'est introduit par UI-3.
+11. Chaque famille utilise le mode de collection adapté à son usage.
+12. Une donnée absente réduit la fiche au lieu de créer une zone vide.
 
 ---
 
@@ -31,16 +33,32 @@ Principe directeur :
 
 | Entité | Mode principal | Secondaire | Mode initial |
 |---|---|---|---|
-| Donjons | Galerie | aucun obligatoire | Galerie |
-| Héros | Galerie groupée | aucun obligatoire | Galerie |
+| Donjons | Galerie | Liste | Galerie |
+| Héros | Galerie groupée | Liste | Galerie |
 | PNJ | Galerie | Liste | Galerie |
-| Quêtes | Liste | aucun obligatoire | Liste |
+| Quêtes | Liste | Cartes | Liste |
 | Loot | Galerie | Liste | Galerie |
-| Objets interactifs | Liste | aucun obligatoire | Liste |
-| Brouhaha | Échelle / référentiel | aucun | Référentiel |
+| Objets interactifs | Liste | Galerie | Liste |
+| Brouhaha | Cartes par niveau | Liste | Cartes |
 | Médias | Galerie | vue compacte éventuelle | Galerie |
 
 Lorsque plusieurs modes existent, le dernier mode utilisé est mémorisé localement.
+
+Une carte ou une ligne ouvre toujours une **fiche dédiée**. Sur tablette et téléphone, collection et fiche ne sont pas affichées côte à côte.
+
+## 2.2 Champs existants à respecter
+
+La maquette et l'UI de production s'appuient sur les champs déjà présents dans les templates de l'application :
+
+- Donjon : `name`, `description`, `floor_budgets`, `boss_name`, `tags`, `image_path` ;
+- Héros : `hero_base_name`, `level`, `name`, `role`, `title`, `pv`, `atk`, `def`, `zone`, `actions`, `ability_text`, `effect_text`, `brouhaha`, `tags`, `image_path` ;
+- PNJ : `name`, `race`, `tone`, `role`, `lore`, `tags`, `image_path` ;
+- Quête : `name`, `description`, `objective`, `reward`, `difficulty`, `npc_name`, `dungeon_name`, `tags`, `image_path` ;
+- Loot : `creature_name`, `name`, `type`, `effect`, `gold_value`, `tags`, `image_path` ;
+- Objet interactif : `name`, `dungeon_name`, `type`, `hp`, `actions_allowed`, `effect`, `image_path`, `tags` ;
+- Brouhaha : `level`, `dungeon_name`, `effect_text`.
+
+La présentation ne doit pas inventer de champs métier supplémentaires. Une illustration est prévue pour chaque type d'élément : `image_path` lorsqu'il existe, ou média lié pour Brouhaha afin de ne pas imposer un changement de schéma uniquement pour l'UI.
 
 ---
 
@@ -71,7 +89,9 @@ Règle : ne pas détourner un pictogramme existant si sa sémantique diffère. P
 
 ## 3.1 Collection
 
-La carte Donjon privilégie l'affiche et affiche seulement les informations utiles pour choisir le lieu : nom, boss final et quelques compteurs contextuels.
+La collection Donjon peut basculer Galerie/Liste. La carte privilégie l'affiche et affiche seulement les informations utiles pour choisir le lieu : nom, boss final et quelques compteurs contextuels.
+
+Le Drive de référence contient actuellement **15 dossiers de Donjon** ; la maquette doit donc rester confortable à cette échelle et au-delà.
 
 ## 3.2 Fiche Donjon
 
@@ -111,6 +131,8 @@ UI-3 n'ajoute pas `boss_creature_id`.
 ## 4.1 Collection
 
 Une seule carte par `hero_base_name`.
+
+La collection Héros est une vraie galerie/liste, pas une fiche unique. Les images de niveaux restent associées au même héros et la fiche choisit l'image du niveau actif lorsqu'elle existe.
 
 La carte montre :
 
@@ -153,7 +175,7 @@ La progression montre les autres niveaux de façon compacte, sans afficher plusi
 
 Le PNJ est une fiche narrative, jamais une Créature sans stats.
 
-Collection : Galerie par défaut, Liste en alternative.
+Collection : Galerie par défaut, Liste en alternative. Chaque Loot ouvre sa propre fiche d'inspection. Une carte ouvre la fiche PNJ et le retour restitue la collection.
 
 Fiche :
 
@@ -179,7 +201,7 @@ Le PNJ reste sur palette neutre tant qu'aucune appartenance de donjon directe et
 
 La Quête UI-3 est une **fiche de référence**. Le tirage de session appartient à UI-4.
 
-Collection : Liste.
+Collection : Liste par défaut, cartes en alternative. Chaque quête reste un élément autonome ouvrant sa fiche de référence.
 
 Filtres utiles : donjon, difficulté, PNJ, tags, selon les données réellement disponibles.
 
@@ -231,7 +253,7 @@ L'accent du donjon n'est utilisé que si la provenance peut être déterminée a
 
 Le store technique reste `interactables`, mais le libellé utilisateur est **Objets interactifs**.
 
-Collection : Liste.
+Collection : Liste par défaut, Galerie en alternative. Chaque Objet interactif ouvre une fiche dédiée.
 
 Fiche :
 
@@ -254,6 +276,8 @@ Le champ `actions_allowed` peut être rendu plus lisible si ses séparateurs son
 # 9. Brouhaha référentiel
 
 UI-3 présente le référentiel des effets, pas l'outil manipulé pendant la partie.
+
+Le référentiel est lui-même une collection de plusieurs effets Brouhaha. Il propose des cartes par niveau ou une liste ; un effet sélectionné ouvre une fiche dédiée.
 
 Structure :
 
@@ -342,12 +366,12 @@ Les breakpoints et règles communes appartiennent à UI-1/UI-6.
 
 Comportements métier :
 
-- Donjon : page hub riche ;
-- Héros : fiche de progression ;
-- PNJ, Quêtes, Loot, Objets interactifs : master-detail seulement lorsque la largeur le permet ;
-- tablette portrait : fiche prioritaire et collection en drawer si nécessaire ;
+- desktop : master-detail autorisé lorsque la largeur laisse respirer la fiche ;
+- Donjon : collection -> hub riche ;
+- Héros : collection -> fiche de progression ;
+- PNJ, Quêtes, Loot, Objets interactifs et Brouhaha : collection -> fiche dédiée ;
+- tablette, portrait comme paysage : `Collection -> Fiche -> Retour`, sans colonnes collection + fiche comprimées ;
 - téléphone : `Collection -> Fiche -> Retour` ;
-- Brouhaha référentiel : page filtrable unique ;
 - Médias : galerie dédiée.
 
 ---
@@ -386,7 +410,7 @@ UI-3 n'introduit pas implicitement :
 
 UI-3 est validée lorsque :
 
-1. chaque famille conserve une grammaire adaptée à son usage ;
+1. chaque famille possède une vraie collection et une fiche adaptée à son usage ;
 2. le Donjon sert de hub naturel ;
 3. un Héros est perçu comme une identité évolutive ;
 4. le PNJ reste narratif ;
