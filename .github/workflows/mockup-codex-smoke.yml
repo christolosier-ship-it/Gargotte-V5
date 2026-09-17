@@ -1,0 +1,104 @@
+name: Mockup Codex browser smoke
+
+on:
+  push:
+    branches: [V5.3]
+    paths:
+      - '.github/workflows/mockup-codex-smoke.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: V5.3
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Serve mockup
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/mockup-http.log 2>&1 &
+          echo $! >/tmp/mockup-http.pid
+          sleep 2
+
+      - name: Exercise Codex in a real browser
+        shell: bash
+        run: |
+          cat > .tmp-codex-smoke.mjs <<'JS'
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:1280,height:900}});
+          const pageErrors=[];
+          const consoleErrors=[];
+          page.on('pageerror', e => pageErrors.push(String(e)));
+          page.on('console', m => { if(m.type()==='error') consoleErrors.push(m.text()); });
+
+          await page.goto('http://127.0.0.1:8000/docs/GARGOTTEX-V6-MAQUETTE-PREMIUM-V3.html#codex', {waitUntil:'networkidle'});
+          await page.waitForTimeout(500);
+
+          const report={};
+          report.pageActive=await page.locator('#codex.page.active').count();
+          report.creatureCards=await page.locator('#bestiary-collection [data-creature]').count();
+          report.creatureSheet=await page.locator('#creature-detail .sheet').count();
+          report.families={};
+
+          const families=['creatures','dungeons','heroes','npcs','quests','loot','interactables','brouhaha'];
+          for(const family of families){
+            const tab=page.locator('.codex-tabs button[data-codex="'+family+'"]');
+            await tab.click();
+            await page.waitForTimeout(120);
+            report.families[family]={
+              tabActive:await tab.evaluate(el=>el.classList.contains('active')),
+              sectionActive:await page.locator('#codex-'+family+'.active').count(),
+              cards:family==='creatures'
+                ? await page.locator('#bestiary-collection [data-creature]').count()
+                : await page.locator('#'+family+'-browser [data-family-item]').count(),
+              detail:family==='creatures'
+                ? await page.locator('#creature-detail .sheet').count()
+                : await page.locator('#'+family+'-browser .family-detail-card').count()
+            };
+          }
+
+          report.pageErrors=pageErrors;
+          report.consoleErrors=consoleErrors;
+          console.log('CODEX_SMOKE_REPORT_START');
+          console.log(JSON.stringify(report,null,2));
+          console.log('CODEX_SMOKE_REPORT_END');
+
+          const bad=
+            report.pageActive!==1 ||
+            report.creatureCards<1 ||
+            report.creatureSheet!==1 ||
+            pageErrors.length>0 ||
+            Object.values(report.families).some(x=>!x.tabActive||x.sectionActive!==1||x.cards<1||x.detail!==1);
+
+          await browser.close();
+          if(bad) process.exit(1);
+          JS
+          node .tmp-codex-smoke.mjs
+          rm -f .tmp-codex-smoke.mjs
+
+      - name: Remove one-shot workflow
+        if: always()
+        shell: bash
+        run: |
+          rm -f .tmp-codex-smoke.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/mockup-codex-smoke.yml
+          git commit -m "chore(mockup): remove Codex browser smoke workflow"
+          git push origin HEAD:V5.3
