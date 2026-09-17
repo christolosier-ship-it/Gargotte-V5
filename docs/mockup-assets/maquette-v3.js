@@ -33,6 +33,80 @@ let encounter={rainette:2,trixie:1}, bhLevel=7, questIndex=0;
 const emblem=(src,cls='chip-logo',alt='')=>`<img class="emblem-img ${cls}" src="${ICON_BASE+src}" alt="${alt}">`;
 const utilIcon=(id,cls='icon')=>`<svg class="${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
 const catChip=cat=>{const m=catMeta[cat];return `<span class="chip cat ${cat}">${emblem(m.sigil,'chip-logo','')}<span>${m.label}</span></span>`};
+const creatureSrc=c=>c.displayImg||c.img;
+
+function injectCreatureStageStyles(){
+  if($('#creature-stage-v2-styles'))return;
+  const style=document.createElement('style');
+  style.id='creature-stage-v2-styles';
+  style.textContent=`
+    .art{background:#0d0907;isolation:isolate}
+    .art:before{background:radial-gradient(circle at 50% 43%,color-mix(in srgb,var(--cat) 19%,transparent),transparent 37%),linear-gradient(180deg,#21170f 0%,#120d09 52%,#0b0806 100%),url('./mockup-assets/textures/grain-dark.svg') repeat!important;filter:none!important;opacity:1}
+    .art:after{background:radial-gradient(ellipse at 50% 82%,rgba(0,0,0,.08),rgba(0,0,0,.62) 72%),linear-gradient(90deg,#0b08066e,transparent 24%,transparent 76%,#0b080685)}
+    .figure{inset:4% 5% 3%}
+    .figure img{width:100%;height:100%;object-fit:contain;object-position:center;background:transparent;filter:drop-shadow(0 20px 18px rgba(0,0,0,.48)) saturate(1.06) contrast(1.03)}
+    .thumb,.gallery-card{background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--cat) 12%,transparent),transparent 48%),#120d09}
+    .thumb img{object-fit:contain;padding:3px;background:transparent}
+    .gallery-card img{object-fit:contain;padding:8px;background:transparent}
+    @media(max-width:1199px) and (min-width:900px){
+      .codex-shell{grid-template-columns:220px minmax(0,1fr)}
+      .sheet{grid-template-columns:minmax(240px,34%) minmax(0,1fr);min-height:640px}
+      .art{min-height:640px}
+      .detail{padding:18px}
+      .creature-name{font-size:36px}
+    }
+    @media(max-width:899px) and (min-width:768px){
+      .sheet{display:block;min-height:0;margin-top:10px}
+      .art{height:clamp(380px,46vh,480px);min-height:0;border-right:0;border-bottom:1px solid var(--b1)}
+      .figure{inset:3% 7% 2%}
+      .detail{padding:22px}
+    }
+    @media(max-width:767px){
+      .art{height:clamp(300px,42svh,420px)!important;min-height:0!important}
+      .figure{inset:3% 5% 2%}
+      .fullscreen-btn{right:18px;top:18px}
+      .art-frame{inset:10px}
+    }
+  `;
+  document.head.append(style);
+}
+
+function loadImage(src){
+  return new Promise((resolve,reject)=>{const img=new Image();img.decoding='async';img.onload=()=>resolve(img);img.onerror=reject;img.src=src});
+}
+async function makeTransparentDisplay(src){
+  const img=await loadImage(src);
+  const maxDim=1400,scale=Math.min(1,maxDim/Math.max(img.naturalWidth,img.naturalHeight));
+  const w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));
+  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,w,h);
+  const frame=ctx.getImageData(0,0,w,h),d=frame.data,n=w*h,seen=new Uint8Array(n),queue=new Int32Array(n);let head=0,tail=0;
+  const candidate=i=>{const o=i*4,a=d[o+3];if(a===0)return true;const r=d[o],g=d[o+1],b=d[o+2],min=Math.min(r,g,b),max=Math.max(r,g,b);return min>=210&&(max-min)<=24};
+  const push=i=>{if(i<0||i>=n||seen[i]||!candidate(i))return;seen[i]=1;queue[tail++]=i};
+  for(let x=0;x<w;x++){push(x);push((h-1)*w+x)}
+  for(let y=1;y<h-1;y++){push(y*w);push(y*w+w-1)}
+  while(head<tail){const i=queue[head++],x=i%w,y=(i/w)|0;if(x>0)push(i-1);if(x<w-1)push(i+1);if(y>0)push(i-w);if(y<h-1)push(i+w)}
+  for(let i=0;i<n;i++)if(seen[i]){const o=i*4,lum=(d[o]+d[o+1]+d[o+2])/3;d[o+3]=lum>=240?0:Math.max(0,Math.min(255,Math.round((240-lum)/30*255)))}
+  ctx.putImageData(frame,0,0);
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.92));
+  if(!blob)throw new Error('WebP indisponible');
+  return URL.createObjectURL(blob);
+}
+async function prepareCreatureImage(c){
+  if(c.displayImg)return;
+  try{c.displayImg=await makeTransparentDisplay(c.img)}catch(err){console.warn('Dérivé transparent indisponible pour',c.id,err);c.displayImg=c.img}
+}
+async function prepareCreatureImages(){
+  const selected=creatures.find(c=>c.id===selectedCreature)||creatures[0];
+  await prepareCreatureImage(selected);
+  renderBestiary();renderCreature();applyBestiaryResponsive();
+  for(const c of creatures){
+    if(c===selected)continue;
+    await prepareCreatureImage(c);
+    renderBestiary();
+    if(c.id===selectedCreature)renderCreature();
+  }
+}
 
 function showToast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(showToast.t);showToast.t=setTimeout(()=>t.classList.remove('show'),2600)}
 function normalizeView(view){return view==='plus'?'more':view}
@@ -61,18 +135,20 @@ function renderBestiary(){
   $('#mode-gallery')?.classList.toggle('active',bestiaryMode==='gallery');
   $('#mode-list')?.classList.toggle('active',bestiaryMode==='list');
   host.innerHTML=bestiaryMode==='gallery'
-    ? `<div class="gallery-grid">${creatures.map(c=>`<button class="gallery-card ${c.cat}" data-creature="${c.id}"><img src="${c.img}" alt=""><div class="gallery-copy"><div class="row-name">${c.name}</div><div class="row-sub">${c.dungeon}</div><div class="row-meta">${catChip(c.cat)}<span class="chip neutral">Menace ${c.threat}</span></div></div></button>`).join('')}</div>`
-    : `<div class="creature-list">${creatures.map(c=>`<button class="creature-row ${c.cat} ${c.id===selectedCreature?'selected':''}" data-creature="${c.id}"><div class="thumb"><img src="${c.img}" alt=""></div><div><div class="row-name">${c.name}</div><div class="row-sub">${c.dungeon}</div><div class="row-meta">${catChip(c.cat)}<span class="row-stats">PV ${c.pv} · ATK ${c.atk} · DEF ${c.def} · ☠ ${c.threat}</span></div></div></button>`).join('')}</div>`;
+    ? `<div class="gallery-grid">${creatures.map(c=>`<button class="gallery-card ${c.cat}" data-creature="${c.id}"><img src="${creatureSrc(c)}" alt=""><div class="gallery-copy"><div class="row-name">${c.name}</div><div class="row-sub">${c.dungeon}</div><div class="row-meta">${catChip(c.cat)}<span class="chip neutral">Menace ${c.threat}</span></div></div></button>`).join('')}</div>`
+    : `<div class="creature-list">${creatures.map(c=>`<button class="creature-row ${c.cat} ${c.id===selectedCreature?'selected':''}" data-creature="${c.id}"><div class="thumb"><img src="${creatureSrc(c)}" alt=""></div><div><div class="row-name">${c.name}</div><div class="row-sub">${c.dungeon}</div><div class="row-meta">${catChip(c.cat)}<span class="row-stats">PV ${c.pv} · ATK ${c.atk} · DEF ${c.def} · ☠ ${c.threat}</span></div></div></button>`).join('')}</div>`;
   $$('[data-creature]',host).forEach(b=>b.onclick=()=>selectCreature(b.dataset.creature));
 }
 function selectCreature(id){
   selectedCreature=id;localStorage.setItem('mockup:selectedCreature',id);renderBestiary();renderCreature();
+  const c=creatures.find(x=>x.id===id);if(c&&!c.displayImg)prepareCreatureImage(c).then(()=>{renderBestiary();renderCreature()});
   if(isPhone()){mobileDetailOpen=true;applyBestiaryResponsive();window.scrollTo({top:0,behavior:'smooth'})}
 }
 function renderCreature(){
   const c=creatures.find(x=>x.id===selectedCreature)||creatures[0],m=catMeta[c.cat],host=$('#creature-detail');if(!host)return;
-  host.innerHTML=`<article class="sheet ${c.cat}"><div class="art"><div class="art-frame"></div><button class="btn iconbtn fullscreen-btn" id="full-image" aria-label="Ouvrir l’image en plein écran">${utilIcon('i-expand')}</button><div class="figure"><img src="${c.img}" alt="Illustration de ${c.name}"></div></div><div class="detail"><div class="identity"><div><button class="dungeon btn tertiary" data-codex="dungeons">${emblem('Icone_Gameplay_DONJON.webp','dungeon-logo','')}<span>${c.dungeon}</span></button><h2 class="creature-name">${c.name}</h2><div class="row wrap">${catChip(c.cat)}<span class="chip neutral">${emblem('Icone_Gameplay_MENACE.webp')}Menace ${c.threat}</span><span class="chip neutral">${emblem('Icone_Gameplay_SOCLE.webp')}Socle ${c.base} mm</span></div></div><div class="sigil">${emblem(m.sigil,'sigil-logo','Sigil '+m.label)}</div></div><div class="stats"><div class="stat">${emblem('Icone_Gameplay_PV.webp','stat-logo')}<b>${c.pv}</b><span>PV</span></div><div class="stat">${emblem('Icone_Gameplay_ATK.webp','stat-logo')}<b>${c.atk}</b><span>ATK</span></div><div class="stat">${emblem('Icone_Gameplay_DEF.webp','stat-logo')}<b>${c.def}</b><span>DEF</span></div><div class="stat">${emblem('Icone_Gameplay_ZONE.webp','stat-logo')}<b>${c.range}</b><span>Portée / Zone</span></div><div class="stat">${emblem('Icone_Gameplay_ACTION.webp','stat-logo')}<b>${c.actions}</b><span>Actions</span></div></div><section class="ability"><div class="caps">Capacité signature</div><h3>${c.ability}</h3><p>${c.copy}</p></section><div class="sections"><section class="section"><h4>${emblem('Icone_Gameplay_COMPORTEMENT.webp','section-logo')}Comportement</h4><p>${c.ai}</p></section><section class="section"><h4>${emblem('Icone_Gameplay_BUTIN.webp','section-logo')}Butin</h4><div class="loot-items">${c.loot.map(x=>`<button class="loot-item" data-codex="loot">${x}</button>`).join('')}</div></section><section class="section lore"><h4>${emblem('Icone_Gameplay_LORE.webp','section-logo')}Lore</h4><p>${c.lore}</p></section></div><div class="tags">${c.tags.map(t=>`<span class="chip neutral">${t}</span>`).join('')}</div><div class="related"><div class="row" style="justify-content:space-between"><h4 class="serif" style="margin:0">Entités liées</h4><span class="small muted">Même donjon puis relations explicites</span></div><div class="related-grid"><button class="related-card" data-codex="dungeons"><b>${c.dungeon}</b><div class="small muted">Donjon</div></button><button class="related-card" data-codex="loot"><b>${c.loot[0]}</b><div class="small muted">Loot</div></button><button class="related-card" data-codex="quests"><b>Le tonneau qui savait trop</b><div class="small muted">Quête liée</div></button></div></div></div></article>`;
-  $('#full-image').onclick=()=>openImage(c.img,c.name);
+  const src=creatureSrc(c);
+  host.innerHTML=`<article class="sheet ${c.cat}"><div class="art"><div class="art-frame"></div><button class="btn iconbtn fullscreen-btn" id="full-image" aria-label="Ouvrir l’image en plein écran">${utilIcon('i-expand')}</button><div class="figure"><img src="${src}" alt="Illustration de ${c.name}"></div></div><div class="detail"><div class="identity"><div><button class="dungeon btn tertiary" data-codex="dungeons">${emblem('Icone_Gameplay_DONJON.webp','dungeon-logo','')}<span>${c.dungeon}</span></button><h2 class="creature-name">${c.name}</h2><div class="row wrap">${catChip(c.cat)}<span class="chip neutral">${emblem('Icone_Gameplay_MENACE.webp')}Menace ${c.threat}</span><span class="chip neutral">${emblem('Icone_Gameplay_SOCLE.webp')}Socle ${c.base} mm</span></div></div><div class="sigil">${emblem(m.sigil,'sigil-logo','Sigil '+m.label)}</div></div><div class="stats"><div class="stat">${emblem('Icone_Gameplay_PV.webp','stat-logo')}<b>${c.pv}</b><span>PV</span></div><div class="stat">${emblem('Icone_Gameplay_ATK.webp','stat-logo')}<b>${c.atk}</b><span>ATK</span></div><div class="stat">${emblem('Icone_Gameplay_DEF.webp','stat-logo')}<b>${c.def}</b><span>DEF</span></div><div class="stat">${emblem('Icone_Gameplay_ZONE.webp','stat-logo')}<b>${c.range}</b><span>Portée / Zone</span></div><div class="stat">${emblem('Icone_Gameplay_ACTION.webp','stat-logo')}<b>${c.actions}</b><span>Actions</span></div></div><section class="ability"><div class="caps">Capacité signature</div><h3>${c.ability}</h3><p>${c.copy}</p></section><div class="sections"><section class="section"><h4>${emblem('Icone_Gameplay_COMPORTEMENT.webp','section-logo')}Comportement</h4><p>${c.ai}</p></section><section class="section"><h4>${emblem('Icone_Gameplay_BUTIN.webp','section-logo')}Butin</h4><div class="loot-items">${c.loot.map(x=>`<button class="loot-item" data-codex="loot">${x}</button>`).join('')}</div></section><section class="section lore"><h4>${emblem('Icone_Gameplay_LORE.webp','section-logo')}Lore</h4><p>${c.lore}</p></section></div><div class="tags">${c.tags.map(t=>`<span class="chip neutral">${t}</span>`).join('')}</div><div class="related"><div class="row" style="justify-content:space-between"><h4 class="serif" style="margin:0">Entités liées</h4><span class="small muted">Même donjon puis relations explicites</span></div><div class="related-grid"><button class="related-card" data-codex="dungeons"><b>${c.dungeon}</b><div class="small muted">Donjon</div></button><button class="related-card" data-codex="loot"><b>${c.loot[0]}</b><div class="small muted">Loot</div></button><button class="related-card" data-codex="quests"><b>Le tonneau qui savait trop</b><div class="small muted">Quête liée</div></button></div></div></div></article>`;
+  $('#full-image').onclick=()=>openImage(src,c.name);
   $$('[data-codex]',host).forEach(b=>b.onclick=()=>openCodex(b.dataset.codex));
 }
 function setBestiaryMode(mode){bestiaryMode=mode;localStorage.setItem('mockup:bestiaryMode',mode);renderBestiary()}
@@ -101,7 +177,7 @@ function initCodex(){
 
 function renderEncounter(){
   const host=$('#encounter-results');if(!host)return;
-  host.innerHTML=Object.entries(encounter).map(([id,qty])=>{const c=creatures.find(x=>x.id===id);return `<div class="result-card ${qty===0?'done':''}"><div class="encounter-row"><img src="${c.img}" alt=""><div><b class="serif" style="font-size:20px">${c.name}</b><div class="small muted">PV ${c.pv} · ATK ${c.atk} · DEF ${c.def} · ${c.ability}</div></div><div class="row"><span class="qty">×${qty}</span><button class="btn smallbtn" data-open-creature="${id}">Fiche</button><button class="btn smallbtn" data-eliminate="${id}" ${qty===0?'disabled':''}>Éliminer</button></div></div>${qty===0?'<div class="loot-reveal">Groupe terminé. Tous les tirages de Butin ont été effectués.</div>':''}</div>`}).join('');
+  host.innerHTML=Object.entries(encounter).map(([id,qty])=>{const c=creatures.find(x=>x.id===id);return `<div class="result-card ${qty===0?'done':''}"><div class="encounter-row"><img src="${creatureSrc(c)}" alt=""><div><b class="serif" style="font-size:20px">${c.name}</b><div class="small muted">PV ${c.pv} · ATK ${c.atk} · DEF ${c.def} · ${c.ability}</div></div><div class="row"><span class="qty">×${qty}</span><button class="btn smallbtn" data-open-creature="${id}">Fiche</button><button class="btn smallbtn" data-eliminate="${id}" ${qty===0?'disabled':''}>Éliminer</button></div></div>${qty===0?'<div class="loot-reveal">Groupe terminé. Tous les tirages de Butin ont été effectués.</div>':''}</div>`}).join('');
   $$('[data-eliminate]',host).forEach(b=>b.onclick=()=>{const id=b.dataset.eliminate;if(encounter[id]>0){encounter[id]--;renderEncounter();showToast('1 occurrence éliminée · Butin tiré une seule fois')}});
   $$('[data-open-creature]',host).forEach(b=>b.onclick=()=>{selectedCreature=b.dataset.openCreature;mobileDetailOpen=true;renderCreature();openCodex('creatures')});
 }
@@ -150,5 +226,5 @@ function initSearch(){
 }
 function initMockup(){$$('.mockup-nav button').forEach(b=>b.onclick=()=>$(b.dataset.jump)?.scrollIntoView({behavior:'smooth',block:'start'}))}
 
-function init(){initNav();initCodex();renderCodexType('creatures');initGenerator();initBrouhaha();initQuests();initAtelier();initMedia();initImport();initOverlays();initSearch();initMockup()}
+function init(){injectCreatureStageStyles();initNav();initCodex();renderCodexType('creatures');initGenerator();initBrouhaha();initQuests();initAtelier();initMedia();initImport();initOverlays();initSearch();initMockup();prepareCreatureImages()}
 document.addEventListener('DOMContentLoaded',init);
