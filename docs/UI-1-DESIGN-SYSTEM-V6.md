@@ -89,7 +89,7 @@ La structure reste moderne et sobre. L’émotion vient des illustrations, de la
 ### Surfaces
 
 - `--color-surface-1` : cartes, formulaires, listes.
-- `--color-surface-2` : panneau élevé, capacité signature, zone active.
+- `--color-surface-2` : panneau élevé, compétence, zone active.
 - `--color-surface-3` : sélection forte, élément actif ou accent sombre.
 
 ### Or / laiton
@@ -186,7 +186,7 @@ Usage :
 - nom d’une créature ;
 - nom d’un donjon ;
 - titre de quête ;
-- titre de capacité signature ;
+- titre de compétence ;
 - citations narratives ponctuelles.
 
 ### Interface
@@ -346,6 +346,7 @@ Gameplay :
 - menace ;
 - socle ;
 - comportement ;
+- compétence ;
 - butin ;
 - lore ;
 - donjon ;
@@ -813,7 +814,7 @@ Hiérarchie verrouillée :
 2. donjon / contexte
 3. catégorie / menace / socle
 4. stats
-5. capacité signature
+5. compétence
 6. comportement
 7. butin
 8. lore
@@ -828,7 +829,7 @@ Hiérarchie verrouillée :
 - ouverture plein écran possible ;
 - halo discret d’accent donjon autorisé.
 
-## 19.2 Capacité signature
+## 19.2 Compétence
 
 Composant distinct.
 
