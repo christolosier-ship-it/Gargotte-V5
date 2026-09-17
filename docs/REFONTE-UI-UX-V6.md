@@ -23,7 +23,7 @@ Les documents ont des responsabilités distinctes.
 | `REFACTORISATION-V6-LOCAL-FIRST-NEON.md` | architecture technique, IndexedDB, Neon, Auth, synchronisation et sauvegarde des originaux médias |
 | `UI-1-DESIGN-SYSTEM-V6.md` | design system : palette, typographies, iconographie, espacements, composants et primitives responsive |
 | `UI-2-BESTIAIRE-FICHE-CREATURE-V6.md` | Bestiaire et fiche Créature |
-| `UI-3-CODEX-AUTRES-ENTITES-V6.md` | Donjons, Héros, PNJ, Quêtes Codex, Loot, Objets du décor, Brouhaha référentiel et Médias contextuels |
+| `UI-3-CODEX-AUTRES-ENTITES-V6.md` | Donjons, Héros, PNJ, Quêtes Codex, Loot, Objets interactifs, Brouhaha référentiel et Médias contextuels |
 | `UI-4-OUTILS-DE-PARTIE-V6.md` | Accueil et outils de session |
 | `UI-5-ADMINISTRATION-MEDIAS-SYNC-V6.md` | Atelier, Auth visible, Médias, Import/Export, synchronisation et diagnostics |
 | `UI-6-POLISH-RESPONSIVE-ACCESSIBILITE-V6.md` | validation responsive, accessibilité, performance et appareils réels |
@@ -60,7 +60,7 @@ Fonctions transversales :
 - tactile et clavier ;
 - installation PWA.
 
-Le libellé utilisateur des `interactables` est **Objets du décor**.
+Le libellé utilisateur des `interactables` est **Objets interactifs**.
 
 ---
 
@@ -74,7 +74,7 @@ Les règles suivantes sont non négociables :
 - l'Atelier sert à créer et modifier ;
 - aucune fonction critique ne dépend du hover ;
 - les actions importantes sont réellement tactiles ;
-- le téléphone utilise une navigation séquentielle pour les fiches ;
+- le téléphone et la tablette utilisent une navigation séquentielle pour la fiche Créature ;
 - la tablette possède ses propres compositions ;
 - le desktop privilégie densité utile et navigation rapide ;
 - l'interface reste utilisable offline avec les données disponibles localement ;
