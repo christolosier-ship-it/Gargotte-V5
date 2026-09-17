@@ -61,7 +61,8 @@ const brunhildaLevels=[
   {level:3,name:'Brünhilda la Torgnole - Rempart à Mandales',title:'Rempart à Mandales',role:'Tank',pv:16,atk:3,def:4,zone:1,actions:3,ability:'Torgnole Monumentale',effect:"Baffe circulaire qui repousse les créatures adjacentes de 2 cases et leur fait perdre 1 PV, la baffe ignore la DEF et touche les ennemis, les alliés et les objets.",brouhaha:'+1'},
   {level:4,name:'Brünhilda la Torgnole - Forteresse à Torgnoles',title:'Forteresse à Torgnoles',role:'Tank',pv:18,atk:3,def:5,zone:1,actions:3,ability:'Rugissement de la Gargote',effect:'Bloque tout les déplacements ennemis et alliés au prochain tour',brouhaha:'+1'}
 ];
-const heroSkeleton=name=>({id:slugify(name),name,image:null,levels:[1,2,3,4].map(level=>({level,name:name+' - Level '+level}))});
+const familySlug=text=>String(text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const heroSkeleton=name=>({id:familySlug(name),name,image:null,levels:[1,2,3,4].map(level=>({level,name:name+' - Level '+level}))});
 const codexHeroes=[
   {id:'brunhilda',name:'Brünhilda la Torgnole',image:'../assets/images/bruna.jpeg',levels:brunhildaLevels},
   heroSkeleton('Hector Coeurdacier'),heroSkeleton('Firmin Tronçebois'),heroSkeleton('Dolorès Boumbardine'),
