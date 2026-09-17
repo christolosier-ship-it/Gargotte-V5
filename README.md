@@ -8,7 +8,7 @@
 [![Offline first](https://img.shields.io/badge/PWA-Offline--first-6f4a2f?style=flat-square)](./service-worker.js)
 [![Vanilla JavaScript](https://img.shields.io/badge/JavaScript-ES%20Modules-F7DF1E?style=flat-square&logo=javascript&logoColor=000)](./src/app.js)
 [![IndexedDB](https://img.shields.io/badge/Storage-IndexedDB-4b3628?style=flat-square)](./src/storage/idb.js)
-[![Neon](https://img.shields.io/badge/Sync-Neon-2f7d32?style=flat-square)](./docs/V6-MIGRATION-CONFIGURATION.md)
+[![Cible Google Drive](https://img.shields.io/badge/Cible-Google_Drive-4285F4?style=flat-square)](./docs/REFACTORISATION-V6-LOCAL-FIRST-GOOGLE-DRIVE.md)
 
 [Présentation](#présentation) · [Fonctionnalités](#fonctionnalités) · [Démarrage](#démarrage-rapide) · [Architecture](#architecture)
 
@@ -18,9 +18,11 @@
 
 Gargottex est une application web autonome conçue pour accompagner les parties de **Gargotte & Va-Nu-Pieds**. Elle centralise le contenu du jeu, aide à préparer les donjons et permet d’improviser rapidement créatures, quêtes, objets et effets de Brouhaha pendant une session.
 
-L’application fonctionne dans le navigateur et enregistre immédiatement les modifications dans IndexedDB. La V6 ajoute, après connexion, une sauvegarde des données structurées et des originaux médias dans Neon. Les transferts reprennent après interruption et les originaux sont vérifiés par SHA-256, sans recompression.
+L’application fonctionne dans le navigateur et enregistre immédiatement les modifications dans IndexedDB.
 
-**État V6 :** gate Phase 2 révisée validée sur branche isolée ; migration iPad et promotion restent en Phase 3. Voir [l’état d’exécution](./docs/V6-ETAT-EXECUTION.md), [la synchronisation média](./docs/V6-MEDIA-SYNCHRONISATION.md) et [la procédure de migration/configuration](./docs/V6-MIGRATION-CONFIGURATION.md).
+**Cible V6 retenue : IndexedDB + Google Drive + GitHub Pages.** La synchronisation Drive reste à implémenter. Le code de cette branche hérite encore du chantier Neon ; aucune migration Drive ni gate Drive n'est validée.
+
+Voir le [plan Google Drive](./docs/REFACTORISATION-V6-LOCAL-FIRST-GOOGLE-DRIVE.md), [l'état d'exécution](./docs/V6-ETAT-EXECUTION.md), [la synchronisation](./docs/V6-MEDIA-SYNCHRONISATION.md) et [la migration/configuration](./docs/V6-MIGRATION-CONFIGURATION.md). Les validations Neon restent des preuves historiques dans [l'archive](./docs/archive/neon/V6-ETAT-EXECUTION.md). La refonte UI/UX parallèle n'est pas concernée.
 
 > [!NOTE]
 > Gargottex est un outil de préparation et d’assistance au meneur de jeu. Il ne remplace pas les règles officielles ni l’arbitrage de la table.
@@ -56,7 +58,7 @@ L’application fonctionne dans le navigateur et enregistre immédiatement les m
 
 ## Démarrage rapide
 
-Node.js 24 est utilisé en CI. Le build minimal regroupe le SDK Neon et prépare le cache PWA. Sans URL Neon configurée, le build local fonctionne en mode local.
+Node.js 24 est utilisé en CI. Le build actuel regroupe encore le SDK Neon et prépare le cache PWA ; il n'implémente pas Google Drive. Sans URL Neon configurée, le build local fonctionne en mode local. La procédure cible et les adaptations nécessaires sont décrites dans le guide de configuration.
 
 ```bash
 git clone https://github.com/christolosier-ship-it/Gargotte-V5.git
@@ -100,7 +102,7 @@ Les en-têtes attendus sont définis directement dans `src/app.js`, notamment po
 > [!TIP]
 > Conservez les noms de colonnes des modèles. Les relations entre entités sont résolues à partir des identifiants ou des noms, selon le type d’import.
 
-Les sauvegardes complètes peuvent inclure les données structurées et les images stockées localement. Les exports restent sur l’appareil jusqu’à ce que l’utilisateur les copie ou les partage.
+Les sauvegardes complètes peuvent inclure les données structurées et les images stockées localement. L'export ZIP global peut saturer la mémoire d'un iPad ; il n'est pas un prérequis de migration. Privilégier les exports structurés et les futurs transferts médias progressifs. Les exports restent sur l’appareil jusqu’à ce que l’utilisateur les copie ou les partage.
 
 ## Installation PWA et mode hors ligne
 
@@ -121,9 +123,9 @@ Le service worker :
 
 Toutes les informations sont conservées dans la base IndexedDB locale `gargottex-v5-offline`.
 
-La consultation et l’édition locales ne nécessitent pas de compte. Après connexion, une outbox envoie les données structurées à Neon via Auth + Data API ; les privilèges SQL et RLS les isolent par propriétaire. Les suppressions sont synchronisées et les états remplacés conservés dans l’historique.
+La consultation et l'édition locales ne nécessitent pas de compte. La cible Google Drive utilisera une autorisation Google pour les fichiers concernés, avec données et originaux privés, transferts progressifs et contrôle SHA-256. Une reconnexion pourra être nécessaire après expiration de l'autorisation ; les modifications locales resteront conservées.
 
-Après connexion, les originaux (jusqu’à 64 Mio par fichier) sont sauvegardés dans Postgres et vérifiés par SHA-256 ; les miniatures restent des dérivés locaux. Les originaux plus volumineux restent locaux avec une erreur explicite. Sur un nouvel appareil, leur récupération est individuelle depuis Médias. Les exports JSON et XLSX restent structurés, sans binaires, et fonctionnent depuis la copie locale. Ne placez jamais de chaîne PostgreSQL ni de secret d’administration dans la configuration cliente ; seule `PUBLIC_NEON_DATABASE_URL`, une URL HTTPS publique, est autorisée.
+Le runtime Neon historique de la PR #9 n'est pas encore remplacé. Aucun secret ne doit être placé dans le build, le dépôt ou les exports. Les exports JSON/XLSX structurés restent indépendants du cloud.
 
 ## Architecture
 
@@ -180,7 +182,7 @@ meta
 └── logs
 ```
 
-Les données initiales ne sont injectées que lorsque le magasin des donjons est vide. Les sessions suivantes rechargent les données et l’état de l’interface depuis IndexedDB.
+Le code V6 hérité vérifie l'absence de marqueur d'initialisation et de données métier avant d'injecter le seed en mode local. La cible Drive devra aussi empêcher une injection parasite pendant une restauration distante. Les sessions suivantes rechargent les données et préférences depuis IndexedDB. Les stores techniques d'outbox et de synchronisation sont exclus des exports structurés.
 
 ## Stack technique
 
@@ -220,15 +222,9 @@ Modifiez `seed-data.js` pour changer le contenu livré lors d’une première in
 
 ## Déploiement sur GitHub Pages
 
-Le projet peut être publié directement comme site statique :
+L'adresse actuelle est https://christolosier-ship-it.github.io/Gargotte-V5/. La cible conserve cette adresse et prévoit la publication du build statique dist/ via GitHub Actions, après validation des trois gates Drive.
 
-1. ouvrez **Settings** → **Pages** dans le dépôt ;
-2. choisissez **Deploy from a branch** ;
-3. sélectionnez la branche de publication et le dossier `/root` ;
-4. enregistrez la configuration ;
-5. ouvrez une première fois l’URL en ligne pour initialiser IndexedDB et le cache.
-
-Tous les chemins applicatifs sont relatifs et aucune variable d’environnement n’est requise.
+Le build actuel et sa configuration Neon/Vercel doivent d'abord être adaptés. Ne pas publier cette branche comme une version Drive déjà fonctionnelle. Voir la [procédure cible](./docs/V6-MIGRATION-CONFIGURATION.md).
 
 ## État des versions
 
