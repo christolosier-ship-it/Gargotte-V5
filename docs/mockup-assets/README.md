@@ -50,3 +50,17 @@ Le moteur retenu pour les dérivés transparents de la maquette est **IS-Net / D
 ## Lore
 
 Le panneau Lore combine `paper-warm.svg` avec une patine CSS légère : usure de papier, variation chaude et petites taches discrètes. La texture ne doit jamais réduire la lisibilité.
+
+
+## Sources UI-3 de la maquette
+
+Les propositions UI-3 utilisent des exemples réels issus du Drive Gargotte et des templates existants de l'application :
+
+- 15 dossiers de Donjon ;
+- dossier Héros avec quatre images par niveau pour plusieurs héros ;
+- dossier PNJ avec portraits nommés ;
+- classeur de Quêtes ;
+- classeur de Loot ;
+- classeur Brouhaha.
+
+Les exemples servent à éprouver les volumes, les noms longs, les images et la navigation. Ils ne créent aucun nouveau champ métier. Les fiches proposées restent volontairement différentes visuellement : dossier d'expédition pour Donjon, folio évolutif pour Héros, portrait narratif pour PNJ, contrat pour Quête, table d'inspection pour Loot, plan technique pour Objet interactif et carte d'incident pour Brouhaha.
