@@ -13,7 +13,8 @@ Ces ressources peuvent être promues plus tard vers `assets/ui/` après validati
 - `icons/premium-symbols.svg` : sprite SVG des 6 catégories de créatures et des pictogrammes gameplay.
 - `textures/grain-dark.svg` : grain maître sombre, usage global léger.
 - `textures/wood-charred.svg` : bois noirci premium, usage sidebar / home / couverture.
-- `textures/paper-warm.svg` : papier chaud sombre, usage lore / narratif.
+- `textures/paper-warm.svg` : ancien papier chaud sombre conservé pour référence.
+- `textures/paper-aged-light.svg` : parchemin beige très clair, nuancé, légèrement usé et taché ; référence pour Lore, histoire et blocs narratifs.
 - `textures/brass-aged.svg` : laiton vieilli, usage filets / cadres / accents.
 - `textures/leather-dark.svg` : cuir sombre, usage exceptionnel uniquement.
 - `ornaments/corner-brass.svg` : coin décoratif laiton pour les panneaux narratifs premium.
@@ -43,13 +44,26 @@ Ces ressources peuvent être promues plus tard vers `assets/ui/` après validati
 
 À créer : `Compétence`, `Héros`, `PNJ`, `Quête`, `Objet interactif`, `Brouhaha`.
 
+## Rareté et difficulté
+
+Les six couleurs Créature servent aussi de référentiel commun :
+
+- Basique : Loot **Mauvais** / Quête **Très facile** ;
+- Tactique : Loot **Commun** / Quête **Facile** ;
+- Spéciale : Loot **Inhabituel** / Quête **Normale** ;
+- Brute : Loot **Rare** / Quête **Difficile** ;
+- Mini-boss : Loot **Épique** / Quête **Très difficile** ;
+- Boss : Loot **Légendaire** / Quête **Extrême**.
+
+Ces niveaux utilisent des badges texte + couleur ; **aucune icône supplémentaire n'est requise** pour la rareté ou la difficulté.
+
 ## Détourage des figurines
 
 Le moteur retenu pour les dérivés transparents de la maquette est **IS-Net / DIS** via `rembg`. Les originaux restent intacts ; seuls les fichiers de `creatures-transparent/` sont régénérés.
 
 ## Lore
 
-Le panneau Lore combine `paper-warm.svg` avec une patine CSS légère : usure de papier, variation chaude et petites taches discrètes. La texture ne doit jamais réduire la lisibilité.
+Les blocs Lore, histoire et assimilés utilisent `paper-aged-light.svg` : parchemin beige très clair, fibres nuancées, usure et taches légères, avec texte brun foncé pour préserver le contraste.
 
 
 ## Sources UI-3 de la maquette
