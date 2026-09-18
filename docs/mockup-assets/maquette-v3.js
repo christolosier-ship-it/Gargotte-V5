@@ -64,10 +64,10 @@ const codexDungeons=dungeonNames.map((name,i)=>({
   image:i===0?'../assets/images/logo-512.png':null
 }));
 const brunhildaLevels=[
-  {level:1,name:'Brünhilda la Torgnole - Mur en slip',title:'Mur en slip',role:'Tank',pv:12,atk:3,def:4,zone:1,actions:3,ability:'Ivresse Héroïque',effect:"Gagne +2 DEF pendant 1 tour et repousse les ennemis adjacents d'une case.",brouhaha:''},
-  {level:2,name:'Brünhilda la Torgnole - Pare-Baffes',title:'Pare-Baffes',role:'Tank',pv:14,atk:3,def:4,zone:1,actions:3,ability:'-',effect:'',brouhaha:''},
-  {level:3,name:'Brünhilda la Torgnole - Rempart à Mandales',title:'Rempart à Mandales',role:'Tank',pv:16,atk:3,def:4,zone:1,actions:3,ability:'Torgnole Monumentale',effect:"Baffe circulaire qui repousse les créatures adjacentes de 2 cases et leur fait perdre 1 PV, la baffe ignore la DEF et touche les ennemis, les alliés et les objets.",brouhaha:'+1'},
-  {level:4,name:'Brünhilda la Torgnole - Forteresse à Torgnoles',title:'Forteresse à Torgnoles',role:'Tank',pv:18,atk:3,def:5,zone:1,actions:3,ability:'Rugissement de la Gargote',effect:'Bloque tout les déplacements ennemis et alliés au prochain tour',brouhaha:'+1'}
+  {level:1,name:'Brünhilda la Torgnole - Mur en slip',title:'Mur en slip',role:'Tank',pv:12,atk:3,def:4,zone:1,actions:3,ability:'Ivresse Héroïque',effect:"Gagne +2 DEF pendant 1 tour et repousse les ennemis adjacents d'une case.",brouhaha:'',image:'../assets/images/bruna.jpeg'},
+  {level:2,name:'Brünhilda la Torgnole - Pare-Baffes',title:'Pare-Baffes',role:'Tank',pv:14,atk:3,def:4,zone:1,actions:3,ability:'-',effect:'',brouhaha:'',image:'../assets/images/bruna.jpeg'},
+  {level:3,name:'Brünhilda la Torgnole - Rempart à Mandales',title:'Rempart à Mandales',role:'Tank',pv:16,atk:3,def:4,zone:1,actions:3,ability:'Torgnole Monumentale',effect:"Baffe circulaire qui repousse les créatures adjacentes de 2 cases et leur fait perdre 1 PV, la baffe ignore la DEF et touche les ennemis, les alliés et les objets.",brouhaha:'+1',image:'../assets/images/bruna.jpeg'},
+  {level:4,name:'Brünhilda la Torgnole - Forteresse à Torgnoles',title:'Forteresse à Torgnoles',role:'Tank',pv:18,atk:3,def:5,zone:1,actions:3,ability:'Rugissement de la Gargote',effect:'Bloque tout les déplacements ennemis et alliés au prochain tour',brouhaha:'+1',image:'../assets/images/bruna.jpeg'}
 ];
 const familySlug=text=>String(text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const heroSkeleton=name=>({id:familySlug(name),name,image:null,levels:[1,2,3,4].map(level=>({level,name:name+' - Level '+level}))});
@@ -273,12 +273,7 @@ function tierBadge(kind,tier,label){
   if(!tier)return '';
   return '<span class="tier-badge '+tier+'"><i></i><span>'+(kind==='quest'?'Difficulté':'Rareté')+'</span><b>'+label+'</b></span>';
 }
-function tierLegend(type){
-  if(type!=='quests'&&type!=='loot')return '';
-  const kind=type==='quests'?'quest':'loot';
-  return '<div class="tier-legend"><span>'+(type==='quests'?'Difficulté des quêtes':'Rareté du loot')+'</span>'+
-    Object.entries(tierMeta).map(([tier,m])=>tierBadge(kind,tier,m[kind])).join('')+'</div>';
-}
+function tierLegend(type){return '';}
 function familySubtitle(type,item){
   if(type==='dungeons')return 'Donjon '+item.number;
   if(type==='heroes')return (item.levels?.length||0)+' niveaux disponibles';
@@ -312,12 +307,22 @@ function heroDetail(h){
   const wanted=heroLevelState[h.id]||1;
   const level=h.levels.find(x=>x.level===wanted)||h.levels[0]||{};
   const val=x=>x??'—';
+  const levelImage=level.image||h.image;
+  const unlocked=h.levels.filter(x=>x.level<=level.level&&x.ability&&x.ability!=='-').map(x=>({
+    level:x.level,name:x.ability,effect:x.effect||'Effet à renseigner.',brouhaha:x.brouhaha||''
+  }));
+  const competenceStack=unlocked.length
+    ? unlocked.map(skill=>'<section class="hero-competence cumulative-skill"><div class="hero-skill-head"><div class="eyebrow">'+emblem('Icone_Gameplay_COMPETENCE.webp','chip-logo')+'<span>Compétence · N'+skill.level+'</span></div>'+(skill.brouhaha?'<span class="brouhaha-stamp">Brouhaha '+skill.brouhaha+'</span>':'')+'</div><h3>'+skill.name+'</h3><p>'+skill.effect+'</p></section>').join('')
+    : '<section class="hero-competence cumulative-skill"><div class="eyebrow">'+emblem('Icone_Gameplay_COMPETENCE.webp','chip-logo')+'<span>Compétence</span></div><h3>À renseigner</h3></section>';
+  const portrait=levelImage
+    ? '<div class="hero-portrait hero-level-portrait level-'+(level.level||1)+'"><img src="'+levelImage+'" alt="Illustration niveau '+(level.level||1)+' de '+h.name+'"></div>'
+    : familyMedia('heroes',h,'hero-portrait');
   return '<article class="hero-sheet-proposal family-detail-card">'+
-    '<aside class="hero-identity-card">'+familyMedia('heroes',h,'hero-portrait')+'<div class="hero-nameplate"><div class="eyebrow" style="display:flex;align-items:center;gap:7px">'+familyMark('heroes','chip-logo')+'<span>Héros</span></div><h2>'+h.name+'</h2><div>'+(level.role||'Rôle à renseigner')+'</div></div><div class="hero-level-rail">'+h.levels.map(x=>'<button class="hero-level-proposal '+(x.level===level.level?'active':'')+'" data-hero-level="'+x.level+'" data-hero-id="'+h.id+'">N'+x.level+'</button>').join('')+'</div></aside>'+
-    '<div class="hero-playbook"><header><div><div class="eyebrow">Niveau '+(level.level||1)+'</div><h3>'+(level.title||level.name||h.name)+'</h3><div class="hero-motto">« '+(level.role?'Tenir son rôle, puis tenir le comptoir.':'Une légende se construit niveau après niveau.')+' »</div></div><span class="chip neutral">'+(level.brouhaha?'Brouhaha '+level.brouhaha:'Brouhaha —')+'</span></header>'+
+    '<aside class="hero-identity-card">'+portrait+'<div class="hero-nameplate"><div class="eyebrow" style="display:flex;align-items:center;gap:7px">'+familyMark('heroes','chip-logo')+'<span>Héros</span></div><h2>'+h.name+'</h2><div>'+(level.role||'Rôle à renseigner')+'</div></div><div class="hero-level-rail" aria-label="Niveaux du héros">'+h.levels.map(x=>'<button class="hero-level-proposal '+(x.level===level.level?'active':'')+'" data-hero-level="'+x.level+'" data-hero-id="'+h.id+'" aria-label="Afficher le niveau '+x.level+'">N'+x.level+'</button>').join('')+'</div></aside>'+
+    '<div class="hero-playbook"><header><div><div class="eyebrow">Niveau '+(level.level||1)+'</div><h3>'+(level.title||level.name||h.name)+'</h3><div class="hero-motto">« '+(level.role?'Tenir son rôle, puis tenir le comptoir.':'Une légende se construit niveau après niveau.')+' »</div></div></header>'+
     '<div class="hero-stat-ribbon"><div>'+emblem('Icone_Gameplay_PV.webp','stat-logo')+'<b>'+val(level.pv)+'</b><span>PV</span></div><div>'+emblem('Icone_Gameplay_ATK.webp','stat-logo')+'<b>'+val(level.atk)+'</b><span>ATK</span></div><div>'+emblem('Icone_Gameplay_DEF.webp','stat-logo')+'<b>'+val(level.def)+'</b><span>DEF</span></div><div>'+emblem('Icone_Gameplay_ZONE.webp','stat-logo')+'<b>'+val(level.zone)+'</b><span>Zone</span></div><div>'+emblem('Icone_Gameplay_ACTION.webp','stat-logo')+'<b>'+val(level.actions)+'</b><span>Actions</span></div></div>'+
-    '<section class="hero-competence"><div class="eyebrow" style="display:flex;align-items:center;gap:8px">'+emblem('Icone_Gameplay_COMPETENCE.webp','chip-logo')+'<span>Compétence</span></div><h3>'+(level.ability||'À renseigner')+'</h3><p>'+(level.effect||'Le champ effet vient compléter la compétence du niveau sélectionné.')+'</p></section>'+
-    '<div class="hero-progression-note">La progression reste visible, mais un seul niveau est développé à la fois. Chaque niveau peut porter sa propre image.</div></div></article>';
+    '<div class="hero-skill-stack">'+competenceStack+'</div>'+
+    '<div class="hero-progression-note">Les compétences acquises aux niveaux précédents restent disponibles. L’image affichée dépend du niveau sélectionné.</div></div></article>';
 }
 function npcDetail(n){
   return '<article class="npc-sheet-proposal family-detail-card">'+

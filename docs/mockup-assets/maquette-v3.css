@@ -308,3 +308,88 @@
   .floor-stop b{font-size:25px!important}
   .floor-stop:after{box-shadow:-52px 44px 0 #61452f}
 }
+
+
+/* ============================================================
+   V3 — Polish pass: Hero progression, PNJ media, tier cleanup
+   ============================================================ */
+.hero-identity-card{display:flex;flex-direction:column}
+.hero-level-rail{
+  position:static!important;
+  right:auto!important;top:auto!important;
+  display:flex!important;flex-wrap:nowrap;
+  gap:8px;width:100%;
+  padding:0 20px 20px;
+  margin-top:auto;
+  overflow-x:auto;
+  scrollbar-width:thin;
+  scrollbar-color:var(--goldDark) transparent;
+}
+.hero-level-rail:before{content:none!important}
+.hero-level-proposal{
+  flex:0 0 48px;
+  width:48px!important;height:48px!important;min-height:48px!important;
+}
+.hero-level-portrait{background:#0d0907}
+.hero-level-portrait img{
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  background:#fff;
+  transition:filter var(--motion-normal),transform var(--motion-normal);
+}
+.hero-level-portrait.level-1 img{filter:saturate(.92) contrast(.98)}
+.hero-level-portrait.level-2 img{filter:saturate(1) contrast(1)}
+.hero-level-portrait.level-3 img{filter:saturate(1.06) contrast(1.015)}
+.hero-level-portrait.level-4 img{filter:saturate(1.12) contrast(1.025)}
+.hero-skill-stack{display:grid;gap:12px}
+.hero-competence.cumulative-skill{position:relative}
+.hero-skill-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;min-height:36px;
+}
+.hero-skill-head .eyebrow{display:flex;align-items:center;gap:8px}
+.brouhaha-stamp{
+  flex:0 0 auto;
+  display:inline-block;
+  padding:7px 12px 5px;
+  border:3px double #a85c49;
+  border-radius:4px;
+  color:#e5a38d;
+  background:rgba(68,22,15,.42);
+  font:900 11px/1 Inter,sans-serif;
+  letter-spacing:.09em;text-transform:uppercase;
+  transform:rotate(-5deg);
+  box-shadow:0 2px 0 rgba(0,0,0,.42),inset 0 0 0 1px rgba(229,163,141,.13);
+  text-shadow:0 1px #0008;
+}
+.cumulative-skill:nth-child(even) .brouhaha-stamp{transform:rotate(4deg)}
+.hero-playbook>header>span.chip{display:none!important}
+
+/* Entire supplied PNJ image remains visible. */
+.npc-portrait{
+  min-height:320px;
+  height:360px;
+  background:#f4f0e8;
+}
+.npc-portrait img{
+  width:100%;height:100%;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  background:#f4f0e8;
+}
+
+/* Redundant difficulty/rarity legend rows removed; card badges remain. */
+.tier-legend{display:none!important}
+
+@media(max-width:899px){
+  .hero-level-rail{padding:12px 18px 18px;margin-top:0}
+  .hero-level-proposal{flex-basis:50px;width:50px!important;height:50px!important}
+  .npc-portrait{height:min(48vh,440px);min-height:300px}
+}
+@media(max-width:767px){
+  .hero-level-rail{gap:7px;padding:10px 14px 16px}
+  .hero-level-proposal{flex-basis:46px;width:46px!important;height:46px!important;min-height:46px!important}
+  .hero-skill-head{align-items:flex-start}
+  .brouhaha-stamp{font-size:9px;padding:6px 8px 4px}
+  .npc-portrait{height:min(44svh,380px);min-height:270px}
+}
