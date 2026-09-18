@@ -404,7 +404,7 @@ function applyBestiaryResponsive(){
 }
 function openCodex(type){show('codex');renderCodexType(type)}
 function renderCodexType(type){
-  currentCodex=type;renderCodexChapter(type);$('.codex-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.codex===type));$$('.entity-demo').forEach(x=>x.classList.remove('active'));$('#codex-'+type)?.classList.add('active');
+  currentCodex=type;renderCodexChapter(type);$$('.codex-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.codex===type));$$('.entity-demo').forEach(x=>x.classList.remove('active'));$('#codex-'+type)?.classList.add('active');
   $('#bestiary-controls')?.classList.toggle('hidden',type!=='creatures');
   if(type==='creatures'){renderBestiary();renderCreature();applyBestiaryResponsive()}
   else if(codexFamilyMeta[type]){renderFamilyBrowser(type);applyFamilyResponsive(type)}
@@ -423,7 +423,7 @@ function renderEncounter(){
   $$('[data-eliminate]',host).forEach(b=>b.onclick=()=>{const id=b.dataset.eliminate;if(encounter[id]>0){encounter[id]--;renderEncounter();showToast('1 occurrence éliminée · Butin tiré une seule fois')}});
   $$('[data-open-creature]',host).forEach(b=>b.onclick=()=>{selectedCreature=b.dataset.openCreature;mobileDetailOpen=true;renderCreature();openCodex('creatures')});
 }
-function initGenerator(){$('.enc-mode').forEach(b=>b.onclick=()=>{$('.enc-mode').forEach(x=>x.classList.remove('active'));b.classList.add('active')});$('#generate').onclick=()=>{encounter={rainette:2,trixie:1};$('#generator')?.classList.add('generated');renderEncounter();showToast('Rencontre générée localement')};renderEncounter()}
+function initGenerator(){$$('.enc-mode').forEach(b=>b.onclick=()=>{$$('.enc-mode').forEach(x=>x.classList.remove('active'));b.classList.add('active')});$('#generate').onclick=()=>{encounter={rainette:2,trixie:1};$('#generator')?.classList.add('generated');renderEncounter();showToast('Rencontre générée localement')};renderEncounter()}
 
 function initBrouhaha(){
   const update=()=>{$('#bh-level').textContent=bhLevel;$('#bh-meter').value=bhLevel;$('#bh-state').textContent=bhLevel>=10?'Critique':bhLevel>=7?'Élevé':bhLevel>=4?'Agité':'Calme';$('#bh-dial')?.style.setProperty('--level',bhLevel)};
@@ -466,7 +466,7 @@ function initOverlays(){
 function initSearch(){
   const input=$('#global-search-input');input.oninput=()=>{const q=input.value.trim().toLowerCase(),results=creatures.filter(c=>!q||c.name.toLowerCase().includes(q)||c.dungeon.toLowerCase().includes(q)).slice(0,5);$('#search-results').innerHTML=results.map(c=>`<button class="related-card" data-search-creature="${c.id}"><b>${c.name}</b><div class="small muted">Créature · ${c.dungeon}</div></button>`).join('')+`<button class="related-card" data-search-codex="dungeons"><b>Le Cabaret des Joyeuses</b><div class="small muted">Donjon</div></button>`;$$('[data-search-creature]').forEach(b=>b.onclick=()=>{selectedCreature=b.dataset.searchCreature;mobileDetailOpen=true;closeOverlay('#search-modal');renderCreature();openCodex('creatures')});$$('[data-search-codex]').forEach(b=>b.onclick=()=>{closeOverlay('#search-modal');openCodex(b.dataset.searchCodex)})};input.dispatchEvent(new Event('input'));
 }
-function initMockup(){$('.mockup-nav button').forEach(b=>b.onclick=()=>$(b.dataset.jump)?.scrollIntoView({behavior:'smooth',block:'start'}));$('#pwa-install-demo')?.addEventListener('click',()=>showToast('iOS : Partager → Ajouter à l’écran d’accueil · autres plateformes : invitation d’installation si disponible'))}
+function initMockup(){$$('.mockup-nav button').forEach(b=>b.onclick=()=>$(b.dataset.jump)?.scrollIntoView({behavior:'smooth',block:'start'}));$('#pwa-install-demo')?.addEventListener('click',()=>showToast('iOS : Partager → Ajouter à l’écran d’accueil · autres plateformes : invitation d’installation si disponible'))}
 
 function init(){injectCreatureStageStyles();initNav();initCodex();renderCodexType('creatures');initGenerator();initBrouhaha();initQuests();initAtelier();initMedia();initImport();initOverlays();initSearch();initMockup();prepareCreatureImages()}
 document.addEventListener('DOMContentLoaded',init);
