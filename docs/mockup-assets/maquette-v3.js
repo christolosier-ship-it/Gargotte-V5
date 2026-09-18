@@ -136,7 +136,7 @@ const codexChapterMeta={
   interactables:{label:'Objets interactifs',eyebrow:'Carnet de mécanicien',icon:'Icone_Entite_OBJET_INTERACTIF.webp',copy:'Des objets concrets, actionnables, presque trop tentants pour rester intacts.'},
   brouhaha:{label:'Brouhaha',eyebrow:'Échelle du chaos',icon:'Icone_Entite_OBJET_BROUHAHA.webp',copy:'Chaque niveau est un incident lisible, et le chaos monte sans masquer la règle.'}
 };
-function renderCodexChapter(type){const host=$('#codex-chapter-banner'),m=codexChapterMeta[type];if(!host||!m)return;host.innerHTML=`<div class="chapter-crest">${emblem(m.icon,'chapter-logo')}</div><div><div class="eyebrow">${m.eyebrow}</div><h2>${m.label}</h2><p>${m.copy}</p></div><div class="chapter-rule">Codex › ${m.label}</div>`;}
+function renderCodexChapter(type){const host=$('#codex-chapter-banner'),m=codexChapterMeta[type];if(!host||!m)return;host.innerHTML=`<div class="chapter-crest">${emblem(m.icon,'chapter-logo')}</div><div><h2>${m.label}</h2></div><div class="chapter-rule">Codex › ${m.label}</div>`;}
 
 function injectCreatureStageStyles(){
   if($('#creature-stage-v2-styles'))return;
@@ -238,7 +238,7 @@ function renderBestiary(){
   $('#mode-gallery')?.classList.toggle('active',bestiaryMode==='gallery');
   $('#mode-list')?.classList.toggle('active',bestiaryMode==='list');
   host.innerHTML=bestiaryMode==='gallery'
-    ? `<div class="gallery-grid">${creatures.map(c=>`<button class="gallery-card ${c.cat}" data-creature="${c.id}"><img src="${creatureSrc(c)}" alt=""><div class="gallery-copy"><div class="row-name">${c.name}</div><div class="row-sub">${c.dungeon}</div><div class="row-meta">${catChip(c.cat)}<span class="chip neutral">Menace ${c.threat}</span></div></div></button>`).join('')}</div>`
+    ? `<div class="gallery-grid">${creatures.map(c=>`<button class="gallery-card ${c.cat}" data-creature="${c.id}"><img src="${creatureSrc(c)}" alt=""><div class="gallery-copy"><div class="row-name">${c.name}</div><div class="row-sub">${c.dungeon}</div><div class="row-meta"><span class="chip cat ${c.cat}"><span>${catMeta[c.cat].label}</span></span><span class="chip neutral">Menace ${c.threat}</span></div></div></button>`).join('')}</div>`
     : `<div class="creature-list">${creatures.map(c=>`<button class="creature-row ${c.cat} ${c.id===selectedCreature?'selected':''}" data-creature="${c.id}"><div class="thumb"><img src="${creatureSrc(c)}" alt=""></div><div><div class="row-name">${c.name}</div><div class="row-sub">${c.dungeon}</div><div class="row-meta">${catChip(c.cat)}<span class="row-stats">PV ${c.pv} · ATK ${c.atk} · DEF ${c.def} · ☠ ${c.threat}</span></div></div></button>`).join('')}</div>`;
   $$('[data-creature]',host).forEach(b=>b.onclick=()=>selectCreature(b.dataset.creature));
 }
@@ -293,13 +293,14 @@ function familyCard(type,item,mode){
   const tier=itemTier(type,item);
   const tierStyle=tier?'--tier:var(--'+({basique:'basic',tactique:'tactical',speciale:'special',brute:'brute',mini_boss:'mini',boss:'boss'}[tier])+');':'';
   const badge=type==='quests'?tierBadge('quest',tier,item.difficulty):type==='loot'?tierBadge('loot',tier,item.rarity):'';
+  const kicker=mode==='list'?'<div class="family-card-kicker"><span>'+codexFamilyMeta[type].singular+'</span></div>':'';
   return '<button class="family-card '+mode+(tier?' tier-card '+tier:'')+'" data-family-item="'+item.id+'" style="--family:'+codexFamilyMeta[type].color+';'+tierStyle+'">'+
     familyMedia(type,item,'family-card-media')+
-    '<div class="family-card-copy"><div class="family-card-kicker" style="display:flex;align-items:center;gap:6px">'+familyMark(type,'chip-logo')+'<span>'+codexFamilyMeta[type].singular+'</span></div><strong>'+item.name+'</strong>'+badge+'<span>'+familySubtitle(type,item)+'</span></div></button>';
+    '<div class="family-card-copy">'+kicker+'<strong>'+item.name+'</strong>'+badge+'<span>'+familySubtitle(type,item)+'</span></div></button>';
 }
 function dungeonDetail(d){
   const floors=d.floorBudgets?.length
-    ? '<div class="floor-track">'+d.floorBudgets.map((b,i)=>'<div class="floor-stop"><b>'+(i+1)+'</b><span>Budget '+b+'</span></div>').join('')+'</div>'
+    ? '<div class="floor-track" aria-label="Étages du donjon">'+d.floorBudgets.map((b,i)=>'<div class="floor-stop"><span class="floor-label">Étage</span><b>'+(i+1)+'</b><span class="floor-budget">Budget '+b+'</span></div>').join('')+'</div>'
     : '<div class="empty-inline">Budgets d’étages disponibles quand le champ floor_budgets est renseigné.</div>';
   return '<article class="dungeon-sheet family-detail-card">'+
     '<div class="dungeon-cover">'+familyMedia('dungeons',d,'dungeon-cover-media')+'<div class="dungeon-cover-seal">'+familyMark('dungeons','section-logo')+'<span>Couverture de donjon</span></div><div class="dungeon-cover-copy"><div class="eyebrow">Donjon '+d.number+'</div><h2>'+d.name+'</h2><p>'+(d.description||'')+'</p></div></div>'+
@@ -359,9 +360,9 @@ function renderFamilyBrowser(type){
   const selected=all.find(x=>x.id===familySelected[type])||all[0];if(selected)familySelected[type]=selected.id;
   const mode=familyMode[type];
   host.style.setProperty('--family',m.color);
-  host.innerHTML='<div class="family-identity-strip">'+familyMark(type,'section-logo')+'<div><span>Chapitre du Codex</span><b>'+m.label+'</b></div></div><div class="family-toolbar"><div><div class="eyebrow">Collection</div><h2 class="serif">'+m.label+' <span class="small muted">· '+all.length+' exemples</span></h2></div><input class="field family-search" data-family-search="'+type+'" placeholder="Rechercher dans '+m.label.toLowerCase()+'…"><div class="segmented"><button class="'+(mode==='gallery'?'active':'')+'" data-family-mode="'+type+':gallery">'+utilIcon('i-grid','icon sm')+'</button><button class="'+(mode==='list'?'active':'')+'" data-family-mode="'+type+':list">'+utilIcon('i-list','icon sm')+'</button></div></div>'+
+  host.innerHTML='<div class="family-toolbar family-toolbar-clean"><input class="field family-search" data-family-search="'+type+'" placeholder="Rechercher dans '+m.label.toLowerCase()+'…"><div class="segmented"><button class="'+(mode==='gallery'?'active':'')+'" data-family-mode="'+type+':gallery">'+utilIcon('i-grid','icon sm')+'</button><button class="'+(mode==='list'?'active':'')+'" data-family-mode="'+type+':list">'+utilIcon('i-list','icon sm')+'</button></div></div>'+
     tierLegend(type)+
-    '<div class="family-backbar" data-family-back="'+type+'"><b>'+m.label+'</b><span>· collection → fiche</span></div>'+
+    '<div class="family-backbar" data-family-back="'+type+'"></div>'+
     '<div class="family-browser-shell"><aside class="family-collection panel"><div class="family-collection-grid '+mode+'" data-family-list="'+type+'">'+all.map(x=>familyCard(type,x,mode)).join('')+'</div></aside><div class="family-detail-host">'+(selected?familyDetail(type,selected):'')+'</div></div>';
   $$('[data-family-item]',host).forEach(b=>b.onclick=()=>selectFamilyItem(type,b.dataset.familyItem));
   $$('[data-family-mode]',host).forEach(b=>b.onclick=()=>{const next=b.dataset.familyMode.split(':')[1];familyMode[type]=next;localStorage.setItem('mockup:familyMode:'+type,next);renderFamilyBrowser(type);applyFamilyResponsive(type)});
@@ -381,9 +382,17 @@ function applyFamilyResponsive(type){
   const host=$('#'+type+'-browser');if(!host)return;
   const shell=$('.family-browser-shell',host),collection=$('.family-collection',host),detail=$('.family-detail-host',host),bar=$('.family-backbar',host);if(!shell||!collection||!detail||!bar)return;
   if(isBestiarySequential()){
-    shell.classList.add('sequential');bar.style.display='flex';collection.style.display=familyDetailOpen[type]?'none':'block';detail.style.display=familyDetailOpen[type]?'block':'none';
-    bar.innerHTML=familyDetailOpen[type]?'‹ <b>'+codexFamilyMeta[type].label+'</b><span>· retour à la collection</span>':'<b>'+codexFamilyMeta[type].label+'</b><span>· '+codexFamilyData[type].length+' éléments</span>';
-    bar.onclick=()=>{if(familyDetailOpen[type]){familyDetailOpen[type]=false;applyFamilyResponsive(type);window.scrollTo({top:0,behavior:'smooth'})}};
+    shell.classList.add('sequential');
+    collection.style.display=familyDetailOpen[type]?'none':'block';
+    detail.style.display=familyDetailOpen[type]?'block':'none';
+    bar.style.display=familyDetailOpen[type]?'flex':'none';
+    if(familyDetailOpen[type]){
+      bar.innerHTML='‹ <b>'+codexFamilyMeta[type].label+'</b><span>· retour à la collection</span>';
+      bar.onclick=()=>{familyDetailOpen[type]=false;applyFamilyResponsive(type);window.scrollTo({top:0,behavior:'smooth'})};
+    }else{
+      bar.innerHTML='';
+      bar.onclick=null;
+    }
   }else{
     shell.classList.remove('sequential');bar.style.removeProperty('display');collection.style.removeProperty('display');detail.style.removeProperty('display');bar.onclick=null;
   }
@@ -393,10 +402,16 @@ function applyBestiaryResponsive(){
   const list=$('#codex-creatures .collection'),detail=$('#creature-detail'),bar=$('#codex-creatures .mobile-sheet-bar'),shell=$('#codex-creatures .codex-shell');if(!list||!detail||!bar||!shell)return;
   if(isBestiarySequential()){
     shell.classList.add('sequential');
-    list.style.display=mobileDetailOpen?'none':'block';detail.style.display=mobileDetailOpen?'block':'none';bar.style.display='flex';
-    bar.innerHTML=mobileDetailOpen?`‹ <b>Bestiaire</b><span>· ${creatures.find(c=>c.id===selectedCreature)?.name||''}</span>`:`<b>Bestiaire</b><span>· ${creatures.length} créatures · toucher une entrée</span>`;
-    bar.tabIndex=0;bar.setAttribute('role','button');bar.onclick=()=>{if(mobileDetailOpen){mobileDetailOpen=false;applyBestiaryResponsive();window.scrollTo({top:0,behavior:'smooth'})}};
-    bar.onkeydown=e=>{if(mobileDetailOpen&&(e.key==='Enter'||e.key===' ')){e.preventDefault();mobileDetailOpen=false;applyBestiaryResponsive();window.scrollTo({top:0,behavior:'smooth'})}};
+    list.style.display=mobileDetailOpen?'none':'block';detail.style.display=mobileDetailOpen?'block':'none';
+    bar.style.display=mobileDetailOpen?'flex':'none';
+    if(mobileDetailOpen){
+      bar.innerHTML=`‹ <b>Bestiaire</b><span>· ${creatures.find(c=>c.id===selectedCreature)?.name||''}</span>`;
+      bar.tabIndex=0;bar.setAttribute('role','button');
+      bar.onclick=()=>{mobileDetailOpen=false;applyBestiaryResponsive();window.scrollTo({top:0,behavior:'smooth'})};
+      bar.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();mobileDetailOpen=false;applyBestiaryResponsive();window.scrollTo({top:0,behavior:'smooth'})}};
+    }else{
+      bar.innerHTML='';bar.removeAttribute('role');bar.removeAttribute('tabindex');bar.onclick=null;bar.onkeydown=null;
+    }
   }else{
     shell.classList.remove('sequential');list.style.removeProperty('display');detail.style.removeProperty('display');bar.style.removeProperty('display');
     bar.removeAttribute('role');bar.removeAttribute('tabindex');bar.onclick=null;bar.onkeydown=null;

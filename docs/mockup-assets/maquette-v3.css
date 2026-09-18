@@ -113,3 +113,198 @@
 @media(max-width:899px){.counter-note{position:relative;right:auto;bottom:auto;width:auto;margin:0 18px 18px;transform:rotate(-1deg)}.codex-chapter-banner{grid-template-columns:auto 1fr}.chapter-rule{display:none}.quest-attachments{grid-template-columns:1fr}.npc-voice-note{float:none;width:100%;margin:0 0 12px}.import-crates,.situation-grid,.mood-grid{grid-template-columns:1fr}.encounter-stage-head{align-items:flex-start;flex-direction:column}.pwa-install-card{align-items:flex-start;flex-direction:column}}
 @media(max-width:767px){.codex-tabs button img{width:20px;height:20px}.codex-chapter-banner{padding:10px}.chapter-crest{width:48px;height:48px}.chapter-logo{width:42px;height:42px}.codex-chapter-banner p{display:none}.session-mini-summary{overflow:auto;flex-wrap:nowrap;padding-bottom:2px}.session-mini-summary span{white-space:nowrap}.brouhaha-dial{width:min(240px,74vw)}.quest-stage-label{display:none}.atelier-save-ledger span:last-child{display:none}.atelier-identity-ribbon{align-items:flex-start}.atelier-save-ledger{font-size:8px}.import-steps{grid-template-columns:auto 1fr auto 1fr auto}.import-steps div span{display:none}}
 @media(prefers-reduced-motion:reduce){.event-pop,.quest-flip{animation:none!important}.generated .game-layout,.media-card{transition:none!important}}
+
+
+/* ============================================================
+   V3 — Polish pass: Codex collections & dungeon floors
+   ============================================================ */
+#codex .codex-page-head{margin-bottom:14px}
+#codex .codex-page-head .title{margin:0}
+#codex .codex-chapter-banner{min-height:76px;padding:11px 16px;margin-bottom:12px}
+#codex .codex-chapter-banner h2{margin:0;font-size:28px}
+#codex .chapter-crest{width:54px;height:54px}
+#codex .chapter-logo{width:46px;height:46px}
+#codex .chapter-rule{align-self:center}
+#codex-creatures .collection{padding-top:10px}
+
+/* Collection cards keep information, but repeated sigils are gone. */
+.gallery-card .row-meta .chip.cat .emblem-img{display:none}
+.gallery-card .row-meta .chip.cat{padding-left:10px}
+
+/* All secondary Codex families use the same compact collection grammar. */
+.family-toolbar.family-toolbar-clean{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:10px!important;
+  align-items:center!important;
+  margin:0 0 10px!important;
+}
+.family-toolbar.family-toolbar-clean .family-search{
+  grid-column:auto!important;
+  grid-row:auto!important;
+  justify-self:stretch!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.family-toolbar.family-toolbar-clean .segmented{justify-self:end}
+.family-browser-shell.sequential .family-collection{
+  position:static;
+  max-height:none;
+  overflow:visible;
+}
+.family-collection{padding:10px}
+.family-collection-grid.gallery{
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr))!important;
+  gap:12px!important;
+}
+.family-card.gallery{
+  aspect-ratio:3/4;
+  min-height:0!important;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+}
+.family-card.gallery .family-card-media{
+  height:auto!important;
+  min-height:0;
+  background:
+    radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--family) 12%,transparent),transparent 50%),
+    #120d09;
+}
+.family-card.gallery .family-card-media img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  padding:8px;
+  background:transparent;
+}
+.family-card.gallery .family-card-media.placeholder{
+  min-height:0;
+}
+.family-card.gallery .family-card-copy{padding:10px}
+.family-card.gallery .family-card-copy strong{
+  font-size:17px;
+  line-height:1.05;
+}
+.family-card.gallery .family-card-copy>span:last-child{
+  margin-top:2px;
+  line-height:1.25;
+}
+.family-card.gallery .tier-badge{margin-top:5px}
+.family-card.list .family-card-kicker{display:block}
+.family-card.gallery .family-card-kicker{display:none}
+
+/* The back strip is navigation only. It no longer repeats counts in collection view. */
+.family-backbar:empty{display:none!important}
+
+/* Scalable "escalier ivre": orderly enough to read, irregular enough to feel Gargotte. */
+.expedition-route{min-width:0}
+.floor-track{
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:repeat(auto-fill,minmax(92px,1fr))!important;
+  gap:15px 11px!important;
+  margin-top:14px!important;
+  padding:15px 12px 18px!important;
+  max-height:min(46vh,420px);
+  overflow:auto;
+  overscroll-behavior:contain;
+  border:1px solid rgba(106,75,49,.62);
+  border-radius:16px;
+  background:
+    radial-gradient(circle at 15% 20%,rgba(212,164,95,.08),transparent 24%),
+    radial-gradient(circle at 82% 76%,rgba(114,71,39,.10),transparent 22%),
+    linear-gradient(rgba(16,11,8,.84),rgba(10,7,5,.92)),
+    url('./textures/wood-charred.svg') center/cover;
+  scrollbar-width:thin;
+  scrollbar-color:var(--goldDark) #120d09;
+}
+.floor-track:before{content:none!important}
+.floor-stop{
+  --tilt:0deg;
+  position:relative!important;
+  z-index:1;
+  min-height:82px;
+  padding:15px 8px 10px!important;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:1px;
+  border:1px solid #684a31!important;
+  border-radius:13px 9px 14px 8px!important;
+  background:
+    linear-gradient(150deg,rgba(49,32,20,.96),rgba(22,15,10,.98))!important;
+  box-shadow:
+    0 8px 16px rgba(0,0,0,.26),
+    inset 0 1px rgba(240,207,147,.07);
+  transform:translateY(0) rotate(var(--tilt));
+  clip-path:polygon(3% 5%,96% 0,100% 88%,91% 100%,5% 96%,0 16%);
+}
+.floor-stop:after{
+  content:"";
+  position:absolute;
+  width:7px;height:7px;
+  right:8px;top:8px;
+  border-radius:50%;
+  background:#8a5e31;
+  box-shadow:-67px 54px 0 #61452f;
+  opacity:.75;
+}
+.floor-stop:nth-child(6n+1){--tilt:-1.3deg;transform:translateY(4px) rotate(var(--tilt))}
+.floor-stop:nth-child(6n+2){--tilt:.8deg;transform:translateY(-3px) rotate(var(--tilt))}
+.floor-stop:nth-child(6n+3){--tilt:-.55deg;transform:translateY(2px) rotate(var(--tilt))}
+.floor-stop:nth-child(6n+4){--tilt:1.25deg;transform:translateY(5px) rotate(var(--tilt))}
+.floor-stop:nth-child(6n+5){--tilt:-.85deg;transform:translateY(-2px) rotate(var(--tilt))}
+.floor-stop:nth-child(6n){--tilt:.45deg;transform:translateY(1px) rotate(var(--tilt))}
+.floor-stop .floor-label{
+  display:block;
+  font-size:7px!important;
+  line-height:1;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#92785f!important;
+}
+.floor-stop b{
+  font:800 30px/.9 Alegreya,serif!important;
+  color:var(--goldSoft)!important;
+  text-shadow:0 2px 0 #0008;
+}
+.floor-stop .floor-budget{
+  display:block;
+  margin-top:4px;
+  font-size:8px!important;
+  color:var(--muted)!important;
+  white-space:nowrap;
+}
+
+/* Tablet keeps the same card language instead of collapsing to one huge card. */
+@media(max-width:1199px){
+  .family-collection-grid.gallery{
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr))!important;
+  }
+}
+@media(max-width:899px){
+  .family-collection-grid.gallery{
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr))!important;
+  }
+}
+@media(max-width:767px){
+  #codex .codex-page-head{padding:14px 12px 0;margin-bottom:8px}
+  #codex .codex-chapter-banner{margin:0 12px 10px;padding:9px 10px;min-height:64px}
+  #codex .chapter-crest{width:46px;height:46px}
+  #codex .chapter-logo{width:40px;height:40px}
+  #codex .codex-chapter-banner h2{font-size:24px}
+  .family-toolbar.family-toolbar-clean{grid-template-columns:minmax(0,1fr) auto!important}
+  .family-collection-grid.gallery{
+    grid-template-columns:repeat(auto-fill,minmax(165px,1fr))!important;
+    gap:8px!important;
+  }
+  .floor-track{
+    grid-template-columns:repeat(auto-fill,minmax(74px,1fr))!important;
+    gap:11px 7px!important;
+    padding:12px 8px 14px!important;
+    max-height:380px;
+  }
+  .floor-stop{min-height:72px;padding:12px 4px 8px!important}
+  .floor-stop b{font-size:25px!important}
+  .floor-stop:after{box-shadow:-52px 44px 0 #61452f}
+}

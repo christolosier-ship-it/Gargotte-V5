@@ -78,7 +78,7 @@
       </section>
 
       <section class="page" id="codex">
-        <div class="page-head"><div><div class="eyebrow">Encyclopédie</div><h1 class="title">Codex</h1><div class="desc">Galerie pour explorer. Liste pour arbitrer. Fiche pour comprendre. Chaque famille garde une grammaire adaptée à son usage.</div></div></div>
+        <div class="page-head codex-page-head"><div><h1 class="title">Codex</h1></div></div>
         <div class="codex-tabs" role="tablist" aria-label="Familles du Codex">
           <button class="active" data-codex="creatures"><img src="./mockup-assets/icons/Sigil_Basique.webp" alt="">Créatures</button><button data-codex="dungeons"><img src="./mockup-assets/icons/Icone_Gameplay_DONJON.webp" alt="">Donjons</button><button data-codex="heroes"><img src="./mockup-assets/icons/Icone_Entite_HEROS.webp" alt="">Héros</button><button data-codex="npcs"><img src="./mockup-assets/icons/Icone_Entite_PNJ.webp" alt="">PNJ</button><button data-codex="quests"><img src="./mockup-assets/icons/Icone_Entite_QUETE.webp" alt="">Quêtes</button><button data-codex="loot"><img src="./mockup-assets/icons/Icone_Gameplay_BUTIN.webp" alt="">Loot</button><button data-codex="interactables"><img src="./mockup-assets/icons/Icone_Entite_OBJET_INTERACTIF.webp" alt="">Objets interactifs</button><button data-codex="brouhaha"><img src="./mockup-assets/icons/Icone_Entite_OBJET_BROUHAHA.webp" alt="">Brouhaha</button>
         </div>
@@ -87,10 +87,10 @@
         <section class="entity-demo active" id="codex-creatures">
           <div id="bestiary-controls">
             <div class="toolbar"><input class="field searchfield" placeholder="Rechercher une créature…"><select class="field"><option>Tous les donjons</option><option>Bastognac</option><option>Cabaret</option></select><select class="field"><option>Toutes catégories</option><option>Basique</option><option>Tactique</option><option>Spéciale</option><option>Brute</option><option>Mini-boss</option><option>Boss</option></select><select class="field"><option>Menace : toutes</option></select><div class="view-switch segmented"><button id="mode-gallery" aria-label="Vue galerie"><svg class="icon sm"><use href="#i-grid"/></svg></button><button id="mode-list" aria-label="Vue liste"><svg class="icon sm"><use href="#i-list"/></svg></button></div></div>
-            <div class="filter-active"><button class="filter-chip">Donjon : tous ×</button><button class="filter-chip">Catégorie : toutes ×</button></div>
+            
           </div>
-          <div class="mobile-sheet-bar"><b>Bestiaire</b><span>· navigation séquentielle sur téléphone et iPad</span></div>
-          <div class="codex-shell"><aside class="panel collection"><h3>Bestiaire <span class="small muted">· 6 exemples</span></h3><div id="bestiary-collection"></div></aside><div id="creature-detail"></div></div>
+          <div class="mobile-sheet-bar"></div>
+          <div class="codex-shell"><aside class="panel collection"><div id="bestiary-collection"></div></aside><div id="creature-detail"></div></div>
         </section>
 
         <section class="entity-demo" id="codex-dungeons"><div class="family-browser" id="dungeons-browser"></div></section>
