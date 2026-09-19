@@ -493,12 +493,61 @@ function initBrouhaha(){
   $('#bh-reset').onclick=()=>openConfirm('Réinitialiser le Brouhaha ?','Le niveau et l’historique de session seront remis à zéro. Le Codex ne sera pas modifié.',()=>{bhLevel=0;update();$('#bh-history').innerHTML='';$('#bh-current').textContent='Aucun effet tiré.'});
   update();
 }
-function renderQuest(){const q=sessionQuests[questIndex];const card=$('#session-quest');card.innerHTML=`<div class="eyebrow" style="display:flex;align-items:center;gap:8px">${emblem('Icone_Entite_QUETE.webp','chip-logo')}<span>Quête de session</span></div><h2>${q.name}</h2><div class="quest-giver-live">${emblem('Icone_Entite_PNJ.webp','section-logo')}<span><small>Commanditaire</small><b>${q.npc}</b></span></div><div class="row wrap"><span class="chip neutral">${q.difficulty}</span></div><p>${q.desc}</p><div class="quest-grid"><div class="objective objective-hero"><b>Objectif</b><div>${q.objective}</div></div><div class="objective"><b>Récompense</b><div class="small">${q.reward}</div></div></div>`;card.classList.remove('quest-flip');requestAnimationFrame(()=>card.classList.add('quest-flip'))}
+function renderQuest(){const q=sessionQuests[questIndex];const card=$('#session-quest');card.innerHTML=`<h2>${q.name}</h2><div class="quest-giver-live">${emblem('Icone_Entite_PNJ.webp','section-logo')}<span><small>Commanditaire</small><b>${q.npc}</b></span></div><div class="row wrap"><span class="chip neutral">${q.difficulty}</span></div><p>${q.desc}</p><div class="quest-grid"><div class="objective objective-hero"><b>Objectif</b><div>${q.objective}</div></div><div class="objective"><b>Récompense</b><div class="small">${q.reward}</div></div></div>`;card.classList.remove('quest-flip');requestAnimationFrame(()=>card.classList.add('quest-flip'))}
 function initQuests(){renderQuest();$('#reroll-quest').onclick=()=>{questIndex=(questIndex+1)%sessionQuests.length;renderQuest();showToast('Nouvelle quête tirée sans confirmation')};$('#quest-codex').onclick=()=>openCodex('quests')}
 
-function setDirty(v){dirty=v;$('#dirty-state').classList.toggle('hidden',!v);$('#save-state').textContent=v?'Modifications non enregistrées':'Enregistré localement · Synchronisé avec Neon'}
-function saveEntity(after){setDirty(false);$('#save-state').innerHTML='<span class="syncdot"></span>Enregistré localement · synchronisation distante en cours';setTimeout(()=>{$('#save-state').innerHTML='<span class="syncdot"></span>Enregistré localement · Synchronisé avec Neon';showToast('Enregistrement local confirmé, puis synchronisation distante');after?.()},700)}
-function initAtelier(){$$('#atelier-form input,#atelier-form select,#atelier-form textarea').forEach(el=>el.addEventListener('input',()=>setDirty(true)));$('#save-entity').onclick=()=>saveEntity();$('#delete-entity').onclick=()=>openConfirm('Supprimer Rainette Voltigeuse ?','Action destructive volontaire. Les impacts connus seraient listés ici avant confirmation.',()=>showToast('Démonstration : aucune donnée réellement supprimée'))}
+const atelierTypes={
+  creatures:{label:'Créatures',singular:'Créature',items:['Rainette Voltigeuse','Gobeline Turbo-Coude','Videur du Cellier','Maître du Comptoir','Démon de la Réserve','Gundrade la Tenace']},
+  dungeons:{label:'Donjons',singular:'Donjon',items:['Le Château de Bastognac','Le Cabaret des Joyeuses','Les Marécages Infectés']},
+  heroes:{label:'Héros',singular:'Héros',items:['Brünhilda la Torgnole','Gundrade la Tenace']},
+  npcs:{label:'PNJ',singular:'PNJ',items:['Veloria Triplemousse','Mirette la Serveuse','Le Conservateur']},
+  quests:{label:'Quêtes',singular:'Quête',items:['Le tonneau qui savait trop','Concours officiel de lancer de caillou','La machine à bière automatique']},
+  loot:{label:'Loot',singular:'Objet de loot',items:['Sac de vis rouillées','Ressort mystérieux','Caillou bien équilibré','Touffe de poils magiques']},
+  interactables:{label:'Objets interactifs',singular:'Objet interactif',items:['Levier suspect','Tonneau bavard','Soupape de cuve']},
+  brouhaha:{label:'Brouhaha',singular:'Palier de Brouhaha',items:['Niveau 1 · Calme','Niveau 4 · Agité','Niveau 7 · Élevé','Niveau 12 · Critique']}
+};
+let atelierCurrentType='creatures';
+
+function atelierFormMarkup(type,name){
+  const q=v=>String(v||'').replace(/"/g,'&quot;');
+  if(type==='creatures')return '<div class="form-section"><div class="eyebrow">Identité</div><div class="form-grid" style="margin-top:12px"><label class="field-label">Nom<input class="field" value="'+q(name)+'"></label><label class="field-label">Catégorie<select class="field"><option>Spéciale</option><option>Basique</option><option>Tactique</option><option>Brute</option><option>Mini-boss</option><option>Boss</option></select></label><label class="field-label">Donjon<select class="field"><option>Les Marécages Infectés</option></select></label><label class="field-label">Menace<input class="field" value="2"></label></div></div><div class="form-section"><div class="eyebrow">Gameplay</div><div class="form-grid" style="margin-top:12px"><label class="field-label">PV<input class="field" value="7"></label><label class="field-label">ATK<input class="field" value="3"></label><label class="field-label">DEF<input class="field" value="2"></label><label class="field-label">Actions<input class="field" value="2"></label></div></div><div class="form-section"><div class="eyebrow">Capacité & IA</div><label class="field-label" style="margin-top:12px">Capacité<textarea class="field">Bond électrique</textarea></label><label class="field-label" style="margin-top:12px">Comportement<textarea class="field">Harcele les flancs et cherche les cases libres.</textarea></label></div>';
+  if(type==='dungeons')return '<div class="form-section"><div class="eyebrow">Donjon</div><div class="form-grid" style="margin-top:12px"><label class="field-label">Nom<input class="field" value="'+q(name)+'"></label><label class="field-label">Numéro<input class="field" value="1"></label><label class="field-label">Boss final<input class="field" value="Non renseigné"></label><label class="field-label">Nombre d’étages<input class="field" value="5"></label></div><label class="field-label" style="margin-top:12px">Description<textarea class="field">Description du donjon.</textarea></label></div>';
+  if(type==='heroes')return '<div class="form-section"><div class="eyebrow">Héros</div><div class="form-grid" style="margin-top:12px"><label class="field-label">Nom<input class="field" value="'+q(name)+'"></label><label class="field-label">Classe<input class="field" value="Tank"></label><label class="field-label">Niveau<input class="field" value="1"></label><label class="field-label">Brouhaha<input class="field" value="0"></label></div><label class="field-label" style="margin-top:12px">Compétence<textarea class="field">Compétence du niveau sélectionné.</textarea></label></div>';
+  if(type==='npcs')return '<div class="form-section"><div class="eyebrow">PNJ</div><div class="form-grid" style="margin-top:12px"><label class="field-label">Nom<input class="field" value="'+q(name)+'"></label><label class="field-label">Rôle<input class="field" value=""></label><label class="field-label">Race<input class="field" value=""></label><label class="field-label">Ton<input class="field" value=""></label></div><label class="field-label" style="margin-top:12px">Lore<textarea class="field"></textarea></label></div>';
+  if(type==='quests')return '<div class="form-section"><div class="eyebrow">Quête</div><div class="form-grid" style="margin-top:12px"><label class="field-label">Nom<input class="field" value="'+q(name)+'"></label><label class="field-label">Difficulté<select class="field"><option>Moyenne</option><option>Très facile</option><option>Facile</option><option>Normale</option><option>Difficile</option></select></label><label class="field-label">Commanditaire<input class="field" value="Mirette la Serveuse"></label><label class="field-label">Donjon<input class="field" value="Le Cabaret des Joyeuses"></label></div><label class="field-label" style="margin-top:12px">Objectif<textarea class="field"></textarea></label></div>';
+  if(type==='loot')return '<div class="form-section"><div class="eyebrow">Loot</div><div class="form-grid" style="margin-top:12px"><label class="field-label">Nom<input class="field" value="'+q(name)+'"></label><label class="field-label">Rareté<select class="field"><option>Commun</option><option>Mauvais</option><option>Inhabituel</option><option>Rare</option><option>Légendaire</option></select></label><label class="field-label">Valeur<input class="field" value="1"></label><label class="field-label">Source<input class="field" value=""></label></div></div>';
+  if(type==='interactables')return '<div class="form-section"><div class="eyebrow">Objet interactif</div><div class="form-grid" style="margin-top:12px"><label class="field-label">Nom<input class="field" value="'+q(name)+'"></label><label class="field-label">Donjon<input class="field" value=""></label></div><label class="field-label" style="margin-top:12px">Actions<textarea class="field">Examiner, actionner</textarea></label><label class="field-label" style="margin-top:12px">Effet<textarea class="field"></textarea></label></div>';
+  return '<div class="form-section"><div class="eyebrow">Brouhaha</div><div class="form-grid" style="margin-top:12px"><label class="field-label">Palier<input class="field" value="'+q(name)+'"></label><label class="field-label">Niveau<input class="field" value="7"></label></div><label class="field-label" style="margin-top:12px">Effet<textarea class="field">Une table se renverse au pire endroit.</textarea></label></div>';
+}
+
+function bindAtelierInputs(){
+  $$('#atelier-form input,#atelier-form select,#atelier-form textarea').forEach(el=>el.addEventListener('input',()=>setDirty(true)));
+}
+function renderAtelier(type=atelierCurrentType,selectedName){
+  atelierCurrentType=type;
+  const meta=atelierTypes[type];
+  const chosen=selectedName||meta.items[0];
+  $$('.atelier-type-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.atelierType===type));
+  $('#atelier-kind').textContent=meta.singular;
+  $('#atelier-selected').textContent=chosen;
+  $('#atelier-new').textContent='+ Nouveau '+meta.singular.toLowerCase();
+  $('#delete-entity').textContent='Supprimer '+meta.singular.toLowerCase();
+  $('#atelier-list').innerHTML=meta.items.map((name,i)=>'<button class="'+(name===chosen?'active':'')+'" data-atelier-item="'+i+'">'+name+'</button>').join('');
+  $('#atelier-form').innerHTML=atelierFormMarkup(type,chosen);
+  $$('[data-atelier-item]').forEach(b=>b.onclick=()=>renderAtelier(type,meta.items[Number(b.dataset.atelierItem)]));
+  bindAtelierInputs();
+  setDirty(false);
+}
+function setDirty(v){dirty=v;$('#dirty-state')?.classList.toggle('hidden',!v)}
+function saveEntity(after){setDirty(false);showToast('Enregistrement local confirmé · synchronisation distante lancée');after?.()}
+function initAtelier(){
+  renderAtelier('creatures');
+  $$('.atelier-type-tabs button').forEach(b=>b.onclick=()=>renderAtelier(b.dataset.atelierType));
+  $('#atelier-new').onclick=()=>{const meta=atelierTypes[atelierCurrentType];renderAtelier(atelierCurrentType,'Nouvel élément');setDirty(true);showToast('Nouvelle fiche '+meta.singular.toLowerCase())};
+  $('#save-entity').onclick=()=>saveEntity();
+  $('#delete-entity').onclick=()=>{const meta=atelierTypes[atelierCurrentType],name=$('#atelier-selected').textContent;openConfirm('Supprimer '+name+' ?','Action destructive volontaire. Les impacts connus seraient listés avant confirmation.',()=>showToast('Démonstration : aucune donnée réellement supprimée'),'Supprimer')};
+}
+
 function openUnsaved(target){
   const modal=$('#confirm-modal'),ok=$('#confirm-ok');$('#confirm-title').textContent='Modifications non enregistrées';$('#confirm-copy').textContent='Choisissez Rester, Quitter sans enregistrer ou Enregistrer avant de quitter.';ok.textContent='Quitter sans enregistrer';
   let save=$('#confirm-save');if(!save){save=document.createElement('button');save.id='confirm-save';save.className='btn primary';save.textContent='Enregistrer';ok.before(save)}save.classList.remove('hidden');

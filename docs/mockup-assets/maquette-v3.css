@@ -451,3 +451,117 @@
 @media(max-width:899px){#generator .encounter-row{grid-template-columns:66px minmax(0,1fr)}#generator .encounter-controls{grid-column:1/-1;justify-content:flex-end}.chaos-session{grid-template-columns:1fr!important}.chaos-event{min-height:180px!important;transform:rotate(.5deg)}}
 @media(max-width:767px){#generator .encounter-row{grid-template-columns:56px minmax(0,1fr);gap:9px}#generator .encounter-miniature{width:54px;height:62px}#generator .encounter-miniature img{width:52px;height:52px}.encounter-stats{gap:4px}.encounter-stats>span{min-width:47px;padding:4px 5px}.encounter-controls{flex-wrap:wrap}.chaos-pressure{width:min(350px,94vw)}.chaos-actions{gap:12px}}
 @media(prefers-reduced-motion:reduce){#brouhaha[data-chaos="critical"] .brouhaha-console{animation:none!important}}
+
+
+/* ============================================================
+   V3 — Final polish: Quests, Atelier, Media, Import/Export
+   ============================================================ */
+#quests .page-head,
+#atelier .page-head,
+#media .page-head,
+#importexport .page-head{margin-bottom:14px}
+#quests .page-head .title,
+#atelier .page-head .title,
+#media .page-head .title,
+#importexport .page-head .title{margin:0}
+#quests .quest-draw-stage{padding-top:0}
+#quests .quest-stage-label{display:none!important}
+
+/* Atelier: explicit type tabs, classic boxed list, then editing sheet. */
+.atelier-type-tabs{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:12px;
+}
+.atelier-type-tabs button{
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:8px 11px;
+  border:1px solid var(--b0);
+  border-radius:12px;
+  background:var(--s1);
+  color:var(--muted);
+  text-align:left;
+}
+.atelier-type-tabs button img{
+  width:34px;height:34px;object-fit:contain;
+  filter:drop-shadow(0 4px 7px #0008);
+}
+.atelier-type-tabs button.active{
+  color:var(--goldSoft);
+  border-color:var(--goldDark);
+  background:linear-gradient(120deg,rgba(212,164,95,.09),var(--s1));
+  box-shadow:inset 3px 0 var(--gold);
+}
+.atelier-classic{
+  grid-template-columns:300px minmax(0,1fr)!important;
+  align-items:start;
+}
+.atelier-list{
+  display:grid!important;
+  gap:7px;
+  position:sticky;
+  top:calc(var(--top) + 14px);
+  max-height:calc(100vh - var(--top) - 38px);
+  overflow:auto;
+}
+.atelier-list button{
+  min-height:52px;
+  border-radius:11px;
+  padding:8px 12px;
+}
+.atelier-list button.active{
+  background:linear-gradient(90deg,rgba(212,164,95,.10),var(--s1));
+  box-shadow:inset 3px 0 var(--gold);
+}
+.atelier-editor{min-width:0}
+.atelier-panel-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding-bottom:14px;
+  margin-bottom:18px;
+  border-bottom:1px solid var(--b0);
+}
+.atelier-panel-head h2{font-size:28px;margin:3px 0 0}
+.atelier-identity-ribbon,.atelier-preview{display:none!important}
+#atelier .danger-zone p{display:none}
+#atelier .dirtybar{justify-content:flex-end}
+#atelier .dirtybar #dirty-state:not(.hidden){
+  margin-right:auto;
+  padding:7px 10px;
+  border:1px solid color-mix(in srgb,var(--warning) 38%,var(--b0));
+  border-radius:999px;
+  background:color-mix(in srgb,var(--warning) 6%,transparent);
+}
+
+/* Media header is intentionally bare; status detail stays on the assets themselves. */
+#media .media-toolbar{margin-top:0}
+
+/* Import/export goes straight to actions, preview remains mandatory after click. */
+#importexport .import-steps,
+#importexport .import-crates{display:none!important}
+#importexport .import-grid{margin-top:0}
+#importexport .import-grid>.panel{min-height:210px}
+#importexport .import-grid>.panel>.eyebrow{margin-bottom:14px}
+
+@media(max-width:1199px){
+  .atelier-type-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .atelier-classic{grid-template-columns:260px minmax(0,1fr)!important}
+}
+@media(max-width:899px){
+  .atelier-type-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .atelier-classic{grid-template-columns:1fr!important}
+  .atelier-list{position:static;max-height:none;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:767px){
+  .atelier-type-tabs{display:flex;overflow-x:auto;padding-bottom:3px}
+  .atelier-type-tabs button{flex:0 0 auto;min-width:145px}
+  .atelier-list{grid-template-columns:1fr}
+  .atelier-panel-head{align-items:flex-start;flex-direction:column}
+  #importexport .import-grid{grid-template-columns:1fr}
+}
