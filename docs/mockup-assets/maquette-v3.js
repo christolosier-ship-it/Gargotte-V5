@@ -439,17 +439,59 @@ function initCodex(){
 
 function renderEncounter(){
   const host=$('#encounter-results');if(!host)return;
-  host.innerHTML=Object.entries(encounter).map(([id,qty])=>{const c=creatures.find(x=>x.id===id);return `<div class="result-card ${qty===0?'done':''}"><div class="encounter-row"><div class="encounter-miniature"><img src="${creatureSrc(c)}" alt=""><i></i></div><div><b class="serif" style="font-size:20px">${c.name}</b><div class="small muted">PV ${c.pv} · ATK ${c.atk} · DEF ${c.def} · ${c.ability}</div></div><div class="row"><span class="qty">×${qty}</span><button class="btn smallbtn" data-open-creature="${id}">Fiche</button><button class="btn smallbtn" data-eliminate="${id}" ${qty===0?'disabled':''}>Éliminer</button></div></div>${qty===0?'<div class="loot-reveal">Groupe terminé. Tous les tirages de Butin ont été effectués.</div>':''}</div>`}).join('');
+  host.innerHTML=Object.entries(encounter).map(([id,qty])=>{
+    const c=creatures.find(x=>x.id===id);
+    return `<div class="result-card ${c.cat} ${qty===0?'done':''}">
+      <div class="encounter-row">
+        <div class="encounter-miniature"><img src="${creatureSrc(c)}" alt=""><i></i></div>
+        <div class="encounter-creature">
+          <span class="encounter-type ${c.cat}">${catMeta[c.cat].label}</span>
+          <b class="serif encounter-name">${c.name}</b>
+          <div class="encounter-stats">
+            <span><b>${c.pv}</b><small>PV</small></span>
+            <span><b>${c.atk}</b><small>ATK</small></span>
+            <span><b>${c.def}</b><small>DEF</small></span>
+            <span><b>${c.actions}</b><small>ACTION</small></span>
+            <span><b>${c.threat}</b><small>MENACE</small></span>
+          </div>
+          <div class="encounter-ability">${emblem('Icone_Gameplay_COMPETENCE.webp','chip-logo')}<b>${c.ability}</b></div>
+        </div>
+        <div class="row encounter-controls"><span class="qty">×${qty}</span><button class="btn smallbtn" data-open-creature="${id}">Fiche</button><button class="btn smallbtn" data-eliminate="${id}" ${qty===0?'disabled':''}>Éliminer</button></div>
+      </div>
+      ${qty===0?'<div class="loot-reveal">Groupe terminé. Tous les tirages de Butin ont été effectués.</div>':''}
+    </div>`;
+  }).join('');
   $$('[data-eliminate]',host).forEach(b=>b.onclick=()=>{const id=b.dataset.eliminate;if(encounter[id]>0){encounter[id]--;renderEncounter();showToast('1 occurrence éliminée · Butin tiré une seule fois')}});
   $$('[data-open-creature]',host).forEach(b=>b.onclick=()=>{selectedCreature=b.dataset.openCreature;mobileDetailOpen=true;renderCreature();openCodex('creatures')});
 }
 function initGenerator(){$$('.enc-mode').forEach(b=>b.onclick=()=>{$$('.enc-mode').forEach(x=>x.classList.remove('active'));b.classList.add('active')});$('#generate').onclick=()=>{encounter={rainette:2,trixie:1};$('#generator')?.classList.add('generated');renderEncounter();showToast('Rencontre générée localement')};renderEncounter()}
 
 function initBrouhaha(){
-  const update=()=>{$('#bh-level').textContent=bhLevel;$('#bh-meter').value=bhLevel;$('#bh-state').textContent=bhLevel>=10?'Critique':bhLevel>=7?'Élevé':bhLevel>=4?'Agité':'Calme';$('#bh-dial')?.style.setProperty('--level',bhLevel)};
-  $('#bh-minus').onclick=()=>{bhLevel=Math.max(0,bhLevel-1);update()};$('#bh-plus').onclick=()=>{bhLevel=Math.min(12,bhLevel+1);update()};
-  $('#bh-draw').onclick=()=>{const effects=['Une table se renverse au pire endroit.','Les clients chantent faux et couvrent les ordres.','Une chope traverse la salle sans propriétaire apparent.','Le sol devient glissant près du comptoir.'];const effect=effects[Math.floor(Math.random()*effects.length)];$('#bh-current').textContent=effect;const card=$('#bh-event-card');card?.classList.remove('event-pop');requestAnimationFrame(()=>card?.classList.add('event-pop'));$('#bh-history').insertAdjacentHTML('afterbegin',`<div class="history-item"><span class="ticket-hole"></span><b>Niveau ${bhLevel}</b><div>${effect}</div></div>`)};
-  $('#bh-reset').onclick=()=>openConfirm('Réinitialiser le Brouhaha ?','Le niveau et l’historique de session seront remis à zéro. Le Codex ne sera pas modifié.',()=>{bhLevel=0;update();$('#bh-history').innerHTML='';$('#bh-current').textContent='Aucun effet tiré.'});update();
+  const update=()=>{
+    const state=bhLevel>=10?'Critique':bhLevel>=7?'Élevé':bhLevel>=4?'Agité':'Calme';
+    const tier=bhLevel>=10?'critical':bhLevel>=7?'high':bhLevel>=4?'mid':'low';
+    const pct=(bhLevel/12*100).toFixed(2)+'%';
+    $('#bh-level').textContent=bhLevel;
+    $('#bh-meter').value=bhLevel;
+    $('#bh-state').textContent=state;
+    const dial=$('#bh-dial');
+    dial?.style.setProperty('--level',bhLevel);
+    dial?.style.setProperty('--bh-pct',pct);
+    const page=$('#brouhaha');
+    if(page){page.dataset.chaos=tier;page.style.setProperty('--bh-pct',pct)}
+  };
+  $('#bh-minus').onclick=()=>{bhLevel=Math.max(0,bhLevel-1);update()};
+  $('#bh-plus').onclick=()=>{bhLevel=Math.min(12,bhLevel+1);update()};
+  $('#bh-meter').oninput=e=>{bhLevel=Number(e.target.value);update()};
+  $('#bh-draw').onclick=()=>{
+    const effects=['Une table se renverse au pire endroit.','Les clients chantent faux et couvrent les ordres.','Une chope traverse la salle sans propriétaire apparent.','Le sol devient glissant près du comptoir.'];
+    const effect=effects[Math.floor(Math.random()*effects.length)];
+    $('#bh-current').textContent=effect;
+    const card=$('#bh-event-card');card?.classList.remove('event-pop');requestAnimationFrame(()=>card?.classList.add('event-pop'));
+    $('#bh-history').insertAdjacentHTML('afterbegin',`<div class="history-item"><span class="ticket-hole"></span><b>Niveau ${bhLevel}</b><div>${effect}</div></div>`)
+  };
+  $('#bh-reset').onclick=()=>openConfirm('Réinitialiser le Brouhaha ?','Le niveau et l’historique de session seront remis à zéro. Le Codex ne sera pas modifié.',()=>{bhLevel=0;update();$('#bh-history').innerHTML='';$('#bh-current').textContent='Aucun effet tiré.'});
+  update();
 }
 function renderQuest(){const q=sessionQuests[questIndex];const card=$('#session-quest');card.innerHTML=`<div class="eyebrow" style="display:flex;align-items:center;gap:8px">${emblem('Icone_Entite_QUETE.webp','chip-logo')}<span>Quête de session</span></div><h2>${q.name}</h2><div class="quest-giver-live">${emblem('Icone_Entite_PNJ.webp','section-logo')}<span><small>Commanditaire</small><b>${q.npc}</b></span></div><div class="row wrap"><span class="chip neutral">${q.difficulty}</span></div><p>${q.desc}</p><div class="quest-grid"><div class="objective objective-hero"><b>Objectif</b><div>${q.objective}</div></div><div class="objective"><b>Récompense</b><div class="small">${q.reward}</div></div></div>`;card.classList.remove('quest-flip');requestAnimationFrame(()=>card.classList.add('quest-flip'))}
 function initQuests(){renderQuest();$('#reroll-quest').onclick=()=>{questIndex=(questIndex+1)%sessionQuests.length;renderQuest();showToast('Nouvelle quête tirée sans confirmation')};$('#quest-codex').onclick=()=>openCodex('quests')}
