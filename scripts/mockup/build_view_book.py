@@ -27,9 +27,9 @@ MOCKUP_URL = "http://127.0.0.1:8765/docs/GARGOTTEX-V6-MAQUETTE-PREMIUM-V3.html"
 COMMIT = os.environ.get("GITHUB_SHA", "V5.3")[:12]
 
 DEVICES = [
-    {"key":"desktop","label":"Desktop","size":"1440 x 900","width":1440,"height":900},
-    {"key":"tablet","label":"Tablette","size":"1024 x 768","width":1024,"height":768},
-    {"key":"phone","label":"Téléphone","size":"390 x 844","width":390,"height":844},
+    {"key":"desktop","label":"Desktop","size":"1440 x 900","width":1440,"height":900,"has_touch":False},
+    {"key":"tablet","label":"Tablette tactile","size":"1024 x 768","width":1024,"height":768,"has_touch":True},
+    {"key":"phone","label":"Téléphone tactile","size":"390 x 844","width":390,"height":844,"has_touch":True},
 ]
 
 def js(code: str) -> str:
@@ -49,12 +49,12 @@ VIEWS = [
     {
       "id":"V02","group":"Codex","title":"Bestiaire - collection",
       "purpose":"Explorer rapidement les créatures par image, catégorie, menace et donjon avant d’ouvrir une fiche.",
-      "setup":js("show('codex'); renderCodexType('creatures'); bestiaryMode='gallery'; mobileDetailOpen=false; renderBestiary(); applyBestiaryResponsive();"),
+      "setup":js("show('codex'); renderCodexType('creatures'); bestiaryMode=isPhone()?'list':'gallery'; mobileDetailOpen=false; renderBestiary(); applyBestiaryResponsive();"),
       "callouts":[
         ("1","Familles du Codex",0.19,0.12),("2","Recherche et filtres",0.43,0.18),
         ("3","Bascule galerie / liste",0.74,0.18),("4","Collection de figurines",0.49,0.55)
       ],
-      "notes":["La galerie est l’entrée éditoriale principale.","La couleur de catégorie reste un accent, jamais une grande surface.","Sur téléphone, la collection et la fiche deviennent séquentielles."]
+      "notes":["Vue initiale : Galerie sur desktop/tablette, Liste sur téléphone.","Tablette tactile et téléphone : Collection -> Fiche -> Retour, jamais collection et fiche côte à côte.","La couleur de catégorie reste un accent, jamais une grande surface."]
     },
     {
       "id":"V03","group":"Codex","title":"Fiche créature",
@@ -69,7 +69,7 @@ VIEWS = [
         ("3","Statistiques stables",0.73,0.43),("4","Compétence signature",0.73,0.64),
         ("5","Comportement / Butin / Lore",0.72,0.82)
       ],
-      "notes":["La figurine reste le premier contenu.","Les stats suivent PV / ATK / DEF / Portée-Zone / Actions.","La fiche se compresse en sections plutôt que de cacher l’information essentielle."]
+      "notes":["La figurine reste le premier contenu.","Desktop : collection et fiche peuvent coexister si la largeur le permet.","Tablette tactile et téléphone : la fiche prend toute la largeur utile ; Retour restaure la collection et son contexte."]
     },
     {
       "id":"V04","group":"Codex","title":"Donjons - collection",
@@ -79,7 +79,7 @@ VIEWS = [
         ("1","Onglet Donjons",0.19,0.12),("2","Recherche / mode d’affichage",0.53,0.18),
         ("3","Cartes de lieux",0.50,0.52),("4","Accent local de donjon",0.78,0.52)
       ],
-      "notes":["La structure reste commune à tout le Codex.","L’accent du donjon colore l’ambiance sans remplacer les couleurs gameplay.","Les cartes restent lisibles même sans couverture dédiée."]
+      "notes":["Desktop : master-detail autorisé si la fiche garde de l’air.","Tablette tactile et téléphone : Collection -> Fiche -> Retour, sans panneau détail à droite.","L’accent du donjon colore l’ambiance sans remplacer les couleurs gameplay."]
     },
     {
       "id":"V05","group":"Codex","title":"Fiche donjon",
@@ -89,7 +89,7 @@ VIEWS = [
         ("1","Couverture et ambiance",0.49,0.31),("2","Identité du lieu",0.50,0.55),
         ("3","Étages / budgets",0.40,0.74),("4","Boss final",0.72,0.74)
       ],
-      "notes":["Le donjon est traité comme une couverture éditoriale.","Les étages restent extensibles : 5, 10 ou 100 niveaux sans changer le modèle.","Le Boss peut déclencher une révélation théâtralisée."]
+      "notes":["Le donjon est traité comme un hub narratif.","Tablette tactile et téléphone : la fiche Donjon remplace la collection jusqu’au retour.","Les étages restent extensibles sans dépendre d’un nombre fixe de niveaux."]
     },
     {
       "id":"V06","group":"Codex","title":"Héros - collection",
@@ -99,7 +99,7 @@ VIEWS = [
         ("1","Famille Héros",0.18,0.12),("2","Collection",0.50,0.50),
         ("3","Nombre de niveaux",0.52,0.74),("4","Illustrations détourées",0.76,0.50)
       ],
-      "notes":["Les visuels utilisent les dérivés transparents du workflow de détourage.","Une carte représente un héros, pas un niveau isolé.","La fiche porte ensuite la progression niveau par niveau."]
+      "notes":["Les visuels utilisent les dérivés transparents du workflow de détourage.","Une carte représente un héros, pas un niveau isolé.","Tablette tactile et téléphone : la fiche remplace la collection ; aucun panneau détail à droite."]
     },
     {
       "id":"V07","group":"Codex","title":"Fiche héros",
@@ -115,7 +115,7 @@ VIEWS = [
         ("3","Statistiques",0.72,0.36),("4","Compétences cumulées",0.72,0.63),
         ("5","Tampon Brouhaha",0.84,0.63)
       ],
-      "notes":["Chaque niveau possède sa propre image.","Les compétences acquises aux niveaux précédents restent visibles.","Le Brouhaha lié à une compétence est traité comme un tampon, pas comme un simple badge."]
+      "notes":["Chaque niveau possède sa propre image et le niveau actif est restaurable.","Tablette tactile et téléphone : fiche plein espace utile, avec retour vers la collection.","Le Brouhaha lié à une compétence est traité comme un tampon, pas comme un simple badge."]
     },
     {
       "id":"V08","group":"Codex","title":"PNJ - collection",
@@ -125,7 +125,7 @@ VIEWS = [
         ("1","Famille PNJ",0.18,0.12),("2","Collection de portraits",0.50,0.52),
         ("3","Race / rôle",0.50,0.75),("4","Mode galerie / liste",0.77,0.18)
       ],
-      "notes":["La fiche PNJ est narrative, pas tactique.","Les images sont affichées en entier autant que possible.","Les relations servent de porte d’entrée vers les quêtes associées."]
+      "notes":["La fiche PNJ est narrative, pas tactique.","Tablette tactile et téléphone : Collection -> Fiche -> Retour, sans master-detail comprimé.","Les relations servent de porte d’entrée vers les quêtes associées."]
     },
     {
       "id":"V09","group":"Codex","title":"Fiche PNJ",
@@ -135,7 +135,7 @@ VIEWS = [
         ("1","Portrait",0.34,0.36),("2","Nom et rôle",0.70,0.22),
         ("3","Traits de personnalité",0.28,0.72),("4","Lore",0.60,0.72),("5","Relations",0.84,0.72)
       ],
-      "notes":["Le portrait conserve ses proportions.","Le ton et le lore remplacent les faux blocs de stats.","Les relations prolongent naturellement la navigation du Codex."]
+      "notes":["Le portrait conserve ses proportions.","Tablette tactile et téléphone : fiche dédiée en pleine largeur utile.","Le ton et le lore remplacent les faux blocs de stats."]
     },
     {
       "id":"V10","group":"Codex","title":"Quêtes - collection",
@@ -145,7 +145,7 @@ VIEWS = [
         ("1","Famille Quêtes",0.18,0.12),("2","Recherche",0.48,0.18),
         ("3","Liste de contrats",0.49,0.52),("4","Difficulté",0.78,0.52)
       ],
-      "notes":["Le Codex présente la bibliothèque complète.","La difficulté est visible sans surcharger la carte.","La session de jeu utilise une vue volontairement plus courte."]
+      "notes":["Le Codex présente la bibliothèque complète ; le mode initial Quêtes est la Liste.","Tablette tactile et téléphone : Collection -> Fiche -> Retour.","La session de jeu utilise une vue volontairement plus courte."]
     },
     {
       "id":"V11","group":"Codex","title":"Fiche quête",
@@ -155,7 +155,7 @@ VIEWS = [
         ("1","Titre / commanditaire",0.50,0.26),("2","Difficulté",0.77,0.26),
         ("3","Objectif",0.48,0.55),("4","Récompense / rattachement",0.54,0.76)
       ],
-      "notes":["L’objectif est la pièce immédiatement repérable.","La fiche conserve une matière narrative légère.","La difficulté reste un repère secondaire."]
+      "notes":["L’objectif est la pièce immédiatement repérable.","Tablette tactile et téléphone : fiche dédiée, sans collection visible à côté.","La difficulté reste toujours lisible par texte en plus de la couleur."]
     },
     {
       "id":"V12","group":"Codex","title":"Loot - collection",
@@ -165,7 +165,7 @@ VIEWS = [
         ("1","Famille Loot",0.18,0.12),("2","Galerie d’objets",0.50,0.52),
         ("3","Rareté",0.52,0.73),("4","Origine / type",0.76,0.73)
       ],
-      "notes":["La rareté ne doit pas inventer une hiérarchie absente des données.","La galerie privilégie l’objet, la liste privilégie l’arbitrage.","Les métadonnées restent visibles mais secondaires."]
+      "notes":["Rareté : Mauvais, Commun, Inhabituel, Rare, Épique, Légendaire ; texte + couleur.","Tablette tactile et téléphone : Collection -> Fiche -> Retour.","La galerie privilégie l’objet, la liste privilégie l’arbitrage."]
     },
     {
       "id":"V13","group":"Codex","title":"Fiche loot",
@@ -175,27 +175,27 @@ VIEWS = [
         ("1","Objet / vitrine",0.34,0.43),("2","Nom / rareté",0.70,0.24),
         ("3","Valeur",0.70,0.48),("4","Source / notes",0.70,0.71)
       ],
-      "notes":["Le visuel d’objet reste central.","La valeur et la provenance servent la partie sans dominer la fiche.","Les états sans image utilisent un fallback cohérent."]
+      "notes":["Le visuel d’objet reste central.","Tablette tactile et téléphone : la fiche remplace la collection.","La valeur et la provenance servent la partie sans dominer la fiche."]
     },
     {
-      "id":"V14","group":"Codex","title":"Objets du décor - collection",
+      "id":"V14","group":"Codex","title":"Objets interactifs - collection",
       "purpose":"Repérer les éléments interactifs d’une salle et leurs fonctions.",
       "setup":js("show('codex'); renderCodexType('interactables'); familyDetailOpen.interactables=false; renderFamilyBrowser('interactables'); applyFamilyResponsive('interactables');"),
       "callouts":[
         ("1","Famille Objets",0.18,0.12),("2","Liste fonctionnelle",0.50,0.52),
         ("3","Donjon associé",0.52,0.73),("4","Type d’objet",0.76,0.73)
       ],
-      "notes":["La liste est le mode naturel pour arbitrer rapidement.","L’objet reste relié à son donjon d’origine.","La fiche détaille ensuite les actions et conséquences."]
+      "notes":["Le mode initial des Objets interactifs est la Liste.","Tablette tactile et téléphone : Collection -> Fiche -> Retour.","L’objet reste relié à son donjon d’origine lorsque la relation existe."]
     },
     {
-      "id":"V15","group":"Codex","title":"Fiche objet du décor",
+      "id":"V15","group":"Codex","title":"Fiche objet interactif",
       "purpose":"Décrire un élément de salle, ses actions possibles et son effet.",
       "setup":js("show('codex'); renderCodexType('interactables'); familySelected.interactables=codexInteractables[0].id; familyDetailOpen.interactables=true; renderFamilyBrowser('interactables'); applyFamilyResponsive('interactables');"),
       "callouts":[
         ("1","Visuel / plan",0.34,0.42),("2","Identité",0.70,0.23),
         ("3","Actions",0.70,0.48),("4","Effet",0.70,0.70)
       ],
-      "notes":["La fiche vise l’usage à la table.","Les actions sont plus importantes que la décoration.","La présentation reste cohérente avec le Codex sans imiter une fiche créature."]
+      "notes":["La fiche vise l’usage à la table.","Tablette tactile et téléphone : fiche dédiée, sans collection à côté.","Les actions autorisées et l’effet priment sur la décoration."]
     },
     {
       "id":"V16","group":"Codex","title":"Brouhaha - collection",
@@ -205,7 +205,7 @@ VIEWS = [
         ("1","Famille Brouhaha",0.18,0.12),("2","Échelle des incidents",0.50,0.52),
         ("3","Niveau",0.52,0.73),("4","Donjon / portée",0.76,0.73)
       ],
-      "notes":["Le Codex explique les incidents.","La vue session, elle, met en scène la pression actuelle.","Les deux rôles ne sont pas mélangés."]
+      "notes":["Le Codex explique les incidents ; l’outil de session gère le niveau courant.","Tablette tactile et téléphone : Collection -> Fiche -> Retour.","Les deux rôles ne sont pas mélangés."]
     },
     {
       "id":"V17","group":"Codex","title":"Fiche Brouhaha",
@@ -215,7 +215,7 @@ VIEWS = [
         ("1","Niveau",0.33,0.33),("2","Titre de l’incident",0.69,0.26),
         ("3","Effet",0.69,0.53),("4","Contexte",0.69,0.75)
       ],
-      "notes":["La fiche reste une référence, pas un compteur.","Le niveau et l’effet sont lus immédiatement.","La direction visuelle annonce déjà le chaos sans nuire à la règle."]
+      "notes":["La fiche reste une référence, pas un compteur.","Tablette tactile et téléphone : fiche dédiée en pleine largeur utile.","Le niveau reste explicitement lisible, jamais transmis par l’intensité visuelle seule."]
     },
     {
       "id":"V18","group":"Partie","title":"Hub Jeu",
@@ -342,6 +342,22 @@ VIEWS = [
 
 GROUP_ORDER = ["Navigation","Codex","Partie","Administration","Système","Référence"]
 
+def source_for_view(view):
+    vid=view["id"]
+    if vid in {"V02","V03"}:
+        return "UI-2 Bestiaire & Fiche Créature, notamment §2 et §9"
+    if vid.startswith("V") and 4 <= int(vid[1:]) <= 17:
+        return "UI-3 Codex autres entités, notamment §2 et §14"
+    if vid in {"V01","V18","V19","V20","V21"}:
+        return "UI-4 Accueil & outils de partie"
+    if vid in {"V22","V23","V24","V27"}:
+        return "UI-5 Administration, Médias & Synchronisation"
+    if vid=="V25":
+        return "UI-1 Navigation + UI-5 Administration"
+    if vid=="V26":
+        return "UI-3 Recherche globale + UI-6 validation"
+    return "UI-1 Design system + UI-6 validation finale"
+
 def start_server():
     log = open(WORK / "server.log", "w", encoding="utf-8")
     proc = subprocess.Popen([sys.executable, "-m", "http.server", "8765", "--bind", "127.0.0.1", "--directory", str(ROOT)], stdout=log, stderr=log)
@@ -369,13 +385,18 @@ def capture_all():
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, args=["--disable-dev-shm-usage"])
             for device in DEVICES:
-                context = browser.new_context(viewport={"width":device["width"],"height":device["height"]}, device_scale_factor=1, reduced_motion="reduce")
+                context = browser.new_context(
+                    viewport={"width":device["width"],"height":device["height"]},
+                    device_scale_factor=1,
+                    reduced_motion="reduce",
+                    has_touch=device["has_touch"],
+                )
+                context.add_init_script("try{localStorage.clear()}catch(e){}")
                 page = context.new_page()
                 for index, view in enumerate(VIEWS, 1):
                     page.goto(MOCKUP_URL, wait_until="domcontentloaded")
                     wait_assets(page)
                     page.add_style_tag(content="""*{animation-duration:.001ms!important;animation-delay:0ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important} html,body{caret-color:transparent!important}""")
-                    page.evaluate("localStorage.setItem('mockup:bestiaryMode','gallery')")
                     page.evaluate(view["setup"])
                     page.evaluate("window.scrollTo(0,0)")
                     page.wait_for_timeout(170)
@@ -508,7 +529,8 @@ def draw_view_page(c,view,page_no,total):
 
     c.setFillColor(TER); c.setFont("GargSans",7)
     c.drawString(590,70,"Captures issues de la maquette HTML exécutée localement dans les trois breakpoints de référence.")
-    c.drawString(590,55,"Les légendes documentent l’intention UI ; les documents UI-1 à UI-6 restent la source de vérité.")
+    source = source_for_view(view)
+    c.drawString(590,55,f"Source de vérité : {source}. Les règles spécialisées UI-2/UI-3 priment sur les exemples génériques de UI-1.")
 
 def draw_cover(c,total):
     c.setFillColor(BG); c.rect(0,0,PAGE_W,PAGE_H,fill=1,stroke=0)
@@ -548,7 +570,7 @@ def draw_index(c,total):
             y-=22
         y-=12
     rounded_box(c,40,48,PAGE_W-80,72,fill=colors.HexColor("#120D09"),stroke=BORDER,r=10)
-    draw_text(c,"Convention responsive : Desktop 1440×900, Tablette 1024×768 paysage, Téléphone 390×844 portrait. Les captures montrent le premier écran utile de chaque état, comme l’utilisateur le rencontre réellement.",58,91,PAGE_W-116,9,MUTED,"GargSans",13,max_lines=3)
+    draw_text(c,"Convention responsive : Desktop 1440×900, Tablette tactile 1024×768 paysage, Téléphone tactile 390×844 portrait. Pour le Codex, tablette portrait comme paysage suit Collection -> Fiche -> Retour : le master-detail collection + fiche reste réservé au desktop. L’Atelier conserve ses règles propres définies par UI-5.",58,91,PAGE_W-116,9,MUTED,"GargSans",13,max_lines=4)
 
 def draw_method(c):
     c.setFillColor(BG); c.rect(0,0,PAGE_W,PAGE_H,fill=1,stroke=0)
@@ -556,10 +578,10 @@ def draw_method(c):
     c.setFillColor(TEXT); c.setFont("GargSerifBold",30); c.drawString(40,PAGE_H-70,"Comment lire le cahier")
     cards=[
       ("1 · Capture réelle","Chaque page est générée depuis la maquette HTML de V5.3 dans Chromium, avec les ressources du repo."),
-      ("2 · Trois breakpoints","Desktop montre la densité et le master-detail ; tablette teste la recomposition ; téléphone valide la séquence tactile."),
+      ("2 · Trois breakpoints","Desktop autorise le master-detail quand le document spécialisé le prévoit. Dans le Codex, tablette et téléphone sont séquentiels : Collection -> Fiche -> Retour. L’Atelier suit ses propres règles UI-5."),
       ("3 · Légendes","Les pastilles numérotées repèrent les zones structurantes. Elles ne représentent pas des composants additionnels."),
       ("4 · Documentation","Le texte décrit le rôle de la vue, sa hiérarchie et les adaptations responsive à conserver en production."),
-      ("5 · Source de vérité","Ce cahier documente la maquette. Les fichiers UI-1 à UI-6 tranchent en cas d’écart fonctionnel ou d’accessibilité."),
+      ("5 · Source de vérité","Ce cahier documente la maquette. En cas d’écart, le document spécialisé le plus proche prime : UI-2 pour Créatures, UI-3 pour les autres familles du Codex, puis UI-4/UI-5 selon la vue."),
       ("6 · Production","Une différence visuelle pourra être acceptée si elle respecte l’intention documentée et améliore robustesse, accessibilité ou performance.")
     ]
     x0=40; y0=PAGE_H-130; w=(PAGE_W-100)/2; h=170
