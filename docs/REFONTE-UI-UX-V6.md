@@ -225,97 +225,113 @@ La synchronisation distante est différée.
 
 ---
 
-# 7. Processus obligatoire pour chaque future tâche
+# 7. Workflow léger pour chaque future tâche
 
-Chaque tâche UI suit cette séquence.
+Le chantier utilise des **points de contrôle compacts**, pas un cérémonial de Gates à documenter une par une.
 
-## Gate 0 - Lecture et inventaire
+Le déroulé normal d'une tâche ou d'un sous-lot tient en trois moments :
 
-Avant toute modification :
+## A. Pré-check avant travaux
 
-1. lire ce document ;
-2. lire le document du lot concerné ;
-3. ouvrir la maquette V3 et les ressources concernées ;
-4. inspecter le code de production touché ;
-5. identifier les object stores/champs lus ou écrits ;
-6. vérifier si la tâche touche des données IndexedDB ou seulement la présentation ;
-7. si elle touche les images, lire le workflow rembg ;
-8. noter les comportements déjà en production à préserver.
+Avant de modifier le code :
 
-Aucune hypothèse sur le contenu réel des IndexedDB utilisateurs.
+- lire ce document maître ;
+- lire le document du lot concerné ;
+- ouvrir la vue correspondante dans la maquette V3 ;
+- inspecter le code de production réellement touché ;
+- identifier si la tâche lit, écrit ou migre des données IndexedDB ;
+- si la tâche touche des images détourées, lire le workflow rembg.
 
-## Gate 1 - Contrat de compatibilité
+Résumé attendu, en quelques lignes seulement :
 
-Avant de coder :
+```text
+Périmètre :
+Impact données : aucun | lecture | écriture | migration
+IndexedDB : inchangé | évolution additive | STOP
+Référence V3 :
+Risque principal :
+```
 
-- lister les champs nécessaires ;
-- distinguer champs existants, optionnels et nouveaux ;
-- définir les fallbacks pour anciens enregistrements ;
-- définir la stratégie de migration si nécessaire ;
-- confirmer qu'aucun original média n'est remplacé ;
-- confirmer qu'aucune donnée existante n'est supprimée.
+Aucun rapport séparé n'est demandé pour les anciennes Gate 0 à 6.
 
-Si une migration destructive semble nécessaire, **le lot s'arrête** et un chantier de migration séparé est préparé.
+### STOP sécurité données
 
-## Gate 2 - Implémentation visuelle
+Le chantier s'arrête immédiatement si :
 
-Construire la vue conformément à :
+- une migration destructive paraît nécessaire ;
+- un object store existant devrait être supprimé ou renommé sans chantier dédié ;
+- un original média risque d'être remplacé/perdu ;
+- la compatibilité avec les anciennes données n'est pas démontrable ;
+- une hypothèse sur les IndexedDB utilisateurs réels est indispensable.
 
-- UI-1 pour les tokens/primitives ;
-- document du lot pour le comportement ;
-- V3 pour la composition et l'émotion.
+Dans ce cas, un chantier de migration séparé est préparé avant de poursuivre.
 
-La première passe peut travailler sur fixtures **sans modifier le schéma de données**.
+## B. Construction
 
-## Gate 3 - Branchement données réelles
+La construction regroupe naturellement :
 
-Brancher sur les contrats existants :
+- implémentation visuelle ;
+- branchement des données si nécessaire ;
+- responsive ;
+- interactions.
 
-- IndexedDB ;
-- modèles métier ;
-- médias ;
-- imports/exports.
+Ordre conseillé :
 
-Les lecteurs doivent tolérer les enregistrements anciens et incomplets.
+1. construire selon UI-1 + document du lot + V3 ;
+2. brancher IndexedDB/modèles métier si la tâche en dépend ;
+3. conserver les fallbacks pour données anciennes ou incomplètes ;
+4. vérifier progressivement desktop, tablette et téléphone ;
+5. corriger les interactions au fil du chantier.
 
-Les écritures doivent préserver IDs, relations et données non éditées.
+Si la tâche ne touche pas aux données métier, noter simplement :
 
-## Gate 4 - Responsive et interactions
+`Données : N/A, aucun contrat métier modifié.`
 
-Valider au minimum :
+Il n'est pas nécessaire d'inventer une étape de branchement uniquement pour « passer une Gate ».
 
-- desktop ;
-- tablette paysage ;
-- tablette portrait ;
-- téléphone.
+## C. Validation et clôture
 
-Le Codex utilise **Collection -> Fiche -> Retour** sur tablette et téléphone.
-
-Le master-detail du Codex est réservé au desktop.
-
-L'Atelier garde ses propres règles UI-5.
-
-## Gate 5 - Tests et comparaison V3
-
-Avant fermeture du lot :
+Avant de considérer le sous-lot terminé :
 
 - comparaison visuelle avec V3 ;
-- tests des interactions ;
-- test clavier desktop ;
-- test reduced motion ;
-- test offline utile ;
-- vérification qu'aucune opération réseau n'est requise pour lire les données locales ;
-- test avec données absentes/anciennes ;
-- test de non-régression IndexedDB sur une base de test migrée.
+- interactions principales ;
+- desktop / tablette paysage / tablette portrait / téléphone ;
+- clavier et reduced motion lorsque pertinents ;
+- offline lorsque pertinent ;
+- données absentes, anciennes ou incomplètes ;
+- non-régression IndexedDB si la tâche touche les données ;
+- documentation mise à jour si une décision a évolué.
 
-## Gate 6 - Clôture documentaire
+Bilan compact :
 
-Le lot n'est terminé que si :
+```text
+Livré :
+Données/IndexedDB :
+Responsive :
+Écarts V3 :
+Tests :
+Reste à faire :
+```
 
-- le document du lot correspond à ce qui a été livré ;
-- aucune divergence volontaire avec V3 n'est non documentée ;
-- les tests/gates sont notés ;
-- les limites restantes sont explicites.
+### STOP validation
+
+Le lot ne se ferme pas s'il subsiste :
+
+- un risque de perte de données ;
+- une anomalie bloquante ou majeure ;
+- un responsive essentiel incorrect ;
+- une divergence importante avec V3 non expliquée ;
+- un comportement métier obligatoire non fonctionnel.
+
+## D. Gates des lots UI
+
+Les sections `Gate UI-1`, `Gate UI-2`, etc. présentes dans les documents spécialisés sont des **checklists d'acceptation de fin de lot**, pas des étapes procédurales supplémentaires.
+
+Elles sont évaluées pendant la validation finale du lot.
+
+Même principe pour la Gate image du workflow rembg.
+
+**En pratique : pré-check compact -> construction continue -> validation/clôture compacte.**
 
 ---
 
