@@ -80,6 +80,17 @@ const codexHeroes=[
   heroSkeleton('Hector Coeurdacier'),heroSkeleton('Firmin Tronçebois'),heroSkeleton('Dolorès Boumbardine'),
   heroSkeleton('Géraldine Pintelance'),heroSkeleton('Clara Ferlipette')
 ];
+const generatedMockupCatalog=window.GARGOTTEX_MOCKUP_CATALOG||{creatures:[],heroes:[]};
+const catalogKey=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+function mergeCatalogItem(target,item){
+  const key=catalogKey(item?.name);
+  const index=target.findIndex(x=>catalogKey(x?.name)===key);
+  if(index>=0)target[index]={...target[index],...item,id:target[index].id};
+  else target.push(item);
+}
+(generatedMockupCatalog.creatures||[]).forEach(item=>mergeCatalogItem(creatures,item));
+(generatedMockupCatalog.heroes||[]).forEach(item=>mergeCatalogItem(codexHeroes,item));
+
 const codexNpcs=[
   {id:'sylviane',name:'Sylviane Racinebouteille',race:'Demi-Ant',tone:'Placide, maternelle, très lente',role:'Gardienne du tonneau éternel',lore:"Ancien chêne millénaire autour duquel la taverne a été construite. Ses racines traversent la cave et alimentent certains tonneaux en sève fermentée. Quand les clients deviennent trop bruyants, elle fait pousser des racines pour les faire trébucher.",image:null,tags:['demi-ant']},
   {id:'mirelda',name:'Mirelda Trois-Tentacules',race:'Demi-Kraken',tone:'Sarcastique, blasée',role:'Plongeuse officielle',lore:'Mirelda peut laver douze chopes à la fois grâce à ses tentacules. Personne ne sait exactement combien de bras elle possède sous le comptoir et personne ne pose la question.',image:null,tags:['demi-kraken']},
@@ -123,7 +134,7 @@ const codexFamilyData={dungeons:codexDungeons,heroes:codexHeroes,npcs:codexNpcs,
 const familyMode=Object.fromEntries(Object.entries(codexFamilyMeta).map(([k,m])=>[k,localStorage.getItem('mockup:familyMode:'+k)||m.defaultMode]));
 const familySelected=Object.fromEntries(Object.entries(codexFamilyData).map(([k,v])=>[k,localStorage.getItem('mockup:familySelected:'+k)||v[0]?.id]));
 const familyDetailOpen=Object.fromEntries(Object.keys(codexFamilyMeta).map(k=>[k,false]));
-const heroLevelState={brunhilda:Number(localStorage.getItem('mockup:heroLevel:brunhilda')||1)};
+const heroLevelState=Object.fromEntries(codexHeroes.map(h=>[h.id,Number(localStorage.getItem('mockup:heroLevel:'+h.id)||h.levels?.[0]?.level||1)]));
 
 
 const emblem=(src,cls='chip-logo',alt='')=>`<img class="emblem-img ${cls}" src="${ICON_BASE+src}" alt="${alt}">`;
