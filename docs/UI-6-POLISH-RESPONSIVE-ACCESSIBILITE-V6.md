@@ -410,3 +410,213 @@ La V6 peut être proposée en production lorsque :
 11. performances acceptables ;
 12. Bloquants = 0 ;
 13. Majeurs = 0.
+
+
+---
+
+# 19. Exécution UI-6 — 20/09/2026
+
+## État de la Gate
+
+**AUTOMATISATION VERTE — VALIDATION APPAREILS RÉELS / VOICEOVER RESTANTE**
+
+Commit validé automatiquement :
+
+`507fc64faf3545d5c65016398c79e1734d14aa84`
+
+Workflow :
+
+- `UI-6 final validation` ;
+- run GitHub Actions **#33** (`35539924943`) ;
+- résultat : **31/31 tests passés** ;
+- aucun test flaky sur le run vert ;
+- rapport Playwright conservé en artefact `ui6-playwright-report` (artifact `10614840614`).
+
+## Données / IndexedDB
+
+Validation automatique passée :
+
+- fixture représentative créée en IndexedDB **v1** ;
+- ouverture par V6 et upgrade naturel vers **v2** ;
+- IDs préservés ;
+- relations préservées ;
+- propriétés historiques inconnues préservées ;
+- Blob original média préservé byte-for-byte ;
+- Blob thumbnail préservé byte-for-byte ;
+- lecture puis édition d'une Créature ;
+- fermeture / réouverture ;
+- réouverture offline ;
+- export structuré après upgrade ;
+- anciens enregistrements incomplets et relations cassées rendus sans réécriture automatique.
+
+Contrôle du code :
+
+- `src/storage/idb.js` a le même blob SHA sur `V5.3` et UI-6 : `33cddaf3823d73aa9de9dff135ffddda4384eed4` ;
+- `DB_VERSION = 2` inchangé ;
+- aucune utilisation de `deleteDatabase()` ;
+- aucune migration UI-6 ajoutée ;
+- aucun backend Neon / Supabase / Firebase introduit.
+
+## Responsive automatisé
+
+Matrice Playwright validée :
+
+- téléphone : 320×720, 360×800, 390×844, 430×932 ;
+- tablette portrait : 768×1024, 834×1112 ;
+- tablette paysage : 1024×768, 1194×834 ;
+- desktop étroit : 1280×800 ;
+- desktop : 1440×900 ;
+- desktop large : 1920×1080.
+
+Validé :
+
+- absence de débordement horizontal critique ;
+- navigation téléphone ;
+- Codex séquentiel sous le breakpoint desktop master-detail ;
+- retour Collection ↔ Fiche ;
+- Atelier tablette portrait : liste puis éditeur ;
+- Atelier tablette paysage : liste + éditeur selon ses règles propres.
+
+## Parcours critiques Playwright
+
+Les parcours obligatoires de la section 10 sont couverts, notamment :
+
+- Accueil → Codex → Bestiaire → fiche ;
+- recherche, filtres, tri, Galerie/Liste et persistance ;
+- Donjon → Voir tout préfiltré → retour Donjon ;
+- Héros N1/N2/N3/N4 et compétences cumulées ;
+- PNJ → Quête associée ;
+- recherche globale multi-familles ;
+- Générateur → rencontre → élimination d'occurrence ;
+- Brouhaha → niveau → tirage → historique ;
+- Quête de session → reroll → Codex ;
+- Atelier → édition → sauvegarde ;
+- Atelier dirty → modale ;
+- Médias → détail sans mutation de l'original ;
+- Import → preview sans écriture → confirmation ;
+- navigation mobile ;
+- parcours tablette séquentiel.
+
+## Accessibilité automatisée
+
+Validé :
+
+- axe WCAG 2.2 AA sur Accueil, Bestiaire, fiche Créature, Atelier et Import/Export ;
+- focus visible ;
+- focus initial des dialogs ;
+- boucle Tab / Shift+Tab ;
+- Escape lorsque sûr ;
+- restauration du focus au déclencheur ;
+- noms accessibles des boutons icon-only testés ;
+- annonces live Atelier / Import ;
+- recherche globale avec sémantique searchbox valide ;
+- contrastes Bestiaire, fiche Créature et Atelier corrigés ;
+- `prefers-reduced-motion` sans animation longue indispensable.
+
+Le token V6 `--color-text-tertiary` a été ajusté de `#867563` à `#95816D` afin de conserver la même famille visuelle tout en sécurisant le contraste sur les surfaces sombres.
+
+## Zoom / reflow / performance
+
+Validé automatiquement :
+
+- proxy reflow 100 %, 125 %, 150 %, 200 % ;
+- gros volumes : centaines de Créatures, dizaines de Donjons, nombreux Héros/niveaux, Quêtes et médias ;
+- noms longs ;
+- lore long ;
+- relations absentes ;
+- images absentes ;
+- temps d'interaction Bestiaire sous le seuil de vigilance du test ;
+- CLS <= 0,10 ;
+- LCP <= 2,5 s sur le scénario de vigilance CI.
+
+L'INP navigateur réel reste à observer en mesure terrain ; le test d'interaction synchrone reste sous 200 ms dans le scénario CI.
+
+## PWA / Service Worker / offline
+
+Validé automatiquement :
+
+- cache UI final : `gargottex-v6-ui6-final` ;
+- nom de cache identique dans l'application et le Service Worker ;
+- ressources cœur présentes dans le cache ;
+- contrôle Service Worker obtenu sans reload parasite au premier enregistrement ;
+- `registration.update()` exercé ;
+- action UI de mise à jour Service Worker exercée ;
+- compteurs IndexedDB identiques avant / après update ;
+- réouverture offline après upgrade IndexedDB ;
+- données et média historique toujours lisibles offline.
+
+## Images détourées
+
+Validé automatiquement :
+
+- audit de détourage présent ;
+- modèle `isnet-general-use` ;
+- originaux déclarés préservés ;
+- SHA-256 sources présents ;
+- alpha bbox présent ;
+- ratios de transparence cohérents ;
+- aucun fond blanc ajouté sur la figure testée ;
+- rendu `object-fit: contain`.
+
+La consultation d'un média dans la bibliothèque est également testée comme non mutante pour les originaux.
+
+## Fidélité V3
+
+Le rapport Playwright contient une paire de captures production / référence V3 pour :
+
+- Accueil ;
+- Bestiaire ;
+- Créature ;
+- Donjon ;
+- Héros ;
+- PNJ ;
+- Quête ;
+- Loot ;
+- Générateur ;
+- Brouhaha ;
+- Atelier ;
+- Médias ;
+- Import/Export.
+
+La direction V3 reste reconnaissable :
+
+- hiérarchie sombre bois / laiton ;
+- Alegreya + Inter ;
+- matières V3 ;
+- emblèmes ;
+- composition éditoriale ;
+- densité et proportions générales.
+
+Les différences acceptées proviennent des données réelles, des états de session et des corrections d'accessibilité.
+
+## Sévérité à l'issue de la validation automatisée
+
+```text
+Bloquants automatisés : 0
+Majeurs automatisés   : 0
+Flaky                  : 0
+```
+
+Les défauts de contraste découverts par axe pendant UI-6 ont été corrigés et ne restent pas ouverts.
+
+## Validation réelle encore obligatoire
+
+La Gate UI-6 n'est **pas fermée** tant que les points explicitement matériels des sections 5, 13 et 15 n'ont pas été vérifiés sur appareils réels :
+
+- iPhone réel ;
+- iPad réel portrait ;
+- iPad réel paysage ;
+- VoiceOver smoke réel ;
+- installation depuis l'écran d'accueil ;
+- lancement de la PWA installée ;
+- retour multitâche ;
+- réouverture offline de la PWA installée ;
+- Chrome Android réel smoke.
+
+Le WebKit Playwright et la matrice de viewports sont des protections complémentaires, mais ne sont volontairement **pas présentés comme substituts** à ces essais.
+
+### Décision actuelle
+
+**STOP validation matérielle uniquement.**
+
+Aucun défaut bloquant ou majeur n'est connu dans la validation automatisée, mais le bilan final « prêt production » ne doit être donné qu'après le smoke réel ci-dessus.
