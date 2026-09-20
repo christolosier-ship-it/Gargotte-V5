@@ -11,7 +11,7 @@ async function attachShot(locator, name, testInfo) {
     } catch (error) {
       lastError = error;
       if (!String(error?.message || error).includes("not attached")) throw error;
-      await locator.page().waitForTimeout(120);
+      await new Promise(resolve => setTimeout(resolve, 120));
     }
   }
   throw lastError;
