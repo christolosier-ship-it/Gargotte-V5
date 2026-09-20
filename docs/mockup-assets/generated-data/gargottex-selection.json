@@ -1,0 +1,1893 @@
+{
+  "source": "docs/mockup-assets/stat-export/gargottex_export_2026-08-01.xlsx",
+  "entities": {
+    "creatures": [
+      "Ange Émondeuse Sacrée",
+      "Balai Hanté",
+      "Baron Pas-Très-Terrifiant",
+      "Chevalier Sans Cheval",
+      "Cloche Possédée",
+      "Coasse-Sombre",
+      "Cuisinier Zombie",
+      "Déesse de la Fermentation Sacrée",
+      "Déesse de la Mousse Éternelle",
+      "Déesse du Houblon Absolu",
+      "Dégustatrice Divine",
+      "Diablotine Contrôleuse",
+      "Fantôme Bureaucrate",
+      "Garde Possédé",
+      "Gobelin Bricoleur",
+      "Gobelin Chef",
+      "Gobelin Lance-Tout",
+      "Gobeline Aguicheuse",
+      "Gobeline Serveuse Explosive",
+      "Inspectrice du Goût Déchue",
+      "Larve de Houblon",
+      "Léviathan Hydrique",
+      "Maître Brasseur MécanoGnome",
+      "Mimique Raté",
+      "Ogre Maladroit",
+      "Poule Démoniaque",
+      "Saute-Tonneau",
+      "Squelette Maladroit",
+      "Squelette Porte-Placard",
+      "Squelette Tire-au-Pif"
+    ],
+    "heroes": [
+      "Brünhilda la Torgnole",
+      "Glibouille Nénucorde",
+      "Magdalena Coquinelle",
+      "Mandaline Cataparebaffe",
+      "Mycélia Sporeventail"
+    ]
+  },
+  "matches": {
+    "creatures": {
+      "Ange Émondeuse Sacrée": [
+        {
+          "sheet": "Loot",
+          "row": 88,
+          "cells": {
+            "A": "Ange Émondeuse Sacrée",
+            "B": "Sécateur sacré",
+            "C": "Projectile",
+            "D": "ATK 2 portée 2",
+            "E": 0,
+            "F": "loot"
+          }
+        },
+        {
+          "sheet": "Loot",
+          "row": 263,
+          "cells": {
+            "A": "Ange Émondeuse Sacrée",
+            "B": "Branche taillée",
+            "C": "Vendable",
+            "D": "Objet utile",
+            "E": 1,
+            "F": "loot"
+          }
+        }
+      ],
+      "Balai Hanté": [
+        {
+          "sheet": "Loot",
+          "row": 145,
+          "cells": {
+            "A": "Balai Hanté",
+            "B": "Touffe de poils magiques",
+            "C": "Utilitaire",
+            "D": "+1 déplacement gratuit",
+            "E": 0,
+            "F": "loot"
+          }
+        },
+        {
+          "sheet": "Loot",
+          "row": 421,
+          "cells": {
+            "A": "Balai Hanté",
+            "B": "Manche à balai",
+            "C": "Vendable",
+            "D": "Objet utile",
+            "E": 2,
+            "F": "loot"
+          }
+        }
+      ],
+      "Baron Pas-Très-Terrifiant": [
+        {
+          "sheet": "Loot",
+          "row": 158,
+          "cells": {
+            "A": "Baron Pas-Très-Terrifiant",
+            "B": "Couronne en toc",
+            "C": "Vendable",
+            "D": "Objet ridicule",
+            "E": 3,
+            "F": "loot"
+          }
+        },
+        {
+          "sheet": "Loot",
+          "row": 217,
+          "cells": {
+            "A": "Baron Pas-Très-Terrifiant",
+            "B": "Doudou du Baron",
+            "C": "Vendable",
+            "D": "Objet ridicule",
+            "E": 3,
+            "F": "loot"
+          }
+        }
+      ],
+      "Chevalier Sans Cheval": [
+        {
+          "sheet": "Médias",
+          "row": 23,
+          "cells": {
+            "A": "media_0dfa71f7-dd61-4d2f-9537-49a8c247db46",
+            "B": "793170E4-42BE-4897-AD17-54B01189BCE1.PNG",
+            "C": "793170E4-42BE-4897-AD17-54B01189BCE1.PNG",
+            "D": "assets/images/creatures/793170e4-42be-4897-ad17-54b01189bce1_00c632d2-1890-4521-bea7-3d10ff9cfc6e.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_chevalier-sans-cheval"
+          }
+        }
+      ],
+      "Cloche Possédée": [
+        {
+          "sheet": "Loot",
+          "row": 302,
+          "cells": {
+            "A": "Cloche Possédée",
+            "B": "Petit éclat de bronze",
+            "C": "Vendable",
+            "D": "Objet déchet de valeurs",
+            "E": 1,
+            "F": "loot"
+          }
+        },
+        {
+          "sheet": "Loot",
+          "row": 378,
+          "cells": {
+            "A": "Cloche Possédée",
+            "B": "Battant de cloche",
+            "C": "Vendable",
+            "D": "Objet déchet de valeurs",
+            "E": 2,
+            "F": "loot"
+          }
+        }
+      ],
+      "Coasse-Sombre": [
+        {
+          "sheet": "Loot",
+          "row": 180,
+          "cells": {
+            "A": "Coasse-Sombre",
+            "B": "Cloche de nuit",
+            "C": "Projectile",
+            "D": "ATK 2 portée 2; +1 bruit",
+            "E": 0,
+            "F": "loot"
+          }
+        },
+        {
+          "sheet": "Loot",
+          "row": 447,
+          "cells": {
+            "A": "Coasse-Sombre",
+            "B": "Bave noire",
+            "C": "Utilitaire",
+            "D": "Crée une case de terrain difficile",
+            "E": 0,
+            "F": "loot"
+          }
+        }
+      ],
+      "Cuisinier Zombie": [
+        {
+          "sheet": "Médias",
+          "row": 196,
+          "cells": {
+            "A": "media_739058eb-78d8-4d17-9169-fab7b3f8e9d7",
+            "B": "976187F2-5489-48DB-B5FA-94EB1B7FBBC4.PNG",
+            "C": "976187F2-5489-48DB-B5FA-94EB1B7FBBC4.PNG",
+            "D": "assets/images/creatures/976187f2-5489-48db-b5fa-94eb1b7fbbc4_6e8e4a41-c701-4c65-8ae1-0e348a8e28e0.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_cuisinier-zombie"
+          }
+        }
+      ],
+      "Déesse de la Fermentation Sacrée": [
+        {
+          "sheet": "Médias",
+          "row": 359,
+          "cells": {
+            "A": "media_dcc7cd97-bdbb-4b29-8ead-13a7e58b34f2",
+            "B": "Déesse de la Fermentation Sacrée.PNG",
+            "C": "Déesse de la Fermentation Sacrée.PNG",
+            "D": "assets/images/creatures/deesse-de-la-fermentation-sacree_563a572a-6227-44a2-a46f-fa4c73b90e10.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_f76cac61-1e10-42a9-8a48-3482e8150d9b"
+          }
+        }
+      ],
+      "Déesse de la Mousse Éternelle": [
+        {
+          "sheet": "Médias",
+          "row": 178,
+          "cells": {
+            "A": "media_6d09ff46-fdd5-42f8-b6df-0951a5f58d82",
+            "B": "Déesse de la Mousse Éternelle.PNG",
+            "C": "Déesse de la Mousse Éternelle.PNG",
+            "D": "assets/images/creatures/deesse-de-la-mousse-eternelle_5c3e5209-a543-4a55-88e3-390aa484ff2a.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_641e6d05-fb45-4e9e-9640-bfebfd9fb99d"
+          }
+        }
+      ],
+      "Déesse du Houblon Absolu": [
+        {
+          "sheet": "Médias",
+          "row": 156,
+          "cells": {
+            "A": "media_5e81c285-c8bd-415a-bcf2-b487cfda4955",
+            "B": "Déesse du Houblon Absolu.PNG",
+            "C": "Déesse du Houblon Absolu.PNG",
+            "D": "assets/images/creatures/deesse-du-houblon-absolu_7c18d41a-425f-4ea0-a8ce-bb739e2498e4.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_8e0c75f7-e494-4c3d-b370-687eed0f03d4"
+          }
+        }
+      ],
+      "Dégustatrice Divine": [
+        {
+          "sheet": "Médias",
+          "row": 129,
+          "cells": {
+            "A": "media_5160a93b-a385-4652-a489-f3b2c2ffc7df",
+            "B": "Dégustatrice Divine.PNG",
+            "C": "Dégustatrice Divine.PNG",
+            "D": "assets/images/creatures/degustatrice-divine_9f10ebf9-8b5f-4748-a5ae-af62d3fdce2a.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_5ebc28c0-8054-4676-885c-92707f1faebc"
+          }
+        }
+      ],
+      "Diablotine Contrôleuse": [
+        {
+          "sheet": "Loot",
+          "row": 64,
+          "cells": {
+            "A": "Diablotine Contrôleuse",
+            "B": "Registre humide",
+            "C": "utilitaire",
+            "D": "Supprime un buff",
+            "E": 0,
+            "F": "loot"
+          }
+        },
+        {
+          "sheet": "Loot",
+          "row": 241,
+          "cells": {
+            "A": "Diablotine Contrôleuse",
+            "B": "Tampon d'ordre",
+            "C": "vendable",
+            "D": "Objet étrange",
+            "E": 1,
+            "F": "loot"
+          }
+        }
+      ],
+      "Fantôme Bureaucrate": [
+        {
+          "sheet": "Loot",
+          "row": 36,
+          "cells": {
+            "A": "Fantôme Bureaucrate",
+            "B": "Formulaire spectral",
+            "C": "Utilitaire",
+            "D": "Ouvre un coffre gratuitement",
+            "E": 0,
+            "F": "loot"
+          }
+        },
+        {
+          "sheet": "Loot",
+          "row": 422,
+          "cells": {
+            "A": "Fantôme Bureaucrate",
+            "B": "Tampon officiel",
+            "C": "Utilitaire",
+            "D": "Ouvre une porte gratuitement",
+            "E": 0,
+            "F": "loot"
+          }
+        }
+      ],
+      "Garde Possédé": [
+        {
+          "sheet": "Loot",
+          "row": 342,
+          "cells": {
+            "A": "Garde Possédé",
+            "B": "Casque cabossé",
+            "C": "Vendable",
+            "D": "Objet déchet de valeurs",
+            "E": 2,
+            "F": "loot"
+          }
+        },
+        {
+          "sheet": "Loot",
+          "row": 473,
+          "cells": {
+            "A": "Garde Possédé",
+            "B": "Insigne militaire",
+            "C": "Vendable",
+            "D": "Objet bizarre",
+            "E": 1,
+            "F": "loot"
+          }
+        }
+      ],
+      "Gobelin Bricoleur": [
+        {
+          "sheet": "Médias",
+          "row": 104,
+          "cells": {
+            "A": "media_42f35e36-0e67-4e7f-aae7-a07e0ace10cc",
+            "B": "D6C97F1F-3D03-443C-84DF-03A3C68F085C.PNG",
+            "C": "D6C97F1F-3D03-443C-84DF-03A3C68F085C.PNG",
+            "D": "assets/images/creatures/d6c97f1f-3d03-443c-84df-03a3c68f085c_5b8de171-18af-4ec6-bec4-796fc26de439.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_gobelin-bricoleur"
+          }
+        }
+      ],
+      "Gobelin Chef": [
+        {
+          "sheet": "Médias",
+          "row": 101,
+          "cells": {
+            "A": "media_4147d1bf-2912-4bee-8ab8-be5ea17777fc",
+            "B": "623F4E9E-55E5-4033-B13C-84BC759885D5.PNG",
+            "C": "623F4E9E-55E5-4033-B13C-84BC759885D5.PNG",
+            "D": "assets/images/creatures/623f4e9e-55e5-4033-b13c-84bc759885d5_9c7ba0d5-6b8e-42de-b851-5841f22742bf.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_gobelin-chef"
+          }
+        }
+      ],
+      "Gobelin Lance-Tout": [
+        {
+          "sheet": "Médias",
+          "row": 148,
+          "cells": {
+            "A": "media_5bd9c9ee-91ec-4a54-9c96-ae5983d958c2",
+            "B": "41683E86-DF03-48C7-A96A-E4C16546F83F.PNG",
+            "C": "41683E86-DF03-48C7-A96A-E4C16546F83F.PNG",
+            "D": "assets/images/creatures/41683e86-df03-48c7-a96a-e4c16546f83f_76c25ddd-1d56-47e3-9113-9328d630caa9.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_gobelin-lance-tout"
+          }
+        }
+      ],
+      "Gobeline Aguicheuse": [
+        {
+          "sheet": "Médias",
+          "row": 20,
+          "cells": {
+            "A": "media_0b52f68a-83b6-429a-9cd8-5ea745ab5830",
+            "B": "7EB85A40-8E93-43DB-99E0-453B83BF73E7.PNG",
+            "C": "7EB85A40-8E93-43DB-99E0-453B83BF73E7.PNG",
+            "D": "assets/images/creatures/7eb85a40-8e93-43db-99e0-453b83bf73e7_935fabcd-a1a9-4b72-b9f5-4189e339bd77.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_gobeline-aguicheuse"
+          }
+        }
+      ],
+      "Gobeline Serveuse Explosive": [
+        {
+          "sheet": "Médias",
+          "row": 294,
+          "cells": {
+            "A": "media_b704bcbc-a657-41d6-a323-53d4277d7aac",
+            "B": "723BDFAC-0F23-4F99-AA69-A3F7BFA204A8.PNG",
+            "C": "723BDFAC-0F23-4F99-AA69-A3F7BFA204A8.PNG",
+            "D": "assets/images/creatures/723bdfac-0f23-4f99-aa69-a3f7bfa204a8_a003a151-5841-4732-bdb9-7761caf42b06.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_gobeline-serveuse-explosive"
+          }
+        }
+      ],
+      "Inspectrice du Goût Déchue": [
+        {
+          "sheet": "Médias",
+          "row": 382,
+          "cells": {
+            "A": "media_e8ebd2f6-d453-401e-8bd9-5707c2536497",
+            "B": "Inspectrice du Goût Déchue.PNG",
+            "C": "Inspectrice du Goût Déchue.PNG",
+            "D": "assets/images/creatures/inspectrice-du-gout-dechue_78f44f43-96d2-498a-af49-fe5b3c7c99f7.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_35b109cc-6a12-4a5c-a55f-b2a8c8b45226"
+          }
+        }
+      ],
+      "Larve de Houblon": [
+        {
+          "sheet": "Médias",
+          "row": 171,
+          "cells": {
+            "A": "media_66b15e42-d9e1-433d-861f-094555e14e97",
+            "B": "Larve de Houblon.PNG",
+            "C": "Larve de Houblon.PNG",
+            "D": "assets/images/creatures/larve-de-houblon_261ffd96-2f41-4a5d-87db-bf64c698f496.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_f0700d94-4415-4c68-99f0-6f958fa08bc0"
+          }
+        }
+      ],
+      "Léviathan Hydrique": [
+        {
+          "sheet": "Loot",
+          "row": 176,
+          "cells": {
+            "A": "Léviathan Hydrique",
+            "B": "Onde captive",
+            "C": "projectile",
+            "D": "ATK 2 portée 3 explosion",
+            "E": 0,
+            "F": "loot"
+          }
+        },
+        {
+          "sheet": "Loot",
+          "row": 325,
+          "cells": {
+            "A": "Léviathan Hydrique",
+            "B": "Goutte d'ambre",
+            "C": "vendable",
+            "D": "Objet précieux",
+            "E": 2,
+            "F": "loot"
+          }
+        }
+      ],
+      "Maître Brasseur MécanoGnome": [
+        {
+          "sheet": "Médias",
+          "row": 38,
+          "cells": {
+            "A": "media_1758086b-2f75-48f2-a2c4-1607c4ae5862",
+            "B": "Maître Brasseur MécanoGnome.PNG",
+            "C": "Maître Brasseur MécanoGnome.PNG",
+            "D": "assets/images/creatures/maitre-brasseur-mecanognome_3d597f08-6df9-401e-b970-9020fa1d5588.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_38307943-e9e3-4b98-bbee-428306224ea3"
+          }
+        }
+      ],
+      "Mimique Raté": [
+        {
+          "sheet": "Loot",
+          "row": 167,
+          "cells": {
+            "A": "Mimique Raté",
+            "B": "Dent de coffre",
+            "C": "Vendable",
+            "D": "Objet bizarre",
+            "E": 2,
+            "F": "loot"
+          }
+        },
+        {
+          "sheet": "Loot",
+          "row": 474,
+          "cells": {
+            "A": "Mimique Raté",
+            "B": "Trésor du Mimique",
+            "C": "Vendable",
+            "D": "Objet épique",
+            "E": 3,
+            "F": "loot"
+          }
+        }
+      ],
+      "Ogre Maladroit": [
+        {
+          "sheet": "Médias",
+          "row": 9,
+          "cells": {
+            "A": "media_041756a6-59a7-4a1a-86ea-9d879f783ae3",
+            "B": "E14EAE7D-38DB-4B1A-B4BD-4002421E6040.PNG",
+            "C": "E14EAE7D-38DB-4B1A-B4BD-4002421E6040.PNG",
+            "D": "assets/images/creatures/e14eae7d-38db-4b1a-b4bd-4002421e6040_8693945e-d7fb-481c-935c-c51265cfd9b6.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_ogre-maladroit"
+          }
+        }
+      ],
+      "Poule Démoniaque": [
+        {
+          "sheet": "Médias",
+          "row": 146,
+          "cells": {
+            "A": "media_5b3fc510-7a26-4e96-aa1b-1b94e2e7b223",
+            "B": "Poule Démoniaque du Panthéon.PNG",
+            "C": "Poule Démoniaque du Panthéon.PNG",
+            "D": "assets/images/creatures/poule-demoniaque-du-pantheon_405a267e-5c70-474f-82bf-7a861a4d795a.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_27077db6-c681-498e-b2b8-830181963cea"
+          }
+        }
+      ],
+      "Saute-Tonneau": [
+        {
+          "sheet": "Médias",
+          "row": 87,
+          "cells": {
+            "A": "media_3b94523d-ab0d-4e20-ae05-daf5b1b46f3d",
+            "B": "Rainette Saute-Tonneau.PNG",
+            "C": "Rainette Saute-Tonneau.PNG",
+            "D": "assets/images/npcs/rainette-saute-tonneau_f6e4104a-8d35-4156-bc41-855f8d021ebb.webp",
+            "E": "image/webp",
+            "F": "npcs",
+            "G": "npc_rainette-saute-tonneau"
+          }
+        }
+      ],
+      "Squelette Maladroit": [
+        {
+          "sheet": "Médias",
+          "row": 405,
+          "cells": {
+            "A": "media_f853a02d-b50f-499a-922f-68517d6c961f",
+            "B": "06BF4CC8-F10A-4860-8A17-9F0ECD5607BE.PNG",
+            "C": "06BF4CC8-F10A-4860-8A17-9F0ECD5607BE.PNG",
+            "D": "assets/images/creatures/06bf4cc8-f10a-4860-8a17-9f0ecd5607be_82fd2c5c-8c80-4685-8bf3-b5e51ff41dbf.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_squelette-maladroit"
+          }
+        }
+      ],
+      "Squelette Porte-Placard": [
+        {
+          "sheet": "Médias",
+          "row": 264,
+          "cells": {
+            "A": "media_a5521f84-dcc9-4a98-8a62-974b49032748",
+            "B": "3B47167C-49D0-47EF-A264-100F1DF72F49.PNG",
+            "C": "3B47167C-49D0-47EF-A264-100F1DF72F49.PNG",
+            "D": "assets/images/creatures/3b47167c-49d0-47ef-a264-100f1df72f49_ab286cea-256b-470a-828c-ff6ce1c264b1.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_squelette-porte-placard"
+          }
+        }
+      ],
+      "Squelette Tire-au-Pif": [
+        {
+          "sheet": "Médias",
+          "row": 39,
+          "cells": {
+            "A": "media_19036450-40af-478a-b9ee-173128fec06f",
+            "B": "42854D7C-3DC5-47E1-AFE3-B7B59AF545E6.PNG",
+            "C": "42854D7C-3DC5-47E1-AFE3-B7B59AF545E6.PNG",
+            "D": "assets/images/creatures/42854d7c-3dc5-47e1-afe3-b7b59af545e6_f84d7a5c-3124-4d52-92ef-10cb2c5516bf.webp",
+            "E": "image/webp",
+            "F": "creatures",
+            "G": "creature_squelette-tire-au-pif"
+          }
+        }
+      ]
+    },
+    "heroes": {
+      "Brünhilda la Torgnole": [
+        {
+          "sheet": "Héros",
+          "row": 54,
+          "cells": {
+            "A": "Brünhilda la Torgnole",
+            "B": 1,
+            "C": "Brünhilda la Torgnole - Mur en slip",
+            "D": "Tank",
+            "E": "Mur en slip",
+            "F": 12,
+            "G": 3,
+            "H": 4,
+            "I": 1,
+            "J": 3,
+            "K": "Ivresse Héroïque",
+            "L": "Gagne +2 DEF pendant 1 tour et repousse les ennemis adjacents d'une case.",
+            "N": "brunhilda-la-torgnole, tank",
+            "O": "assets/images/heroes/e76844ab-a8ad-45bc-8000-ce187fee5c85_3f75bfde-4f52-4ee1-a509-8274f7528ede.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 55,
+          "cells": {
+            "A": "Brünhilda la Torgnole",
+            "B": 2,
+            "C": "Brünhilda la Torgnole - Pare-Baffes",
+            "D": "Tank",
+            "E": "Pare-Baffes",
+            "F": 14,
+            "G": 3,
+            "H": 4,
+            "I": 1,
+            "J": 3,
+            "K": "-",
+            "N": "brunhilda-la-torgnole, tank",
+            "O": "assets/images/heroes/3d6d10b4-8a35-487b-89f7-94094f65f5f3_c2c67c82-ecdc-4850-b802-83cd310a4ee2.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 56,
+          "cells": {
+            "A": "Brünhilda la Torgnole",
+            "B": 3,
+            "C": "Brünhilda la Torgnole - Rempart à Mandales",
+            "D": "Tank",
+            "E": "Rempart à Mandales",
+            "F": 16,
+            "G": 3,
+            "H": 4,
+            "I": 1,
+            "J": 3,
+            "K": "Torgnole Monumentale",
+            "L": "Baffe circulaire qui repousse les créatures adjacentes de 2 cases et leur fait perdre 1 PV, la baffe ignore la DEF et touche les ennemis, les alliés et les objets",
+            "M": "+1",
+            "N": "brunhilda-la-torgnole, tank",
+            "O": "assets/images/heroes/fc22b084-3ba5-44d6-93b3-a1ba030dae0a_268d2fbc-37c3-47df-a513-7f93813ee1d8.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 57,
+          "cells": {
+            "A": "Brünhilda la Torgnole",
+            "B": 4,
+            "C": "Brünhilda la Torgnole - Forteresse à Torgnoles",
+            "D": "Tank",
+            "E": "Forteresse à Torgnoles",
+            "F": 18,
+            "G": 3,
+            "H": 5,
+            "I": 1,
+            "J": 3,
+            "K": "Rugissement de la Gargote",
+            "L": "Bloque tout les déplacements ennemis et alliés au prochain tour",
+            "M": "+1",
+            "N": "brunhilda-la-torgnole, tank",
+            "O": "assets/images/heroes/2142946c-116d-485d-b4d9-7685766974a5_91f0378d-6eb6-402c-b511-d91ed7826d18.webp"
+          }
+        }
+      ],
+      "Glibouille Nénucorde": [
+        {
+          "sheet": "Héros",
+          "row": 6,
+          "cells": {
+            "A": "Glibouille Nénucorde",
+            "B": 2,
+            "C": "Glibouille Nénucorde - La Lanceuse de Flaque",
+            "D": "Hameçonneuse",
+            "E": "La Lanceuse de Flaque",
+            "F": 5,
+            "G": 1,
+            "H": 1,
+            "I": 3,
+            "J": 3,
+            "K": "Double Tir de Nénucorde",
+            "L": "Choisit jusqu'à 2 cibles à portée 3. Les ennemis subissent 1 dégât. Chaque cible peut être tirée d'1 case vers Glibouille ou repoussée d'1 case. Les alliés peuvent être déplacés sans subir de dégât.",
+            "N": "glibouille-nenucorde, hameconneuse, gripplie, controle-terrain, repositionnement",
+            "O": "assets/images/heroes/2c2af702-6aa3-45ab-8e6c-efc6e589b437_6c7fd582-7193-422f-813e-eac5c3b2ad5b.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 20,
+          "cells": {
+            "A": "Glibouille Nénucorde",
+            "B": 3,
+            "C": "Glibouille Nénucorde - La Harponneuse de Comptoir",
+            "D": "Hameçonneuse",
+            "E": "La Harponneuse de Comptoir",
+            "F": 6,
+            "G": 2,
+            "H": 1,
+            "I": 3,
+            "J": 3,
+            "K": "Râteau de Marécage",
+            "L": "Choisit une ligne de 3 cases à portée 3. Les ennemis dans la ligne subissent 1 dégât. Glibouille choisit ensuite : toutes les cibles sont tirées d'1 case vers le centre de la ligne ou repoussées d'1 case vers l'extérieur.",
+            "M": "+1",
+            "N": "glibouille-nenucorde, hameconneuse, gripplie, controle-terrain, ligne, repositionnement",
+            "O": "assets/images/heroes/5abb91f7-58c3-4dd2-af05-f0140208b711_e9579338-679d-4bee-a663-9372373bacc8.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 25,
+          "cells": {
+            "A": "Glibouille Nénucorde",
+            "B": 4,
+            "C": "Glibouille Nénucorde - La Grande Crapaudine du Dernier Plouf",
+            "D": "Hameçonneuse",
+            "E": "La Grande Crapaudine du Dernier Plouf",
+            "F": 7,
+            "G": 2,
+            "H": 2,
+            "I": 3,
+            "J": 3,
+            "K": "Grand Plouf des Hameçons",
+            "L": "Choisit une zone de 3 cases à portée 3. Les ennemis subissent 2 dégâts. Glibouille peut ensuite déplacer chaque cible d'1 case, soit vers le centre de la zone, soit à l'opposé. Les alliés peuvent être déplacés sans subir de dégât.",
+            "M": "+1",
+            "N": "glibouille-nenucorde, hameconneuse, gripplie, controle-terrain, zone, repositionnement",
+            "O": "assets/images/heroes/c681177f-9760-4025-99dc-191eeec76bb8_3898bc50-4e4b-499c-9fb1-cf6efbed9889.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 62,
+          "cells": {
+            "A": "Glibouille Nénucorde",
+            "B": 1,
+            "C": "Glibouille Nénucorde - La Barboteuse",
+            "D": "Hameçonneuse",
+            "E": "La Barboteuse",
+            "F": 4,
+            "G": 1,
+            "H": 1,
+            "I": 3,
+            "J": 3,
+            "K": "Hameçon Piteux",
+            "L": "Inflige 1 dégât à une cible ennemie, puis Glibouille peut la tirer d'1 case vers elle ou la repousser d'1 case si la case d'arrivée est libre.",
+            "N": "glibouille-nenucorde, hameconneuse, gripplie, controle-terrain, repositionnement",
+            "O": "assets/images/heroes/ff0b8429-cdd9-4893-a796-c1215383dc49_b457e227-13ff-4188-a25b-a1221ad2d567.webp"
+          }
+        }
+      ],
+      "Magdalena Coquinelle": [
+        {
+          "sheet": "Médias",
+          "row": 57,
+          "cells": {
+            "A": "media_24055ad8-ec9b-426d-a85a-0908eb2885d8",
+            "B": "5F4BFA29-F3D6-4AB3-9D47-9DE57DC0AF02.jpeg",
+            "C": "5F4BFA29-F3D6-4AB3-9D47-9DE57DC0AF02.jpeg",
+            "D": "assets/images/heroes/5f4bfa29-f3d6-4ab3-9d47-9de57dc0af02_064ab8af-64fe-4a7b-a968-e30fdf5cc082.webp",
+            "E": "image/webp",
+            "F": "heroes",
+            "G": "hero_magdalena-coquinelle_l2"
+          }
+        },
+        {
+          "sheet": "Médias",
+          "row": 151,
+          "cells": {
+            "A": "media_5d356bed-01d2-4249-8165-46ab6a22b77a",
+            "B": "AEF92F29-84C1-4AE4-92AC-AA259DB5BF79.png",
+            "C": "AEF92F29-84C1-4AE4-92AC-AA259DB5BF79.png",
+            "D": "assets/images/heroes/aef92f29-84c1-4ae4-92ac-aa259db5bf79_a55dd779-40f1-42eb-95c0-f28c7fad6282.webp",
+            "E": "image/webp",
+            "F": "heroes",
+            "G": "hero_magdalena-coquinelle_l4"
+          }
+        },
+        {
+          "sheet": "Médias",
+          "row": 155,
+          "cells": {
+            "A": "media_5e3723c6-1344-49f4-b42b-bca16ffe4997",
+            "B": "EDE41A21-A6C5-4A0B-A718-C6854003AB94.png",
+            "C": "EDE41A21-A6C5-4A0B-A718-C6854003AB94.png",
+            "D": "assets/images/heroes/ede41a21-a6c5-4a0b-a718-c6854003ab94_221b87bc-8a13-4573-be1e-369c6d65f9e0.webp",
+            "E": "image/webp",
+            "F": "heroes",
+            "G": "hero_magdalena-coquinelle_l3"
+          }
+        },
+        {
+          "sheet": "Médias",
+          "row": 186,
+          "cells": {
+            "A": "media_70144727-3805-4afb-9c9c-19375936fef4",
+            "B": "C6FA9F74-8414-4A4D-B6E6-8BFE182FA20E.jpeg",
+            "C": "C6FA9F74-8414-4A4D-B6E6-8BFE182FA20E.jpeg",
+            "D": "assets/images/heroes/c6fa9f74-8414-4a4d-b6e6-8bfe182fa20e_fc9b7453-a8fb-4075-bc26-bf2f8c68e859.webp",
+            "E": "image/webp",
+            "F": "heroes",
+            "G": "hero_magdalena-coquinelle_l1"
+          }
+        }
+      ],
+      "Mandaline Cataparebaffe": [
+        {
+          "sheet": "Héros",
+          "row": 10,
+          "cells": {
+            "A": "mandaline-cataparebaffe",
+            "B": 1,
+            "C": "Mandaline Cataparebaffe - La P’tite Torgnole",
+            "D": "Tank",
+            "E": "La P’tite Torgnole",
+            "F": 11,
+            "G": 1,
+            "H": 4,
+            "I": 1,
+            "J": 3,
+            "K": "Claque-Bouclier de Caniveau",
+            "L": "Inflige 1 dégât et pousse la cible d’1 case. Si la cible percute un mur ou un objet, elle perd 1 action au prochain tour.",
+            "N": "mandaline-cataparebaffe, tank, diablotine",
+            "O": "assets/images/heroes/dabda105-f955-4037-b25a-5b21f51f406a_29836fd8-a62f-4615-b2bb-db00f6ef6865.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 59,
+          "cells": {
+            "A": "mandaline-cataparebaffe",
+            "B": 4,
+            "C": "Mandaline Cataparebaffe - L’Infernale Tankardière",
+            "D": "Tank",
+            "E": "L’Infernale Tankardière",
+            "F": 18,
+            "G": 2,
+            "H": 5,
+            "I": 1,
+            "J": 3,
+            "K": "Mur de Cataparebaffes",
+            "L": "Repousse toutes les créatures adjacentes de 2 cases. Les cibles qui heurtent un obstacle subissent 2 dégâts supplémentaires.",
+            "M": "+1",
+            "N": "mandaline-cataparebaffe, tank, diablotine",
+            "O": "assets/images/heroes/f02c89a5-ab67-4f0a-8e50-0a6c76900286_198ea054-1b36-4ce8-80ee-1045670cc131.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 72,
+          "cells": {
+            "A": "mandaline-cataparebaffe",
+            "B": 2,
+            "C": "Mandaline Cataparebaffe - La Muraille à Cornes",
+            "D": "Tank",
+            "E": "La Muraille à Cornes",
+            "F": 13,
+            "G": 2,
+            "H": 4,
+            "I": 1,
+            "J": 3,
+            "K": "Porte dans les Dents",
+            "L": "Charge de 2 cases en ligne droite. Les cibles touchées subissent 1 dégât et sont repoussées d’1 case.",
+            "N": "mandaline-cataparebaffe, tank, diablotine",
+            "O": "assets/images/heroes/e28dc60e-53fc-4351-9e1d-180126f27362_c88bbe9d-44d8-4c91-a252-035993ee5a2c.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 76,
+          "cells": {
+            "A": "mandaline-cataparebaffe",
+            "B": 3,
+            "C": "Mandaline Cataparebaffe - La Cognepareuse",
+            "D": "Tank",
+            "E": "La Cognepareuse",
+            "F": 15,
+            "G": 2,
+            "H": 5,
+            "I": 1,
+            "J": 3,
+            "K": "Parade à Mandales",
+            "L": "Jusqu’au prochain tour, Mandaline gagne +2 DEF. Les créatures adjacentes qui l’attaquent subissent 1 dégât.",
+            "M": "+1",
+            "N": "mandaline-cataparebaffe, tank, diablotine",
+            "O": "assets/images/heroes/0ce16e31-6644-4aec-aee2-8140bd584108_d3556452-7fdc-4d42-9efa-0e6d66933213.webp"
+          }
+        }
+      ],
+      "Mycélia Sporeventail": [
+        {
+          "sheet": "Héros",
+          "row": 30,
+          "cells": {
+            "A": "Mycélia Sporeventail",
+            "B": 3,
+            "C": "Mycélia Sporeventail - La Consolideuse de Mousse",
+            "D": "Sporicienne",
+            "E": "La Consolideuse de Mousse",
+            "F": 6,
+            "G": 2,
+            "H": 1,
+            "I": 3,
+            "J": 3,
+            "K": "Nuage de Spores Tièdes",
+            "L": "Choisit une zone de 4 cases à portée 3. Les ennemis dans la zone sont empoisonnés et subissent 1 dégât au début de leur prochain tour. Les alliés dans la zone récupèrent 2 PV.",
+            "M": "+1",
+            "N": "mycelia-sporeventail, sporicienne, mycelienne, support, poison, soin, zone",
+            "O": "assets/images/heroes/d3d898a3-ae97-459e-baa7-85ddc8f0a84c_78bdab61-132e-4390-a61a-e72ea96d4d8c.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 38,
+          "cells": {
+            "A": "Mycélia Sporeventail",
+            "B": 1,
+            "C": "Mycélia Sporeventail - La Recrue Rincée",
+            "D": "Sporicienne",
+            "E": "La Recrue Rincée",
+            "F": 4,
+            "G": 1,
+            "H": 1,
+            "I": 3,
+            "J": 3,
+            "K": "Spore de Fond de Chope",
+            "L": "Inflige 1 dégât à une cible ennemie et l'empoisonne : elle subit 1 dégât au début de son prochain tour.",
+            "N": "mycelia-sporeventail, sporicienne, mycelienne, support, poison",
+            "O": "assets/images/heroes/f035f16a-ed0d-4bd1-ba40-1f206eab8853_062b5a1a-a6c4-49c4-8e2f-232b681a29d1.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 51,
+          "cells": {
+            "A": "Mycélia Sporeventail",
+            "B": 4,
+            "C": "Mycélia Sporeventail - La Marquise de la Chope Moussue",
+            "D": "Sporicienne",
+            "E": "La Marquise de la Chope Moussue",
+            "F": 7,
+            "G": 2,
+            "H": 2,
+            "I": 3,
+            "J": 3,
+            "K": "Marquisat du Moisi Royal",
+            "L": "Choisit une zone de 9 cases à portée 3. Les ennemis dans la zone sont empoisonnés : ils subissent 2 dégâts au début de leur prochain tour. Les alliés dans la zone récupèrent 3 PV.",
+            "M": "+1",
+            "N": "mycelia-sporeventail, sporicienne, mycelienne, support, poison, soin, zone",
+            "O": "assets/images/heroes/3f68af16-2230-4992-8d54-8e8366d8cc51_9d9484f8-94f4-46eb-8514-b3087f9de5b9.webp"
+          }
+        },
+        {
+          "sheet": "Héros",
+          "row": 52,
+          "cells": {
+            "A": "Mycélia Sporeventail",
+            "B": 2,
+            "C": "Mycélia Sporeventail - La Parasoline de Comptoir",
+            "D": "Sporicienne",
+            "E": "La Parasoline de Comptoir",
+            "F": 5,
+            "G": 1,
+            "H": 1,
+            "I": 3,
+            "J": 3,
+            "K": "Pollen de Rattrapage",
+            "L": "Si c'est un ennemi, elle subit 1 dégât et est empoisonnée pour 1 dégât au début de son prochain tour. Si c'est un allié, il récupère 2 PV.",
+            "N": "mycelia-sporeventail, sporicienne, mycelienne, support, poison, soin",
+            "O": "assets/images/heroes/014b8c33-57b5-4441-9f75-91aef69474c8_38d19bde-8737-4a6e-b060-ca31496240f3.webp"
+          }
+        }
+      ]
+    }
+  },
+  "sheet_context": {
+    "Donjons": [
+      {
+        "row": 1,
+        "cells": {
+          "A": "name",
+          "B": "description",
+          "C": "floor_budgets",
+          "D": "boss_name",
+          "E": "tags",
+          "F": "image_path"
+        }
+      },
+      {
+        "row": 2,
+        "cells": {
+          "A": "L'enfer de la Sobriété Éternelle",
+          "C": "3;5;7;9;11",
+          "F": "assets/images/dungeons/6bd77490-ca4a-463b-8f51-6139094a5123_78f3c9af-f38a-4f6d-8da5-dbdf879296df.webp"
+        }
+      },
+      {
+        "row": 3,
+        "cells": {
+          "A": "Le Monastère des Dénaturées",
+          "C": "3;5;7;9;11",
+          "F": "assets/images/dungeons/55a54ee7-24c4-4f1e-9942-8161eea6fa55_2d1357d6-eef7-4f9f-ac2d-aa8a609d60a7.webp"
+        }
+      },
+      {
+        "row": 4,
+        "cells": {
+          "A": "Hôtel Zombifornia",
+          "B": "Donjon importé depuis le bestiaire Hôtel Zombifornia",
+          "C": "3;5;7;9;11",
+          "E": "hotel-zombifornia",
+          "F": "assets/images/dungeons/39d64e94-741b-4b42-b6c2-d4d516e00519_222ae021-0630-45ec-92df-391025ed5485.webp"
+        }
+      },
+      {
+        "row": 5,
+        "cells": {
+          "A": "Le Panthéon des Fermentations Interdites",
+          "C": "3;5;7;9;11",
+          "E": "le-pantheon-des-fermentations-interdites",
+          "F": "assets/images/dungeons/476b3b53-e12a-4788-9492-55918d05515b_25d8c5ae-30b2-4a0a-8927-dc6012b658a2.webp"
+        }
+      },
+      {
+        "row": 6,
+        "cells": {
+          "A": "Le Sanctuaire du Houblon Noir",
+          "C": "3;5;7;9;11",
+          "E": "le-sanctuaire-du-houblon-noir",
+          "F": "assets/images/dungeons/13fcd42a-2749-4236-a0d6-6af2a6d8e322_4bc3acd3-a5d9-4827-b960-cda9656e8646.webp"
+        }
+      },
+      {
+        "row": 7,
+        "cells": {
+          "A": "La Brasserie Céleste",
+          "C": "3;5;7;9;11",
+          "E": "la-brasserie-celeste",
+          "F": "assets/images/dungeons/a5caf7ef-7fdf-4ba2-ad00-b58a00f50755_d5aedda3-46ee-4729-b737-5fbb49d6bee5.webp"
+        }
+      },
+      {
+        "row": 8,
+        "cells": {
+          "A": "La Forêt en Chantier",
+          "B": "Donjon importé depuis le bestiaire La Forêt en Chantier.",
+          "C": "3;5;7;9;11",
+          "E": "la-foret-en-chantier",
+          "F": "assets/images/dungeons/e1df43b6-2cb2-4bdd-8a12-8eb0e5bd467d_e9f34608-ddc1-47c9-85dc-c42b181ed02d.webp"
+        }
+      }
+    ],
+    "Créatures": [
+      {
+        "row": 1,
+        "cells": {
+          "A": "name",
+          "B": "dungeon_name",
+          "C": "category",
+          "D": "menace",
+          "E": "pv",
+          "F": "atk",
+          "G": "def",
+          "H": "zone",
+          "I": "actions",
+          "J": "special_attack_name",
+          "K": "special_attack_noise",
+          "L": "ai_behavior",
+          "M": "ai_target_priority",
+          "N": "lore",
+          "O": "socle",
+          "P": "tags",
+          "Q": "image_path",
+          "R": "loot"
+        }
+      },
+      {
+        "row": 2,
+        "cells": {
+          "A": "Séraphin de la Levure Exaltée",
+          "B": "La Brasserie Céleste",
+          "C": "mini_boss",
+          "D": 4,
+          "E": 20,
+          "F": 3,
+          "G": 4,
+          "H": 2,
+          "I": 2,
+          "J": "Culture Mère — invoque 1 unité basique adjacente à un décor; si déjà au maximum d’alliés, elle la transforme en buff.",
+          "K": 1,
+          "L": "Fait éclore la salle et pousse ses alliés à proliférer.",
+          "M": "Allié à invoquer",
+          "N": "Elle crée trop de vie.",
+          "O": "60mm",
+          "P": "fermentation-sacree",
+          "Q": "assets/images/creatures/76f18d81-3a45-4c41-beb8-1d059230c164_f24d5d6c-f0bc-481e-a14f-ea58b5b60bf8.webp",
+          "R": "Culture mère|Utilitaire|Invoque 1 unité basique adjacente à un décor|0\nBoue tactique|Utilitaire|Crée une case de terrain difficile|0\nFlacon de levure|Vendable|Objet précieux|2\nRésidu de Guetteuse des Flaques|Vendable|Objet utile|1"
+        }
+      },
+      {
+        "row": 3,
+        "cells": {
+          "A": "Poule Sobre",
+          "B": "L'enfer de la Sobriété Éternelle",
+          "C": "speciale",
+          "D": 4,
+          "E": 7,
+          "F": 1,
+          "G": 2,
+          "H": 1,
+          "I": 2,
+          "J": "Œuf Clair — pond une zone d'eau qui ralentit de 1 le déplacement des unités à portée 1.",
+          "K": 1,
+          "L": "Perturbe les trajectoires avec une logique de basse-cour exemplaire.",
+          "M": "Couloir",
+          "N": "Elle pond de l’eau. Personne ne veut comprendre.",
+          "O": "40mm",
+          "P": "sobriete-eternelle",
+          "Q": "assets/images/creatures/cc29427d-d007-41fa-91c9-c1c411b57025_e39d32bf-0321-4797-afcd-74eba1d580f0.webp",
+          "R": "Œuf limpide|projectile|ATK 1 portée 2; crée une case d'eau|0\nPlume tassée|vendable|Objet bizarre|1"
+        }
+      },
+      {
+        "row": 4,
+        "cells": {
+          "A": "Caprine Absolue",
+          "B": "Le Monastère des Dénaturées",
+          "C": "boss",
+          "D": 5,
+          "E": 32,
+          "F": 5,
+          "G": 5,
+          "H": 3,
+          "I": 3,
+          "J": "Trône à Trois Souffles — invoque 2 Caprines Standard à 1 case et donne +1 DEF à toute la faction caprine.",
+          "K": 3,
+          "L": "Domine le terrain en alternant immobilisation, repositionnement et pression de groupe.",
+          "M": "Tous",
+          "N": "Une Reine Caprine Absolue repose de tout son long, silhouette souveraine et alanguie, comme abandonnée sur un trône invisible de pierre tiède.",
+          "O": "80mm",
+          "P": "boss, le-monastere-des-denaturees",
+          "Q": "assets/images/creatures/18e194dc-fc99-4ba9-a6e6-042231a426ea_440b7aac-f093-4a9d-8223-ab28f066d574.webp",
+          "R": "Couronne caprine|vendable|Objet légendaire|8\nAnneau de trône|utilitaire|Invoque 1 Caprine Standard à portée 2|0"
+        }
+      },
+      {
+        "row": 5,
+        "cells": {
+          "A": "Récolteuse de Ferment",
+          "B": "Les Marécages Infectés",
+          "C": "basique",
+          "D": 1,
+          "E": 8,
+          "F": 3,
+          "G": 2,
+          "H": 2,
+          "I": 2,
+          "J": "Coupe-Ferment — attaque adjacente; si la cible est blessée, +1 dégât.",
+          "K": 0,
+          "L": "Fonce sur les cibles entamées et les termine comme une vendange très personnelle.",
+          "M": "Héros blessé",
+          "N": "Elle coupe le ferment comme d’autres coupent les ponts. Son panier sent la cave et la menace utile.",
+          "O": "32mm",
+          "P": "mycelienne, les-marecages-infectes",
+          "Q": "assets/images/creatures/0f890c15-b3bf-4a56-ab59-953376ada344_8d93915d-a907-436b-803e-0d2accf0523b.webp",
+          "R": "Fragment de Récolteuse de Ferment|Vendable|Objet utile|1\nImpulsion marécageuse|Utilitaire|Donne +1 déplacement|0"
+        }
+      },
+      {
+        "row": 6,
+        "cells": {
+          "A": "ArchiDémone Purificatrice",
+          "B": "L'enfer de la Sobriété Éternelle",
+          "C": "tactique",
+          "D": 3,
+          "E": 8,
+          "F": 1,
+          "G": 4,
+          "H": 2,
+          "I": 2,
+          "J": "Lame Blanche — supprime tous les buffs d'une cible à portée 2; si aucun buff, la cible subit -1 DEF.",
+          "K": 1,
+          "L": "Vise les cibles trop confortables et les rend immédiatement plus tristes.",
+          "M": "Héros buffé",
+          "N": "Elle supprime toute trace d’excès.",
+          "O": "32mm",
+          "P": "sobriete-eternelle",
+          "Q": "assets/images/creatures/1525253c-ddca-449b-927e-2af132a6559a_26bf8d26-f13c-4ee0-8bb2-4f99e78ca1a7.webp",
+          "R": "Rasoir cérémoniel|projectile|ATK 2 portée 2|0\nSachet d'abstention|vendable|Objet étrange|1"
+        }
+      },
+      {
+        "row": 7,
+        "cells": {
+          "A": "Léviathan Hydrique",
+          "B": "L'enfer de la Sobriété Éternelle",
+          "C": "mini_boss",
+          "D": 6,
+          "E": 26,
+          "F": 4,
+          "G": 4,
+          "H": 3,
+          "I": 2,
+          "J": "Déferlante Pure — pousse toutes les unités à portée 2 de 1 case; si elles touchent un décor, elles subissent +1 dégât.",
+          "K": 2,
+          "L": "Se déplace comme une vague qui a appris à compter les côtes.",
+          "M": "Groupe",
+          "N": "Une masse d’eau vivante, parfaitement calme.",
+          "O": "60mm",
+          "P": "sobriete-eternelle",
+          "Q": "assets/images/creatures/27fb15a5-1695-48ca-8aa8-e057e5a6edd3_c35784c3-4daf-4f6d-b8dc-c4a9d9bb114c.webp",
+          "R": "Onde captive|projectile|ATK 2 portée 3 explosion|0\nGoutte d'ambre|vendable|Objet précieux|2"
+        }
+      },
+      {
+        "row": 8,
+        "cells": {
+          "A": "Lingère zélée",
+          "B": "Hôtel Zombifornia",
+          "C": "tactique",
+          "D": 2,
+          "E": 5,
+          "F": 0,
+          "G": 3,
+          "H": 2,
+          "I": 3,
+          "J": "Pressing infernal — crée une zone difficile à portée 2; les héros qui y entrent subissent -1 déplacement jusqu’à leur prochain tour",
+          "K": 1,
+          "L": "Tisse des zones gênantes à distance, en priorisant les couloirs actifs et les regroupements.",
+          "M": "Zone active > Couloir",
+          "N": "Elle plie, replie, surplie… jusqu’à ce que même les vivants finissent rangés dans une pile bien nette.",
+          "O": "32mm",
+          "Q": "assets/images/creatures/3e21792f-996f-41cf-b4de-142ac615760d_e4fda857-0e3b-4e4d-8369-b078d8ba282d.webp",
+          "R": "Drap enchanté|Utilitaire|Crée une case difficile adjacente ou protège un allié adjacent de +1 DEF pendant 1 tour|2\nSavon usé|Vendable|Objet utile|1"
+        }
+      }
+    ],
+    "Héros": [
+      {
+        "row": 1,
+        "cells": {
+          "A": "hero_base_name",
+          "B": "level",
+          "C": "name",
+          "D": "role",
+          "E": "title",
+          "F": "pv",
+          "G": "atk",
+          "H": "def",
+          "I": "zone",
+          "J": "actions",
+          "K": "ability_text",
+          "L": "effect_text",
+          "M": "brouhaha",
+          "N": "tags",
+          "O": "image_path"
+        }
+      },
+      {
+        "row": 2,
+        "cells": {
+          "A": "Firmin Tronçebois",
+          "B": 2,
+          "C": "Firmin Tronçebois - Le Fendeur Affolé",
+          "D": "Bûcheron Berserker",
+          "E": "Le Fendeur Affolé",
+          "F": 6,
+          "G": 5,
+          "H": 1,
+          "I": 1,
+          "J": 3,
+          "K": "Grand Coup de Hache",
+          "L": "Inflige +2 dégâts et casse les objets destructibles adjacents à la cible.",
+          "M": "+1",
+          "N": "firmin-troncebois, cac",
+          "O": "assets/images/heroes/65b85796-6a41-4173-8260-d55fa25b98f9_83d88d4e-ee59-4bc5-a735-6deab94d5d51.webp"
+        }
+      },
+      {
+        "row": 3,
+        "cells": {
+          "A": "Capucine Brèchecornue",
+          "B": 3,
+          "C": "Capucine Brèchecornue - La Sabot-Fantôme",
+          "D": "Sauteuse Dimensionnelle",
+          "E": "La Sabot-Fantôme",
+          "F": 6,
+          "G": 2,
+          "H": 1,
+          "I": 3,
+          "J": 3,
+          "K": "Passe-Sabot de Panique",
+          "L": "Échange la position d'une créature avec une case libre adjacente. Les créatures et objets adjacent à la cible déplacée sont repoussés d'1 case.",
+          "N": "capucine-brechecornue, teleportation, caprine",
+          "O": "assets/images/heroes/b4b47c7b-dcaa-45b9-a9c4-39038ea2bcfe_6eec208a-5617-45e0-9ad4-978275d4a26f.webp"
+        }
+      },
+      {
+        "row": 4,
+        "cells": {
+          "A": "Ambroisine Dardelune",
+          "B": 4,
+          "C": "Ambroisine Dardelune - La Reine Sans Ruche",
+          "D": "Miellicienne",
+          "E": "La Reine Sans Ruche",
+          "F": 8,
+          "G": 2,
+          "H": 2,
+          "I": 4,
+          "J": 3,
+          "K": "Décret Royal de Poissage",
+          "L": "Choisit une zone de 3 cases à portée 4. Elles deviennent collantes pendant 2 tours. Les créatures présentes perdent 1 action et -1 DEF pendant 1 tour. Ambroisine peut ensuite se déplacer d'1 case gratuitement.",
+          "N": "ambroisine-dardelune, miellicienne, abeille-humanoide",
+          "O": "assets/images/heroes/890b0776-cf9c-4e73-8809-22e66276d316_8a880a59-8f56-4359-854b-00e2c84a9e18.webp"
+        }
+      },
+      {
+        "row": 5,
+        "cells": {
+          "A": "Géraldine Pintelance",
+          "B": 2,
+          "C": "Géraldine Pintelance - La Chopevotive",
+          "D": "Paladin heal",
+          "E": "La Chopevotive",
+          "F": 9,
+          "G": 2,
+          "H": 4,
+          "I": 1,
+          "J": 3,
+          "K": "Mousse de Secours",
+          "L": "Soigne 4 PV à la créature la plus proche à portée 3. Si la cible est un allié, elle gagne +1 DEF pendant 1 tour.",
+          "N": "geraldine-pintelance, paladin-heal, humaine",
+          "O": "assets/images/heroes/1896fb78-f298-439b-9aac-b83ae34edc66_c30ea423-2a93-4402-bb85-adc5746f0605.webp"
+        }
+      },
+      {
+        "row": 6,
+        "cells": {
+          "A": "Glibouille Nénucorde",
+          "B": 2,
+          "C": "Glibouille Nénucorde - La Lanceuse de Flaque",
+          "D": "Hameçonneuse",
+          "E": "La Lanceuse de Flaque",
+          "F": 5,
+          "G": 1,
+          "H": 1,
+          "I": 3,
+          "J": 3,
+          "K": "Double Tir de Nénucorde",
+          "L": "Choisit jusqu'à 2 cibles à portée 3. Les ennemis subissent 1 dégât. Chaque cible peut être tirée d'1 case vers Glibouille ou repoussée d'1 case. Les alliés peuvent être déplacés sans subir de dégât.",
+          "N": "glibouille-nenucorde, hameconneuse, gripplie, controle-terrain, repositionnement",
+          "O": "assets/images/heroes/2c2af702-6aa3-45ab-8e6c-efc6e589b437_6c7fd582-7193-422f-813e-eac5c3b2ad5b.webp"
+        }
+      },
+      {
+        "row": 7,
+        "cells": {
+          "A": "Dolorès Boumbardine",
+          "B": 1,
+          "C": "Dolorès Boumbardine - La Ronchombrune",
+          "D": "Artillerie distance",
+          "E": "La Ronchombrune",
+          "F": 3,
+          "G": 4,
+          "H": 1,
+          "I": 4,
+          "J": 3,
+          "K": "Tromblon de Réveil",
+          "L": "La prochaine attaque de Dolorès gagne +1 ATK et repousse la cible d'1 case si elle touche.",
+          "N": "dolorès-boumbardine, artillerie-distance, naine",
+          "O": "assets/images/heroes/028595a5-f686-4625-a3c4-ca52fd2aae44_5c7da5fc-f88f-4e2b-8296-24f08935faf6.webp"
+        }
+      },
+      {
+        "row": 8,
+        "cells": {
+          "A": "Dolorès Boumbardine",
+          "B": 3,
+          "C": "Dolorès Boumbardine - La Canonnardeuse",
+          "D": "Artillerie distance",
+          "E": "La Canonnardeuse",
+          "F": 5,
+          "G": 5,
+          "H": 2,
+          "I": 4,
+          "J": 3,
+          "K": "Canon de Chevet",
+          "L": "Tire en ligne droite jusqu'à 3 cases. La première créature touchée subit +1 dégât et les autres cibles de la ligne subissent 1 dégât.",
+          "M": "+1",
+          "N": "dolorès-boumbardine, artillerie-distance, naine",
+          "O": "assets/images/heroes/0b1d96d3-bb62-4f52-a9ee-ae07e11f647c_739380d8-a6f3-4257-a765-c3c9887e549c.webp"
+        }
+      }
+    ],
+    "PNJ": [
+      {
+        "row": 1,
+        "cells": {
+          "A": "name",
+          "B": "race",
+          "C": "tone",
+          "D": "role",
+          "E": "lore",
+          "F": "tags",
+          "G": "image_path"
+        }
+      },
+      {
+        "row": 2,
+        "cells": {
+          "A": "Astra Luminara",
+          "B": "Demi-Luminéa",
+          "C": "Gracieuse, énigmatique, théâtrale, incapable d’entrer dans une pièce sans effet lumineux",
+          "D": "Éclaireuse de comptoir",
+          "E": "Astra éclaire les coins sombres de la taverne avec une dignité céleste qui s’effondre dès qu’on lui sert un verre violet. Elle bénit les tournées, annonce les présages et confond souvent les lucioles avec des clients solvables.",
+          "F": "demi-luminea, eclaireuse-de-comptoir",
+          "G": "assets/images/npcs/astra-luminara_901d7ce3-894d-4ada-a011-54b593124b89.webp"
+        }
+      },
+      {
+        "row": 3,
+        "cells": {
+          "A": "Amina Kalhea",
+          "B": "Humaine des Savanes",
+          "C": "Fière, solaire, directe, souriante uniquement quand la lance est déjà pointée dans la bonne direction",
+          "D": "Guerrière des lances solaires",
+          "E": "Amina garde l’entrée de la Chope Qui Colle comme si c’était un temple sacré, ce qui force les clients à essuyer leurs bottes avant de s’écrouler. Sa lance sert autant à percer les monstres qu’à décrocher les jambons suspendus trop haut.",
+          "F": "humaine-des-savanes, guerriere-des-lances-solaires",
+          "G": "assets/images/npcs/amina-kalhea_ab0cc686-5db5-42e7-87a4-8a4b7a3c299d.webp"
+        }
+      },
+      {
+        "row": 4,
+        "cells": {
+          "A": "Fulmina Tonnerrebrune",
+          "B": "Demi-Orageuse",
+          "C": "Électrique, charmeuse, impatiente, sert les chopes avant même qu’on ait fini de commander",
+          "D": "Serveuse explosive",
+          "E": "Fulmina transporte les commandes à la vitesse d’un éclair mal élevé. Ses cheveux crépitent quand un client ne laisse pas de pourboire, et sa bouteille bleue contient soit de l’eau de pluie magique, soit une très mauvaise décision.",
+          "F": "demi-orageuse, serveuse-explosive",
+          "G": "assets/images/npcs/fulmina-tonerrebrune_7de3497a-640c-455d-94fd-eeeb64e2e429.webp"
+        }
+      },
+      {
+        "row": 5,
+        "cells": {
+          "A": "Mycella Sporine",
+          "B": "Demi-Champignon",
+          "C": "Moelleuse, inventive, un peu inquiétante quand elle sourit près des cuves",
+          "D": "Brasseuse de bières étranges",
+          "E": "Mycella brasse des bières aux arômes de sous-bois, de mousse enchantée et parfois d’idées regrettables. Ses créations sont étonnamment populaires malgré les effets secondaires mineurs, comme luire dans le noir ou parler couramment aux tabourets.",
+          "F": "demi-champignon, brasseuse-de-bieres-etranges",
+          "G": "assets/images/npcs/mycella-sporine_dbecba6c-50cc-4cfa-83f8-b72cf5956004.webp"
+        }
+      },
+      {
+        "row": 6,
+        "cells": {
+          "A": "Althéa Virefeuille",
+          "B": "Esprit Sylvestre",
+          "C": "Douce, aérienne, taquine, toujours à moitié en retard et à moitié portée par le vent",
+          "D": "Messagère des vents forestiers",
+          "E": "Althéa traverse les fenêtres ouvertes pour livrer des messages parfumés à la mousse fraîche. Elle prétend connaître tous les secrets de la forêt, mais oublie systématiquement le prénom du destinataire dès qu’un courant d’air passe.",
+          "F": "esprit-sylvestre, messagere-des-vents-forestiers",
+          "G": "assets/images/npcs/althea-virefeuille_198d2ace-8bc7-4701-8961-776fa384f68e.webp"
+        }
+      },
+      {
+        "row": 7,
+        "cells": {
+          "A": "Nyx Félindra",
+          "B": "Félidée",
+          "C": "Souple, maligne, moqueuse, officiellement employée pour les rats et officieusement pour fouiller partout",
+          "D": "Chasseuse de rats de cave",
+          "E": "Nyx connaît chaque trou, chaque poutre et chaque cachette suspecte des sous-sols de la taverne. Elle revient toujours avec des rats en moins, des secrets en plus et une expression qui suggère qu’elle pourrait faire payer certaines informations.",
+          "F": "felidee, chasseuse-de-rats-de-cave",
+          "G": "assets/images/npcs/nyx-felindra_2510ad4f-0780-4914-8470-6ac1047fe555.webp"
+        }
+      },
+      {
+        "row": 8,
+        "cells": {
+          "A": "Crabella Pincedor",
+          "B": "Demi-Crabe",
+          "C": "Rusée, rampante, pince-sans-rire, beaucoup trop contente de récupérer ce qui tombe",
+          "D": "Repêcheuse de clients sous les tables",
+          "E": "Crabella se glisse entre les bancs pour récupérer pièces perdues, chopes renversées et aventuriers incapables de retrouver le haut. Sa pince géante ouvre les tonneaux, les coffres et parfois les débats.",
+          "F": "demi-crabe, repecheuse-de-clients-sous-les-tables",
+          "G": "assets/images/npcs/crabella-pincedor_87fc4067-3f2f-4730-b90f-3e25ee694606.webp"
+        }
+      }
+    ],
+    "Quêtes": [
+      {
+        "row": 1,
+        "cells": {
+          "A": "name",
+          "B": "description",
+          "C": "objective",
+          "D": "reward",
+          "E": "difficulty",
+          "F": "npc_name",
+          "G": "dungeon_name",
+          "H": "tags",
+          "I": "image_path"
+        }
+      },
+      {
+        "row": 2,
+        "cells": {
+          "A": "test",
+          "B": "Test",
+          "C": "Test",
+          "D": "Test",
+          "E": 1,
+          "F": "Mirelda Trois-Tentacules",
+          "G": "Le Cabaret des Joyeuses",
+          "H": "Test"
+        }
+      }
+    ],
+    "Loot": [
+      {
+        "row": 1,
+        "cells": {
+          "A": "creature_name",
+          "B": "name",
+          "C": "type",
+          "D": "effect",
+          "E": "gold_value",
+          "F": "tags",
+          "G": "image_path"
+        }
+      },
+      {
+        "row": 2,
+        "cells": {
+          "A": "Sirène Chef Bassin",
+          "B": "Coquillage",
+          "C": "Vendable",
+          "D": "Objet utile",
+          "E": 5,
+          "F": "loot"
+        }
+      },
+      {
+        "row": 3,
+        "cells": {
+          "A": "Squelette Tire-au-Pif",
+          "B": "Flèche tordue",
+          "C": "Projectile",
+          "D": "ATK 1 portée 3",
+          "E": 0,
+          "F": "loot"
+        }
+      },
+      {
+        "row": 4,
+        "cells": {
+          "A": "Récolteuse de Ferment",
+          "B": "Fragment de Récolteuse de Ferment",
+          "C": "Vendable",
+          "D": "Objet utile",
+          "E": 1,
+          "F": "loot"
+        }
+      },
+      {
+        "row": 5,
+        "cells": {
+          "A": "Garçon d’étage",
+          "B": "Plateau cabossé",
+          "C": "Projectile",
+          "D": "ATK 1 portée 3",
+          "E": 0,
+          "F": "loot"
+        }
+      },
+      {
+        "row": 6,
+        "cells": {
+          "A": "Déesse du Houblon Absolu",
+          "B": "Couronne verte",
+          "C": "Vendable",
+          "D": "Objet épique",
+          "E": 3,
+          "F": "loot"
+        }
+      },
+      {
+        "row": 7,
+        "cells": {
+          "A": "Caprine Chaloupée",
+          "B": "Sonne-talon",
+          "C": "utilitaire",
+          "D": "Donne +1 ATK à une unité adjacente",
+          "E": 0,
+          "F": "loot"
+        }
+      },
+      {
+        "row": 8,
+        "cells": {
+          "A": "Contaminatrice de Zone",
+          "B": "Résidu contaminé de Contaminatrice de Zone",
+          "C": "Vendable",
+          "D": "Objet étrange",
+          "E": 2,
+          "F": "loot"
+        }
+      }
+    ],
+    "Objets": [
+      {
+        "row": 1,
+        "cells": {
+          "A": "name",
+          "B": "dungeon_name",
+          "C": "type",
+          "D": "hp",
+          "E": "actions_allowed",
+          "F": "effect",
+          "G": "image_path",
+          "H": "tags"
+        }
+      },
+      {
+        "row": 2,
+        "cells": {
+          "A": "Torche",
+          "B": "Le Château de Bastognac",
+          "C": "torche murale",
+          "D": 2,
+          "E": "activer,éteindre",
+          "F": "activate=light,range=3,turns=4,extinguish=darkness",
+          "G": "44"
+        }
+      },
+      {
+        "row": 3,
+        "cells": {
+          "A": "Baril",
+          "B": "Le Château de Bastognac",
+          "C": "baril",
+          "D": 6,
+          "E": "pousser,casser,lancer",
+          "F": "break=explode,damage=1,area=2,brouhaha=1",
+          "G": "13"
+        }
+      },
+      {
+        "row": 4,
+        "cells": {
+          "A": "Grille",
+          "B": "Le Château de Bastognac",
+          "C": "grille",
+          "D": 9,
+          "E": "ouvrir,fermer,casser",
+          "F": "open=open_passage,close=close_passage,break=force_entry,brouhaha=2",
+          "G": "53"
+        }
+      },
+      {
+        "row": 5,
+        "cells": {
+          "A": "Pilier",
+          "B": "Le Château de Bastognac",
+          "C": "pilier",
+          "D": 12,
+          "E": "pousser,casser",
+          "F": "break=collapse,area=2,damage=1,brouhaha=3",
+          "G": "31"
+        }
+      },
+      {
+        "row": 6,
+        "cells": {
+          "A": "Table",
+          "B": "Le Château de Bastognac",
+          "C": "table",
+          "D": 6,
+          "E": "pousser,casser,lancer",
+          "F": "push=move,range=2,break=terrain_difficile",
+          "G": "21"
+        }
+      },
+      {
+        "row": 7,
+        "cells": {
+          "A": "Éboulis",
+          "B": "Le Château de Bastognac",
+          "C": "éboulis",
+          "D": 5,
+          "E": "déplacer,casser",
+          "F": "move=clear,break=block_passage,brouhaha=1",
+          "G": "39"
+        }
+      },
+      {
+        "row": 8,
+        "cells": {
+          "A": "Statue",
+          "B": "Le Château de Bastognac",
+          "C": "statue",
+          "D": 10,
+          "E": "pousser,casser",
+          "F": "push=fall,adjacent=1,damage=1,brouhaha=2,break=shatter",
+          "G": "31"
+        }
+      }
+    ],
+    "Brouhaha": [
+      {
+        "row": 1,
+        "cells": {
+          "A": "level",
+          "B": "dungeon_name",
+          "C": "effect_text"
+        }
+      },
+      {
+        "row": 2,
+        "cells": {
+          "A": 10,
+          "C": "Spawn : 2 créatures tactiques apparaissent dans la salle actuelle sur des cases libres au bord de la pièce. Si le bestiaire ne le permet pas, remplace chaque tactique manquante par 2 basiques."
+        }
+      },
+      {
+        "row": 3,
+        "cells": {
+          "A": 7,
+          "C": "Un objet interactif dangereux s’active si possible : feu, fumée, chute, verrouillage, ouverture ou mouvement selon sa nature. À défaut, l’objet le plus proche des héros."
+        }
+      },
+      {
+        "row": 4,
+        "cells": {
+          "A": 3,
+          "C": "Un objet interactif proche d’une figurine bascule, glisse ou se renverse. Les chevilles héroïques n’apprécient pas."
+        }
+      },
+      {
+        "row": 5,
+        "cells": {
+          "A": 8,
+          "C": "Spawn : 2 créatures apparaissent au bord de la salle actuelle. Utilise des basiques ou 1 tactique + 1 basique selon le bestiaire disponible. Elles ont clairement suivi le bruit comme des mouettes de donjon."
+        }
+      },
+      {
+        "row": 6,
+        "cells": {
+          "A": 5,
+          "C": "Un objet interactif proche des héros se déplace brutalement de 2 cases en ligne droite si possible. Les figurines sur son trajet sont repoussées d’1 case. Si ça coince, tout le monde fait semblant que c’était prévu."
+        }
+      },
+      {
+        "row": 7,
+        "cells": {
+          "A": 6,
+          "C": "Spawn : 2 créatures basiques apparaissent dans une salle adjacente révélée ou proche. Elles entrent en jeu groupées, comme une mauvaise idée qui aurait trouvé des amis."
+        }
+      },
+      {
+        "row": 8,
+        "cells": {
+          "A": 4,
+          "C": "Spawn : 2 créatures basiques apparaissent sur des cases libres au bord de la salle actuelle. Elles doivent être placées séparées si possible, comme deux employés qui refusent de travailler ensemble."
+        }
+      }
+    ],
+    "Médias": [
+      {
+        "row": 1,
+        "cells": {
+          "A": "id",
+          "B": "label",
+          "C": "file_name",
+          "D": "path",
+          "E": "mime_type",
+          "F": "entity_type",
+          "G": "entity_id"
+        }
+      },
+      {
+        "row": 2,
+        "cells": {
+          "A": "media_0041a113-f2b7-4eca-9421-ab7ee0692f70",
+          "B": "A0D7BFF3-3F23-4EF1-B111-F79EDE75A6AA.png",
+          "C": "A0D7BFF3-3F23-4EF1-B111-F79EDE75A6AA.png",
+          "D": "assets/images/creatures/a0d7bff3-3f23-4ef1-b111-f79ede75a6aa_fdae5fda-5031-4219-ae25-3b89e221fad9.webp",
+          "E": "image/webp",
+          "F": "creatures",
+          "G": "creature_8c11cfd3-17c2-4704-b0e3-eba9f66bc3ce"
+        }
+      },
+      {
+        "row": 3,
+        "cells": {
+          "A": "media_00641294-504a-42b6-a44e-0e2a1e776e8f",
+          "B": "5C1A193E-BD3B-4352-B05B-7AC187A4F175.jpeg",
+          "C": "5C1A193E-BD3B-4352-B05B-7AC187A4F175.jpeg",
+          "D": "assets/images/heroes/5c1a193e-bd3b-4352-b05b-7ac187a4f175_b5c8586b-711b-4f23-bcac-b090b2221a99.webp",
+          "E": "image/webp",
+          "F": "heroes",
+          "G": "hero_4e966ce5-299e-4eaa-8eba-1d88c211baf8"
+        }
+      },
+      {
+        "row": 4,
+        "cells": {
+          "A": "media_0138c22a-381b-42ba-b560-c4a0e18fab6b",
+          "B": "D3440855-9838-4390-8547-A1D9E171E793.PNG",
+          "C": "D3440855-9838-4390-8547-A1D9E171E793.PNG",
+          "D": "assets/images/creatures/d3440855-9838-4390-8547-a1d9e171e793_999747d2-19f6-4103-a945-f0e01a747d71.webp",
+          "E": "image/webp",
+          "F": "creatures",
+          "G": "creature_aaf338a1-824b-4fa1-9188-22f3bf916b53"
+        }
+      },
+      {
+        "row": 5,
+        "cells": {
+          "A": "media_01d22d08-e21e-45a5-ac03-29ab9e3cb09c",
+          "B": "6BD77490-CA4A-463B-8F51-6139094A5123.PNG",
+          "C": "6BD77490-CA4A-463B-8F51-6139094A5123.PNG",
+          "D": "assets/images/dungeons/6bd77490-ca4a-463b-8f51-6139094a5123_78f3c9af-f38a-4f6d-8da5-dbdf879296df.webp",
+          "E": "image/webp",
+          "F": "dungeons",
+          "G": "dungeon_08514deb-9aef-4b35-82d1-2cb657941424"
+        }
+      },
+      {
+        "row": 6,
+        "cells": {
+          "A": "media_02a9fe22-55c2-46af-aeb6-fcd1fbabfffc",
+          "B": "3990CBFC-D833-4F05-B244-70EE8C851D28.PNG",
+          "C": "3990CBFC-D833-4F05-B244-70EE8C851D28.PNG",
+          "D": "assets/images/creatures/3990cbfc-d833-4f05-b244-70ee8c851d28_e2568131-0b6f-4858-bf9f-1311ffc40193.webp",
+          "E": "image/webp",
+          "F": "creatures",
+          "G": "creature_52f5440c-6a56-456f-90d5-cbf142c662d3"
+        }
+      },
+      {
+        "row": 7,
+        "cells": {
+          "A": "media_0311aed9-a381-4426-8363-8abe552d705d",
+          "B": "FDCE0B9E-15B6-4A31-B177-9BDF5A98D146.png",
+          "C": "FDCE0B9E-15B6-4A31-B177-9BDF5A98D146.png",
+          "D": "assets/images/creatures/fdce0b9e-15b6-4a31-b177-9bdf5a98d146_1ef75365-3164-4250-8e4e-dd34ecd87884.webp",
+          "E": "image/webp",
+          "F": "creatures",
+          "G": "creature_66b3e173-80d9-47be-81a2-4e10f8848020"
+        }
+      },
+      {
+        "row": 8,
+        "cells": {
+          "A": "media_03aab786-c3b7-4ceb-bb23-a5bfa9a9c4ed",
+          "B": "Kobold Contremaître Dévot.PNG",
+          "C": "Kobold Contremaître Dévot.PNG",
+          "D": "assets/images/creatures/kobold-contremaitre-devot_738fab4b-f40a-44e1-a536-261564a38d15.webp",
+          "E": "image/webp",
+          "F": "creatures",
+          "G": "creature_5dded550-c826-44a3-b462-cd33ecfe5847"
+        }
+      }
+    ]
+  }
+}
