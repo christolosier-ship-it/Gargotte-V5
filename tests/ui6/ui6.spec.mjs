@@ -425,8 +425,7 @@ test("session Generator, Brouhaha and Quest flows remain coherent", async ({ pag
   const eliminate = page.locator('[data-action="session-eliminate-creature"]').first();
   const beforeRemaining = Number(await page.locator(".encounter-remaining-v6 b").innerText());
   await eliminate.click();
-  const afterRemaining = Number(await page.locator(".encounter-remaining-v6 b").innerText());
-  expect(afterRemaining).toBeLessThan(beforeRemaining);
+  await expect.poll(async () => Number(await page.locator(".encounter-remaining-v6 b").innerText())).toBeLessThan(beforeRemaining);
 
   await gotoView(page, "brouhaha");
   await page.locator('[data-action="session-brouhaha-plus"]').click();
