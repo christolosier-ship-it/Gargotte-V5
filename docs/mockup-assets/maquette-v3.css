@@ -859,3 +859,35 @@
   .gargotte-cinematic,.cinematic-backdrop,.cinematic-curtain,.cinematic-card,.dungeon-boss-showcase{transition:none!important}
   .cinematic-sparks{display:none}
 }
+
+
+/* ========================================================================== */
+/* V3 stability pass · runtime resilience                                     */
+/* ========================================================================== */
+body.cinematic-open{overflow:hidden}
+.media-broken{
+  position:relative;
+  display:grid!important;
+  place-items:center;
+  min-height:120px;
+  background:
+    radial-gradient(circle at 50% 42%,rgba(212,164,95,.09),transparent 34%),
+    linear-gradient(145deg,#21170f,#0b0806 72%),
+    url('./textures/grain-dark.svg');
+}
+.media-broken-mark{
+  position:relative;
+  z-index:3;
+  padding:7px 10px;
+  border:1px solid var(--b1);
+  border-radius:999px;
+  color:var(--ter);
+  background:rgba(11,8,6,.72);
+  font:700 9px/1 Inter,sans-serif;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+@media(max-width:620px){
+  .gargotte-cinematic{padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom)}
+  .cinematic-card{max-height:calc(100svh - 32px);overflow:auto}
+}

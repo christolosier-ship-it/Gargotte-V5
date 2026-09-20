@@ -218,8 +218,8 @@ async function prepareCreatureImages(){
 function showToast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(showToast.t);showToast.t=setTimeout(()=>t.classList.remove('show'),2600)}
 const cinematicSeen=new Set();
 function ensureCinematicLayer(){let layer=$('#gargotte-cinematic');if(layer)return layer;layer=document.createElement('div');layer.id='gargotte-cinematic';layer.className='gargotte-cinematic';layer.setAttribute('role','dialog');layer.setAttribute('aria-modal','true');layer.setAttribute('aria-live','polite');document.body.append(layer);return layer}
-function hideCinematic(){const layer=$('#gargotte-cinematic');if(!layer)return;layer.classList.remove('show');clearTimeout(showCinematic.timer)}
-function showCinematic(kind,payload){payload=payload||{};const layer=ensureCinematicLayer(),image=payload.image||'',accent=payload.accent||'#D4A45F';clearTimeout(showCinematic.timer);const icon=kind==='victory'?'Icone_Gameplay_BUTIN.webp':kind==='boss'?'Sigil_Boss.webp':'Icone_Gameplay_DONJON.webp';const eyebrow=kind==='victory'?'RENCONTRE TERMINÉE':kind==='boss'?'BOSS EN VUE':'NOUVEAU LIEU';const title=payload.title||(kind==='victory'?'Salle nettoyée':'Découverte');const copy=payload.copy||(kind==='victory'?'Le silence revient. C’est presque inquiétant.':'');layer.dataset.kind=kind;layer.style.setProperty('--cinematic-bg',image?"url('"+image+"')":'none');layer.style.setProperty('--cinematic-accent',accent);layer.innerHTML='<div class="cinematic-backdrop"></div><div class="cinematic-curtain left"></div><div class="cinematic-curtain right"></div><div class="cinematic-card"><img class="cinematic-emblem" src="'+ICON_BASE+icon+'" alt=""><div class="cinematic-eyebrow">'+eyebrow+'</div><h2>'+title+'</h2><p>'+copy+'</p><div class="cinematic-sparks" aria-hidden="true">'+Array.from({length:9},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><button class="btn cinematic-skip" type="button">Continuer</button></div>';layer.onclick=e=>{if(e.target===layer||e.target.closest('.cinematic-skip'))hideCinematic()};requestAnimationFrame(()=>layer.classList.add('show'));showCinematic.timer=setTimeout(hideCinematic,kind==='victory'?3200:2500)}
+function hideCinematic(){const layer=$('#gargotte-cinematic');if(!layer)return;layer.classList.remove('show');document.body.classList.remove('cinematic-open');clearTimeout(showCinematic.timer)}
+function showCinematic(kind,payload){payload=payload||{};const layer=ensureCinematicLayer(),image=payload.image||'',accent=payload.accent||'#D4A45F';clearTimeout(showCinematic.timer);const icon=kind==='victory'?'Icone_Gameplay_BUTIN.webp':kind==='boss'?'Sigil_Boss.webp':'Icone_Gameplay_DONJON.webp';const eyebrow=kind==='victory'?'RENCONTRE TERMINÉE':kind==='boss'?'BOSS EN VUE':'NOUVEAU LIEU';const title=payload.title||(kind==='victory'?'Salle nettoyée':'Découverte');const copy=payload.copy||(kind==='victory'?'Le silence revient. C’est presque inquiétant.':'');layer.dataset.kind=kind;layer.style.setProperty('--cinematic-bg',image?"url('"+image+"')":'none');layer.style.setProperty('--cinematic-accent',accent);layer.innerHTML='<div class="cinematic-backdrop"></div><div class="cinematic-curtain left"></div><div class="cinematic-curtain right"></div><div class="cinematic-card"><img class="cinematic-emblem" src="'+ICON_BASE+icon+'" alt=""><div class="cinematic-eyebrow">'+eyebrow+'</div><h2>'+title+'</h2><p>'+copy+'</p><div class="cinematic-sparks" aria-hidden="true">'+Array.from({length:9},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><button class="btn cinematic-skip" type="button">Continuer</button></div>';layer.onclick=e=>{if(e.target===layer||e.target.closest('.cinematic-skip'))hideCinematic()};document.body.classList.add('cinematic-open');requestAnimationFrame(()=>layer.classList.add('show'));showCinematic.timer=setTimeout(hideCinematic,kind==='victory'?3200:2500)}
 
 function normalizeView(view){return view==='plus'?'more':view}
 function show(requested){
@@ -383,8 +383,8 @@ function renderFamilyBrowser(type){
     list.innerHTML=all.filter(x=>(x.name+' '+familySubtitle(type,x)).toLowerCase().includes(q)).map(x=>familyCard(type,x,mode)).join('')||'<div class="empty-inline">Aucun résultat.</div>';
     $$('[data-family-item]',list).forEach(b=>b.onclick=()=>selectFamilyItem(type,b.dataset.familyItem));
   };
-  $('[data-see-all]',host).forEach(b=>b.onclick=()=>{renderCodexType(b.dataset.seeAll);showToast('Collection liée ouverte')});
-  $('[data-boss-reveal]',host).forEach(b=>b.onclick=()=>{const d=codexDungeons.find(x=>x.id===b.dataset.bossReveal);if(d)showCinematic('boss',{title:d.boss||'Boss',copy:(d.bossThreat?'Menace '+d.bossThreat+' · ':'')+(d.atmosphere||''),image:d.bossImage||d.image,accent:d.accent})});
+  $$('[data-see-all]',host).forEach(b=>b.onclick=()=>{renderCodexType(b.dataset.seeAll);showToast('Collection liée ouverte')});
+  $$('[data-boss-reveal]',host).forEach(b=>b.onclick=()=>{const d=codexDungeons.find(x=>x.id===b.dataset.bossReveal);if(d)showCinematic('boss',{title:d.boss||'Boss',copy:(d.bossThreat?'Menace '+d.bossThreat+' · ':'')+(d.atmosphere||''),image:d.bossImage||d.image,accent:d.accent})});
   $$('[data-hero-level]',host).forEach(b=>b.onclick=()=>{heroLevelState[b.dataset.heroId]=Number(b.dataset.heroLevel);localStorage.setItem('mockup:heroLevel:'+b.dataset.heroId,b.dataset.heroLevel);renderFamilyBrowser(type);applyFamilyResponsive(type)});
 }
 function selectFamilyItem(type,id){
@@ -442,7 +442,6 @@ function initCodex(){
   $$('.codex-tabs button').forEach(b=>b.onclick=()=>renderCodexType(b.dataset.codex));
   $('#mode-gallery').onclick=()=>setBestiaryMode('gallery');$('#mode-list').onclick=()=>setBestiaryMode('list');
   $$('[data-see-all]').forEach(b=>b.onclick=()=>{renderCodexType(b.dataset.seeAll);showToast('Collection ouverte avec filtre Donjon conservé')});
-  $$('.hero-level').forEach(b=>b.onclick=()=>{$$('.hero-level').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#hero-level-label').textContent=b.dataset.level;$('#hero-pv').textContent=Number(b.dataset.level)*2+8;$('#hero-atk').textContent=Math.ceil(Number(b.dataset.level)/2)+2});
   addEventListener('resize',()=>{applyBestiaryResponsive();Object.keys(codexFamilyMeta).forEach(applyFamilyResponsive)});
 }
 
@@ -450,6 +449,7 @@ function renderEncounter(){
   const host=$('#encounter-results');if(!host)return;
   host.innerHTML=Object.entries(encounter).map(([id,qty])=>{
     const c=creatures.find(x=>x.id===id);
+    if(!c)return '';
     return `<div class="result-card ${c.cat} ${qty===0?'done':''}">
       <div class="encounter-row">
         <div class="encounter-miniature"><img src="${creatureSrc(c)}" alt=""><i></i></div>
@@ -470,10 +470,16 @@ function renderEncounter(){
       ${qty===0?'<div class="loot-reveal">Groupe terminé. Tous les tirages de Butin ont été effectués.</div>':''}
     </div>`;
   }).join('');
-  $('[data-eliminate]',host).forEach(b=>b.onclick=()=>{const id=b.dataset.eliminate;if(encounter[id]>0){encounter[id]--;renderEncounter();showToast('1 occurrence éliminée · Butin tiré une seule fois');if(!encounterVictoryShown&&Object.values(encounter).every(q=>q===0)){encounterVictoryShown=true;setTimeout(()=>showCinematic('victory',{title:'Salle nettoyée',copy:'Le butin est tombé. Le silence aussi. Personne ne fait confiance au silence.'}),180)}}});
+  $$('[data-eliminate]',host).forEach(b=>b.onclick=()=>{const id=b.dataset.eliminate;if(encounter[id]>0){encounter[id]--;renderEncounter();showToast('1 occurrence éliminée · Butin tiré une seule fois');if(!encounterVictoryShown&&Object.values(encounter).every(q=>q===0)){encounterVictoryShown=true;setTimeout(()=>showCinematic('victory',{title:'Salle nettoyée',copy:'Le butin est tombé. Le silence aussi. Personne ne fait confiance au silence.'}),180)}}});
   $$('[data-open-creature]',host).forEach(b=>b.onclick=()=>{selectedCreature=b.dataset.openCreature;mobileDetailOpen=true;renderCreature();openCodex('creatures')});
 }
-function initGenerator(){$('.enc-mode').forEach(b=>b.onclick=()=>{$('.enc-mode').forEach(x=>x.classList.remove('active'));b.classList.add('active')});$('#generate').onclick=()=>{encounter={rainette:2,trixie:1};encounterVictoryShown=false;$('#generator')?.classList.add('generated');renderEncounter();showToast('Rencontre générée localement')};renderEncounter()}
+function initGenerator(){
+  const modes=$$('.enc-mode');
+  modes.forEach(b=>b.onclick=()=>{modes.forEach(x=>x.classList.remove('active'));b.classList.add('active')});
+  const generate=$('#generate');
+  if(generate)generate.onclick=()=>{encounter={rainette:2,trixie:1};encounterVictoryShown=false;$('#generator')?.classList.add('generated');renderEncounter();showToast('Rencontre générée localement')};
+  renderEncounter();
+}
 
 function initBrouhaha(){
   const update=()=>{
@@ -563,6 +569,25 @@ function openUnsaved(target){
   modal.classList.add('open');ok.onclick=()=>{save.classList.add('hidden');closeOverlay('#confirm-modal');dirty=false;setDirty(false);show(target)};save.onclick=()=>{save.classList.add('hidden');closeOverlay('#confirm-modal');saveEntity(()=>show(target))};
 }
 
+function initImageFallbacks(){
+  document.addEventListener('error',e=>{
+    const img=e.target;
+    if(!(img instanceof HTMLImageElement)||img.dataset.fallbackApplied)return;
+    img.dataset.fallbackApplied='1';
+    const frame=img.parentElement;
+    if(frame){
+      frame.classList.add('media-broken');
+      img.style.display='none';
+      if(!frame.querySelector('.media-broken-mark')){
+        const mark=document.createElement('span');
+        mark.className='media-broken-mark';
+        mark.textContent='Visuel indisponible';
+        frame.append(mark);
+      }
+    }
+  },true);
+}
+
 function initMedia(){
   $$('.media-filter').forEach(b=>b.onclick=()=>{$$('.media-filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');const f=b.dataset.mediaFilter;$$('.media-card').forEach(c=>c.classList.toggle('hidden',f!=='all'&&!c.dataset.state.includes(f)))});
   $$('.media-card').forEach(c=>c.onclick=()=>{$('#media-detail-title').textContent=c.dataset.title;$('#media-detail-status').textContent=c.dataset.status;$('#media-detail-image').src=c.querySelector('img').src;$('#media-detail-panel').classList.remove('hidden');$('#media-detail-panel').scrollIntoView({behavior:'smooth'})});
@@ -588,5 +613,23 @@ function initSearch(){
 }
 function initMockup(){$$('.mockup-nav button').forEach(b=>b.onclick=()=>$(b.dataset.jump)?.scrollIntoView({behavior:'smooth',block:'start'}));$('#pwa-install-demo')?.addEventListener('click',()=>showToast('iOS : Partager → Ajouter à l’écran d’accueil · autres plateformes : invitation d’installation si disponible'))}
 
-function init(){injectCreatureStageStyles();initNav();initCodex();renderCodexType('creatures');initGenerator();initBrouhaha();initQuests();initAtelier();initMedia();initImport();initOverlays();initSearch();initMockup();prepareCreatureImages()}
+function safeInit(name,fn){
+  try{fn()}catch(err){console.error('[Gargottex mockup] '+name,err)}
+}
+function init(){
+  safeInit('styles',injectCreatureStageStyles);
+  safeInit('navigation',initNav);
+  safeInit('codex',()=>{initCodex();renderCodexType('creatures')});
+  safeInit('generator',initGenerator);
+  safeInit('brouhaha',initBrouhaha);
+  safeInit('quests',initQuests);
+  safeInit('atelier',initAtelier);
+  safeInit('media',initMedia);
+  safeInit('import-export',initImport);
+  safeInit('overlays',initOverlays);
+  safeInit('search',initSearch);
+  safeInit('mockup',initMockup);
+  safeInit('image-fallbacks',initImageFallbacks);
+  Promise.resolve().then(prepareCreatureImages).catch(err=>console.warn('[Gargottex mockup] creature images',err));
+}
 document.addEventListener('DOMContentLoaded',init);
