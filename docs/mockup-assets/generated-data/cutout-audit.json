@@ -17,6 +17,7 @@
         1405
       ],
       "source": "docs/mockup-assets/creatures/Ange Émondeuse Sacrée.PNG",
+      "source_sha256": "1cca22adc9a1c822d61830aafe1721f41e7c26a54299b6bcf376f3d34a3dd799",
       "model": "isnet-general-use"
     },
     {
@@ -33,6 +34,7 @@
         1173
       ],
       "source": "docs/mockup-assets/creatures/Balai Hanté.PNG",
+      "source_sha256": "8ed651310a773dabd975b512fe986305f0e1b618e5286c5181daa1058321b70f",
       "model": "isnet-general-use"
     },
     {
@@ -49,6 +51,7 @@
         1232
       ],
       "source": "docs/mockup-assets/creatures/Baron Pas-Très-Terrifiant.PNG",
+      "source_sha256": "c0a718af95a7ca792cd1150e8e9b05e77b6d2bba726c511b9ca6d6feea9687fb",
       "model": "isnet-general-use"
     },
     {
@@ -65,6 +68,7 @@
         1230
       ],
       "source": "docs/mockup-assets/creatures/Chevalier Sans Cheval.PNG",
+      "source_sha256": "668e1c8a6661eece8dfc4fddeef6141bd6a42ea10b7ddd38437cdef60e801abf",
       "model": "isnet-general-use"
     },
     {
@@ -81,6 +85,7 @@
         1150
       ],
       "source": "docs/mockup-assets/creatures/Cloche Possédée.PNG",
+      "source_sha256": "c842b14fbe14f06f1246296f95d31a643b7f2b5674c9e3515818a5a4a3b5e273",
       "model": "isnet-general-use"
     },
     {
@@ -97,6 +102,7 @@
         1234
       ],
       "source": "docs/mockup-assets/creatures/Coasse-Sombre.PNG",
+      "source_sha256": "a6d1a24563ddacb8eec8c59aa0e85f89d2cf9524f638cb5e208c0bd3a6155cbc",
       "model": "isnet-general-use"
     },
     {
@@ -113,6 +119,7 @@
         1174
       ],
       "source": "docs/mockup-assets/creatures/Cuisinier Zombie.PNG",
+      "source_sha256": "0907ab0357a936fe758a74e0959f30dfec810f2d691dd5ef2f52fed6f87ad466",
       "model": "isnet-general-use"
     },
     {
@@ -129,6 +136,7 @@
         1403
       ],
       "source": "docs/mockup-assets/creatures/Déesse de la Fermentation Sacrée.PNG",
+      "source_sha256": "b527a468e5cc12e1faff2a322f3d7f6bdbb7765242a12b2b880badd0ab962a45",
       "model": "isnet-general-use"
     },
     {
@@ -145,6 +153,7 @@
         1319
       ],
       "source": "docs/mockup-assets/creatures/Déesse de la Mousse Éternelle.PNG",
+      "source_sha256": "e9da4c6a8ba9d58cf6d90399a86cee1760977eb0cf8902c51f65a0412d494929",
       "model": "isnet-general-use"
     },
     {
@@ -161,6 +170,7 @@
         1413
       ],
       "source": "docs/mockup-assets/creatures/Déesse du Houblon Absolu.PNG",
+      "source_sha256": "a633c6e4c5788ca68cd322e61fbd2b32d7604802168a878deb56fdec314237ba",
       "model": "isnet-general-use"
     },
     {
@@ -177,6 +187,7 @@
         1375
       ],
       "source": "docs/mockup-assets/creatures/Dégustatrice Divine.PNG",
+      "source_sha256": "47666b1649667a6a9f1c795cf81933927b07526c4f190aa9f9343150f3b3f3ef",
       "model": "isnet-general-use"
     },
     {
@@ -193,6 +204,7 @@
         1469
       ],
       "source": "docs/mockup-assets/creatures/Diablotine Contrôleuse.PNG",
+      "source_sha256": "ee45f2921a74cd18f8f13d86ae889452731537f73b6599718fc88880ec901406",
       "model": "isnet-general-use"
     },
     {
@@ -209,6 +221,7 @@
         1224
       ],
       "source": "docs/mockup-assets/creatures/Fantôme Bureaucrate.PNG",
+      "source_sha256": "edff6574cd80bb54030478ba951cca18829734b1b4d5dc2c49615f1f8ee1c0f4",
       "model": "isnet-general-use"
     },
     {
@@ -225,6 +238,7 @@
         1167
       ],
       "source": "docs/mockup-assets/creatures/Garde Possédé.PNG",
+      "source_sha256": "c9a481443ceb732a81d706d6827153aa1b3e9f625a760e1811c9e32b4fdaa28e",
       "model": "isnet-general-use"
     },
     {
@@ -241,6 +255,7 @@
         1204
       ],
       "source": "docs/mockup-assets/creatures/Gobelin Bricoleur.PNG",
+      "source_sha256": "1fb4f1ff3fd3d71d49058344805c5d254397c1e821a98e97cda3f04a100737c0",
       "model": "isnet-general-use"
     },
     {
@@ -257,6 +272,7 @@
         1228
       ],
       "source": "docs/mockup-assets/creatures/Gobelin Chef.PNG",
+      "source_sha256": "c5480c10a25918af58fcdb5689b6bf3bfcb5b978ad6eab9538d92b5d8c78c3fe",
       "model": "isnet-general-use"
     },
     {
@@ -273,6 +289,7 @@
         1142
       ],
       "source": "docs/mockup-assets/creatures/Gobelin Lance-Tout.PNG",
+      "source_sha256": "e62a78c86914a562e6311756d83642e7cbf07255eb550cc9f933bdec3d82c089",
       "model": "isnet-general-use"
     },
     {
@@ -289,6 +306,7 @@
         1251
       ],
       "source": "docs/mockup-assets/creatures/Gobeline Aguicheuse.PNG",
+      "source_sha256": "9c8d697164a0477e2efe926147265075b7f1a622072566eaac96bd73164adf3d",
       "model": "isnet-general-use"
     },
     {
@@ -305,6 +323,7 @@
         1241
       ],
       "source": "docs/mockup-assets/creatures/Gobeline Serveuse Explosive.PNG",
+      "source_sha256": "6470cb1ed2aa8f42ae7b5e4686c0c9f46b40514b878bdaec2c4eab0384170dac",
       "model": "isnet-general-use"
     },
     {
@@ -321,6 +340,7 @@
         1321
       ],
       "source": "docs/mockup-assets/creatures/Inspectrice du Goût Déchue.PNG",
+      "source_sha256": "867c3907e2a7772ab82bc5e18878f682dc942c4b04e71ce139c04c7993a3568f",
       "model": "isnet-general-use"
     },
     {
@@ -337,6 +357,7 @@
         1193
       ],
       "source": "docs/mockup-assets/creatures/Larve de Houblon.PNG",
+      "source_sha256": "ec81ecd51e5c0839364aeca1a5a75b22bc0dc2cef163a495ad1c19739ad75864",
       "model": "isnet-general-use"
     },
     {
@@ -353,6 +374,7 @@
         1217
       ],
       "source": "docs/mockup-assets/creatures/Léviathan Hydrique.PNG",
+      "source_sha256": "ce7045c6c598ced499e0bba4693dc9bd90473c88465d083a1d7e452fd51e7581",
       "model": "isnet-general-use"
     },
     {
@@ -369,6 +391,7 @@
         1235
       ],
       "source": "docs/mockup-assets/creatures/Maître Brasseur MécanoGnome.PNG",
+      "source_sha256": "a30c7967313280fe036940aad1c00fc58ee9a44f8bca4cd6e8c514fd7f085a7a",
       "model": "isnet-general-use"
     },
     {
@@ -385,6 +408,7 @@
         1072
       ],
       "source": "docs/mockup-assets/creatures/Mimique Raté.PNG",
+      "source_sha256": "d638f677cdf3733f782c443438030b4179de3783d4e484f51b01eb76ce866f70",
       "model": "isnet-general-use"
     },
     {
@@ -401,6 +425,7 @@
         1245
       ],
       "source": "docs/mockup-assets/creatures/Ogre Maladroit.PNG",
+      "source_sha256": "acd91474094b3593664b061eaa58a790390f45b538eab7bafbd4cb54e24f2138",
       "model": "isnet-general-use"
     },
     {
@@ -417,6 +442,7 @@
         1174
       ],
       "source": "docs/mockup-assets/creatures/Poule Démoniaque.PNG",
+      "source_sha256": "87b0fa5f6346fe03fb79db0bd8574b279bf0bb7c92bc52b118d7856a52b6439f",
       "model": "isnet-general-use"
     },
     {
@@ -433,6 +459,7 @@
         1189
       ],
       "source": "docs/mockup-assets/creatures/Saute-Tonneau.PNG",
+      "source_sha256": "6fae61565a1ae5e8e70c8d0b5a8e19179b407983614d35d54898a1abd27c6a39",
       "model": "isnet-general-use"
     },
     {
@@ -449,6 +476,7 @@
         1119
       ],
       "source": "docs/mockup-assets/creatures/Squelette Maladroit.PNG",
+      "source_sha256": "3978453d0465a514e64a22e48c062568813917658039172822c5afdec7217355",
       "model": "isnet-general-use"
     },
     {
@@ -465,6 +493,7 @@
         1163
       ],
       "source": "docs/mockup-assets/creatures/Squelette Porte-Placard.PNG",
+      "source_sha256": "508a05948cecab8543d4b51822ab001bb47c4e8252c6ea90cc89f1bab2abfa0d",
       "model": "isnet-general-use"
     },
     {
@@ -481,6 +510,7 @@
         1140
       ],
       "source": "docs/mockup-assets/creatures/Squelette Tire-au-Pif.PNG",
+      "source_sha256": "c1e35d02dc5728f4618a76a1e6f7474b9ec179887e77d9655f0db645d292c859",
       "model": "isnet-general-use"
     }
   ],
@@ -499,6 +529,7 @@
         1213
       ],
       "source": "docs/mockup-assets/heros/Brünhilda la Torgnole - Level 1.PNG",
+      "source_sha256": "c5160397589208e9d3751b378949f8cfc951ca7b28da030abad06e849242de47",
       "model": "isnet-general-use"
     },
     {
@@ -515,6 +546,7 @@
         1218
       ],
       "source": "docs/mockup-assets/heros/Brünhilda la Torgnole - Level 2.PNG",
+      "source_sha256": "c64815c7b3fc88ca400e776c0a2acd1c6561b80109f7e33d9bed0be251dea53d",
       "model": "isnet-general-use"
     },
     {
@@ -531,6 +563,7 @@
         1208
       ],
       "source": "docs/mockup-assets/heros/Brünhilda la Torgnole - Level 3.PNG",
+      "source_sha256": "77db4af4d7a6eceb782bd7224a13c59bc8658a163796cb18a1b5a367636f29e4",
       "model": "isnet-general-use"
     },
     {
@@ -547,6 +580,7 @@
         1228
       ],
       "source": "docs/mockup-assets/heros/Brünhilda la Torgnole - Level 4.PNG",
+      "source_sha256": "c6f8d50f50c87841aeb691dfb760e8430c51fddfd84450b76eec8247fb43b773",
       "model": "isnet-general-use"
     },
     {
@@ -563,6 +597,7 @@
         1439
       ],
       "source": "docs/mockup-assets/heros/Glibouille Nénucorde - Level 1.PNG",
+      "source_sha256": "155d71f9fb154e9591fa2414ec3376b11511c35d5fdd350d21c268e2e75e1cfa",
       "model": "isnet-general-use"
     },
     {
@@ -579,6 +614,7 @@
         1525
       ],
       "source": "docs/mockup-assets/heros/Glibouille Nénucorde - Level 2.PNG",
+      "source_sha256": "7a0146108e19849a64f602a7be564da8bc4e6922fa928e9cc1803ab474c3fb84",
       "model": "isnet-general-use"
     },
     {
@@ -595,6 +631,7 @@
         1472
       ],
       "source": "docs/mockup-assets/heros/Glibouille Nénucorde - Level 3.PNG",
+      "source_sha256": "3056cb82511d4922f8d94481a72594ca7294b83c1006aec908dc8057cbe42660",
       "model": "isnet-general-use"
     },
     {
@@ -611,6 +648,7 @@
         1459
       ],
       "source": "docs/mockup-assets/heros/Glibouille Nénucorde - Level 4.PNG",
+      "source_sha256": "4b378b9f2fdcfef41f68021176184b24eba1b89e79bfe046888c66ef4c2d55f1",
       "model": "isnet-general-use"
     },
     {
@@ -627,6 +665,7 @@
         929
       ],
       "source": "docs/mockup-assets/heros/Magdalena Coquinelle - Level 1.jpg",
+      "source_sha256": "d6c38e6a0e74a5501cf0556de69b98ebbd02fc1c86d0f0b09d9c1f20b90a4828",
       "model": "isnet-general-use"
     },
     {
@@ -643,6 +682,7 @@
         1281
       ],
       "source": "docs/mockup-assets/heros/Magdalena Coquinelle - Level 2.jpg",
+      "source_sha256": "75c7898f574c53fe106fdf17a3b16af7a28a68d1aa846a4968f7d1786ec5a5d8",
       "model": "isnet-general-use"
     },
     {
@@ -659,6 +699,7 @@
         1295
       ],
       "source": "docs/mockup-assets/heros/Magdalena Coquinelle - Level 3.PNG",
+      "source_sha256": "72960eabfa10c6e1f9996f1ed5dfa5cc8ef177824bad5ebc414c1d516ec8cc58",
       "model": "isnet-general-use"
     },
     {
@@ -675,6 +716,7 @@
         1299
       ],
       "source": "docs/mockup-assets/heros/Magdalena Coquinelle - Level 4.PNG",
+      "source_sha256": "bf1293f697fbe29587c07234179f1390443d8d630838d2a009169c66dd28364e",
       "model": "isnet-general-use"
     },
     {
@@ -691,6 +733,7 @@
         1197
       ],
       "source": "docs/mockup-assets/heros/Mandaline Cataparebaffe - Level 1.PNG",
+      "source_sha256": "ee6d6482d96f6f092e777e2764a0994d2a66ab78d20a89e0faaac505f084e071",
       "model": "isnet-general-use"
     },
     {
@@ -707,6 +750,7 @@
         1218
       ],
       "source": "docs/mockup-assets/heros/Mandaline Cataparebaffe - Level 2.PNG",
+      "source_sha256": "20c4f6a1e1e5ded64ca2c1f1656a2eb86b584ee7da741f6b5aa62a50a0c21f96",
       "model": "isnet-general-use"
     },
     {
@@ -723,6 +767,7 @@
         1229
       ],
       "source": "docs/mockup-assets/heros/Mandaline Cataparebaffe - Level 3.PNG",
+      "source_sha256": "bf53b224ec574159f70bb7742a5e5b5fcf26d2aa0d9531ad2a8ca3af4892e24f",
       "model": "isnet-general-use"
     },
     {
@@ -739,6 +784,7 @@
         1228
       ],
       "source": "docs/mockup-assets/heros/Mandaline Cataparebaffe - Level 4.PNG",
+      "source_sha256": "be556aa844065f9f3c083624ae3f39a9eb3f02a1f53ecdb9edb4bc55a5bdefb9",
       "model": "isnet-general-use"
     },
     {
@@ -755,6 +801,7 @@
         1451
       ],
       "source": "docs/mockup-assets/heros/Mycélia Sporeventail - Level 1.PNG",
+      "source_sha256": "9096ac2043757c34575137adfedff836f6764eb386ac1b566ab93b4fe32afb69",
       "model": "isnet-general-use"
     },
     {
@@ -771,6 +818,7 @@
         1387
       ],
       "source": "docs/mockup-assets/heros/Mycélia Sporeventail - Level 2.PNG",
+      "source_sha256": "f3a664469e88bdcb01d2d2e3460b6cc483588e868537e9667f30eea7c40c93a0",
       "model": "isnet-general-use"
     },
     {
@@ -787,6 +835,7 @@
         1363
       ],
       "source": "docs/mockup-assets/heros/Mycélia Sporeventail - Level 3.PNG",
+      "source_sha256": "3e2e1ae557e98fe924a910b8fa9128b92e4ace7383b1f183a0e075063ec88199",
       "model": "isnet-general-use"
     },
     {
@@ -803,6 +852,7 @@
         1295
       ],
       "source": "docs/mockup-assets/heros/Mycélia Sporeventail - Level 4.PNG",
+      "source_sha256": "cb4b2d06057014d750c12d3a545ae251f8530016676c684d333b1dcb80db9cc8",
       "model": "isnet-general-use"
     }
   ]
