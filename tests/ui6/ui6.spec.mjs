@@ -355,6 +355,33 @@ test("mobile WebKit critical navigation smoke @webkit", async ({ page }) => {
 });
 
 
+test("core web vitals stay inside UI-6 vigilance thresholds", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__ui6Vitals = { cls: 0, lcp: 0 };
+    try {
+      new PerformanceObserver(list => {
+        for (const entry of list.getEntries()) {
+          if (!entry.hadRecentInput) window.__ui6Vitals.cls += entry.value || 0;
+        }
+      }).observe({ type: "layout-shift", buffered: true });
+    } catch (_) {}
+    try {
+      new PerformanceObserver(list => {
+        const entries = list.getEntries();
+        const last = entries[entries.length - 1];
+        if (last) window.__ui6Vitals.lcp = last.startTime || 0;
+      }).observe({ type: "largest-contentful-paint", buffered: true });
+    } catch (_) {}
+  });
+  await ready(page);
+  await page.waitForLoadState("load");
+  await page.waitForTimeout(1200);
+  const vitals = await page.evaluate(() => window.__ui6Vitals);
+  expect(vitals.cls).toBeLessThanOrEqual(0.10);
+  expect(vitals.lcp).toBeGreaterThan(0);
+  expect(vitals.lcp).toBeLessThanOrEqual(2500);
+});
+
 test("cutout audit keeps originals and transparent derivatives valid", async ({ page }) => {
   await page.goto("/docs/mockup-assets/generated-data/cutout-audit.json");
   const audit = JSON.parse(await page.locator("body").innerText());
