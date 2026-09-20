@@ -6851,13 +6851,14 @@ async function bootstrap() {
   render();
 
 if ("serviceWorker" in navigator) {
+    const controlledBeforeRegistration = Boolean(navigator.serviceWorker.controller);
     const reg = await navigator.serviceWorker.register("./service-worker.js");
     state.serviceWorkerRegistration = reg;
     setInterval(() => { reg.update().catch(() => {}); }, 15 * 60 * 1000);
     if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
     let refreshing = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (refreshing) return;
+      if (refreshing || !controlledBeforeRegistration) return;
       refreshing = true;
       window.location.reload();
     });
