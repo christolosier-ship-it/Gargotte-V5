@@ -482,6 +482,80 @@ test("mobile WebKit critical navigation smoke @webkit", async ({ page }) => {
 });
 
 
+test("Service Worker cache and update control preserve local data", async ({ page }) => {
+  await ready(page);
+  const controlled = await page.evaluate(async () => {
+    const reg = await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) return false;
+    await reg.update();
+    return true;
+  });
+  if (!controlled) {
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator(".v6-app")).toBeVisible();
+    await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller), null, { timeout: 10_000 });
+  }
+
+  const before = await page.evaluate(async () => {
+    const db = await new Promise((resolve,reject) => { const req=indexedDB.open("gargottex-v5-offline"); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
+    const names=["dungeons","creatures","heroes","npcs","quests","loot_items","interactables","brouhaha_effects","media_assets"];
+    const tx=db.transaction(names,"readonly");
+    const counts={};
+    for (const name of names) counts[name]=await new Promise((resolve,reject)=>{ const req=tx.objectStore(name).count(); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
+    db.close();
+    return counts;
+  });
+
+  const cacheState = await page.evaluate(async () => {
+    const names = await caches.keys();
+    const cacheName = names.find(name => name === "gargottex-v6-ui6-final");
+    if (!cacheName) return { cacheName: null, missing: ["cache"] };
+    const cache = await caches.open(cacheName);
+    const core = ["./index.html","./styles.css","./manifest.webmanifest","./src/app.js","./src/storage/idb.js","./assets/fonts/Inter-Variable.ttf","./assets/fonts/Alegreya-Variable.ttf"];
+    const missing=[];
+    for (const path of core) if (!(await cache.match(path,{ignoreSearch:true}))) missing.push(path);
+    return { cacheName, missing };
+  });
+  expect(cacheState.cacheName).toBe("gargottex-v6-ui6-final");
+  expect(cacheState.missing).toEqual([]);
+
+  await gotoView(page, "import");
+  await page.locator('[data-action="pwa-update"]').click();
+  await expect(page.locator(".toast-stack")).toContainText("Service Worker");
+
+  const after = await page.evaluate(async () => {
+    const db = await new Promise((resolve,reject) => { const req=indexedDB.open("gargottex-v5-offline"); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
+    const names=["dungeons","creatures","heroes","npcs","quests","loot_items","interactables","brouhaha_effects","media_assets"];
+    const tx=db.transaction(names,"readonly");
+    const counts={};
+    for (const name of names) counts[name]=await new Promise((resolve,reject)=>{ const req=tx.objectStore(name).count(); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
+    db.close();
+    return counts;
+  });
+  expect(after).toEqual(before);
+});
+
+test("zoom and reflow proxy covers 100 125 150 and 200 percent", async ({ page }) => {
+  const cases = [
+    [100, 1280],
+    [125, 1024],
+    [150, 853],
+    [200, 640]
+  ];
+  for (const [zoom, width] of cases) {
+    await page.setViewportSize({ width, height: 900 });
+    await ready(page);
+    await assertNoHorizontalOverflow(page);
+    await gotoView(page, "codex");
+    await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+    await assertNoHorizontalOverflow(page);
+    await page.locator('[data-action="select-codex"][data-type="creatures"]').first().click();
+    await expect(page.locator(".creature-sheet-v6")).toBeVisible();
+    await assertNoHorizontalOverflow(page);
+    await test.info().attach(`reflow-${zoom}-percent.txt`, { body: Buffer.from(`1280 CSS px baseline / ${zoom}% -> ${width}px effective layout width`) });
+  }
+});
+
 test("core web vitals stay inside UI-6 vigilance thresholds", async ({ page }) => {
   await page.addInitScript(() => {
     window.__ui6Vitals = { cls: 0, lcp: 0 };
