@@ -34,7 +34,10 @@ import {
   clearStore,
   appendLog,
   getLogs,
-  transaction
+  transaction,
+  DB_NAME,
+  DB_VERSION,
+  STORE_DEFS
 } from "./storage/idb.js";
 
 const ENTITY_ORDER = [
@@ -169,7 +172,7 @@ const FORM_FIELDS = {
     { name: "name", label: "Nom", type: "text" },
     { name: "dungeon_id", label: "Donjon", type: "select", options: "dungeons" },
     { name: "npc_id", label: "PNJ (optionnel)", type: "select", options: "npcs", allowEmpty: true },
-    { name: "difficulty", label: "Difficulté", type: "number", min: 1, max: 5, step: 1 },
+    { name: "difficulty", label: "Difficulté", type: "number", min: 1, max: 6, step: 1 },
     { name: "description", label: "Description", type: "textarea", rows: 4 },
     { name: "objective", label: "Objectif", type: "textarea", rows: 4 },
     { name: "reward", label: "Récompense", type: "text" },
@@ -268,8 +271,10 @@ const WORKSHOP_REQUIRED_FIELDS = {
   brouhaha_effects: ["level","effect_text"]
 };
 
-const IMPORT_TYPES = ENTITY_ORDER.slice();
-const APP_VERSION = "5.4.0";
+const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
+const APP_VERSION = "5.5.0";
+const PWA_CACHE_NAME = "gargottex-v6-ui5c";
+const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js"];
 let backupBusy = false;
 let searchDebounceTimer = null;
 let bestiaryScrollSaveTimer = null;
@@ -296,6 +301,10 @@ const state = {
   data: {},
   index: {},
   imageViewer: null,
+  importRuntime: { preview: null, lastResult: null },
+  diagnostic: null,
+  serviceWorkerRegistration: null,
+  pwaInstallPrompt: null,
   workshop: {
     dirty: false,
     dirtyFields: new Set(),
@@ -336,7 +345,7 @@ const state = {
     brouhaha: { dungeonId: "", level: 0, history: [], drawn: [] },
     questsResult: null,
     questDungeonId: "",
-    import: { type: "creatures", fileName: "", preview: null },
+    import: { type: "creatures", fileName: "" },
     media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "" },
     journalOpen: false,
     globalSearch: ""
@@ -377,7 +386,7 @@ function defaultBlankUi() {
     brouhaha: { dungeonId: "", level: 0, history: [], drawn: [] },
     questsResult: null,
     questDungeonId: "",
-    import: { type: "creatures", fileName: "", preview: null },
+    import: { type: "creatures", fileName: "" },
     media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "" },
     journalOpen: false,
     globalSearch: ""
@@ -2198,7 +2207,7 @@ function importRowToEntity(type, row, existing) {
       item.description = String(row.description || existing?.description || "").trim();
       item.objective = String(row.objective || existing?.objective || "").trim();
       item.reward = String(row.reward || existing?.reward || "").trim();
-      item.difficulty = clamp(row.difficulty ?? existing?.difficulty ?? 1, 1, 5);
+      item.difficulty = clamp(row.difficulty ?? existing?.difficulty ?? 1, 1, 6);
       item.dungeon_name = String(row.dungeon_name || existing?.dungeon_name || "").trim();
       item.dungeon_id = findByName("dungeons", item.dungeon_name)?.id || existing?.dungeon_id || item.dungeon_id || "";
       item.npc_name = String(row.npc_name || existing?.npc_name || "").trim();
@@ -5200,72 +5209,51 @@ function renderMedia() {
     </section>`);
 }
 
-function renderImportExport() {
-  return renderShell(`
-    <section class="panel">
-      <div class="panel-title">
-        <h2>Import / Export</h2>
-        <div class="muted">CSV et XLSX uniquement, basés sur tes templates. Si doublon, la ligne est remplacée.</div>
-      </div>
+async function idbStoreCount(storeName){return transaction([storeName],"readonly",({[storeName]:store})=>new Promise((resolve,reject)=>{const req=store.count();req.onsuccess=()=>resolve(Number(req.result||0));req.onerror=()=>reject(req.error||new Error(`Count ${storeName} failed`));}));}
 
-      <div class="import-grid">
-        <label>
-          <span>Type</span>
-          <select data-action="import-type">
-            ${IMPORT_TYPES.map(t => `<option value="${t}" ${t === state.ui.import.type ? "selected" : ""}>${getLabel(t)}</option>`).join("")}
-          </select>
-        </label>
-        <label class="wide">
-          <span>Fichier</span>
-          <input type="file" accept=".xlsx,.csv" data-action="import-file">
-        </label>
-      </div>
-
-      <div class="panel-title compact">
-        <h3>Export</h3>
-      </div>
-      <div class="export-buttons">
-        ${ENTITY_ORDER.map(t => `<button class="secondary" data-action="export-entity" data-type="${t}">Exporter ${getLabel(t)}</button>`).join("")}
-        <button class="primary" data-action="export-all">Exporter tout</button>
-        <button class="primary" data-action="export-backup">Exporter backup complet (JSON + images)</button>
-      </div>
-
-      <div class="panel-title compact">
-        <h3>Import backup complet</h3>
-      </div>
-      <div class="import-grid">
-        <label class="wide">
-          <span>Fichier backup ZIP</span>
-          <input type="file" accept=".zip" data-action="import-backup-file">
-        </label>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title compact">
-          <h3>Prévisualisation</h3>
-        </div>
-        ${state.ui.import.preview ? renderImportPreview(state.ui.import.preview) : `<div class="empty">Charge un fichier pour voir un aperçu.</div>`}
-      </div>
-    </section>
-  `);
+async function collectLocalDiagnostic(){
+  const counts={};for(const def of STORE_DEFS){try{counts[def.name]=await idbStoreCount(def.name);}catch(_){counts[def.name]=null;}}
+  const reg="serviceWorker"in navigator?(state.serviceWorkerRegistration||await navigator.serviceWorker.getRegistration()):null,names="caches"in globalThis?await caches.keys():[],cachePresent=names.includes(PWA_CACHE_NAME),cachedCore={};
+  if(cachePresent){const cache=await caches.open(PWA_CACHE_NAME);for(const path of PWA_OFFLINE_CORE)cachedCore[path]=Boolean(await cache.match(path,{ignoreSearch:true}));}else for(const path of PWA_OFFLINE_CORE)cachedCore[path]=false;
+  let storage=null,persisted=null;try{storage=await navigator.storage?.estimate?.();persisted=await navigator.storage?.persisted?.();}catch(_){}
+  const lastError=(state.logs||[]).find(log=>String(log.level||"").toLowerCase()==="error")||null,standalone=Boolean(window.matchMedia?.("(display-mode: standalone)").matches||navigator.standalone===true),swState=!reg?"absent":reg.waiting?"mise à jour prête":reg.installing?"installation":reg.active?.state||"enregistré";
+  return{generated_at:nowISO(),app_version:APP_VERSION,indexeddb:{name:DB_NAME,version:DB_VERSION,stores:STORE_DEFS.map(d=>d.name),counts},pwa:{manifest:true,display_mode:standalone?"standalone":"browser",install_prompt_available:Boolean(state.pwaInstallPrompt),service_worker_supported:"serviceWorker"in navigator,service_worker_state:swState,controller:Boolean(navigator.serviceWorker?.controller),cache_name:PWA_CACHE_NAME,cache_present:cachePresent,cached_core:cachedCore,offline_core_ready:PWA_OFFLINE_CORE.every(path=>cachedCore[path]===true),online:navigator.onLine},storage:storage?{usage:storage.usage||0,quota:storage.quota||0,persisted}:null,last_error:lastError?{message:lastError.message||"",created_at:lastError.created_at||"",level:lastError.level||"error"}:null};
 }
 
-function renderImportPreview(preview) {
-  return `
-    <div class="preview-box">
-      <div class="preview-summary">
-        <div><strong>${escapeHtml(preview.fileName || "")}</strong></div>
-        <div>${preview.rows.length} ligne(s) · ${preview.conflicts.length} conflit(s)</div>
-      </div>
-      <div class="preview-table">
-        ${preview.rows.slice(0, 20).map(r => `<div class="preview-row ${r.status}"><span>${escapeHtml(r.label)}</span><small>${escapeHtml(r.status)}</small></div>`).join("")}
-      </div>
-      <div class="form-actions">
-        <button class="primary" data-action="import-apply">Importer</button>
-        <button class="secondary" data-action="import-clear">Effacer</button>
-      </div>
-    </div>
-  `;
+function diagnosticText(diag){return JSON.stringify(diag,null,2);}
+
+async function refreshDiagnostic(renderAfter=true){state.diagnostic=await collectLocalDiagnostic();if(renderAfter)render();return state.diagnostic;}
+
+async function copyDiagnostic(){const textValue=diagnosticText(state.diagnostic||await collectLocalDiagnostic());if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(textValue);return;}const area=document.createElement("textarea");area.value=textValue;document.body.appendChild(area);area.select();document.execCommand("copy");area.remove();}
+
+async function exportDiagnosticFile(){const d=state.diagnostic||await collectLocalDiagnostic();downloadBlob(new Blob([diagnosticText(d)],{type:"application/json"}),`gargottex_diagnostic_${new Date().toISOString().slice(0,10)}.json`);}
+
+async function clearLocalLogsOnly(){await clearStore("logs");state.logs=[];await refreshDiagnostic(false);render();}
+
+async function requestPwaUpdate(){if(!("serviceWorker"in navigator))throw new Error("Service Worker non supporté.");const reg=state.serviceWorkerRegistration||await navigator.serviceWorker.getRegistration();if(!reg)throw new Error("Service Worker non enregistré.");await reg.update();if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});state.serviceWorkerRegistration=reg;await refreshDiagnostic();}
+
+async function promptPwaInstall(){const prompt=state.pwaInstallPrompt;if(!prompt){toast("Installation : utilise le menu du navigateur / Partager → Ajouter à l’écran d’accueil si aucun prompt n’est proposé.","info");return;}await prompt.prompt();await prompt.userChoice;state.pwaInstallPrompt=null;await refreshDiagnostic();}
+
+function wirePwaInstallPrompt(){window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();state.pwaInstallPrompt=event;if(state.ui?.view==="import")refreshDiagnostic().catch(()=>{});});window.addEventListener("appinstalled",()=>{state.pwaInstallPrompt=null;if(state.ui?.view==="import")refreshDiagnostic().catch(()=>{});});}
+
+function renderDiagnosticPanel(){
+  const d=state.diagnostic;if(!d)return`<section class="diagnostic-v6 panel"><div class="panel-title compact"><h3>Diagnostic local</h3></div><div class="empty">Diagnostic en cours…</div></section>`;
+  const countRows=STORE_DEFS.map(def=>`<div><span>${escapeHtml(def.name)}</span><b>${d.indexeddb.counts[def.name]??"?"}</b></div>`).join(""),coreReady=Object.values(d.pwa.cached_core||{}).filter(Boolean).length;
+  return`<section class="diagnostic-v6 panel"><header class="diagnostic-head-v6"><div><span class="eyebrow">État local</span><h3>Diagnostic</h3></div><span class="${d.pwa.offline_core_ready?"ok":"warn"}">${d.pwa.offline_core_ready?"Cache offline prêt":"Cache offline incomplet"}</span></header><div class="diagnostic-metrics-v6"><div><span>Version PWA</span><b>${escapeHtml(d.app_version)}</b></div><div><span>IndexedDB</span><b>v${d.indexeddb.version}</b><small>${escapeHtml(d.indexeddb.name)}</small></div><div><span>Service Worker</span><b>${escapeHtml(d.pwa.service_worker_state)}</b><small>${d.pwa.controller?"contrôle la page":"sans contrôleur"}</small></div><div><span>Cache V6</span><b>${coreReady}/${PWA_OFFLINE_CORE.length}</b><small>${escapeHtml(d.pwa.cache_name)}</small></div></div><div class="diagnostic-columns-v6"><div class="diagnostic-box"><strong>Stores & compteurs</strong><div class="diagnostic-store-grid">${countRows}</div></div><div class="diagnostic-box"><strong>PWA / offline</strong><p>Affichage : ${escapeHtml(d.pwa.display_mode)} · réseau : ${d.pwa.online?"en ligne":"hors ligne"}</p><p>Installation : ${d.pwa.display_mode==="standalone"?"installée":d.pwa.install_prompt_available?"prompt disponible":"via navigateur"}</p><p>Réouverture offline : ${d.pwa.offline_core_ready?"assets cœur disponibles en cache":"à revalider après mise à jour du cache"}</p>${d.storage?`<p>Stockage : ${mediaBytes(d.storage.usage)} / ${mediaBytes(d.storage.quota)}${d.storage.persisted===true?" · persistant":""}</p>`:""}</div><div class="diagnostic-box wide"><strong>Dernière erreur locale</strong>${d.last_error?`<p>${escapeHtml(d.last_error.message)}</p><small>${escapeHtml(d.last_error.created_at)}</small>`:`<p>Aucune erreur dans le journal chargé.</p>`}</div></div><div class="diagnostic-actions-v6"><button class="secondary" type="button" data-action="diagnostic-refresh">Actualiser</button><button class="secondary" type="button" data-action="diagnostic-copy">Copier diagnostic</button><button class="secondary" type="button" data-action="diagnostic-export">Exporter diagnostic</button><button class="secondary" type="button" data-action="pwa-install">Installer la PWA</button><button class="secondary" type="button" data-action="pwa-update">Vérifier la mise à jour</button><button class="danger ghost" type="button" data-action="diagnostic-clear-logs">Vider uniquement les logs</button></div></section>`;
+}
+
+function renderImportExport(){
+  const preview=state.importRuntime.preview,last=state.importRuntime.lastResult;
+  return renderShell(`<section class="admin-io-v6"><header class="admin-io-head"><div><span class="eyebrow">Administration locale</span><h1>Import / Export</h1><p>Prévisualiser, confirmer, sauvegarder. Aucun backend distant.</p></div></header><section class="panel import-v6"><div class="panel-title"><h2>Import structuré</h2><div class="muted">JSON et XLSX utilisent deux entrées distinctes. Les médias binaires ne s'importent pas par ce formulaire.</div></div><label class="import-family-select"><span>Famille</span><select data-action="import-type">${IMPORT_TYPES.map(t=>`<option value="${t}" ${t===state.ui.import.type?"selected":""}>${escapeHtml(getLabel(t))}</option>`).join("")}</select></label><div class="import-format-grid"><label class="import-format-card"><span class="eyebrow">JSON</span><strong>Importer JSON</strong><small>Tableau, objet <code>rows</code> ou export structuré Gargottex.</small><input type="file" accept=".json,application/json" data-action="import-json-file"></label><label class="import-format-card"><span class="eyebrow">XLSX</span><strong>Importer XLSX</strong><small>La feuille correspondant à la famille sélectionnée est utilisée.</small><input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-action="import-xlsx-file"></label></div>${preview?renderImportPreview(preview):`<div class="import-preview-empty">Charge un JSON ou XLSX : le preview est calculé en mémoire, sans write métier.</div>`}${last?`<div class="import-final-report"><strong>Dernier bilan</strong><span>${last.written} écriture(s) · ${last.created} création(s) · ${last.updated} mise(s) à jour · ${last.excluded} exclue(s)</span><small>${escapeHtml(last.fileName)} · ${escapeHtml(String(last.format).toUpperCase())}</small></div>`:""}</section><section class="panel export-v6"><div class="panel-title"><h2>Export</h2><div class="muted">Les exports XLSX/JSON structurés <strong>ne contiennent aucun Blob média</strong>. Le backup ZIP est le format de sécurité avec binaires.</div></div><div class="export-safety-grid"><article><span>XLSX existants</span><strong>Données structurées</strong><p>Format historique conservé. Aucun Blob.</p><div class="export-buttons">${ENTITY_ORDER.map(t=>`<button class="secondary" data-action="export-entity" data-type="${t}">Exporter ${escapeHtml(getLabel(t))}</button>`).join("")}<button class="primary" data-action="export-all">Exporter tout XLSX</button></div></article><article><span>JSON</span><strong>Snapshot structuré</strong><p>Préserve les propriétés sérialisables et les métadonnées médias. Aucun Blob.</p><button class="primary" data-action="export-structured-json">Exporter JSON structuré</button></article><article class="backup-card-v6"><span>Sauvegarde de sécurité</span><strong>Backup ZIP complet</strong><p>Contient XLSX, JSON structuré, métadonnées et Blobs média disponibles : originaux, thumbnails, aperçus et dérivés transparents. Le ZIP est relu et vérifié avant téléchargement.</p><button class="primary" data-action="export-backup">Exporter et vérifier le backup ZIP</button></article></div><div class="backup-restore-note">La restauration ZIP destructive historique est désactivée. Toute restauration métier passe par un import avec preview et confirmation.</div></section>${renderDiagnosticPanel()}</section>`);
+}
+
+function renderImportPreview(preview){
+  const s=preview.summary;
+  return`<section class="import-preview-v6"><header><div><span class="eyebrow">Preview obligatoire</span><h3>${escapeHtml(preview.fileName||"Fichier")}</h3><p>${escapeHtml(String(preview.format||"").toUpperCase())} · ${escapeHtml(getLabel(preview.type))}</p></div><span class="import-no-write">Aucune donnée métier écrite</span></header>
+  <div class="metric-grid import-metrics-v6"><div class="metric"><span>Total</span><b>${s.total}</b></div><div class="metric ok"><span>Valides</span><b>${s.valid}</b></div><div class="metric warn"><span>Warnings</span><b>${s.warningRows}</b><small>${s.warnings} message(s)</small></div><div class="metric err"><span>Erreurs</span><b>${s.errorRows}</b><small>${s.errors} bloquante(s)</small></div></div>
+  <div class="import-effect-plan"><strong>Effet prévu</strong><span>${s.create} création(s) · ${s.update} mise(s) à jour · ${s.exclude} exclue(s)</span></div>
+  <div class="import-plan-table">${preview.rows.slice(0,60).map(row=>`<article class="import-plan-row ${row.effect}"><span class="import-row-index">#${row.index}</span><div><strong>${escapeHtml(row.label)}</strong>${row.warnings.map(m=>`<small class="warning">⚠ ${escapeHtml(m)}</small>`).join("")}${row.errors.map(m=>`<small class="error">✕ ${escapeHtml(m)}</small>`).join("")}</div><span class="import-effect-badge">${row.effect==="create"?"Créer":row.effect==="update"?"Mettre à jour":"Exclure"}</span></article>`).join("")}</div>
+  ${preview.rows.length>60?`<p class="muted small">${preview.rows.length-60} ligne(s) supplémentaires non affichées, incluses dans les métriques.</p>`:""}<div class="form-actions"><button class="primary" type="button" data-action="import-apply" ${s.valid?"":"disabled"}>Confirmer ${s.valid} écriture(s)</button><button class="secondary" type="button" data-action="import-clear">Annuler le preview</button></div></section>`;
 }
 
 function renderJournalDrawer() {
@@ -5376,6 +5364,67 @@ function toast(message, tone = "info") {
   }, 3200);
 }
 
+function uniqueEntityByName(type,name){
+  const target=normalizeBestiaryText(name||"");if(!target)return{entity:null,count:0};
+  const matches=(state.data[type]||[]).filter(item=>normalizeBestiaryText(item.name||item.title||item.hero_base_name||"")===target);
+  return{entity:matches.length===1?matches[0]:null,count:matches.length};
+}
+
+function importLabel(type,row){return displayImportLabel(type,row)||row.name||row.hero_base_name||row.effect_text||row.id||"Ligne sans libellé";}
+
+function validateImportRow(type,row){
+  const errors=[],warnings=[],text=v=>String(v??"").trim(),number=v=>Number(v);
+  const rel=(store,value,label,optional=false)=>{const name=text(value);if(!name){if(!optional)warnings.push(`${label} non renseigné : relation laissée vide.`);return;}const m=uniqueEntityByName(store,name);if(m.count===0)warnings.push(`${label} « ${name} » introuvable : relation ID non résolue.`);if(m.count>1)warnings.push(`${label} « ${name} » ambigu : relation ID conservée/vide.`);};
+  switch(type){
+    case"dungeons":if(!text(row.name))errors.push("Nom obligatoire.");break;
+    case"creatures":{
+      if(!text(row.name))errors.push("Nom obligatoire.");rel("dungeons",row.dungeon_name,"Donjon");
+      if(text(row.category)){const raw=normalizeBestiaryText(row.category).replace(/ /g,"_");if(!new Set(["basique","tactique","speciale","brute","mini_boss","boss"]).has(raw))errors.push(`Catégorie inconnue : ${row.category}.`);}
+      if(text(row.loot))warnings.push("La colonne Loot enrichit la fiche Créature mais ne remplace jamais la famille Loot.");break;
+    }
+    case"heroes":if(!text(row.hero_base_name))errors.push("Nom de base obligatoire.");if(!Number.isInteger(number(row.level))||number(row.level)<1||number(row.level)>4)errors.push("Niveau Héros attendu entre 1 et 4.");if(!text(row.name))warnings.push("Nom complet absent : le nom pourra être dérivé du nom de base et du niveau.");break;
+    case"npcs":if(!text(row.name))errors.push("Nom obligatoire.");break;
+    case"quests":if(!text(row.name))errors.push("Nom obligatoire.");rel("dungeons",row.dungeon_name,"Donjon",true);rel("npcs",row.npc_name,"PNJ",true);if(text(row.difficulty)&&(!Number.isFinite(number(row.difficulty))||number(row.difficulty)<1||number(row.difficulty)>6))errors.push("Difficulté attendue entre 1 et 6.");break;
+    case"loot_items":if(!text(row.name))errors.push("Nom obligatoire.");rel("creatures",row.creature_name,"Créature",true);break;
+    case"interactables":if(!text(row.name))errors.push("Nom obligatoire.");rel("dungeons",row.dungeon_name,"Donjon",true);break;
+    case"brouhaha_effects":if(!Number.isInteger(number(row.level))||number(row.level)<0||number(row.level)>12)errors.push("Niveau Brouhaha attendu entre 0 et 12.");if(!text(row.effect_text))errors.push("Effet obligatoire.");rel("dungeons",row.dungeon_name,"Donjon",true);break;
+    default:errors.push("Famille non importable par UI-5C.");
+  }
+  return{errors,warnings};
+}
+
+function extractJsonImportRows(payload,type){
+  if(Array.isArray(payload))return{rows:payload,structured:false};
+  if(!payload||typeof payload!=="object")throw new Error("JSON invalide : tableau ou objet attendu.");
+  if(Array.isArray(payload.rows))return{rows:payload.rows,structured:false};
+  if(Array.isArray(payload[type]))return{rows:payload[type],structured:true};
+  if(Array.isArray(payload.data?.[type]))return{rows:payload.data[type],structured:true};
+  throw new Error(`Le JSON ne contient aucune collection « ${type} » exploitable.`);
+}
+
+function buildImportPreview(type,rows,meta={}){
+  const existing=state.data[type]||[],normalized=rows.map(raw=>({raw:raw&&typeof raw==="object"?structuredClone(raw):{},row:normalizeTemplateRow(type,raw&&typeof raw==="object"?raw:{})})),counts=new Map();
+  for(const item of normalized){const key=entityConflictKey(type,item.row);if(key)counts.set(key,(counts.get(key)||0)+1);}
+  const results=normalized.map((item,index)=>{const key=entityConflictKey(type,item.row),conflict=key?existing.find(entity=>buildConflictKeyFromEntity(type,entity)===key):null,v=validateImportRow(type,item.row);if(!key)v.errors.push("Clé de rapprochement vide.");if(key&&counts.get(key)>1)v.errors.push("Doublon dans le fichier : effet ambigu.");const valid=v.errors.length===0;return{index:index+1,label:importLabel(type,item.row),row:item.row,raw:item.raw,conflictId:conflict?.id||"",errors:v.errors,warnings:v.warnings,valid,effect:valid?(conflict?"update":"create"):"exclude"};});
+  const summary={total:results.length,valid:results.filter(r=>r.valid).length,warningRows:results.filter(r=>r.warnings.length).length,warnings:results.reduce((n,r)=>n+r.warnings.length,0),errorRows:results.filter(r=>r.errors.length).length,errors:results.reduce((n,r)=>n+r.errors.length,0),create:results.filter(r=>r.effect==="create").length,update:results.filter(r=>r.effect==="update").length,exclude:results.filter(r=>r.effect==="exclude").length};
+  return{type,format:meta.format||"",fileName:meta.fileName||"",structuredJson:meta.structuredJson===true,createdAt:nowISO(),rows:results,summary};
+}
+
+function mergeStructuredJsonExtras(entity,raw,enabled){
+  if(!enabled||!raw||typeof raw!=="object")return entity;const forbidden=new Set(["blob","thumb_blob","preview_blob","transparent_blob"]);
+  for(const[key,value]of Object.entries(raw)){if(forbidden.has(key)||key==="id"||value instanceof Blob)continue;entity[key]=structuredClone(value);}return entity;
+}
+
+function applySafeImportRelations(type,entity,row,existing){
+  const resolve=(store,name,oldId="")=>{const r=uniqueEntityByName(store,name);return r.entity?.id||oldId||"";};
+  if(type==="creatures"){entity.dungeon_id=resolve("dungeons",row.dungeon_name,existing?.dungeon_id);const d=findById("dungeons",entity.dungeon_id);entity.dungeon_name=String(row.dungeon_name||existing?.dungeon_name||"").trim();entity.dungeon_slug=d?.slug||existing?.dungeon_slug||"";}
+  else if(type==="quests"){entity.dungeon_id=resolve("dungeons",row.dungeon_name,existing?.dungeon_id);entity.npc_id=resolve("npcs",row.npc_name,existing?.npc_id);}
+  else if(type==="loot_items")entity.creature_id=resolve("creatures",row.creature_name,existing?.creature_id);
+  else if(type==="interactables")entity.dungeon_id=resolve("dungeons",row.dungeon_name,existing?.dungeon_id);
+  else if(type==="brouhaha_effects")entity.dungeon_id=String(row.dungeon_name||"").trim()?resolve("dungeons",row.dungeon_name,existing?.dungeon_id):"";
+  return entity;
+}
+
 function normalizeConflictPreview(type, rows) {
   const existing = state.data[type] || [];
   const results = rows.map(row => {
@@ -5396,60 +5445,13 @@ function normalizeConflictPreview(type, rows) {
   };
 }
 
-async function applyImportPreview() {
-  const preview = state.ui.import.preview;
-  if (!preview) return;
-  const type = preview.type;
-  const rows = preview.rows.map(r => r.row);
-  const existing = (state.data[type] || []).slice();
-  const importedIds = new Set();
-
-  for (const row of rows) {
-    const key = entityConflictKey(type, row);
-    const idx = existing.findIndex(item => buildConflictKeyFromEntity(type, item) === key);
-    const oldEntity = idx >= 0 ? existing[idx] : null;
-    const entity = importRowToEntity(type, row, oldEntity);
-    importedIds.add(entity.id);
-    if (idx >= 0) existing[idx] = entity;
-    else existing.push(entity);
-  }
-
-  await putMany(type, existing);
-
-  if (type === "creatures") {
-    const affectedCreatureIds = new Set(
-      existing
-        .filter(c => rows.some(r => buildConflictKeyFromEntity("creatures", c) === entityConflictKey("creatures", r)))
-        .map(c => c.id)
-    );
-
-    await deleteWhere("loot_items", l => affectedCreatureIds.has(l.creature_id));
-
-    const replacementLoot = [];
-    for (const row of rows) {
-      const key = entityConflictKey("creatures", row);
-      const creature = existing.find(c => buildConflictKeyFromEntity("creatures", c) === key);
-      if (!creature) continue;
-
-      const lootLines = String(row.loot || row.loot_lines || "").trim();
-      const parsed = parseLootLines(lootLines, creature.id, creature.name || "");
-      creature.loot_items = parsed;
-
-      replacementLoot.push(...parsed.map(l => ({
-        ...l,
-        creature_id: creature.id,
-        creature_name: creature.name || l.creature_name || ""
-      })));
-    }
-
-    if (replacementLoot.length) {
-      await putMany("loot_items", replacementLoot);
-    }
-  }
-
-  state.ui.import.preview = null;
-  await refreshData();
-  toast(`📥 Import terminé (${getLabel(type)})`, "success");
+async function applyImportPreview(){
+  const preview=state.importRuntime.preview;if(!preview)return;const validRows=preview.rows.filter(r=>r.valid);if(!validRows.length)throw new Error("Aucune ligne valide à importer.");
+  const type=preview.type,entities=[];let created=0,updated=0;
+  for(const plan of validRows){const existing=plan.conflictId?await getById(type,plan.conflictId):null;let entity=importRowToEntity(type,plan.row,existing);entity=mergeStructuredJsonExtras(entity,plan.raw,preview.structuredJson);entity=applySafeImportRelations(type,entity,plan.row,existing);entities.push(entity);existing?updated++:created++;}
+  await putMany(type,entities);
+  state.importRuntime.lastResult={at:nowISO(),type,format:preview.format,fileName:preview.fileName,total:preview.summary.total,written:entities.length,created,updated,excluded:preview.summary.exclude,warnings:preview.summary.warnings,errors:preview.summary.errors};
+  state.importRuntime.preview=null;await refreshData();toast(`Import terminé : ${entities.length} écriture(s), ${preview.summary.exclude} exclue(s).`,"success");
 }
 
 async function refreshData() {
@@ -5738,6 +5740,12 @@ async function attachMediaAsset(assetId, type, entityId) {
   state.ui.media.selectedId=assetId;state.ui.media.linkType=next.entity_type;state.ui.media.linkEntityId=next.entity_id;await saveUiState(state.ui);
 }
 
+function structuredEntityForExport(entity){const copy=structuredClone(entity);for(const key of["blob","thumb_blob","preview_blob","transparent_blob"])delete copy[key];return copy;}
+
+async function exportStructuredJsonFile(){const data={};for(const type of ENTITY_ORDER)data[type]=(state.data[type]||[]).map(structuredEntityForExport);const payload={format:"gargottex-structured-json",version:1,exported_at:nowISO(),app_version:APP_VERSION,contains_media_blobs:false,note:"Données structurées et métadonnées médias uniquement. Les Blobs sont exclus. Utiliser le backup ZIP pour les binaires.",data};downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),`gargottex_structured_${new Date().toISOString().slice(0,10)}.json`);}
+
+function mediaBlobExtension(blob,fallbackMime="application/octet-stream"){const type=String(blob?.type||fallbackMime||"").toLowerCase();if(type.includes("png"))return"png";if(type.includes("jpeg")||type.includes("jpg"))return"jpg";if(type.includes("webp"))return"webp";if(type.includes("gif"))return"gif";return"bin";}
+
 async function exportEntityFile(type) {
   const rows = toTemplateRows(type, state.data[type] || []);
   const headers = sheetHeaders(type);
@@ -5755,108 +5763,37 @@ async function exportAllFile() {
   downloadBlob(blob, `gargottex_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
-async function exportFullBackupFile() {
-  if (backupBusy) throw new Error("Un export/import backup est déjà en cours.");
-  backupBusy = true;
-  try {
-  const sheets = ENTITY_ORDER.map(type => ({
-    sheetName: ENTITY_SHEETS[type] || getLabel(type),
-    headers: sheetHeaders(type),
-    rows: toTemplateRows(type, state.data[type] || [])
-  }));
-  const workbookBlob = buildXlsxWorkbookBlob(sheets);
-  const workbookBytes = new Uint8Array(await workbookBlob.arrayBuffer());
-  const mediaAssets = state.data.media_assets || [];
-  const manifest = {
-    format: "gargottex-backup-zip",
-    version: 1,
-    exported_at: nowISO(),
-    app_version: APP_VERSION,
-    media_count: mediaAssets.length
-  };
-  const files = [
-    { name: "manifest.json", data: toBytes(JSON.stringify(manifest)) },
-    { name: "data/export_all.xlsx", data: workbookBytes },
-    { name: "data/media_assets.json", data: toBytes(JSON.stringify(mediaAssets.map(a => ({
-      id: a.id, label: a.label, file_name: a.file_name, path: a.path, thumb_path: a.thumb_path,
-      mime_type: a.mime_type, entity_type: a.entity_type, entity_id: a.entity_id,
-      width: a.width, height: a.height, created_at: a.created_at, updated_at: a.updated_at
-    })))) }
-  ];
-  const stamp = new Date().toISOString().slice(0, 10);
-  let mediaStep = 0;
-  for (const asset of mediaAssets) {
-    mediaStep++;
-    const ext = (asset.mime_type || "image/webp").split("/")[1] || "bin";
-    if (asset.blob) files.push({ name: `media/original/${asset.id}.${ext}`, data: new Uint8Array(await asset.blob.arrayBuffer()) });
-    if (asset.thumb_blob) files.push({ name: `media/thumbs/${asset.id}.${ext}`, data: new Uint8Array(await asset.thumb_blob.arrayBuffer()) });
-    if (mediaStep % 12 === 0) await new Promise(resolve => setTimeout(resolve, 0));
-  }
-  const zipBytes = makeZip(files);
-  downloadBlob(new Blob([zipBytes], { type: "application/zip" }), `gargottex_backup_${stamp}.zip`);
-  } finally {
-    backupBusy = false;
-  }
+async function exportFullBackupFile(){
+  if(backupBusy)throw new Error("Un export backup est déjà en cours.");backupBusy=true;
+  try{
+    const sheets=ENTITY_ORDER.map(type=>({sheetName:ENTITY_SHEETS[type]||getLabel(type),headers:sheetHeaders(type),rows:toTemplateRows(type,state.data[type]||[])})),wb=buildXlsxWorkbookBlob(sheets),wbBytes=new Uint8Array(await wb.arrayBuffer()),structured={};
+    for(const type of ENTITY_ORDER)structured[type]=(state.data[type]||[]).map(structuredEntityForExport);
+    const mediaAssets=state.data.media_assets||[],files=[],mediaManifest=[];
+    for(const asset of mediaAssets){
+      const meta=structuredEntityForExport(asset),variants={},specs=[["original","blob",asset.mime_type||asset.blob?.type],["thumbnail","thumb_blob",asset.thumb_blob?.type||"image/webp"],["preview","preview_blob",asset.preview_blob?.type||"image/webp"],["transparent","transparent_blob",asset.transparent_blob?.type||"image/png"]];
+      for(const[label,key,mime]of specs){const blob=asset[key];if(!blob)continue;const ext=mediaBlobExtension(blob,mime),filename=`media/${label}/${asset.id}.${ext}`,digest=await sha256Blob(blob);files.push({name:filename,data:new Uint8Array(await blob.arrayBuffer())});variants[label]={file:filename,size:blob.size,type:blob.type||mime||"",sha256:digest};}
+      mediaManifest.push({metadata:meta,variants});if(mediaManifest.length%10===0)await new Promise(r=>setTimeout(r,0));
+    }
+    const manifest={format:"gargottex-backup-zip",version:2,exported_at:nowISO(),app_version:APP_VERSION,db_name:DB_NAME,db_version:DB_VERSION,contains_media_blobs:true,structured_exports_contain_media_blobs:false,store_counts:Object.fromEntries(ENTITY_ORDER.map(type=>[type,(state.data[type]||[]).length])),media_count:mediaAssets.length,media_binary_count:mediaManifest.reduce((n,row)=>n+Object.keys(row.variants).length,0)};
+    files.unshift({name:"manifest.json",data:toBytes(JSON.stringify(manifest,null,2))},{name:"data/export_all.xlsx",data:wbBytes},{name:"data/structured.json",data:toBytes(JSON.stringify({format:"gargottex-structured-json",version:1,exported_at:manifest.exported_at,app_version:APP_VERSION,contains_media_blobs:false,data:structured},null,2))},{name:"data/media_assets.json",data:toBytes(JSON.stringify(mediaManifest,null,2))});
+    const zipBytes=makeZip(files),verify=await readZip(zipBytes.buffer.slice(zipBytes.byteOffset,zipBytes.byteOffset+zipBytes.byteLength)),vm=JSON.parse(fromBytes(verify["manifest.json"]||toBytes("{}"))),vs=JSON.parse(fromBytes(verify["data/structured.json"]||toBytes("{}"))),vmedia=JSON.parse(fromBytes(verify["data/media_assets.json"]||toBytes("[]")));
+    if(vm.format!=="gargottex-backup-zip"||vm.version!==2)throw new Error("Vérification backup échouée : manifest.");
+    if(vs.format!=="gargottex-structured-json"||!vs.data)throw new Error("Vérification backup échouée : structured.json.");
+    if(!Array.isArray(vmedia)||vmedia.length!==mediaAssets.length)throw new Error("Vérification backup échouée : index médias.");
+    for(const row of vmedia){
+      for(const variant of Object.values(row.variants||{})){
+        const bytes=verify[variant.file];
+        if(!bytes)throw new Error(`Vérification backup échouée : ${variant.file} manquant.`);
+        const digest=await sha256Blob(new Blob([bytes],{type:variant.type||"application/octet-stream"}));
+        if(variant.sha256&&digest!==variant.sha256)throw new Error(`Vérification backup échouée : empreinte invalide pour ${variant.file}.`);
+      }
+    }
+    downloadBlob(new Blob([zipBytes],{type:"application/zip"}),`gargottex_backup_${new Date().toISOString().slice(0,10)}.zip`);
+    return{verified:true,mediaCount:mediaAssets.length,binaryCount:vm.media_binary_count,stores:vm.store_counts};
+  }finally{backupBusy=false;}
 }
 
-async function importFullBackupFile(file) {
-  if (backupBusy) throw new Error("Un export/import backup est déjà en cours.");
-  backupBusy = true;
-  try {
-  const zipFiles = await readZip(await file.arrayBuffer());
-  const manifest = JSON.parse(fromBytes(zipFiles["manifest.json"] || toBytes("{}")));
-  if (manifest?.format !== "gargottex-backup-zip") throw new Error("Format de backup ZIP invalide.");
-  const wbBytes = zipFiles["data/export_all.xlsx"];
-  if (!wbBytes) throw new Error("export_all.xlsx manquant dans le backup.");
-  const parsedXlsx = await readXlsxFile(wbBytes.buffer.slice(wbBytes.byteOffset, wbBytes.byteOffset + wbBytes.byteLength));
-
-  for (const type of ENTITY_ORDER) {
-    const wanted = entitySheetNames(type).map(name => String(name).trim().toLowerCase());
-    const sheet = (parsedXlsx.sheets || []).find(s => wanted.includes(String(s.sheetName || "").trim().toLowerCase()));
-    const rows = (sheet?.rows || []).map(row => normalizeTemplateRow(type, row));
-    const current = state.data[type] || [];
-    const existingMap = new Map(current.map(item => [buildConflictKeyFromEntity(type, item), item]));
-    const entities = rows.map(row => {
-      const key = entityConflictKey(type, row || {});
-      const existing = existingMap.get(key);
-      return importRowToEntity(type, row || {}, existing);
-    });
-    await clearStore(type);
-    if (entities.length) await putMany(type, entities);
-    await new Promise(resolve => setTimeout(resolve, 0));
-  }
-
-  const medias = JSON.parse(fromBytes(zipFiles["data/media_assets.json"] || toBytes("[]")));
-  if (medias.length) {
-    await clearStore("media_assets");
-    const rows = medias.map(m => {
-      const ext = (m.mime_type || "image/webp").split("/")[1] || "bin";
-      const orig = zipFiles[`media/original/${m.id}.${ext}`];
-      const thumb = zipFiles[`media/thumbs/${m.id}.${ext}`];
-      return {
-      id: m.id || uid("media"),
-      label: m.label || m.file_name || "",
-      file_name: m.file_name || "",
-      path: m.path || "",
-      thumb_path: m.thumb_path || "",
-      mime_type: m.mime_type || "image/webp",
-      entity_type: m.entity_type || "gallery",
-      entity_id: m.entity_id || "",
-      width: Number(m.width || 0),
-      height: Number(m.height || 0),
-      created_at: m.created_at || nowISO(),
-      updated_at: nowISO(),
-      blob: orig ? new Blob([orig], { type: m.mime_type || "image/webp" }) : null,
-      thumb_blob: thumb ? new Blob([thumb], { type: m.mime_type || "image/webp" }) : null,
-      image_path: m.path || ""
-    };});
-    await putMany("media_assets", rows);
-  }
-  await refreshData();
-  } finally {
-    backupBusy = false;
-  }
-}
+async function importFullBackupFile(){throw new Error("La restauration ZIP destructive historique est désactivée dans UI-5C. Utilise l'import JSON/XLSX avec preview, ou conserve le ZIP comme sauvegarde de sécurité.");}
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -5869,22 +5806,12 @@ function downloadBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1200);
 }
 
-async function parseImportFile(file, type) {
-  const ext = file.name.split(".").pop().toLowerCase();
-  let rows = [];
-  if (ext === "xlsx") {
-    const parsed = await readXlsxFile(file);
-    const wanted = entitySheetNames(type).map(name => String(name).trim().toLowerCase());
-    const sheet = (parsed.sheets || []).find(s => wanted.includes(String(s.sheetName || "").trim().toLowerCase())) || parsed;
-    rows = (sheet.rows || []).map(row => normalizeTemplateRow(type, row));
-  } else if (ext === "csv") {
-    rows = parseCsv(await file.text()).map(normalizeTemplateRow.bind(null, type));
-  } else {
-    throw new Error("Format non supporté.");
-  }
-  const preview = normalizeConflictPreview(type, rows);
-  preview.rows = preview.rows.map(r => ({ ...r, label: r.label || displayImportLabel(type, r.row) }));
-  return preview;
+async function parseImportFile(file,type,expectedFormat=""){
+  const ext=String(file.name.split(".").pop()||"").toLowerCase();let rows=[],format="",structuredJson=false;
+  if(ext==="xlsx"){if(expectedFormat&&expectedFormat!=="xlsx")throw new Error("Sélectionne un fichier XLSX.");const parsed=await readXlsxFile(file),wanted=entitySheetNames(type).map(name=>String(name).trim().toLowerCase()),sheet=(parsed.sheets||[]).find(s=>wanted.includes(String(s.sheetName||"").trim().toLowerCase()))||parsed;rows=sheet.rows||[];format="xlsx";}
+  else if(ext==="json"){if(expectedFormat&&expectedFormat!=="json")throw new Error("Sélectionne un fichier JSON.");const payload=JSON.parse(await file.text()),ex=extractJsonImportRows(payload,type);rows=ex.rows;structuredJson=ex.structured;format="json";}
+  else throw new Error("UI-5C accepte JSON ou XLSX dans leurs zones dédiées.");
+  return buildImportPreview(type,rows,{format,fileName:file.name,structuredJson});
 }
 
 function displayImportLabel(type, row) {
@@ -6445,23 +6372,30 @@ function bindEvents() {
           await refreshData();
           return;
         case "export-entity":
-          await exportEntityFile(btn.dataset.type);
-          return;
+          await exportEntityFile(btn.dataset.type);toast("XLSX structuré exporté. Aucun Blob média inclus.","info");return;
         case "export-all":
-          await exportAllFile();
-          return;
-        case "export-backup":
-          await exportFullBackupFile();
-          toast("🧳 Backup ZIP exporté", "success");
-          return;
+          await exportAllFile();toast("XLSX global exporté. Aucun Blob média inclus.","info");return;
+        case "export-structured-json":
+          await exportStructuredJsonFile();toast("JSON structuré exporté. Aucun Blob média inclus.","info");return;
+        case "export-backup": {
+          const check=await exportFullBackupFile();toast(`Backup ZIP vérifié : ${check.mediaCount} média(s), ${check.binaryCount} Blob(s).`,"success");return;
+        }
         case "import-clear":
-          state.ui.import.preview = null;
-          await saveUiState(state.ui);
-          render();
-          return;
+          state.importRuntime.preview=null;render();return;
         case "import-apply":
-          await applyImportPreview();
-          return;
+          await applyImportPreview();return;
+        case "diagnostic-refresh":
+          await refreshDiagnostic();return;
+        case "diagnostic-copy":
+          await copyDiagnostic();toast("Diagnostic copié.","success");return;
+        case "diagnostic-export":
+          await exportDiagnosticFile();return;
+        case "diagnostic-clear-logs":
+          if(!confirm("Vider uniquement le journal local ? Les données métier et médias resteront intacts."))return;await clearLocalLogsOnly();toast("Journal local vidé. Données métier intactes.","info");return;
+        case "pwa-update":
+          await requestPwaUpdate();toast("Vérification de mise à jour Service Worker effectuée.","success");return;
+        case "pwa-install":
+          await promptPwaInstall();return;
         default:
           return;
       }
@@ -6595,10 +6529,7 @@ function bindEvents() {
           return;
         }
         case "import-type":
-          state.ui.import.type = el.value;
-          await saveUiState(state.ui);
-          render();
-          return;
+          state.ui.import.type=IMPORT_TYPES.includes(el.value)?el.value:"creatures";state.importRuntime.preview=null;state.importRuntime.lastResult=null;await saveUiState(state.ui);render();return;
         case "media-filter-type":
           state.ui.media.filterType = el.value;
           state.ui.media.filterEntity = "";
@@ -6627,26 +6558,9 @@ function bindEvents() {
           toast(audit.pass ? "Audit alpha valide. Contrôle visuel requis." : "Audit alpha insuffisant. Dérivé conservé à corriger.", audit.pass ? "success" : "warn");
           return;
         }
-        case "import-file": {
-          const file = el.files?.[0];
-          if (!file) return;
-          const type = state.ui.import.type || "creatures";
-          state.ui.import.fileName = file.name;
-          state.ui.import.preview = await parseImportFile(file, type);
-          await saveUiState(state.ui);
-          render();
-          toast("📥 Fichier analysé", "success");
-          return;
-        }
-        case "import-backup-file": {
-          const file = el.files?.[0];
-          if (!file) return;
-          await importFullBackupFile(file);
-          await saveUiState(state.ui);
-          render();
-          toast("♻️ Backup ZIP importé (données + images)", "success");
-          el.value = "";
-          return;
+        case "import-json-file":
+        case "import-xlsx-file": {
+          const file=el.files?.[0];if(!file)return;const type=state.ui.import.type||"creatures",format=action==="import-json-file"?"json":"xlsx";state.importRuntime.preview=await parseImportFile(file,type,format);state.importRuntime.lastResult=null;el.value="";render();toast("Preview calculé en mémoire. Aucune donnée métier écrite.","success");return;
         }
       }
     } catch (err) {
@@ -6812,6 +6726,7 @@ async function bootstrap() {
   state.ready = true;
   wireGlobalErrors();
   wireWorkshopUnloadGuard();
+  wirePwaInstallPrompt();
   bindEvents();
   wireBestiaryScrollTracking();
   wireCodexFamilyScrollTracking();
@@ -6819,25 +6734,19 @@ async function bootstrap() {
   render();
 
 if ("serviceWorker" in navigator) {
-
-  const reg = await navigator.serviceWorker.register("./service-worker.js");
-
-  // force Safari à vérifier les updates
-  setInterval(() => {
-    reg.update().catch(() => {});
-  }, 15000);
-
-  // nouveau service worker détecté
-  if (reg.waiting) {
-    reg.waiting.postMessage({ type: "SKIP_WAITING" });
+    const reg = await navigator.serviceWorker.register("./service-worker.js");
+    state.serviceWorkerRegistration = reg;
+    setInterval(() => { reg.update().catch(() => {}); }, 15 * 60 * 1000);
+    if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
   }
-
-  // quand le nouveau SW prend le contrôle
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    window.location.reload();
-  });
-
-}
+  state.diagnostic = await collectLocalDiagnostic();
+  render();
 
   if (navigator.storage?.persist) {
     navigator.storage.persist().catch(() => {});

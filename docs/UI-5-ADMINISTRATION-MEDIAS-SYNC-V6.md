@@ -2,7 +2,7 @@
 
 ## Statut
 
-**ACTIF - source de vérité de l'Atelier, des Médias, des imports/exports et de la persistance visible**
+**LIVRÉ — UI-5 COMPLET (A + B + C) — 20 septembre 2026 — source de vérité de l'Atelier, des Médias, des imports/exports et de la persistance visible**
 
 Le nom historique du fichier contient « SYNC », mais la **synchronisation distante est différée** avec la refactorisation technique.
 
@@ -607,3 +607,40 @@ Aucun Neon, aucun cloud, aucune Auth distante, aucun CDN. IndexedDB reste en ver
 - aucun cloud : validé.
 
 **UI-5B est clos. UI-5C n'est pas démarré par ce sous-lot.**
+
+---
+
+# 24. Implémentation UI-5C sur V5.3
+
+Statut : **LIVRÉ — UI-5C — 20 septembre 2026**
+
+JSON et XLSX disposent de deux entrées distinctes. Le preview est calculé en mémoire et affiche total, valides, warnings, erreurs et effet prévu. Les warnings sont importables, les erreurs et doublons ambigus sont exclus. Aucun write métier n'a lieu avant confirmation.
+
+Les updates préservent les enregistrements existants et les relations par nom ne deviennent des IDs que lorsqu'une cible exacte et unique existe. L'import Créatures ne supprime plus les Loots liés. Médias est exclu des imports structurés car JSON/XLSX ne contiennent pas les Blobs. La restauration ZIP destructive historique est désactivée.
+
+Les XLSX existants sont conservés et explicitement présentés comme sans Blob. Un JSON structuré sans Blob est ajouté. Le backup ZIP v2 contient manifest, XLSX, JSON structuré, métadonnées médias et les Blobs disponibles (original, thumbnail, aperçu, dérivé transparent), indexés avec taille/type/SHA-256. Le ZIP est rouvert et vérifié avant téléchargement.
+
+Le diagnostic expose version PWA, version/nom IndexedDB, stores, compteurs, Service Worker, cache V6, assets cœur offline, installation, stockage/quota et dernière erreur. Il permet copier/exporter, vérifier la mise à jour PWA et vider exclusivement `logs`.
+
+Le cache Service Worker devient `gargottex-v6-ui5c`. Aucun code Service Worker ne touche IndexedDB. Aucune migration IndexedDB : Gate upgrade = **N/A**, DB_VERSION reste 2. La réouverture offline est validée structurellement par contrôle du cache ; le test réel sur appareil reste pour la validation finale UI-6.
+
+## Gate UI-5C
+
+- Import JSON/XLSX distinct + preview + métriques + effet prévu : validé.
+- Aucun write métier avant confirmation : validé.
+- Erreurs exclues / warnings importables / bilan final : validé.
+- Exports XLSX conservés et clairement sans Blobs : validé.
+- JSON structuré sans Blobs : validé.
+- Backup ZIP avec Blobs auto-vérifié : validé.
+- Diagnostic + copier/exporter + logs-only : validé.
+- PWA cache/update/installation : validé structurellement.
+- IndexedDB intact, migration N/A : validé.
+- Aucun backend distant : validé.
+
+# 25. Validation UI-5 complet
+
+UI-5A : **VALIDÉ**  
+UI-5B : **VALIDÉ**  
+UI-5C : **VALIDÉ**
+
+**UI-5 est clos.**
