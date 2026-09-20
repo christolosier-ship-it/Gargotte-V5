@@ -2444,7 +2444,7 @@ function renderShell(content){
       '</aside>',
       '<div class="shell"><header class="topbar">',
         '<button class="mobile-brand" data-action="go-home" data-view="home" aria-label="Accueil Gargottex"><img src="assets/images/logo-192.png" alt=""></button>',
-        '<div class="search-wrap"><span class="search-leading">'+shellIcon("search")+'</span><input class="search" data-action="search" role="combobox" aria-autocomplete="list" aria-label="Recherche globale" aria-expanded="'+(state.ui.globalSearch?"true":"false")+'" aria-controls="global-codex-search-results" autocomplete="off" placeholder="Rechercher dans le Codex…" value="'+escapeHtml(state.ui.globalSearch)+'">'+(state.ui.globalSearch?renderSearchResults():"")+'</div>',
+        '<div class="search-wrap" role="search"><span class="search-leading">'+shellIcon("search")+'</span><input class="search" data-action="search" type="search" role="searchbox" aria-label="Recherche globale" autocomplete="off" placeholder="Rechercher dans le Codex…" value="'+escapeHtml(state.ui.globalSearch)+'">'+(state.ui.globalSearch?renderSearchResults():"")+'</div>',
         '<div class="topbar-right"><span class="offline-badge" title="Données locales disponibles">'+shellIcon("wifi")+'<span>Local</span></span><button class="ghost topbar-action" data-action="toggle-journal" aria-label="Ouvrir le journal">'+shellIcon("journal")+'<span>Journal</span></button></div>',
       '</header><main class="page v6-main" id="main-content">'+content+'</main>',
       '<aside class="toast-stack" aria-live="polite" aria-atomic="true">'+state.toasts.map(t=>'<div class="toast '+t.tone+'">'+escapeHtml(t.message)+'</div>').join("")+'</aside>',
