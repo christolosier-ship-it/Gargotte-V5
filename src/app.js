@@ -235,7 +235,10 @@ const state = {
     codexReturnStack: [],
     codexFamilies: {
       dungeons: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
-      heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} }
+      heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} },
+      npcs: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
+      quests: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
+      loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     workshopType: "creatures",
@@ -269,7 +272,10 @@ function defaultBlankUi() {
     codexReturnStack: [],
     codexFamilies: {
       dungeons: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
-      heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} }
+      heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} },
+      npcs: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
+      quests: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
+      loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     workshopType: "creatures",
@@ -310,7 +316,10 @@ const CREATURE_CATEGORY_META = {
 function defaultCodexFamiliesUi() {
   return {
     dungeons: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
-    heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} }
+    heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} },
+    npcs: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
+    quests: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
+    loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" }
   };
 }
 
@@ -319,11 +328,21 @@ function ensureCodexFamilyUi() {
   const current = state.ui.codexFamilies && typeof state.ui.codexFamilies === "object" ? state.ui.codexFamilies : {};
   state.ui.codexFamilies = {
     dungeons: { ...defaults.dungeons, ...(current.dungeons || {}) },
-    heroes: { ...defaults.heroes, ...(current.heroes || {}) }
+    heroes: { ...defaults.heroes, ...(current.heroes || {}) },
+    npcs: { ...defaults.npcs, ...(current.npcs || {}) },
+    quests: { ...defaults.quests, ...(current.quests || {}) },
+    loot_items: { ...defaults.loot_items, ...(current.loot_items || {}) }
   };
-  for (const type of ["dungeons", "heroes"]) {
-    if (!["gallery", "list"].includes(state.ui.codexFamilies[type].mode)) {
-      state.ui.codexFamilies[type].mode = "gallery";
+  const allowedModes = {
+    dungeons: ["gallery", "list"],
+    heroes: ["gallery", "list"],
+    npcs: ["gallery", "list"],
+    quests: ["list", "cards"],
+    loot_items: ["gallery", "list"]
+  };
+  for (const type of Object.keys(allowedModes)) {
+    if (!allowedModes[type].includes(state.ui.codexFamilies[type].mode)) {
+      state.ui.codexFamilies[type].mode = defaults[type].mode;
     }
     state.ui.codexFamilies[type].search = String(state.ui.codexFamilies[type].search || "");
     state.ui.codexFamilies[type].scrollTop = Math.max(0, Number(state.ui.codexFamilies[type].scrollTop || 0));
@@ -429,6 +448,10 @@ function familyCollectionInitialId(type) {
     const level = selectedHeroLevel(group);
     return level?.id || "";
   }
+  if (["npcs", "quests", "loot_items"].includes(type)) {
+    const selected = state.ui.codexFamilies[type]?.selectedId;
+    if (selected && findById(type, selected)) return selected;
+  }
   return (state.data[type] || [])[0]?.id || "";
 }
 
@@ -523,6 +546,130 @@ function formatBrouhahaStamp(value) {
   const n = Number(text);
   if (Number.isFinite(n)) return n >= 0 ? `+${n}` : String(n);
   return text;
+}
+
+const QUEST_DIFFICULTY_META = [
+  { level: 1, key: "basique", label: "Très facile" },
+  { level: 2, key: "tactique", label: "Facile" },
+  { level: 3, key: "speciale", label: "Normale" },
+  { level: 4, key: "brute", label: "Difficile" },
+  { level: 5, key: "mini_boss", label: "Très difficile" },
+  { level: 6, key: "boss", label: "Extrême" }
+];
+
+const LOOT_RARITY_META = [
+  { level: 1, key: "basique", label: "Mauvais" },
+  { level: 2, key: "tactique", label: "Commun" },
+  { level: 3, key: "speciale", label: "Inhabituel" },
+  { level: 4, key: "brute", label: "Rare" },
+  { level: 5, key: "mini_boss", label: "Épique" },
+  { level: 6, key: "boss", label: "Légendaire" }
+];
+
+function semanticTierMeta(value, levels) {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const raw = String(value).trim();
+  const numeric = Number(raw);
+  if (Number.isInteger(numeric)) {
+    const match = levels.find(entry => entry.level === numeric);
+    if (match) return { ...match, raw, known: true };
+  }
+  const normalized = normalizeBestiaryText(raw);
+  const match = levels.find(entry => normalizeBestiaryText(entry.label) === normalized);
+  return match ? { ...match, raw, known: true } : { key: "unknown", label: raw, raw, known: false };
+}
+
+function questDifficultyMeta(value) {
+  return semanticTierMeta(value, QUEST_DIFFICULTY_META);
+}
+
+function lootRarityMeta(item) {
+  for (const field of ["rarity", "rarity_label", "rarete"]) {
+    if (item?.[field] !== null && item?.[field] !== undefined && String(item[field]).trim() !== "") {
+      return semanticTierMeta(item[field], LOOT_RARITY_META);
+    }
+  }
+  return null;
+}
+
+function resolveQuestNpc(item) {
+  if (!item) return null;
+  const direct = item.npc_id ? findById("npcs", item.npc_id) : null;
+  if (direct) return direct;
+  const target = normalizeBestiaryText(item.npc_name);
+  if (!target) return null;
+  const matches = (state.data.npcs || []).filter(npc => normalizeBestiaryText(npc.name) === target);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function resolveQuestDungeon(item) {
+  if (!item) return null;
+  const direct = item.dungeon_id ? findById("dungeons", item.dungeon_id) : null;
+  if (direct) return direct;
+  const target = normalizeBestiaryText(item.dungeon_name);
+  if (!target) return null;
+  const matches = (state.data.dungeons || []).filter(dungeon => normalizeBestiaryText(dungeon.name) === target);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function questsForNpc(npc) {
+  if (!npc) return [];
+  const npcId = String(npc.id || "");
+  const npcName = normalizeBestiaryText(npc.name);
+  const sameNameCount = (state.data.npcs || []).filter(item => normalizeBestiaryText(item.name) === npcName).length;
+  return (state.data.quests || []).filter(quest => {
+    if (quest.npc_id) return String(quest.npc_id) === npcId;
+    return sameNameCount === 1 && npcName && normalizeBestiaryText(quest.npc_name) === npcName;
+  });
+}
+
+function resolveLootCreature(item) {
+  if (!item) return null;
+  const direct = item.creature_id ? findById("creatures", item.creature_id) : null;
+  if (direct) return direct;
+  const target = normalizeBestiaryText(item.creature_name);
+  if (!target) return null;
+  const matches = (state.data.creatures || []).filter(creature => normalizeBestiaryText(creature.name) === target);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function lootProvenance(item) {
+  const creature = resolveLootCreature(item);
+  if (!creature) return { creature: null, dungeon: null };
+  return { creature, dungeon: resolveCreatureDungeon(creature) };
+}
+
+function getSimpleFamilyCollection(type) {
+  ensureCodexFamilyUi();
+  const ui = state.ui.codexFamilies[type];
+  const q = normalizeBestiaryText(ui.search);
+  let items = [...(state.data[type] || [])];
+  if (q) {
+    items = items.filter(item => {
+      let parts = [];
+      if (type === "npcs") {
+        parts = [item.name, item.race, item.role, item.tone, item.lore, ...tagsToArray(item.tags)];
+      } else if (type === "quests") {
+        parts = [item.name, item.description, item.objective, item.reward, item.npc_name, item.dungeon_name, questDifficultyMeta(item.difficulty)?.label, ...tagsToArray(item.tags)];
+      } else if (type === "loot_items") {
+        const rarity = lootRarityMeta(item);
+        parts = [item.name, item.type, item.effect, item.creature_name, rarity?.label, ...tagsToArray(item.tags)];
+      }
+      return normalizeBestiaryText(parts.filter(Boolean).join(" ")).includes(q);
+    });
+  }
+  return items.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "fr", { sensitivity: "base" }));
+}
+
+function familyModeOptions(type) {
+  if (type === "quests") return [
+    { value: "list", label: "Liste", icon: "list" },
+    { value: "cards", label: "Cartes", icon: "grid" }
+  ];
+  return [
+    { value: "gallery", label: "Galerie", icon: "grid" },
+    { value: "list", label: "Liste", icon: "list" }
+  ];
 }
 
 function defaultBestiaryUi() {
@@ -713,6 +860,11 @@ function ensureSelectionExists() {
   ensureCodexFamilyUi();
   if (!state.data.dungeons?.some(item => String(item.id) === String(state.ui.codexFamilies.dungeons.selectedId))) {
     state.ui.codexFamilies.dungeons.selectedId = state.data.dungeons?.[0]?.id || "";
+  }
+  for (const type of ["npcs", "quests", "loot_items"]) {
+    if (!(state.data[type] || []).some(item => String(item.id) === String(state.ui.codexFamilies[type].selectedId))) {
+      state.ui.codexFamilies[type].selectedId = state.data[type]?.[0]?.id || "";
+    }
   }
   const heroGroups = buildHeroGroups();
   if (!heroGroups.some(group => group.key === state.ui.codexFamilies.heroes.selectedBase)) {
@@ -2248,17 +2400,18 @@ function renderBestiaryCollection() {
 function renderFamilyToolbar(type, count) {
   ensureCodexFamilyUi();
   const ui = state.ui.codexFamilies[type];
-  const label = type === "dungeons" ? "donjons" : "héros";
+  const labels = { dungeons: "donjons", heroes: "héros", npcs: "PNJ", quests: "quêtes", loot_items: "loot" };
+  const label = labels[type] || getLabel(type).toLowerCase();
+  const modes = familyModeOptions(type);
   return `
     <div class="codex-family-toolbar">
       <label class="codex-family-search">
-        <span class="sr-only">Rechercher dans les ${label}</span>
+        <span class="sr-only">Rechercher dans ${label}</span>
         ${shellIcon("search")}
-        <input class="field" data-action="family-search" data-type="${type}" value="${escapeHtml(ui.search)}" placeholder="Rechercher dans les ${label}…">
+        <input class="field" data-action="family-search" data-type="${type}" value="${escapeHtml(ui.search)}" placeholder="Rechercher dans ${label}…">
       </label>
       <div class="segmented" aria-label="Mode d’affichage">
-        <button class="${ui.mode === "gallery" ? "active" : ""}" type="button" data-action="family-mode" data-type="${type}" data-mode="gallery" aria-pressed="${ui.mode === "gallery"}">${shellIcon("grid")}<span>Galerie</span></button>
-        <button class="${ui.mode === "list" ? "active" : ""}" type="button" data-action="family-mode" data-type="${type}" data-mode="list" aria-pressed="${ui.mode === "list"}">${shellIcon("list")}<span>Liste</span></button>
+        ${modes.map(mode => `<button class="${ui.mode === mode.value ? "active" : ""}" type="button" data-action="family-mode" data-type="${type}" data-mode="${mode.value}" aria-pressed="${ui.mode === mode.value}">${shellIcon(mode.icon)}<span>${mode.label}</span></button>`).join("")}
       </div>
       <span class="codex-family-count">${count} entrée${count > 1 ? "s" : ""}</span>
     </div>`;
@@ -2551,11 +2704,261 @@ function renderHeroCodex() {
     </section>`);
 }
 
+function renderNpcCollectionCard(item, mode = "gallery", active = false) {
+  const image = imageUrlForEntity(item);
+  return `
+    <button class="npc-collection-card ${mode} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="npcs" data-id="${escapeHtml(String(item.id || ""))}">
+      <span class="npc-collection-media">
+        ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>Portrait indisponible</span>` : `<span class="npc-media-fallback"><img src="${V6_ICON_PATH}Icone_Entite_PNJ.webp" alt=""></span>`}
+      </span>
+      <span class="npc-collection-copy">
+        <small>PNJ${item.race ? ` · ${escapeHtml(item.race)}` : ""}</small>
+        <strong>${escapeHtml(item.name || "PNJ sans nom")}</strong>
+        ${item.role ? `<em>${escapeHtml(item.role)}</em>` : ""}
+      </span>
+    </button>`;
+}
+
+function renderNpcDetailV6(item) {
+  if (!item) return `<div class="panel empty">PNJ indisponible.</div>`;
+  const image = imageUrlForEntity(item);
+  const quests = questsForNpc(item);
+  const tags = tagsToArray(item.tags).filter(Boolean);
+  const name = String(item.name || "").trim() || "PNJ sans nom";
+  return `
+    <article class="npc-sheet-v6">
+      <section class="npc-portrait-v6">
+        ${image ? `
+          <img src="${escapeHtml(image)}" alt="Portrait de ${escapeHtml(name)}" data-safe-media>
+          <span class="relation-media-fallback" hidden>Portrait indisponible</span>
+          <button class="ghost npc-fullscreen" type="button" data-action="open-image" data-src="${escapeHtml(image)}" data-alt="${escapeHtml(name)}">${shellIcon("image")}<span>Plein écran</span></button>
+        ` : `<div class="npc-media-fallback large"><img src="${V6_ICON_PATH}Icone_Entite_PNJ.webp" alt=""><span>Portrait non renseigné</span></div>`}
+      </section>
+      <section class="npc-dossier-v6">
+        <header class="npc-identity-v6">
+          <div class="eyebrow"><img src="${V6_ICON_PATH}Icone_Entite_PNJ.webp" alt="" aria-hidden="true">PNJ</div>
+          <h1>${escapeHtml(name)}</h1>
+        </header>
+        <div class="npc-facts-v6">
+          ${item.race ? `<div><span>Race</span><b>${escapeHtml(item.race)}</b></div>` : ""}
+          ${item.role ? `<div><span>Rôle</span><b>${escapeHtml(item.role)}</b></div>` : ""}
+          ${item.tone ? `<div><span>Ton</span><b>${escapeHtml(item.tone)}</b></div>` : ""}
+        </div>
+        ${item.lore ? `
+          <section class="npc-lore-v6">
+            <div class="eyebrow"><img src="${V6_ICON_PATH}Icone_Gameplay_LORE.webp" alt="" aria-hidden="true">Lore</div>
+            <p>${escapeHtml(item.lore)}</p>
+          </section>
+        ` : ""}
+        <section class="npc-quests-v6">
+          <div class="npc-section-head"><div><img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt="" aria-hidden="true"><strong>Quêtes associées</strong></div><span>${quests.length}</span></div>
+          <div class="npc-quest-links">
+            ${quests.length ? quests.map(quest => `<button type="button" data-action="open-related" data-type="quests" data-id="${escapeHtml(String(quest.id || ""))}"><b>${escapeHtml(quest.name || "Quête")}</b><small>${escapeHtml(questDifficultyMeta(quest.difficulty)?.label || "Difficulté non renseignée")}</small></button>`).join("") : `<span class="muted small">Aucune Quête reliée de façon fiable.</span>`}
+          </div>
+        </section>
+        ${tags.length ? `<div class="npc-tags-v6">${tags.map(tag=>`<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+      </section>
+    </article>`;
+}
+
+function renderQuestDifficultyBadge(item) {
+  const meta = questDifficultyMeta(item?.difficulty);
+  if (!meta) return "";
+  return `<span class="semantic-tier difficulty ${meta.key} ${meta.known ? "" : "unknown"}"><i></i><span>Difficulté</span><b>${escapeHtml(meta.label)}</b></span>`;
+}
+
+function renderQuestCollectionCard(item, mode = "list", active = false) {
+  const npc = resolveQuestNpc(item);
+  const dungeon = resolveQuestDungeon(item);
+  return `
+    <button class="quest-codex-card ${mode} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="quests" data-id="${escapeHtml(String(item.id || ""))}">
+      <span class="quest-card-emblem"><img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt=""></span>
+      <span class="quest-card-copy">
+        <strong>${escapeHtml(item.name || "Quête sans titre")}</strong>
+        ${renderQuestDifficultyBadge(item)}
+        <small>${escapeHtml([npc?.name || item.npc_name, dungeon?.name || item.dungeon_name].filter(Boolean).join(" · "))}</small>
+        ${item.objective ? `<em>${escapeHtml(item.objective)}</em>` : ""}
+      </span>
+    </button>`;
+}
+
+function renderQuestDetailV6(item) {
+  if (!item) return `<div class="panel empty">Quête indisponible.</div>`;
+  const npc = resolveQuestNpc(item);
+  const dungeon = resolveQuestDungeon(item);
+  const image = imageUrlForEntity(item);
+  const tags = tagsToArray(item.tags).filter(Boolean);
+  const name = String(item.name || "").trim() || "Quête sans titre";
+  return `
+    <article class="quest-sheet-v6">
+      ${image ? `
+        <button class="quest-media-v6" type="button" data-action="open-image" data-src="${escapeHtml(image)}" data-alt="${escapeHtml(name)}">
+          <img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(name)}" data-safe-media>
+          <span class="relation-media-fallback" hidden>Illustration indisponible</span>
+        </button>
+      ` : ""}
+      <div class="quest-contract-v6">
+        <header class="quest-contract-head">
+          <div class="quest-contract-mark"><img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt="" aria-hidden="true"></div>
+          <div>
+            <div class="eyebrow">Quête Codex</div>
+            <h1>${escapeHtml(name)}</h1>
+          </div>
+          ${renderQuestDifficultyBadge(item)}
+        </header>
+        <div class="quest-parties-v6">
+          ${item.npc_name || npc ? `
+            <div><img src="${V6_ICON_PATH}Icone_Entite_PNJ.webp" alt="" aria-hidden="true"><span>Commanditaire</span>
+              ${npc ? `<button type="button" data-action="open-related" data-type="npcs" data-id="${escapeHtml(String(npc.id || ""))}">${escapeHtml(npc.name)}</button>` : `<b>${escapeHtml(item.npc_name || "Non renseigné")}</b>`}
+            </div>
+          ` : ""}
+          ${item.dungeon_name || dungeon ? `
+            <div><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="" aria-hidden="true"><span>Donjon</span>
+              ${dungeon ? `<button type="button" data-action="open-related" data-type="dungeons" data-id="${escapeHtml(String(dungeon.id || ""))}">${escapeHtml(dungeon.name)}</button>` : `<b>${escapeHtml(item.dungeon_name || "Non renseigné")}</b>`}
+            </div>
+          ` : ""}
+        </div>
+        ${item.description ? `<section class="quest-description-v6"><span>Description</span><p>${escapeHtml(item.description)}</p></section>` : ""}
+        ${item.objective ? `<section class="quest-objective-v6"><span>Objectif</span><strong>${escapeHtml(item.objective)}</strong></section>` : `<section class="quest-objective-v6 empty-objective"><span>Objectif</span><strong>Non renseigné</strong></section>`}
+        ${item.reward ? `<section class="quest-reward-v6"><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt="" aria-hidden="true"><div><span>Récompense</span><strong>${escapeHtml(item.reward)}</strong></div></section>` : ""}
+        ${tags.length ? `<div class="quest-tags-v6">${tags.map(tag=>`<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+      </div>
+    </article>`;
+}
+
+function renderLootRarityBadge(item) {
+  const meta = lootRarityMeta(item);
+  if (!meta) return "";
+  return `<span class="semantic-tier rarity ${meta.key} ${meta.known ? "" : "unknown"}"><i></i><span>Rareté</span><b>${escapeHtml(meta.label)}</b></span>`;
+}
+
+function renderLootCollectionCard(item, mode = "gallery", active = false) {
+  const image = imageUrlForEntity(item);
+  const source = resolveLootCreature(item);
+  return `
+    <button class="loot-codex-card ${mode} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="loot_items" data-id="${escapeHtml(String(item.id || ""))}">
+      <span class="loot-card-media">
+        ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>Illustration indisponible</span>` : `<span class="loot-media-fallback"><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt=""></span>`}
+      </span>
+      <span class="loot-card-copy">
+        <strong>${escapeHtml(item.name || "Loot sans nom")}</strong>
+        ${renderLootRarityBadge(item)}
+        ${item.type ? `<small>${escapeHtml(item.type)}</small>` : ""}
+        ${source || item.creature_name ? `<em>Source · ${escapeHtml(source?.name || item.creature_name)}</em>` : ""}
+      </span>
+    </button>`;
+}
+
+function renderLootDetailV6(item) {
+  if (!item) return `<div class="panel empty">Loot indisponible.</div>`;
+  const image = imageUrlForEntity(item);
+  const provenance = lootProvenance(item);
+  const tags = tagsToArray(item.tags).filter(Boolean);
+  const goldPresent = item.gold_value !== null && item.gold_value !== undefined && String(item.gold_value).trim() !== "";
+  const name = String(item.name || "").trim() || "Loot sans nom";
+  return `
+    <article class="loot-sheet-v6">
+      <section class="loot-stage-v6">
+        ${image ? `
+          <img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(name)}" data-safe-media>
+          <span class="relation-media-fallback" hidden>Illustration indisponible</span>
+          <button class="ghost loot-fullscreen" type="button" data-action="open-image" data-src="${escapeHtml(image)}" data-alt="${escapeHtml(name)}">${shellIcon("image")}<span>Plein écran</span></button>
+        ` : `<div class="loot-media-fallback large"><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt=""><span>Illustration non renseignée</span></div>`}
+        ${goldPresent ? `<div class="loot-value-v6"><b>${escapeHtml(String(item.gold_value))}</b><span>or</span></div>` : ""}
+      </section>
+      <section class="loot-ledger-v6">
+        <header>
+          <div class="eyebrow"><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt="" aria-hidden="true">Loot</div>
+          ${renderLootRarityBadge(item)}
+          <h1>${escapeHtml(name)}</h1>
+          ${item.type ? `<span class="loot-type-v6">${escapeHtml(item.type)}</span>` : ""}
+        </header>
+        ${item.effect ? `<section class="loot-effect-v6"><span>Effet</span><strong>${escapeHtml(item.effect)}</strong></section>` : ""}
+        ${goldPresent ? `<section class="loot-fact-v6"><span>Valeur</span><b>${escapeHtml(String(item.gold_value))} or</b></section>` : ""}
+        ${provenance.creature ? `
+          <section class="loot-source-v6">
+            <span>Source</span>
+            <button type="button" data-action="open-related" data-type="creatures" data-id="${escapeHtml(String(provenance.creature.id || ""))}">${escapeHtml(provenance.creature.name || item.creature_name || "Créature")}</button>
+          </section>
+        ` : item.creature_name ? `<section class="loot-source-v6 unresolved"><span>Source déclarée</span><b>${escapeHtml(item.creature_name)}</b></section>` : ""}
+        ${provenance.dungeon ? `
+          <section class="loot-provenance-v6">
+            <img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="" aria-hidden="true"><div><span>Provenance</span><button type="button" data-action="open-related" data-type="dungeons" data-id="${escapeHtml(String(provenance.dungeon.id || ""))}">${escapeHtml(provenance.dungeon.name || "Donjon")}</button></div>
+          </section>
+        ` : ""}
+        ${tags.length ? `<div class="loot-tags-v6">${tags.map(tag=>`<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+      </section>
+    </article>`;
+}
+
+function renderSimpleFamilyMasterItem(type, item, active = false) {
+  if (type === "npcs") return renderNpcCollectionCard(item, "list", active);
+  if (type === "quests") return renderQuestCollectionCard(item, "list", active);
+  return renderLootCollectionCard(item, "list", active);
+}
+
+function renderSimpleFamilyDetail(type, item) {
+  if (type === "npcs") return renderNpcDetailV6(item);
+  if (type === "quests") return renderQuestDetailV6(item);
+  return renderLootDetailV6(item);
+}
+
+function renderSimpleFamilyCodex(type) {
+  ensureCodexFamilyUi();
+  const meta = {
+    npcs: { label: "PNJ", singular: "PNJ" },
+    quests: { label: "Quêtes", singular: "Quête" },
+    loot_items: { label: "Loot", singular: "Loot" }
+  }[type];
+  const ui = state.ui.codexFamilies[type];
+  const items = getSimpleFamilyCollection(type);
+  let selected = findById(type, ui.selectedId || state.ui.codexSelectedId);
+  if (!selected && items.length) selected = items[0];
+
+  if (state.ui.codexDetailOpen) {
+    return renderShell(`
+      <section class="codex-family-v6 ${type}-codex-v6">
+        ${renderCodexReturnBar()}
+        <div class="codex-family-detail-top">
+          <button class="ghost codex-family-back" type="button" data-action="codex-family-back" data-type="${type}">${shellIcon("back")}<span>Retour aux ${meta.label}</span></button>
+          ${renderCodexTabs(type)}
+        </div>
+        <div class="codex-family-master-detail">
+          <aside class="panel codex-family-master-rail">
+            <div class="codex-family-master-head"><strong>${meta.label}</strong><span>${items.length}</span></div>
+            <div class="codex-family-master-list">${items.map(item=>renderSimpleFamilyMasterItem(type,item,String(item.id)===String(selected?.id))).join("") || `<div class="empty small">Aucune entrée.</div>`}</div>
+          </aside>
+          <div class="codex-family-detail-host">${selected ? renderSimpleFamilyDetail(type,selected) : `<div class="panel empty">Entrée indisponible.</div>`}</div>
+        </div>
+      </section>`);
+  }
+
+  const cards = items.map(item => {
+    const active = String(item.id) === String(ui.selectedId);
+    if (type === "npcs") return renderNpcCollectionCard(item, ui.mode, active);
+    if (type === "quests") return renderQuestCollectionCard(item, ui.mode, active);
+    return renderLootCollectionCard(item, ui.mode, active);
+  }).join("");
+
+  return renderShell(`
+    <section class="codex-family-v6 ${type}-codex-v6">
+      <div class="panel codex-family-collection-panel">
+        <div class="codex-family-heading"><div><div class="eyebrow">Codex</div><h2>${meta.label}</h2></div></div>
+        ${renderCodexTabs(type)}
+        ${renderFamilyToolbar(type,items.length)}
+        <div class="codex-family-results ${ui.mode} ${type}">
+          ${cards || `<div class="empty">Aucune entrée ne correspond.</div>`}
+        </div>
+      </div>
+    </section>`);
+}
+
 function renderCodex() {
   const type = state.ui.codexType;
   if (type === "creatures") return renderBestiaryCollection();
   if (type === "dungeons") return renderDungeonCodex();
   if (type === "heroes") return renderHeroCodex();
+  if (["npcs", "quests", "loot_items"].includes(type)) return renderSimpleFamilyCodex(type);
 
   const items = getFilteredList(type, "codex");
   const selected = findById(type, state.ui.codexSelectedId) || items[0] || null;
@@ -2859,65 +3262,15 @@ function renderHeroDetail(item) {
 }
 
 function renderNpcDetail(item) {
-  return `
-    <div class="detail-card">
-      <div class="detail-head">
-        <div>
-          <span class="badge">${escapeHtml(item.race || "")}</span>
-          <h3>${escapeHtml(item.name)}</h3>
-          <div class="muted">${escapeHtml(item.role || "")}</div>
-        </div>
-      </div>
-      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
-        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🍺</div>`}
-      </div>
-      <p><strong>Ton :</strong> ${escapeHtml(item.tone || "—")}</p>
-      <p><strong>Lore :</strong> ${escapeHtml(item.lore || "—")}</p>
-      <p><strong>Tags :</strong> ${escapeHtml(tagsToText(item.tags))}</p>
-    </div>
-  `;
+  return renderNpcDetailV6(item);
 }
 
 function renderQuestDetail(item) {
-  return `
-    <div class="detail-card">
-      <div class="detail-head">
-        <div>
-          <span class="badge">${"⭐".repeat(clamp(item.difficulty || 1, 1, 5))}</span>
-          <h3>${escapeHtml(item.name)}</h3>
-          <div class="muted">${escapeHtml(item.dungeon_name || "")} · ${escapeHtml(item.npc_name || "PNJ facultatif")}</div>
-        </div>
-      </div>
-      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
-        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">📜</div>`}
-      </div>
-      <p><strong>Description :</strong> ${escapeHtml(item.description || "—")}</p>
-      <p><strong>Objectif :</strong> ${escapeHtml(item.objective || "—")}</p>
-      <p><strong>Récompense :</strong> ${escapeHtml(item.reward || "—")}</p>
-      <p><strong>Tags :</strong> ${escapeHtml(tagsToText(item.tags))}</p>
-    </div>
-  `;
+  return renderQuestDetailV6(item);
 }
 
 function renderLootDetail(item) {
-  const creature = findById("creatures", item.creature_id);
-  return `
-    <div class="detail-card">
-      <div class="detail-head">
-        <div>
-          <span class="badge">Loot</span>
-          <h3>${escapeHtml(item.name)}</h3>
-          <div class="muted">${escapeHtml(creature?.name || item.creature_name || "")}</div>
-        </div>
-      </div>
-      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
-        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🪙</div>`}
-      </div>
-      <p><strong>Type :</strong> ${escapeHtml(item.type || "—")}</p>
-      <p><strong>Effet :</strong> ${escapeHtml(item.effect || "—")}</p>
-      <p><strong>Valeur :</strong> ${item.gold_value || 0} or</p>
-    </div>
-  `;
+  return renderLootDetailV6(item);
 }
 
 function renderInteractableDetail(item) {
@@ -3521,7 +3874,7 @@ function wireBestiaryScrollTracking() {
 }
 
 function restoreCodexFamilyScrollAfterRender() {
-  if (state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes"].includes(state.ui.codexType)) return;
+  if (state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(state.ui.codexType)) return;
   ensureCodexFamilyUi();
   const top = Math.max(0, Number(state.ui.codexFamilies[state.ui.codexType].scrollTop || 0));
   restoringCodexFamilyScroll = true;
@@ -3534,7 +3887,7 @@ function restoreCodexFamilyScrollAfterRender() {
 function wireCodexFamilyScrollTracking() {
   window.addEventListener("scroll", () => {
     const type = state.ui.codexType;
-    if (restoringCodexFamilyScroll || state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes"].includes(type)) return;
+    if (restoringCodexFamilyScroll || state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(type)) return;
     ensureCodexFamilyUi();
     state.ui.codexFamilies[type].scrollTop = Math.max(0, window.scrollY || 0);
     if (codexFamilyScrollSaveTimer) clearTimeout(codexFamilyScrollSaveTimer);
@@ -4204,9 +4557,10 @@ function bindEvents() {
           return;
         case "family-mode": {
           const type = btn.dataset.type;
-          if (!["dungeons", "heroes"].includes(type)) return;
+          if (!["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(type)) return;
           ensureCodexFamilyUi();
-          state.ui.codexFamilies[type].mode = btn.dataset.mode === "list" ? "list" : "gallery";
+          const allowed = familyModeOptions(type).map(mode => mode.value);
+          state.ui.codexFamilies[type].mode = allowed.includes(btn.dataset.mode) ? btn.dataset.mode : defaultCodexFamiliesUi()[type].mode;
           state.ui.codexFamilies[type].scrollTop = 0;
           await saveUiState(state.ui);
           render();
@@ -4214,7 +4568,7 @@ function bindEvents() {
         }
         case "select-family-codex": {
           const type = btn.dataset.type;
-          if (!["dungeons", "heroes"].includes(type)) return;
+          if (!["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(type)) return;
           ensureCodexFamilyUi();
           state.ui.codexReturnStack = [];
           state.ui.codexType = type;
@@ -4224,12 +4578,17 @@ function bindEvents() {
             if (!findById("dungeons", id)) return;
             state.ui.codexFamilies.dungeons.selectedId = id;
             state.ui.codexSelectedId = id;
-          } else {
+          } else if (type === "heroes") {
             const group = heroGroupByKey(btn.dataset.base);
             if (!group) return;
             state.ui.codexFamilies.heroes.selectedBase = group.key;
             const level = selectedHeroLevel(group);
             state.ui.codexSelectedId = level?.id || "";
+          } else {
+            const id = String(btn.dataset.id || "");
+            if (!findById(type, id)) return;
+            state.ui.codexFamilies[type].selectedId = id;
+            state.ui.codexSelectedId = id;
           }
           state.ui.codexDetailOpen = true;
           await saveUiState(state.ui);
@@ -4240,7 +4599,7 @@ function bindEvents() {
         }
         case "codex-family-back": {
           const type = btn.dataset.type;
-          if (!["dungeons", "heroes"].includes(type)) return;
+          if (!["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(type)) return;
           state.ui.codexReturnStack = [];
           state.ui.codexDetailOpen = false;
           await saveUiState(state.ui);
@@ -4306,6 +4665,9 @@ function bindEvents() {
               state.ui.codexFamilies.heroes.selectedBase = group.key;
               rememberHeroLevel(group, hero.level);
             }
+          } else if (["npcs", "quests", "loot_items"].includes(previous.type)) {
+            ensureCodexFamilyUi();
+            state.ui.codexFamilies[previous.type].selectedId = previous.id;
           }
           await saveUiState(state.ui);
           render();
@@ -4346,6 +4708,9 @@ function bindEvents() {
               state.ui.codexFamilies.heroes.selectedBase = group.key;
               rememberHeroLevel(group, target.level);
             }
+          } else if (["npcs", "quests", "loot_items"].includes(targetType)) {
+            ensureCodexFamilyUi();
+            state.ui.codexFamilies[targetType].selectedId = targetId;
           }
           await saveUiState(state.ui);
           render();
@@ -4432,6 +4797,9 @@ function bindEvents() {
               state.ui.codexFamilies.heroes.selectedBase = group.key;
               rememberHeroLevel(group, hero.level);
             }
+          } else if (["npcs", "quests", "loot_items"].includes(btn.dataset.type)) {
+            ensureCodexFamilyUi();
+            state.ui.codexFamilies[btn.dataset.type].selectedId = btn.dataset.id;
           }
           state.ui.codexDetailOpen = true;
           await saveUiState(state.ui);
@@ -4759,7 +5127,7 @@ function bindEvents() {
     }
     if (el.dataset.action === "family-search") {
       const type = el.dataset.type;
-      if (!["dungeons", "heroes"].includes(type)) return;
+      if (!["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(type)) return;
       ensureCodexFamilyUi();
       state.ui.codexFamilies[type].search = el.value;
       state.ui.codexFamilies[type].scrollTop = 0;
@@ -4862,7 +5230,10 @@ async function bootstrap() {
           ...defaultBlankUi().codexFamilies.heroes,
           ...(savedUi.codexFamilies?.heroes || {}),
           levelByBase: { ...defaultBlankUi().codexFamilies.heroes.levelByBase, ...(savedUi.codexFamilies?.heroes?.levelByBase || {}) }
-        }
+        },
+        npcs: { ...defaultBlankUi().codexFamilies.npcs, ...(savedUi.codexFamilies?.npcs || {}) },
+        quests: { ...defaultBlankUi().codexFamilies.quests, ...(savedUi.codexFamilies?.quests || {}) },
+        loot_items: { ...defaultBlankUi().codexFamilies.loot_items, ...(savedUi.codexFamilies?.loot_items || {}) }
       },
       bestiary: { ...defaultBlankUi().bestiary, ...(savedUi.bestiary || {}) }
     };

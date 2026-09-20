@@ -579,3 +579,87 @@ Livré :
 - tablette/téléphone séquentiels : validé.
 
 **UI-3A est clos. UI-3 global reste ACTIF pour UI-3B / UI-3C / UI-3D.**
+
+---
+
+# 18. Implémentation UI-3B sur V5.3
+
+Statut : **LIVRÉ — 20 septembre 2026**
+
+Périmètre fermé : **PNJ + Quêtes Codex + Loot uniquement**. UI-3C et UI-3D ne sont pas démarrés par ce chantier.
+
+## Pré-check
+
+- aucune migration IndexedDB ;
+- aucun champ métier réécrit par la lecture ;
+- relations PNJ/Quête et Loot/Créature résolues d'abord par ID, puis par nom exact uniquement lorsque le candidat est unique ;
+- aucune similarité approximative de nom ;
+- Quête Codex rendue uniquement depuis le store `quests`, sans réutiliser la Quête de session ;
+- Loot rendu uniquement depuis `loot_items`, sans fusion avec les Objets interactifs.
+
+## PNJ
+
+Livré :
+
+- collection Galerie/Liste avec recherche locale, mode, sélection et scroll mémorisés ;
+- fiche narrative V3 avec portrait complet, identité, race, rôle, ton et Lore ;
+- Lore sur matière papier ;
+- aucune statistique PV / ATK / DEF / Menace ajoutée ;
+- Quêtes associées uniquement via `npc_id` ou, à défaut, `npc_name` exact si le PNJ est unique ;
+- ouverture de la Quête liée via la navigation Codex existante ;
+- image absente/illisible réduite proprement sans mutation média.
+
+## Quêtes Codex
+
+Livré :
+
+- mode initial Liste ;
+- mode Cartes alternatif ;
+- recherche locale et contexte mémorisé ;
+- difficulté texte + couleur sur six paliers : Très facile, Facile, Normale, Difficile, Très difficile, Extrême ;
+- compatibilité des anciennes valeurs numériques 1 à 6, sans réécriture de la valeur stockée ;
+- valeur textuelle inconnue conservée textuellement avec style neutre ;
+- commanditaire et Donjon reliés uniquement si la relation est fiable ;
+- description ;
+- objectif volontairement dominant visuellement ;
+- récompense avec emblème premium ;
+- Quête Codex distincte de la Quête de session UI-4.
+
+## Loot
+
+Livré :
+
+- mode initial Galerie ;
+- mode Liste alternatif ;
+- recherche locale, mode, sélection et scroll mémorisés ;
+- rareté texte + couleur uniquement lorsqu'un champ de rareté est réellement présent ;
+- six raretés reconnues : Mauvais, Commun, Inhabituel, Rare, Épique, Légendaire ;
+- aucune rareté déduite du type, du prix, des tags ou de la créature source ;
+- type, effet et valeur affichés sans transformer une valeur absente en zéro ;
+- source Créature via `creature_id`, avec fallback exact par `creature_name` uniquement si unique ;
+- provenance Donjon affichée uniquement lorsque la Créature source est elle-même résolue de façon fiable vers un Donjon ;
+- Loot et Objet interactif restent deux familles distinctes.
+
+## Responsive
+
+- grand desktop confortable : master-detail possible ;
+- desktop plus étroit : fiche seule avec Retour ;
+- tablette paysage/portrait : `Collection -> Fiche -> Retour` ;
+- téléphone : `Collection -> Fiche -> Retour`.
+
+## Données / offline
+
+- `src/storage/idb.js` inchangé ;
+- DB `gargottex-v5-offline`, version 2 inchangée ;
+- aucun original média remplacé ;
+- aucun nouvel asset nécessaire : logos PNJ, Quête, Loot, Donjon et Lore premium déjà précachés par UI-1.
+
+## Gate UI-3B
+
+- PNJ narratif : validé ;
+- Quête Codex : validé ;
+- Loot : validé ;
+- modes par défaut : validés ;
+- rareté/difficulté accessibles par texte + couleur : validées.
+
+**UI-3B est clos. UI-3 global reste ACTIF pour UI-3C / UI-3D.**
