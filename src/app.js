@@ -275,6 +275,61 @@ const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
 const APP_VERSION = "5.5.0";
 const PWA_CACHE_NAME = "gargottex-v6-ui6-final";
 const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js"];
+
+const HOME_TAGLINE = "Ici, même les habitués ne savent plus pourquoi ils sont venus.";
+const BERTHOLD_ADVICES = [
+  "« Un aventurier sobre, c’est souvent un aventurier qui n’a plus d’argent. »",
+  "« Quand une porte de donjon est déjà ouverte, demande-toi surtout qui l’a ouverte. »",
+  "« On reconnaît un bon plan au moment précis où quelqu’un propose de l’expliquer avec une carte. »",
+  "« Ne commande jamais “la même chose que lui” avant d’avoir vérifié combien de bras il possède. »",
+  "« Le courage, c’est entrer dans le donjon. La sagesse, c’est garder quelqu’un dehors avec les chevaux. »",
+  "« Si le magicien dit “normalement”, éloigne-toi. »",
+  "« Tout coffre contient un trésor. Parfois, le trésor est une leçon sur les pièges. »",
+  "« Une épée enchantée reste une épée. Évite donc de la lécher. »",
+  "« Dans la vie, il faut savoir choisir ses batailles. Et surtout choisir celles où les autres se battent. »",
+  "« Qui boit seul paie seul. C’est contre nature. »",
+  "« Un dragon endormi vaut mieux que deux dragons réveillés. Je sais que ça paraît évident, mais vous seriez surpris. »",
+  "« Il n’existe pas de petite dette. Il existe seulement des créanciers mal informés. »",
+  "« Si quelque chose brille dans une grotte, ce n’est pas forcément de l’or. Et si ça cligne des yeux, cours. »",
+  "« La diplomatie consiste à offrir une bière à quelqu’un avant de lui expliquer pourquoi sa maison brûle. »",
+  "« Celui qui dit “j’ai une idée” devrait automatiquement payer la prochaine tournée. »",
+  "« Le destin frappe toujours deux fois. La deuxième, c’est généralement parce que t’as demandé qui était là. »",
+  "« Un bon aventurier prépare son équipement. Un grand aventurier prépare son excuse. »",
+  "« Quand le tavernier essuie deux fois le même verre, c’est qu’il écoute votre conversation. »",
+  "« Les gobelins ont mauvaise réputation. Pourtant, j’ai connu des humains bien pires. Ils étaient percepteurs. »",
+  "« L’or ne fait pas le bonheur. Mais il règle l’addition, ce qui évite beaucoup de malheur. »",
+  "« Le problème avec les prophéties, c’est qu’elles manquent toujours d’un paragraphe sur les frais annexes. »",
+  "« Une quête gratuite coûte toujours quelque chose. »",
+  "« Si un vieux sage vit seul au sommet d’une montagne, c’est peut-être simplement parce que personne ne le supporte. »",
+  "« Ne fais jamais confiance à un escalier de donjon impeccable. Personne ne nettoie un escalier de donjon. »",
+  "« Quand quelqu’un murmure “ça pourrait marcher”, regarde immédiatement où se trouve la sortie. »",
+  "« Une bonne bière doit avoir trois qualités : être fraîche, être pleine et être à quelqu’un d’autre. »",
+  "« On peut tout résoudre avec une hache. C’est rarement la meilleure solution, mais techniquement, on peut. »",
+  "« Si ton plan nécessite quatre héros, trois chevaux et une chèvre, commence par surveiller la chèvre. »",
+  "« Dans toute compagnie d’aventuriers, il y en a toujours un qui touche l’objet maudit. Si tu ne sais pas qui c’est, c’est probablement toi. »",
+  "« N’insulte jamais un nain sur sa taille. Insulte plutôt sa bière. Tu souffriras moins longtemps. »",
+  "« Quand une elfe te dit qu’elle se souvient de ton grand-père, ne demande pas dans quelles circonstances. »",
+  "« Une potion sans étiquette est soit extrêmement précieuse, soit extrêmement drôle. »",
+  "« Le premier mensonge d’un aventurier commence toujours par : “On en a pour cinq minutes.” »",
+  "« Ce qui se passe dans la cave reste dans la cave. Surtout depuis qu’on a condamné la porte. »",
+  "« Si le monstre possède un nom, c’est mauvais signe. Si son nom possède un titre, c’est pire. »",
+  "« Mourir riche reste mourir. Dépensez chez Berthold. »",
+  "« Un paladin sans certitudes est un homme agréable. Je n’en ai jamais rencontré. »",
+  "« À force de chercher la lumière au bout du tunnel, certains finissent par réveiller ce qui dormait dedans. »",
+  "« Celui qui garde une potion “pour plus tard” meurt généralement avec une très belle collection de potions. »",
+  "« Dans le doute, commande une deuxième pinte. Le problème sera toujours là, mais il aura de meilleurs contours. »",
+  "« Une armure légendaire ne protège pas contre les décisions stupides. J’ai vérifié. Plusieurs fois. »",
+  "« Il y a trois sortes de champignons : ceux qu’on mange, ceux qui te tuent et ceux qui commencent à te parler. Évite surtout les bavards. »",
+  "« Si le barde commence une chanson sur vos exploits avant votre départ, changez de quête. »",
+  "« Un vrai héros ne regarde jamais les explosions. Un vrai héros intelligent évite surtout d’être près de l’explosion. »",
+  "« Les morts-vivants ont au moins une qualité : ils reviennent toujours régler leurs comptes. »",
+  "« Si tu entends des chants dans une forêt enchantée, bouche-toi les oreilles. Si tu entends de l’accordéon, cours encore plus vite. »",
+  "« Ne demande jamais au cuisinier ce qu’il y a dans le ragoût. S’il le savait, il l’aurait mis sur l’ardoise. »",
+  "« Un aventurier entre dans ma taverne avec cent pièces d’or. Il en ressort avec une quête, une gueule de bois et six pièces d’or. Ça s’appelle l’économie locale. »",
+  "« Tout problème possède une solution. Certains problèmes possèdent également des dents. »",
+  "« Souviens-toi, gamin : quand tout semble perdu, que le donjon s’effondre et que le dragon te poursuit… l’important, c’est d’avoir payé Berthold avant de partir. »"
+];
+let bertholdAdviceIndex = Math.floor(Math.random() * BERTHOLD_ADVICES.length);
 let backupBusy = false;
 let searchDebounceTimer = null;
 let bestiaryScrollSaveTimer = null;
@@ -2629,66 +2684,135 @@ function renderHome() {
   const remainingOccurrences = groups.reduce((sum, group) => sum + group.remaining, 0);
   const quest = findById("quests", session.questId);
   const currentBrouhaha = session.brouhaha.current;
+  const bertholdAdvice = BERTHOLD_ADVICES[bertholdAdviceIndex] || BERTHOLD_ADVICES[0];
+  const dungeonImage = dungeon ? imageUrlForEntity(dungeon) : "";
+  const heroImage = dungeonImage || "assets/images/logo-source.jpeg";
+
+  const editorialHead = `
+    <header class="home-editorial-head">
+      <span class="eyebrow">Gargotte & Va-Nu-Pieds</span>
+      <h1>Gargottex V6</h1>
+      <p>Une encyclopédie visuelle et un compagnon de partie local-first, avec l’identité d’une taverne qui a déjà vu passer trop d’aventuriers.</p>
+    </header>
+  `;
+
+  const bertholdNote = `
+    <aside class="home-berthold-note" aria-label="Le conseil de Berthold">
+      <span>Le conseil de Berthold</span>
+      <strong>${escapeHtml(bertholdAdvice)}</strong>
+      <small>Berthold · La Chope qui colle</small>
+    </aside>
+  `;
 
   if (!session.active) {
     return renderShell(`
-      <section class="session-home-v6 no-session">
-        <div class="session-home-brand">
-          <img src="assets/images/logo-512.png" alt="Gargottex">
-          <div><span class="eyebrow">Gargottex</span><h1>Codex & outils de partie</h1><p>Le Codex reste disponible sans lancer de partie. Le contexte de session est local, temporaire et utilisable hors ligne.</p></div>
+      <section class="session-home-v6 no-session home-polish-v6">
+        ${editorialHead}
+        <div class="home-polish-grid">
+          <article class="home-hero-v6 home-hero-counter">
+            <img class="home-hero-backdrop" src="assets/images/logo-source.jpeg" alt="" aria-hidden="true">
+            <div class="home-hero-shade" aria-hidden="true"></div>
+            <div class="home-hero-copy">
+              <span class="eyebrow">Comptoir de départ</span>
+              <h2>${escapeHtml(HOME_TAGLINE)}</h2>
+              <p>Ouvre le Codex, choisis ton Donjon ou lance une partie. Ici, les outils restent sérieux même quand le mobilier ne l’est plus.</p>
+              <div class="home-hero-actions">
+                <button class="primary" type="button" data-action="set-view" data-view="codex">Ouvrir le Codex</button>
+                <button class="ghost" type="button" data-action="set-view" data-view="generator">Préparer la partie</button>
+              </div>
+            </div>
+            ${bertholdNote}
+          </article>
+
+          <aside class="home-side-v6">
+            ${renderSessionStartCard("Accueil")}
+            <section class="home-local-card panel">
+              <span class="eyebrow">État local</span>
+              <div><i aria-hidden="true"></i><strong>Disponible hors ligne</strong></div>
+              <p>Le Codex et les outils essentiels restent accessibles sans connexion. Les données de partie restent d’abord ici.</p>
+            </section>
+          </aside>
         </div>
-        ${renderSessionStartCard("Accueil")}
-        <div class="session-home-shortcuts">
-          <button type="button" data-action="set-view" data-view="codex"><img src="${V6_ICON_PATH}Sigil_Basique.webp" alt=""><span><b>Ouvrir le Codex</b><small>Consulter toutes les familles</small></span></button>
-          <button type="button" data-action="set-view" data-view="generator"><img src="${V6_ICON_PATH}Icone_Gameplay_ACTION.webp" alt=""><span><b>Générateur</b><small>Démarrer depuis l'outil</small></span></button>
-          <button type="button" data-action="set-view" data-view="brouhaha"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt=""><span><b>Brouhaha</b><small>0 à 12, pendant la partie</small></span></button>
+
+        <div class="session-home-shortcuts home-quick-links">
+          <button type="button" data-action="set-view" data-view="codex"><img src="${V6_ICON_PATH}Sigil_Basique.webp" alt=""><span><b>Explorer le Codex</b><small>Bestiaire, Donjons, Héros et références</small></span></button>
+          <button type="button" data-action="set-view" data-view="generator"><img src="${V6_ICON_PATH}Icone_Gameplay_ACTION.webp" alt=""><span><b>Générateur</b><small>Préparer la prochaine rencontre</small></span></button>
+          <button type="button" data-action="set-view" data-view="brouhaha"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt=""><span><b>Brouhaha</b><small>Niveau, effet et historique</small></span></button>
+          <button type="button" data-action="set-view" data-view="quests"><img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt=""><span><b>Quête de session</b><small>Tirage court lié au Donjon</small></span></button>
         </div>
       </section>
     `);
   }
 
   return renderShell(`
-    <section class="session-home-v6 active-session">
-      <div class="session-counter-v6">
-        <div>
-          <span class="eyebrow">Partie en cours</span>
-          <h1>${escapeHtml(dungeon?.name || "Donjon indisponible")}</h1>
-          <p>Étage ${session.floorIndex + 1}${budget === null ? "" : ` · budget ${escapeHtml(String(budget))}`} · mode ${escapeHtml(sessionModeLabel(session.mode))}</p>
-        </div>
-        <button class="danger" type="button" data-action="session-end">Terminer la partie</button>
+    <section class="session-home-v6 active-session home-polish-v6">
+      ${editorialHead}
+      <div class="home-polish-grid active">
+        <article class="home-hero-v6 home-hero-dungeon">
+          <img class="home-hero-backdrop" src="${escapeHtml(heroImage)}" alt="" aria-hidden="true">
+          <div class="home-hero-shade" aria-hidden="true"></div>
+          <div class="home-hero-copy">
+            <span class="eyebrow">Partie en cours</span>
+            <h2>${escapeHtml(dungeon?.name || "Donjon indisponible")}</h2>
+            <p>Étage ${session.floorIndex + 1}${budget === null ? "" : ` · budget ${escapeHtml(String(budget))}`} · mode ${escapeHtml(sessionModeLabel(session.mode))}</p>
+            <div class="home-hero-actions">
+              <button class="primary" type="button" data-action="set-view" data-view="generator">Reprendre la rencontre</button>
+              ${dungeon ? `<button class="ghost" type="button" data-action="jump-codex" data-type="dungeons" data-id="${escapeHtml(String(dungeon.id || ""))}">Voir le Donjon</button>` : ""}
+            </div>
+          </div>
+          ${bertholdNote}
+        </article>
+
+        <aside class="home-side-v6">
+          <section class="home-session-board panel">
+            <span class="eyebrow">Plateau de table</span>
+            <h2>${escapeHtml(dungeon?.name || "Partie en cours")}</h2>
+            <p class="home-session-meta">Étage ${session.floorIndex + 1}${budget === null ? "" : ` · Budget ${escapeHtml(String(budget))}`} · ${escapeHtml(sessionModeLabel(session.mode))}</p>
+
+            <div class="session-dashboard-v6 home-session-objects">
+              <button class="session-dashboard-card encounter home-session-object" type="button" data-action="set-view" data-view="generator">
+                <img src="${V6_ICON_PATH}Icone_Gameplay_MENACE.webp" alt="" aria-hidden="true">
+                <span><b>Rencontre</b><small>${encounter ? (remainingOccurrences ? `${remainingOccurrences} occurrence(s) restante(s)` : "Rencontre terminée") : "Aucune rencontre active"}</small></span>
+              </button>
+              <button class="session-dashboard-card noise home-session-object" type="button" data-action="set-view" data-view="brouhaha">
+                <img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt="" aria-hidden="true">
+                <span><b>Brouhaha ${escapeHtml(String(session.brouhaha.level))} / 12</b><small>${currentBrouhaha ? escapeHtml(currentBrouhaha.text) : "Aucun effet courant"}</small></span>
+              </button>
+              <button class="session-dashboard-card quest home-session-object" type="button" data-action="set-view" data-view="quests">
+                <img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt="" aria-hidden="true">
+                <span><b>Quête ${quest ? "active" : "de session"}</b><small>${escapeHtml(quest?.name || "Aucune quête tirée")}</small></span>
+              </button>
+            </div>
+
+            <div class="session-safe-controls home-session-safe-controls">
+              <label><span>Donjon actif</span><select data-action="session-set-dungeon">
+                ${(state.data.dungeons || []).map(item => `<option value="${escapeHtml(String(item.id || ""))}" ${String(item.id) === String(session.dungeonId) ? "selected" : ""}>${escapeHtml(item.name || "Donjon")}</option>`).join("")}
+              </select></label>
+              <label><span>Étage</span><select data-action="session-set-floor" ${budgets.length ? "" : "disabled"}>
+                ${budgets.map((value,index)=>`<option value="${index}" ${index===session.floorIndex?"selected":""}>Étage ${index+1}${value === null ? "" : ` · budget ${escapeHtml(String(value))}`}</option>`).join("")}
+              </select></label>
+            </div>
+
+            <button class="danger home-session-end" type="button" data-action="session-end">Terminer la partie</button>
+          </section>
+
+          <section class="home-local-card panel">
+            <span class="eyebrow">État local</span>
+            <div><i aria-hidden="true"></i><strong>Disponible hors ligne</strong></div>
+            <p>La session et le Codex restent pilotés localement, sans interrompre la table si le réseau disparaît.</p>
+          </section>
+        </aside>
       </div>
 
-      <div class="session-safe-controls panel">
-        <label><span>Donjon actif</span><select data-action="session-set-dungeon">
-          ${(state.data.dungeons || []).map(item => `<option value="${escapeHtml(String(item.id || ""))}" ${String(item.id) === String(session.dungeonId) ? "selected" : ""}>${escapeHtml(item.name || "Donjon")}</option>`).join("")}
-        </select></label>
-        <label><span>Étage</span><select data-action="session-set-floor" ${budgets.length ? "" : "disabled"}>
-          ${budgets.map((value,index)=>`<option value="${index}" ${index===session.floorIndex?"selected":""}>Étage ${index+1}${value === null ? "" : ` · budget ${escapeHtml(String(value))}`}</option>`).join("")}
-        </select></label>
-      </div>
-
-      <div class="session-dashboard-v6">
-        <button class="session-dashboard-card encounter" type="button" data-action="set-view" data-view="generator">
-          <span>Rencontre</span><b>${encounter ? `${remainingOccurrences}/${totalOccurrences}` : "—"}</b><small>${encounter ? (remainingOccurrences ? "occurrence(s) restante(s)" : "terminée") : "aucune rencontre"}</small>
-        </button>
-        <button class="session-dashboard-card noise" type="button" data-action="set-view" data-view="brouhaha">
-          <span>Brouhaha</span><b>${session.brouhaha.level}</b><small>${currentBrouhaha ? escapeHtml(currentBrouhaha.text) : "aucun effet courant"}</small>
-        </button>
-        <button class="session-dashboard-card quest" type="button" data-action="set-view" data-view="quests">
-          <span>Quête</span><b>${quest ? "Active" : "—"}</b><small>${escapeHtml(quest?.name || "aucune quête tirée")}</small>
-        </button>
-      </div>
-
-      <div class="session-home-shortcuts">
+      <div class="session-home-shortcuts home-quick-links">
+        <button type="button" data-action="set-view" data-view="codex"><img src="${V6_ICON_PATH}Sigil_Basique.webp" alt=""><span><b>Explorer le Codex</b><small>Retrouver une règle ou une référence</small></span></button>
         <button type="button" data-action="set-view" data-view="generator"><img src="${V6_ICON_PATH}Icone_Gameplay_ACTION.webp" alt=""><span><b>Générateur</b><small>Composer la prochaine salle</small></span></button>
         <button type="button" data-action="set-view" data-view="brouhaha"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt=""><span><b>Brouhaha</b><small>Niveau et effets de session</small></span></button>
-        <button type="button" data-action="set-view" data-view="quests"><img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt=""><span><b>Quête</b><small>Tirage rapide du Donjon</small></span></button>
-        <button type="button" data-action="set-view" data-view="codex"><img src="${V6_ICON_PATH}Sigil_Basique.webp" alt=""><span><b>Codex</b><small>Lecture des données métier</small></span></button>
+        <button type="button" data-action="set-view" data-view="quests"><img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt=""><span><b>Quête de session</b><small>Tirage rapide du Donjon</small></span></button>
       </div>
     </section>
   `);
 }
-
 function statCard(label, value, icon) {
   return `<div class="stat-card"><div class="stat-icon">${icon}</div><div><div class="stat-value">${value}</div><div class="stat-label">${label}</div></div></div>`;
 }
