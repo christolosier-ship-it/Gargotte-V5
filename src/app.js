@@ -203,6 +203,8 @@ const IMPORT_TYPES = ENTITY_ORDER.slice();
 const APP_VERSION = "5.4.0";
 let backupBusy = false;
 let searchDebounceTimer = null;
+let bestiaryScrollSaveTimer = null;
+let restoringBestiaryScroll = false;
 
 const ENTITY_DOWNLOAD_FILES = {
   dungeons: "dungeons.xlsx",
@@ -228,6 +230,7 @@ const state = {
     codexType: "creatures",
     codexSelectedId: "",
     codexDetailOpen: false,
+    bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "" },
     workshopType: "creatures",
     workshopSelectedId: "",
     codexCreatureDungeonId: "",
@@ -255,6 +258,8 @@ function defaultBlankUi() {
     view: "home",
     codexType: "creatures",
     codexSelectedId: "",
+    codexDetailOpen: false,
+    bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "" },
     workshopType: "creatures",
     workshopSelectedId: "",
     codexCreatureDungeonId: "",
@@ -281,6 +286,120 @@ function getLabel(type) {
   return ENTITY_LABELS[type] || type;
 }
 
+const CREATURE_CATEGORY_META = {
+  basique: { label: "Basique", sigil: "Sigil_Basique.webp" },
+  tactique: { label: "Tactique", sigil: "Sigil_Tactique.webp" },
+  speciale: { label: "Spéciale", sigil: "Sigil_Speciale.webp" },
+  brute: { label: "Brute", sigil: "Sigil_Brute.webp" },
+  mini_boss: { label: "Mini-boss", sigil: "Sigil_MiniBoss.webp" },
+  boss: { label: "Boss", sigil: "Sigil_Boss.webp" }
+};
+
+function defaultBestiaryUi() {
+  return { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "" };
+}
+
+function ensureBestiaryUi() {
+  state.ui.bestiary = { ...defaultBestiaryUi(), ...(state.ui.bestiary || {}) };
+  state.ui.bestiary.tags = Array.isArray(state.ui.bestiary.tags) ? state.ui.bestiary.tags.filter(Boolean) : [];
+  if (!["gallery", "list", ""].includes(state.ui.bestiary.mode)) state.ui.bestiary.mode = "";
+  if (!["name", "menace", "dungeon"].includes(state.ui.bestiary.sort)) state.ui.bestiary.sort = "name";
+  if (!["asc", "desc"].includes(state.ui.bestiary.direction)) state.ui.bestiary.direction = "asc";
+}
+
+function creatureTags(item) {
+  return tagsToArray(item?.tags).filter(Boolean);
+}
+
+function creatureCategoryMeta(value) {
+  const key = normalizeCreatureCategory(value || "basique");
+  return { key, ...(CREATURE_CATEGORY_META[key] || CREATURE_CATEGORY_META.basique) };
+}
+
+function normalizeBestiaryText(value) {
+  return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+function bestiaryTagOptions() {
+  return [...new Set((state.data.creatures || []).flatMap(creatureTags))]
+    .filter(Boolean)
+    .sort((a, b) => String(a).localeCompare(String(b), "fr", { sensitivity: "base" }));
+}
+
+function bestiaryMenaceOptions() {
+  return [...new Set((state.data.creatures || []).map(item => Number(item.menace ?? 0)).filter(Number.isFinite))]
+    .sort((a, b) => a - b);
+}
+
+function bestiaryHasActiveFilters() {
+  ensureBestiaryUi();
+  const b = state.ui.bestiary;
+  return Boolean(b.search || b.dungeonId || b.category || b.menace !== "" || b.tags.length);
+}
+
+function getBestiaryCreatures() {
+  ensureBestiaryUi();
+  const b = state.ui.bestiary;
+  const q = normalizeBestiaryText(b.search);
+  const dungeon = b.dungeonId ? findById("dungeons", b.dungeonId) : null;
+  const selectedTags = b.tags.map(normalizeBestiaryText);
+  let list = [...(state.data.creatures || [])];
+
+  if (q) {
+    list = list.filter(item => {
+      const meta = creatureCategoryMeta(item.category);
+      const haystack = normalizeBestiaryText([
+        item.name,
+        item.dungeon_name,
+        meta.label,
+        item.special_attack_name,
+        item.ai_behavior,
+        ...creatureTags(item)
+      ].filter(Boolean).join(" "));
+      return haystack.includes(q);
+    });
+  }
+
+  if (b.dungeonId) {
+    const dungeonName = normalizeBestiaryText(dungeon?.name);
+    list = list.filter(item =>
+      String(item.dungeon_id || "") === String(b.dungeonId) ||
+      (dungeonName && normalizeBestiaryText(item.dungeon_name) === dungeonName)
+    );
+  }
+
+  if (b.category) {
+    list = list.filter(item => creatureCategoryMeta(item.category).key === b.category);
+  }
+
+  if (b.menace !== "") {
+    list = list.filter(item => String(Number(item.menace ?? 0)) === String(b.menace));
+  }
+
+  if (selectedTags.length) {
+    list = list.filter(item => {
+      const tags = creatureTags(item).map(normalizeBestiaryText);
+      return selectedTags.every(tag => tags.includes(tag));
+    });
+  }
+
+  const direction = b.direction === "desc" ? -1 : 1;
+  list.sort((a, bItem) => {
+    let cmp = 0;
+    if (b.sort === "menace") {
+      cmp = Number(a.menace ?? 0) - Number(bItem.menace ?? 0);
+    } else if (b.sort === "dungeon") {
+      cmp = String(a.dungeon_name || "").localeCompare(String(bItem.dungeon_name || ""), "fr", { sensitivity: "base" });
+    } else {
+      cmp = String(a.name || "").localeCompare(String(bItem.name || ""), "fr", { sensitivity: "base" });
+    }
+    if (!cmp) cmp = String(a.name || "").localeCompare(String(bItem.name || ""), "fr", { sensitivity: "base" });
+    return cmp * direction;
+  });
+
+  return list;
+}
+
 function findById(type, id) {
   return (state.data[type] || []).find(item => item.id === id) || null;
 }
@@ -292,6 +411,16 @@ function findByName(type, name) {
 }
 
 function ensureUiDefaults() {
+  ensureBestiaryUi();
+  if (!state.ui.bestiary.mode) {
+    state.ui.bestiary.mode = typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches ? "list" : "gallery";
+  }
+  if (!state.ui.bestiary.dungeonId && state.ui.codexCreatureDungeonId) {
+    state.ui.bestiary.dungeonId = state.ui.codexCreatureDungeonId;
+  }
+  if (!state.ui.bestiary.selectedId) {
+    state.ui.bestiary.selectedId = state.ui.codexSelectedId || state.data.creatures?.[0]?.id || "";
+  }
   if (!state.data.dungeons?.length) return;
   if (!state.ui.generator.dungeonId) state.ui.generator.dungeonId = state.data.dungeons[0].id;
   if (!state.ui.brouhaha.dungeonId) state.ui.brouhaha.dungeonId = state.data.dungeons[0].id;
@@ -307,6 +436,13 @@ function ensureUiDefaults() {
 }
 
 function ensureSelectionExists() {
+  ensureBestiaryUi();
+  if (!state.data.creatures?.some(x => x.id === state.ui.bestiary.selectedId)) {
+    state.ui.bestiary.selectedId = state.data.creatures?.[0]?.id || "";
+  }
+  if (state.ui.codexType === "creatures" && state.ui.bestiary.selectedId) {
+    state.ui.codexSelectedId = state.ui.bestiary.selectedId;
+  }
   if (!state.data[state.ui.codexType]?.some(x => x.id === state.ui.codexSelectedId)) {
     const first = (state.data[state.ui.codexType] || [])[0];
     state.ui.codexSelectedId = first ? first.id : "";
@@ -468,6 +604,7 @@ function getSearchIndexText(type, item) {
 }
 
 function getFilteredList(type, scope = "search") {
+  if (type === "creatures" && scope === "codex") return getBestiaryCreatures();
   const q = state.ui.globalSearch.trim().toLowerCase();
   let list = state.data[type] || [];
 
@@ -1125,6 +1262,8 @@ function shellIcon(name, className = "") {
     transfer: '<path d="M7 7h13"/><path d="m16 3 4 4-4 4"/><path d="M17 17H4"/><path d="m8 13-4 4 4 4"/>',
     journal: '<path d="M5 3h12a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2V3Z"/><path d="M9 7h6M9 11h6M9 15h4"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+    grid: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
+    list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r=".8"/><circle cx="4.5" cy="12" r=".8"/><circle cx="4.5" cy="18" r=".8"/>',
     more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
     back: '<path d="m15 18-6-6 6-6"/>',
     wifi: '<path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/>'
@@ -1268,8 +1407,163 @@ function statCard(label, value, icon) {
   return `<div class="stat-card"><div class="stat-icon">${icon}</div><div><div class="stat-value">${value}</div><div class="stat-label">${label}</div></div></div>`;
 }
 
+function renderCodexTabs(type) {
+  return `<div class="segmented wrap codex-family-tabs">
+    ${ENTITY_ORDER.map(t => `<button class="tab ${t === type ? "active" : ""}" data-action="set-codex-type" data-type="${t}">${getLabel(t)}</button>`).join("")}
+  </div>`;
+}
+
+function renderCreatureCategoryChip(item) {
+  const meta = creatureCategoryMeta(item.category);
+  return `<span class="bestiary-category-chip ${meta.key}"><img src="${V6_ICON_PATH}${meta.sigil}" alt="" aria-hidden="true"><span>${escapeHtml(meta.label)}</span></span>`;
+}
+
+function renderBestiaryGalleryCard(item) {
+  const meta = creatureCategoryMeta(item.category);
+  const image = imageUrlForEntity(item);
+  const selected = String(state.ui.bestiary.selectedId || "") === String(item.id || "");
+  return `
+    <button class="bestiary-gallery-card ${meta.key} ${selected ? "selected" : ""}" data-action="select-codex" data-type="creatures" data-id="${escapeHtml(String(item.id || ""))}" aria-label="Ouvrir ${escapeHtml(item.name || "Créature")}">
+      <div class="bestiary-gallery-media">
+        ${image ? `<img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(item.name || "la créature")}" loading="lazy">` : `<div class="bestiary-media-fallback"><img src="${V6_ICON_PATH}${meta.sigil}" alt=""><span>Visuel indisponible</span></div>`}
+        <img class="bestiary-card-sigil" src="${V6_ICON_PATH}${meta.sigil}" alt="" aria-hidden="true">
+      </div>
+      <div class="bestiary-gallery-copy">
+        <h3>${escapeHtml(item.name || "Créature sans nom")}</h3>
+        <div class="bestiary-dungeon-line"><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="" aria-hidden="true"><span>${escapeHtml(item.dungeon_name || "Donjon non renseigné")}</span></div>
+        <div class="bestiary-card-meta">
+          ${renderCreatureCategoryChip(item)}
+          <span class="bestiary-menace-chip"><img src="${V6_ICON_PATH}Icone_Gameplay_MENACE.webp" alt="" aria-hidden="true">Menace ${escapeHtml(String(item.menace ?? "—"))}</span>
+        </div>
+      </div>
+    </button>`;
+}
+
+function renderBestiaryListRow(item) {
+  const meta = creatureCategoryMeta(item.category);
+  const image = imageUrlForEntity(item);
+  const selected = String(state.ui.bestiary.selectedId || "") === String(item.id || "");
+  const stat = (icon, value, label) => `<span class="bestiary-mini-stat"><img src="${V6_ICON_PATH}${icon}" alt="" aria-hidden="true"><b>${escapeHtml(String(value ?? "—"))}</b><small>${label}</small></span>`;
+  return `
+    <button class="bestiary-list-row ${meta.key} ${selected ? "selected" : ""}" data-action="select-codex" data-type="creatures" data-id="${escapeHtml(String(item.id || ""))}">
+      <div class="bestiary-list-thumb">
+        ${image ? `<img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(item.name || "la créature")}" loading="lazy">` : `<div class="bestiary-media-fallback compact"><img src="${V6_ICON_PATH}${meta.sigil}" alt=""></div>`}
+      </div>
+      <div class="bestiary-list-identity">
+        <h3>${escapeHtml(item.name || "Créature sans nom")}</h3>
+        <div class="bestiary-dungeon-line"><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="" aria-hidden="true"><span>${escapeHtml(item.dungeon_name || "Donjon non renseigné")}</span></div>
+        ${renderCreatureCategoryChip(item)}
+      </div>
+      <div class="bestiary-list-stats">
+        ${stat("Icone_Gameplay_PV.webp", item.pv, "PV")}
+        ${stat("Icone_Gameplay_ATK.webp", item.atk, "ATK")}
+        ${stat("Icone_Gameplay_DEF.webp", item.def, "DEF")}
+        ${stat("Icone_Gameplay_MENACE.webp", item.menace, "Menace")}
+      </div>
+    </button>`;
+}
+
+function renderBestiaryTagFilter() {
+  const selected = state.ui.bestiary.tags;
+  const options = bestiaryTagOptions();
+  return `
+    <details class="bestiary-tags-filter">
+      <summary>Tags${selected.length ? ` · ${selected.length}` : ""}</summary>
+      <div class="bestiary-tags-menu">
+        ${options.length ? options.map(tag => `<label><input type="checkbox" data-action="bestiary-tag" value="${escapeHtml(tag)}" ${selected.includes(tag) ? "checked" : ""}><span>${escapeHtml(tag)}</span></label>`).join("") : `<span class="muted small">Aucun tag disponible.</span>`}
+      </div>
+    </details>`;
+}
+
+function renderBestiaryCollection() {
+  ensureBestiaryUi();
+  const b = state.ui.bestiary;
+  const items = getBestiaryCreatures();
+  const total = (state.data.creatures || []).length;
+  const menaceOptions = bestiaryMenaceOptions();
+  const selected = findById("creatures", b.selectedId || state.ui.codexSelectedId);
+
+  if (state.ui.codexDetailOpen) {
+    return renderShell(`
+      <section class="bestiary-v6 bestiary-detail-bridge">
+        <div class="panel">
+          <div class="bestiary-detail-top">
+            <button class="ghost codex-back" data-action="codex-back" type="button">${shellIcon("back")}<span>Retour au Bestiaire</span></button>
+            ${renderCodexTabs("creatures")}
+          </div>
+          ${selected ? renderCreatureDetail(selected, true) : `<div class="empty">Cette créature n’est plus disponible.</div>`}
+        </div>
+      </section>`);
+  }
+
+  return renderShell(`
+    <section class="bestiary-v6">
+      <div class="panel bestiary-collection-panel">
+        <div class="bestiary-heading">
+          <div>
+            <div class="eyebrow">Codex · Créatures</div>
+            <h2>Bestiaire</h2>
+            <p>Galerie pour explorer. Liste pour arbitrer.</p>
+          </div>
+          <div class="bestiary-counter" aria-live="polite"><strong>${items.length}</strong><span>sur ${total}</span></div>
+        </div>
+
+        ${renderCodexTabs("creatures")}
+
+        <div class="bestiary-toolbar">
+          <label class="bestiary-search-field">
+            <span class="sr-only">Rechercher une créature</span>
+            ${shellIcon("search")}
+            <input class="field" data-action="bestiary-search" value="${escapeHtml(b.search)}" placeholder="Rechercher une créature…">
+          </label>
+
+          <div class="bestiary-filter-grid">
+            <label><span>Donjon</span><select class="field" data-action="bestiary-dungeon">
+              <option value="">Tous les donjons</option>
+              ${(state.data.dungeons || []).map(d => `<option value="${escapeHtml(String(d.id || ""))}" ${String(b.dungeonId) === String(d.id) ? "selected" : ""}>${escapeHtml(d.name || "Donjon")}</option>`).join("")}
+            </select></label>
+            <label><span>Catégorie</span><select class="field" data-action="bestiary-category">
+              <option value="">Toutes catégories</option>
+              ${Object.entries(CREATURE_CATEGORY_META).map(([key,meta]) => `<option value="${key}" ${b.category === key ? "selected" : ""}>${meta.label}</option>`).join("")}
+            </select></label>
+            <label><span>Menace</span><select class="field" data-action="bestiary-menace">
+              <option value="">Toutes</option>
+              ${menaceOptions.map(value => `<option value="${value}" ${String(b.menace) === String(value) ? "selected" : ""}>Menace ${value}</option>`).join("")}
+            </select></label>
+            ${renderBestiaryTagFilter()}
+            <label><span>Trier par</span><select class="field" data-action="bestiary-sort">
+              <option value="name" ${b.sort === "name" ? "selected" : ""}>Nom</option>
+              <option value="menace" ${b.sort === "menace" ? "selected" : ""}>Menace</option>
+              <option value="dungeon" ${b.sort === "dungeon" ? "selected" : ""}>Donjon</option>
+            </select></label>
+            <button class="ghost bestiary-direction" data-action="bestiary-toggle-direction" type="button" aria-label="Inverser le sens du tri" title="Inverser le sens du tri">${b.direction === "asc" ? "↑ Asc." : "↓ Desc."}</button>
+          </div>
+
+          <div class="bestiary-toolbar-foot">
+            <div class="view-switch segmented" aria-label="Mode d’affichage">
+              <button class="${b.mode === "gallery" ? "active" : ""}" data-action="bestiary-mode" data-mode="gallery" aria-pressed="${b.mode === "gallery"}">${shellIcon("grid")}<span>Galerie</span></button>
+              <button class="${b.mode === "list" ? "active" : ""}" data-action="bestiary-mode" data-mode="list" aria-pressed="${b.mode === "list"}">${shellIcon("list")}<span>Liste</span></button>
+            </div>
+            ${bestiaryHasActiveFilters() ? `<button class="ghost bestiary-reset" data-action="bestiary-reset" type="button">Réinitialiser les filtres</button>` : ""}
+            <span class="bestiary-result-label">${items.length} résultat${items.length > 1 ? "s" : ""}</span>
+          </div>
+        </div>
+
+        <div class="bestiary-results ${b.mode}" data-bestiary-results>
+          ${items.length
+            ? (b.mode === "gallery"
+              ? `<div class="bestiary-gallery-grid">${items.map(renderBestiaryGalleryCard).join("")}</div>`
+              : `<div class="bestiary-list">${items.map(renderBestiaryListRow).join("")}</div>`)
+            : `<div class="empty bestiary-empty"><strong>Aucune créature ne correspond.</strong><span>Modifiez la recherche ou réinitialisez les filtres.</span></div>`}
+        </div>
+      </div>
+    </section>`);
+}
+
 function renderCodex() {
   const type = state.ui.codexType;
+  if (type === "creatures") return renderBestiaryCollection();
+
   const items = getFilteredList(type, "codex");
   const selected = items.find(item => item.id === state.ui.codexSelectedId) || items[0] || null;
 
@@ -1277,26 +1571,22 @@ function renderCodex() {
     <section class="panel">
       <div class="panel-title">
         <h2>Codex</h2>
-        <div class="segmented wrap">
-          ${ENTITY_ORDER.map(t => `<button class="tab ${t === type ? "active" : ""}" data-action="set-codex-type" data-type="${t}">${getLabel(t)}</button>`).join("")}
-        </div>
+        ${renderCodexTabs(type)}
       </div>
 
       <div class="panel-subtitle">
         <span>${items.length} entrée(s)</span>
-        ${type === "creatures" ? renderCreatureDungeonFilter(state.ui.codexCreatureDungeonId, "codex-creature-dungeon-filter") : ""}
         ${type === "heroes" ? renderHeroLevelFilter(state.ui.codexHeroLevel, "codex-hero-level-filter") : ""}
         ${type === "quests" ? renderQuestDungeonFilter(state.ui.codexQuestDungeonId, "codex-quest-dungeon-filter") : ""}
       </div>
 
-      <div class="two-col encounter-columns codex-sequential ${state.ui.codexDetailOpen ? "detail-open" : "collection-open"}">
+      <div class="two-col encounter-columns">
         <div class="list-column">
           <div class="card-list">
             ${items.map(item => renderCodexCard(type, item, selected?.id === item.id)).join("") || `<div class="empty">Aucune donnée.</div>`}
           </div>
         </div>
         <div class="detail-column">
-          <button class="ghost codex-back" data-action="codex-back" type="button">${shellIcon("back")}<span>Retour à la collection</span></button>
           ${selected ? renderCodexDetail(type, selected) : `<div class="empty">Sélectionnez une fiche.</div>`}
         </div>
       </div>
@@ -2149,8 +2439,30 @@ function renderPage() {
   }
 }
 
+function restoreBestiaryScrollAfterRender() {
+  if (state.ui.view !== "codex" || state.ui.codexType !== "creatures" || state.ui.codexDetailOpen) return;
+  ensureBestiaryUi();
+  const top = Math.max(0, Number(state.ui.bestiary.scrollTop || 0));
+  restoringBestiaryScroll = true;
+  requestAnimationFrame(() => {
+    window.scrollTo({ top, left: 0, behavior: "auto" });
+    requestAnimationFrame(() => { restoringBestiaryScroll = false; });
+  });
+}
+
+function wireBestiaryScrollTracking() {
+  window.addEventListener("scroll", () => {
+    if (restoringBestiaryScroll || state.ui.view !== "codex" || state.ui.codexType !== "creatures" || state.ui.codexDetailOpen) return;
+    ensureBestiaryUi();
+    state.ui.bestiary.scrollTop = Math.max(0, window.scrollY || 0);
+    if (bestiaryScrollSaveTimer) clearTimeout(bestiaryScrollSaveTimer);
+    bestiaryScrollSaveTimer = setTimeout(() => saveUiState(state.ui).catch(() => {}), 180);
+  }, { passive: true });
+}
+
 function render() {
   app.innerHTML = renderPage();
+  restoreBestiaryScrollAfterRender();
 }
 
 function toast(message, tone = "info") {
@@ -2778,7 +3090,10 @@ function bindEvents() {
           return;
         case "set-codex-type":
           state.ui.codexType = btn.dataset.type;
-          state.ui.codexSelectedId = (state.data[state.ui.codexType] || [])[0]?.id || "";
+          ensureBestiaryUi();
+          state.ui.codexSelectedId = state.ui.codexType === "creatures"
+            ? (state.ui.bestiary.selectedId || state.data.creatures?.[0]?.id || "")
+            : ((state.data[state.ui.codexType] || [])[0]?.id || "");
           state.ui.codexDetailOpen = false;
           await saveUiState(state.ui);
           render();
@@ -2786,12 +3101,44 @@ function bindEvents() {
         case "select-codex":
           state.ui.codexType = btn.dataset.type;
           state.ui.codexSelectedId = btn.dataset.id;
+          if (btn.dataset.type === "creatures") {
+            ensureBestiaryUi();
+            state.ui.bestiary.selectedId = btn.dataset.id;
+            state.ui.bestiary.scrollTop = Math.max(0, window.scrollY || 0);
+          }
           state.ui.codexDetailOpen = true;
           await saveUiState(state.ui);
           render();
+          if (btn.dataset.type === "creatures") requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
           return;
         case "codex-back":
           state.ui.codexDetailOpen = false;
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "bestiary-mode":
+          ensureBestiaryUi();
+          state.ui.bestiary.mode = btn.dataset.mode === "list" ? "list" : "gallery";
+          state.ui.bestiary.scrollTop = 0;
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "bestiary-toggle-direction":
+          ensureBestiaryUi();
+          state.ui.bestiary.direction = state.ui.bestiary.direction === "asc" ? "desc" : "asc";
+          state.ui.bestiary.scrollTop = 0;
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "bestiary-reset":
+          ensureBestiaryUi();
+          state.ui.bestiary.search = "";
+          state.ui.bestiary.dungeonId = "";
+          state.ui.bestiary.category = "";
+          state.ui.bestiary.menace = "";
+          state.ui.bestiary.tags = [];
+          state.ui.bestiary.scrollTop = 0;
+          state.ui.codexCreatureDungeonId = "";
           await saveUiState(state.ui);
           render();
           return;
@@ -2968,6 +3315,46 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           return;
+        case "bestiary-dungeon":
+          ensureBestiaryUi();
+          state.ui.bestiary.dungeonId = el.value;
+          state.ui.codexCreatureDungeonId = el.value;
+          state.ui.bestiary.scrollTop = 0;
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "bestiary-category":
+          ensureBestiaryUi();
+          state.ui.bestiary.category = el.value;
+          state.ui.bestiary.scrollTop = 0;
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "bestiary-menace":
+          ensureBestiaryUi();
+          state.ui.bestiary.menace = el.value;
+          state.ui.bestiary.scrollTop = 0;
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "bestiary-sort":
+          ensureBestiaryUi();
+          state.ui.bestiary.sort = ["name", "menace", "dungeon"].includes(el.value) ? el.value : "name";
+          state.ui.bestiary.scrollTop = 0;
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "bestiary-tag": {
+          ensureBestiaryUi();
+          const tag = el.value;
+          const tags = new Set(state.ui.bestiary.tags);
+          if (el.checked) tags.add(tag); else tags.delete(tag);
+          state.ui.bestiary.tags = [...tags];
+          state.ui.bestiary.scrollTop = 0;
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
         case "codex-hero-level-filter":
           state.ui.codexHeroLevel = el.value;
           state.ui.codexSelectedId = "";
@@ -3083,6 +3470,25 @@ function bindEvents() {
       }, 160);
       return;
     }
+    if (el.dataset.action === "bestiary-search") {
+      ensureBestiaryUi();
+      state.ui.bestiary.search = el.value;
+      state.ui.bestiary.scrollTop = 0;
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(async () => {
+        await saveUiState(state.ui);
+        render();
+        requestAnimationFrame(() => {
+          const input = app.querySelector('[data-action="bestiary-search"]');
+          if (input) {
+            input.focus({ preventScroll: true });
+            const end = input.value.length;
+            input.setSelectionRange?.(end, end);
+          }
+        });
+      }, 140);
+      return;
+    }
   });
 
   app.addEventListener("submit", async (ev) => {
@@ -3141,7 +3547,8 @@ async function bootstrap() {
       generator: { ...defaultBlankUi().generator, ...(savedUi.generator || {}) },
       brouhaha: { ...defaultBlankUi().brouhaha, ...(savedUi.brouhaha || {}) },
       import: { ...defaultBlankUi().import, ...(savedUi.import || {}) },
-      media: { ...defaultBlankUi().media, ...(savedUi.media || {}) }
+      media: { ...defaultBlankUi().media, ...(savedUi.media || {}) },
+      bestiary: { ...defaultBlankUi().bestiary, ...(savedUi.bestiary || {}) }
     };
   } else {
     state.ui = defaultBlankUi();
@@ -3155,6 +3562,7 @@ async function bootstrap() {
   state.ready = true;
   wireGlobalErrors();
   bindEvents();
+  wireBestiaryScrollTracking();
   render();
 
 if ("serviceWorker" in navigator) {

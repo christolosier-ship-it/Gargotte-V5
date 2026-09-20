@@ -340,3 +340,48 @@ Validation obligatoire :
 8. données IndexedDB anciennes lisibles ;
 9. boss regroupés uniquement avec relation fiable ;
 10. aucune perte de données ni réécriture massive.
+
+---
+
+# 17. Implémentation UI-2A sur V5.3
+
+Statut : **LIVRÉ — 20 septembre 2026**
+
+Pré-check :
+
+- périmètre : Collection Bestiaire uniquement ;
+- impact données : lecture des Créatures + écriture de l'état d'interface dans `meta.ui_state` ;
+- IndexedDB : schéma, stores, IDs, relations, Blobs et enregistrements métier inchangés ;
+- référence V3 : toolbar Bestiaire, galerie 3/4, lignes compactes, accents de catégorie et emblèmes premium ;
+- fiche Créature : conservée telle quelle comme pont de navigation, refonte complète réservée à UI-2B.
+
+Livré :
+
+- Galerie et Liste fonctionnelles ;
+- Galerie par défaut desktop/tablette, Liste par défaut téléphone lors du premier usage ;
+- dernier mode mémorisé dans l'état UI local ;
+- recherche locale/offline ;
+- filtres Donjon, Catégorie, Menace et Tags réellement appliqués ;
+- filtre Tags multi-sélection ;
+- tris Nom, Menace et Donjon avec sens ascendant/descendant ;
+- reset des filtres ;
+- compteur de résultats ;
+- sélection, filtres, tri, mode et scroll restaurés ;
+- cartes/lignes inspirées directement de la V3 ;
+- sigils de catégorie et emblèmes Donjon/PV/ATK/DEF/Menace réutilisés depuis `assets/ui-v6/icons/` ;
+- anciens enregistrements tolérés, notamment tags absents ou stockés dans un ancien format.
+
+Responsive UI-2A :
+
+- desktop : collection pleine largeur structurée pour accueillir le futur master-detail ;
+- tablette portrait/paysage : collection pleine largeur ;
+- téléphone : collection pleine largeur, Liste par défaut ;
+- l'ouverture de la fiche reste séquentielle et le retour restaure la position de collection.
+
+Validation UI-2A :
+
+- aucun contrôle décoratif ;
+- aucune migration IndexedDB ;
+- aucune réécriture d'une Créature lors de sa lecture ;
+- aucun original média modifié ;
+- UI-2B non démarré.

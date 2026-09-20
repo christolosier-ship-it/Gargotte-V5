@@ -328,3 +328,118 @@ html{background:var(--color-bg-0);color-scheme:dark}body{margin:0;min-height:100
 @media(max-width:1199px) and (min-width:768px){.v6-app{grid-template-columns:var(--tablet-rail-width) minmax(0,1fr)}.v6-sidebar{padding-inline:10px}.brand-copy,.nav-title,.navbtn .nav-label,.side-foot .nav-label{display:none}.v6-brand{justify-content:center;padding-inline:0}.v6-brand img{width:46px;height:46px}.navbtn{justify-content:center;padding:0}.v6-main{padding:18px 18px 90px}.codex-sequential.collection-open .detail-column{display:none}.codex-sequential.detail-open .list-column{display:none}.codex-sequential.detail-open .detail-column{display:block}.codex-back{display:inline-flex}}
 @media(max-width:767px){:root{--topbar-height:66px}.v6-app{display:block}.v6-sidebar{display:none}.topbar{height:var(--topbar-height);padding:10px 12px}.mobile-brand{width:44px;height:44px;min-height:44px;flex:0 0 44px;display:grid;place-items:center;border:1px solid var(--color-border-subtle);border-radius:11px;background:var(--color-surface-1);padding:4px}.mobile-brand img{width:34px;height:34px;border-radius:8px}.search-wrap{max-width:none}.offline-badge{display:none}.topbar-action{width:44px;padding:0;justify-content:center}.topbar-action span{display:none}.v6-main{padding:14px 14px calc(92px + env(safe-area-inset-bottom));max-width:none}.codex-sequential.collection-open .detail-column{display:none}.codex-sequential.detail-open .list-column{display:none}.codex-sequential.detail-open .detail-column{display:block}.codex-back{display:inline-flex}.mobile-bottom{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:70;min-height:calc(68px + env(safe-area-inset-bottom));padding:7px 4px env(safe-area-inset-bottom);border-top:1px solid var(--color-border-subtle);background:rgba(10,7,5,.97);backdrop-filter:blur(14px)}.mobile-nav-item,.mobile-nav-group>summary{min-width:0;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;color:var(--color-text-secondary);font-size:10px;font-weight:700;list-style:none;border-radius:10px}.mobile-nav-group>summary::-webkit-details-marker{display:none}.mobile-nav-item.active,.mobile-nav-group.active>summary{color:var(--color-accent-gold-soft);background:rgba(212,164,95,.07)}.mobile-nav-item .ui-icon,.mobile-nav-group>summary .ui-icon{width:23px;height:23px}.mobile-nav-group{position:relative}.mobile-nav-popover{position:absolute;left:4px;bottom:calc(100% + 10px);width:220px;padding:8px;border:1px solid var(--color-border);border-radius:14px;background:rgba(23,17,13,.99);box-shadow:0 18px 42px #0009}.mobile-nav-popover-right{left:auto;right:4px}.mobile-nav-popover button{width:100%;min-height:44px;display:flex;align-items:center;gap:9px;padding:0 10px;border:0;border-radius:9px;background:transparent;color:var(--color-text-primary);text-align:left}.toast-stack{right:12px;bottom:calc(82px + env(safe-area-inset-bottom));left:12px;max-width:none}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* ==========================================================================
+   Gargottex V6 · UI-2A · Collection Bestiaire
+   ========================================================================== */
+.bestiary-v6{max-width:1540px;margin:0 auto}
+.bestiary-collection-panel{padding:18px}
+.bestiary-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:14px}
+.bestiary-heading h2{margin:3px 0 2px;font:800 clamp(32px,4vw,46px)/1 Alegreya,Georgia,serif;color:#fff0dd}
+.bestiary-heading p{margin:0;color:var(--color-text-secondary);font-size:13px}
+.bestiary-counter{min-width:92px;display:grid;justify-items:end;line-height:1}
+.bestiary-counter strong{font:800 32px/1 Alegreya,Georgia,serif;color:var(--color-accent-gold-soft)}
+.bestiary-counter span{margin-top:4px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--color-text-tertiary)}
+.codex-family-tabs{margin-bottom:14px;overflow:auto;padding-bottom:2px}
+.bestiary-toolbar{padding:13px;border:1px solid var(--color-border-subtle);border-radius:14px;background:var(--color-surface-1)}
+.bestiary-search-field{position:relative;display:block;margin-bottom:10px}
+.bestiary-search-field>.ui-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);z-index:2;color:var(--color-text-tertiary);pointer-events:none}
+.bestiary-search-field .field{width:100%;padding-left:43px}
+.bestiary-filter-grid{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:8px;align-items:end}
+.bestiary-filter-grid>label{display:grid;gap:5px;min-width:0}
+.bestiary-filter-grid>label>span{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-text-tertiary)}
+.bestiary-filter-grid .field{min-width:0}
+.bestiary-direction{height:44px;align-self:end;white-space:nowrap}
+.bestiary-tags-filter{position:relative;align-self:end}
+.bestiary-tags-filter>summary{height:44px;display:flex;align-items:center;padding:0 11px;border:1px solid var(--color-border-subtle);border-radius:10px;background:var(--color-surface-1);color:var(--color-text-primary);cursor:pointer;list-style:none}
+.bestiary-tags-filter>summary::-webkit-details-marker{display:none}
+.bestiary-tags-filter[open]>summary{border-color:var(--color-accent-gold-dark)}
+.bestiary-tags-menu{position:absolute;z-index:25;top:calc(100% + 6px);left:0;width:min(300px,78vw);max-height:280px;overflow:auto;padding:8px;border:1px solid var(--color-border);border-radius:12px;background:rgba(23,17,13,.99);box-shadow:var(--shadow)}
+.bestiary-tags-menu label{min-height:38px;display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:8px;color:var(--color-text-secondary);font-size:12px}
+.bestiary-tags-menu label:hover{background:var(--color-surface-2);color:var(--color-text-primary)}
+.bestiary-tags-menu input{width:auto;margin:0}
+.bestiary-toolbar-foot{display:flex;align-items:center;gap:9px;margin-top:11px}
+.bestiary-toolbar-foot .view-switch{margin-left:0}
+.bestiary-toolbar-foot .segmented button{display:inline-flex;align-items:center;gap:6px}
+.bestiary-toolbar-foot .ui-icon{width:17px;height:17px}
+.bestiary-reset{margin-left:auto}
+.bestiary-result-label{font-size:11px;color:var(--color-text-tertiary);white-space:nowrap}
+.bestiary-results{margin-top:14px}
+.bestiary-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.bestiary-gallery-card,.bestiary-list-row{--cat:var(--game-basic);position:relative;overflow:hidden;border:1px solid var(--color-border-subtle);background:rgba(16,11,8,.84);color:var(--color-text-primary);text-align:left}
+.bestiary-gallery-card:before,.bestiary-list-row:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cat);z-index:4}
+.bestiary-gallery-card.basique,.bestiary-list-row.basique{--cat:var(--game-basic)}
+.bestiary-gallery-card.tactique,.bestiary-list-row.tactique{--cat:var(--game-tactical)}
+.bestiary-gallery-card.speciale,.bestiary-list-row.speciale{--cat:var(--game-special)}
+.bestiary-gallery-card.brute,.bestiary-list-row.brute{--cat:var(--game-brute)}
+.bestiary-gallery-card.mini_boss,.bestiary-list-row.mini_boss{--cat:var(--game-mini)}
+.bestiary-gallery-card.boss,.bestiary-list-row.boss{--cat:var(--game-boss)}
+.bestiary-gallery-card{min-height:360px;aspect-ratio:3/4;border-radius:14px;padding:0;display:flex;flex-direction:column}
+.bestiary-gallery-card:hover,.bestiary-list-row:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--cat) 46%,var(--color-border-strong))}
+.bestiary-gallery-card.selected,.bestiary-list-row.selected{border-color:color-mix(in srgb,var(--cat) 72%,var(--color-accent-gold));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cat) 18%,transparent)}
+.bestiary-gallery-media{position:relative;height:68%;min-height:220px;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--cat) 12%,transparent),transparent 48%),#0d0907}
+.bestiary-gallery-media>img:not(.bestiary-card-sigil){width:100%;height:100%;object-fit:contain;object-position:center;padding:5px}
+.bestiary-card-sigil{position:absolute;right:8px;top:8px;width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 4px 8px #000b)}
+.bestiary-gallery-copy{padding:11px 12px 12px;display:grid;gap:7px;min-height:0}
+.bestiary-gallery-copy h3,.bestiary-list-identity h3{margin:0;font:700 18px/1.05 Alegreya,Georgia,serif}
+.bestiary-dungeon-line{display:flex;align-items:center;gap:6px;min-width:0;color:var(--color-text-secondary);font-size:10px}
+.bestiary-dungeon-line img{width:18px;height:18px;flex:0 0 18px;object-fit:contain}
+.bestiary-dungeon-line span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bestiary-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.bestiary-category-chip,.bestiary-menace-chip{min-height:28px;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--color-border);border-radius:999px;padding:2px 8px 2px 4px;background:#0002;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.bestiary-category-chip img,.bestiary-menace-chip img{width:21px;height:21px;object-fit:contain}
+.bestiary-category-chip{color:var(--cat)}
+.bestiary-media-fallback{width:100%;height:100%;display:grid;place-items:center;align-content:center;gap:7px;color:var(--color-text-tertiary);font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.bestiary-media-fallback img{width:70px;height:70px;object-fit:contain;opacity:.72}
+.bestiary-media-fallback.compact img{width:42px;height:42px}
+.bestiary-list{display:grid;gap:7px}
+.bestiary-list-row{width:100%;min-height:104px;border-radius:12px;padding:8px;display:grid;grid-template-columns:78px minmax(180px,1fr) minmax(300px,auto);gap:11px;align-items:center}
+.bestiary-list-thumb{height:86px;border:1px solid color-mix(in srgb,var(--cat) 36%,var(--color-border-subtle));border-radius:9px;overflow:hidden;background:#0d0907}
+.bestiary-list-thumb>img{width:100%;height:100%;object-fit:contain}
+.bestiary-list-identity{min-width:0;display:grid;gap:5px}.bestiary-list-identity .bestiary-category-chip{justify-self:start}
+.bestiary-list-stats{display:grid;grid-template-columns:repeat(4,minmax(58px,1fr));gap:5px}
+.bestiary-mini-stat{min-height:64px;display:grid;grid-template-columns:24px 1fr;grid-template-rows:auto auto;align-items:center;column-gap:4px;padding:6px;border:1px solid var(--color-border-subtle);border-radius:9px;background:var(--color-surface-1)}
+.bestiary-mini-stat img{width:24px;height:24px;grid-row:1/3;object-fit:contain}.bestiary-mini-stat b{font:800 17px/1 Alegreya,Georgia,serif}.bestiary-mini-stat small{font-size:7px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em}
+.bestiary-empty{display:grid;gap:5px;place-items:center;min-height:180px}.bestiary-empty span{color:var(--color-text-secondary)}
+.bestiary-detail-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}.bestiary-detail-top .codex-back{display:inline-flex;flex:0 0 auto}.bestiary-detail-top .codex-family-tabs{margin:0;min-width:0;flex:1}
+
+@media(max-width:1199px){
+  .bestiary-v6{max-width:none}
+  .bestiary-filter-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .bestiary-gallery-grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+  .bestiary-list-row{grid-template-columns:76px minmax(0,1fr)}
+  .bestiary-list-stats{grid-column:2;grid-template-columns:repeat(4,minmax(56px,1fr))}
+}
+@media(max-width:767px){
+  .bestiary-collection-panel{padding:12px}
+  .bestiary-heading{align-items:flex-start}
+  .bestiary-heading p{font-size:12px}
+  .bestiary-counter strong{font-size:27px}
+  .bestiary-filter-grid{grid-template-columns:1fr 1fr}
+  .bestiary-tags-filter{width:100%}.bestiary-tags-filter>summary{width:100%}
+  .bestiary-direction{width:100%}
+  .bestiary-toolbar-foot{flex-wrap:wrap}
+  .bestiary-reset{margin-left:0}
+  .bestiary-result-label{margin-left:auto}
+  .bestiary-gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .bestiary-gallery-card{min-height:300px}
+  .bestiary-gallery-media{min-height:170px}
+  .bestiary-gallery-copy h3{font-size:16px}
+  .bestiary-card-sigil{width:38px;height:38px}
+  .bestiary-list-row{grid-template-columns:68px minmax(0,1fr);min-height:96px}
+  .bestiary-list-thumb{height:78px}
+  .bestiary-list-stats{grid-column:1/-1;grid-template-columns:repeat(4,minmax(0,1fr));padding-left:4px}
+  .bestiary-mini-stat{min-height:52px;grid-template-columns:20px 1fr;padding:4px}
+  .bestiary-mini-stat img{width:20px;height:20px}
+  .bestiary-detail-top{align-items:flex-start;flex-direction:column}
+  .bestiary-detail-top .codex-family-tabs{width:100%}
+}
+@media(max-width:430px){
+  .bestiary-filter-grid{grid-template-columns:1fr}
+  .bestiary-gallery-grid{grid-template-columns:1fr 1fr}
+  .bestiary-gallery-card{min-height:280px}
+  .bestiary-gallery-media{min-height:155px}
+  .bestiary-card-meta{gap:4px}
+  .bestiary-category-chip,.bestiary-menace-chip{font-size:8px;padding-right:6px}
+}
