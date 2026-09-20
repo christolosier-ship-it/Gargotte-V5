@@ -364,7 +364,7 @@ html{scroll-padding-top:calc(var(--topbar-height) + 12px);background:var(--color
 .bestiary-toolbar-foot .segmented button{display:inline-flex;align-items:center;gap:6px}
 .bestiary-toolbar-foot .ui-icon{width:17px;height:17px}
 .bestiary-reset{margin-left:auto}
-.bestiary-result-label{font-size:11px;color:var(--color-text-tertiary);white-space:nowrap}
+.bestiary-result-label{font-size:11px;color:var(--color-text-secondary);white-space:nowrap}
 .bestiary-results{margin-top:14px}
 .bestiary-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
 .bestiary-gallery-card,.bestiary-list-row{--cat:var(--game-basic);position:relative;overflow:hidden;border:1px solid var(--color-border-subtle);background:rgba(16,11,8,.84);color:var(--color-text-primary);text-align:left}
