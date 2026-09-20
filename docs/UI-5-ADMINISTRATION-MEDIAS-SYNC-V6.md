@@ -405,3 +405,136 @@ Les nouveaux assets UI doivent être intégrés au cache de production selon le 
 - PWA/offline ;
 - upgrade IndexedDB testé ;
 - aucune dépendance backend distante ajoutée.
+
+---
+
+# 22. Implémentation UI-5A sur V5.3
+
+Statut : **LIVRÉ — UI-5A uniquement — 20 septembre 2026**
+
+UI-5 global reste **ACTIF** pour UI-5B et UI-5C.
+
+## Périmètre
+
+Atelier V6 livré pour :
+
+- Créatures ;
+- Donjons ;
+- Héros ;
+- PNJ ;
+- Quêtes ;
+- Loot ;
+- Objets interactifs ;
+- Brouhaha.
+
+Workflow : `type -> liste -> fiche d'édition`.
+
+La composition reprend le menu classique par familles de la V3, mais les formulaires utilisent les données de production réelles.
+
+## Sécurité de sauvegarde
+
+Aucune migration IndexedDB n'est nécessaire.
+
+Lors d'un Enregistrer :
+
+1. l'enregistrement complet est relu directement depuis son object store par ID ;
+2. une copie complète est conservée ;
+3. seuls les champs dont le contrôle a réellement été modifié sont patchés ;
+4. les champs dérivés strictement dépendants d'un champ modifié sont actualisés ;
+5. toutes les propriétés non affichées ou non modifiées restent intactes ;
+6. l'ID est conservé ;
+7. `updated_at` est actualisé et `created_at` n'est créé que lorsqu'il manque ;
+8. l'objet complet enrichi est réécrit.
+
+Les valeurs `0`, chaînes volontairement vidées, propriétés inconnues d'anciens enregistrements, relations non affichées et propriétés futures sont donc préservées selon leur état réel.
+
+Le Butin lié depuis une fiche Créature est volontairement en lecture seule dans UI-5A. Les Loots sont édités dans leur propre famille afin de préserver leurs IDs et propriétés. UI-5A ne fait plus de `delete/reinsert` massif des Loots lors d'une sauvegarde Créature.
+
+## Nouveau
+
+`+ Nouveau` crée uniquement un brouillon runtime.
+
+Avant `Enregistrer` :
+
+- aucun `putOne` métier ;
+- aucune fiche vide cachée dans IndexedDB ;
+- aucune relation significative inventée ;
+- les champs restent vides jusqu'à saisie explicite.
+
+## Dirty state
+
+Aucune frappe n'est autosauvegardée.
+
+L'Atelier maintient en mémoire :
+
+- le brouillon ;
+- la liste exacte des champs modifiés ;
+- le fichier image éventuellement choisi ;
+- l'état `propre / modifié / enregistrement / enregistré / erreur`.
+
+En cas d'abandon d'une fiche modifiée :
+
+`Rester | Quitter sans enregistrer | Enregistrer`
+
+Le même garde s'applique aux changements de famille et aux sorties vers une autre vue/Codex.
+
+Un `beforeunload` navigateur protège également une fermeture ou un rechargement avec modifications non enregistrées.
+
+## Formulaires
+
+Les formulaires sont regroupés en sections permanentes suivant les fiches Codex :
+
+- Identité ;
+- Gameplay / usage ;
+- Compétence ;
+- Comportement ;
+- Butin ;
+- Lore ;
+- progression, objectif, récompense ou effet selon la famille ;
+- Média lorsque présent.
+
+Les labels restent visibles en permanence.
+
+Une ancienne valeur de select qui n'existe plus dans les options actuelles reste affichée comme `Valeur actuelle indisponible` et n'est jamais remplacée implicitement.
+
+## Zone Danger
+
+La suppression est disponible uniquement depuis la fiche.
+
+Avant suppression, une confirmation forte affiche :
+
+- l'entité ciblée ;
+- les relations par ID connues ;
+- les médias liés connus ;
+- l'éventuelle présence de modifications non enregistrées.
+
+La suppression retire uniquement l'entité explicitement confirmée.
+
+Aucune cascade vers Créatures, Quêtes, Loot, Brouhaha, Objets interactifs ou Médias n'est inventée.
+
+## Responsive
+
+- desktop : liste + formulaire ;
+- tablette paysage : liste + formulaire lorsque la largeur le permet ;
+- tablette portrait : liste puis formulaire prioritaire avec retour explicite ;
+- téléphone : `Liste -> Fiche -> Retour` ;
+- barre `Enregistrer` sticky sur téléphone.
+
+## Gate UI-5A
+
+- huit familles éditables : validé ;
+- workflow type/liste/fiche : validé ;
+- Nouveau sans write caché : validé ;
+- Enregistrer explicite : validé ;
+- aucun autosave à la frappe : validé ;
+- dirty state : validé ;
+- avertissement avant abandon : validé ;
+- formulaires structurés + labels permanents : validé ;
+- lecture complète + patch des seuls champs modifiés : validé ;
+- propriétés non affichées préservées : validé ;
+- Zone Danger : validée ;
+- suppression confirmée sans cascade inventée : validée ;
+- responsive Atelier : validé structurellement ;
+- IndexedDB : schéma inchangé.
+
+**UI-5A est clos. UI-5B et UI-5C ne sont pas démarrés par ce sous-lot.**

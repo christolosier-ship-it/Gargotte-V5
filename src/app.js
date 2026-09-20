@@ -26,6 +26,7 @@ import {
   loadAllData,
   loadUiState,
   saveUiState,
+  getById,
   putOne,
   putMany,
   deleteOne,
@@ -210,6 +211,63 @@ const FORM_FIELDS = {
   ]
 };
 
+const WORKSHOP_TYPES = ["creatures","dungeons","heroes","npcs","quests","loot_items","interactables","brouhaha_effects"];
+
+const WORKSHOP_SECTIONS = {
+  creatures: [
+    { title: "Identité", fields: ["name","dungeon_id","category","socle","tags","image_path"] },
+    { title: "Gameplay", fields: ["menace","pv","atk","def","zone","actions"] },
+    { title: "Compétence", fields: ["special_attack_name","special_attack_noise"] },
+    { title: "Comportement", fields: ["ai_behavior","ai_target_priority"] },
+    { title: "Butin", fields: ["loot_lines"] },
+    { title: "Lore", fields: ["lore"] }
+  ],
+  dungeons: [
+    { title: "Identité", fields: ["name","tags","image_path"] },
+    { title: "Description", fields: ["description"] },
+    { title: "Progression", fields: ["floor_budgets","boss_name"] }
+  ],
+  heroes: [
+    { title: "Identité", fields: ["hero_base_name","level","name","role","title","tags","image_path"] },
+    { title: "Gameplay", fields: ["pv","atk","def","zone","actions"] },
+    { title: "Compétence", fields: ["ability_text","effect_text","brouhaha"] }
+  ],
+  npcs: [
+    { title: "Identité", fields: ["name","race","role","tags","image_path"] },
+    { title: "Ton", fields: ["tone"] },
+    { title: "Lore", fields: ["lore"] }
+  ],
+  quests: [
+    { title: "Identité", fields: ["name","dungeon_id","npc_id","difficulty","tags","image_path"] },
+    { title: "Description", fields: ["description"] },
+    { title: "Objectif", fields: ["objective"] },
+    { title: "Récompense", fields: ["reward"] }
+  ],
+  loot_items: [
+    { title: "Identité", fields: ["name","creature_id","type","tags","image_path"] },
+    { title: "Effet & valeur", fields: ["effect","gold_value"] }
+  ],
+  interactables: [
+    { title: "Identité", fields: ["name","dungeon_id","type","tags","image_path"] },
+    { title: "Usage à la table", fields: ["hp","actions_allowed","effect"] }
+  ],
+  brouhaha_effects: [
+    { title: "Référence", fields: ["level","dungeon_id"] },
+    { title: "Effet", fields: ["effect_text"] }
+  ]
+};
+
+const WORKSHOP_REQUIRED_FIELDS = {
+  dungeons: ["name"],
+  creatures: ["name"],
+  heroes: ["hero_base_name","level"],
+  npcs: ["name"],
+  quests: ["name"],
+  loot_items: ["name"],
+  interactables: ["name"],
+  brouhaha_effects: ["level","effect_text"]
+};
+
 const IMPORT_TYPES = ENTITY_ORDER.slice();
 const APP_VERSION = "5.4.0";
 let backupBusy = false;
@@ -238,6 +296,17 @@ const state = {
   data: {},
   index: {},
   imageViewer: null,
+  workshop: {
+    dirty: false,
+    dirtyFields: new Set(),
+    draft: null,
+    draftFile: null,
+    isNew: false,
+    pending: null,
+    deleteTarget: null,
+    editorOpen: false,
+    status: "clean"
+  },
   ui: {
     view: "home",
     codexType: "creatures",
@@ -4393,76 +4462,509 @@ function renderQuests() {
   `);
 }
 
+function workshopFamilyIcon(type) {
+  const icons = {
+    creatures: "Sigil_Basique.webp",
+    dungeons: "Icone_Gameplay_DONJON.webp",
+    heroes: "Icone_Entite_HEROS.webp",
+    npcs: "Icone_Entite_PNJ.webp",
+    quests: "Icone_Entite_QUETE.webp",
+    loot_items: "Icone_Gameplay_BUTIN.webp",
+    interactables: "Icone_Entite_OBJET_INTERACTIF.webp",
+    brouhaha_effects: "Icone_Entite_OBJET_BROUHAHA.webp"
+  };
+  return icons[type] || "Sigil_Basique.webp";
+}
+
+function workshopResetRuntime(status = "clean") {
+  state.workshop.dirty = false;
+  state.workshop.dirtyFields = new Set();
+  state.workshop.draft = null;
+  state.workshop.draftFile = null;
+  state.workshop.isNew = false;
+  state.workshop.pending = null;
+  state.workshop.deleteTarget = null;
+  state.workshop.status = status;
+}
+
+function workshopSelectedStoredItem(type = state.ui.workshopType) {
+  const id = String(state.ui.workshopSelectedId || "");
+  return id ? findById(type, id) : null;
+}
+
+function workshopSelectedItem(type = state.ui.workshopType) {
+  const id = String(state.ui.workshopSelectedId || "");
+  if (state.workshop.draft && String(state.workshop.draft.id || "") === id && state.workshop.draft.__workshopType === type) {
+    return state.workshop.draft;
+  }
+  return workshopSelectedStoredItem(type);
+}
+
+function createWorkshopDraft(type) {
+  const draft = { id: uid(type === "brouhaha_effects" ? "brouhaha" : type.replace(/_items$|_effects$/,"")), __workshopType: type, __workshopNew: true };
+  for (const field of FORM_FIELDS[type] || []) {
+    if (field.name === "loot_lines") continue;
+    draft[field.name] = "";
+  }
+  return draft;
+}
+
+function workshopRequiredField(type, fieldName) {
+  return (WORKSHOP_REQUIRED_FIELDS[type] || []).includes(fieldName);
+}
+
+function workshopStatusLabel() {
+  if (state.workshop.status === "saving") return "Enregistrement local…";
+  if (state.workshop.status === "saved") return "Enregistré localement";
+  if (state.workshop.status === "error") return "Erreur locale";
+  if (state.workshop.dirty) return "Modifications non enregistrées";
+  return "Aucune modification";
+}
+
+function syncWorkshopDirtyIndicators() {
+  const status = app.querySelector("[data-workshop-status]");
+  if (status) {
+    status.textContent = workshopStatusLabel();
+    status.dataset.state = state.workshop.dirty ? "dirty" : state.workshop.status;
+  }
+  const save = app.querySelector("[data-workshop-save]");
+  if (save) save.disabled = !state.workshop.dirty && !state.workshop.isNew;
+  const root = app.querySelector(".workshop-v6");
+  if (root) root.classList.toggle("is-dirty", state.workshop.dirty);
+}
+
+function captureWorkshopControl(control) {
+  const form = control?.closest?.('form[data-workshop-form="true"]');
+  if (!form || state.ui.view !== "atelier") return false;
+  const type = form.dataset.form;
+  const id = form.dataset.id;
+  if (!type || !id || !control.name) return false;
+
+  if (!state.workshop.draft || String(state.workshop.draft.id || "") !== String(id) || state.workshop.draft.__workshopType !== type) {
+    const current = findById(type, id);
+    if (!current && !state.workshop.isNew) return false;
+    state.workshop.draft = current ? structuredClone(current) : createWorkshopDraft(type);
+    state.workshop.draft.__workshopType = type;
+    if (state.workshop.isNew) state.workshop.draft.__workshopNew = true;
+  }
+
+  if (control.name === "image_file") {
+    state.workshop.draftFile = control.files?.[0] || state.workshop.draftFile || null;
+    state.workshop.dirtyFields.add("image_path");
+  } else {
+    state.workshop.draft[control.name] = control.value;
+    state.workshop.dirtyFields.add(control.name);
+  }
+  state.workshop.dirty = true;
+  state.workshop.status = "dirty";
+  syncWorkshopDirtyIndicators();
+  return true;
+}
+
+function workshopRelationSummary(type, item) {
+  if (!item) return [];
+  const id = String(item.id || "");
+  const rows = [];
+  const add = (label, count) => { if (count > 0) rows.push({ label, count }); };
+  if (type === "dungeons") {
+    add("Créatures liées", (state.data.creatures || []).filter(row => String(row.dungeon_id || "") === id).length);
+    add("Quêtes liées", (state.data.quests || []).filter(row => String(row.dungeon_id || "") === id).length);
+    add("Objets interactifs liés", (state.data.interactables || []).filter(row => String(row.dungeon_id || "") === id).length);
+    add("Effets Brouhaha liés", (state.data.brouhaha_effects || []).filter(row => String(row.dungeon_id || "") === id).length);
+  } else if (type === "creatures") {
+    add("Loot lié", (state.data.loot_items || []).filter(row => String(row.creature_id || "") === id).length);
+  } else if (type === "npcs") {
+    add("Quêtes commanditées", (state.data.quests || []).filter(row => String(row.npc_id || "") === id).length);
+  }
+  add("Médias liés", (state.data.media_assets || []).filter(row => String(row.entity_type || "") === type && String(row.entity_id || "") === id).length);
+  return rows;
+}
+
+function renderWorkshopGuardModal() {
+  if (!state.workshop.pending) return "";
+  return `<div class="workshop-modal-backdrop" role="presentation">
+    <section class="workshop-modal" role="dialog" aria-modal="true" aria-labelledby="workshop-unsaved-title">
+      <span class="eyebrow">Atelier</span>
+      <h2 id="workshop-unsaved-title">Modifications non enregistrées</h2>
+      <p>Cette fiche contient des changements qui n'ont pas encore été écrits dans IndexedDB.</p>
+      <div class="workshop-modal-actions">
+        <button class="ghost" type="button" data-action="workshop-guard-stay">Rester</button>
+        <button class="danger ghost" type="button" data-action="workshop-guard-discard">Quitter sans enregistrer</button>
+        <button class="primary" type="button" data-action="workshop-guard-save">Enregistrer</button>
+      </div>
+    </section>
+  </div>`;
+}
+
+function renderWorkshopDeleteModal() {
+  const target = state.workshop.deleteTarget;
+  if (!target) return "";
+  const item = findById(target.type, target.id);
+  if (!item) return "";
+  const title = item.name || item.title || item.hero_base_name || item.label || item.id;
+  const relations = workshopRelationSummary(target.type, item);
+  return `<div class="workshop-modal-backdrop danger-layer" role="presentation">
+    <section class="workshop-modal danger-modal" role="dialog" aria-modal="true" aria-labelledby="workshop-delete-title">
+      <span class="eyebrow">Zone Danger</span>
+      <h2 id="workshop-delete-title">Supprimer « ${escapeHtml(title)} » ?</h2>
+      <p>Seule cette entité sera supprimée. Les enregistrements liés et les médias ne seront pas supprimés automatiquement.</p>
+      ${relations.length ? `<div class="workshop-delete-relations">${relations.map(row => `<span><b>${row.count}</b> ${escapeHtml(row.label)}</span>`).join("")}</div>` : `<div class="muted small">Aucune relation par ID connue dans les données chargées.</div>`}
+      ${state.workshop.dirty ? `<p class="workshop-delete-dirty">Les modifications non enregistrées de cette fiche seront également abandonnées.</p>` : ""}
+      <div class="workshop-modal-actions">
+        <button class="ghost" type="button" data-action="workshop-delete-cancel">Annuler</button>
+        <button class="danger" type="button" data-action="workshop-delete-confirm" data-type="${escapeHtml(target.type)}" data-id="${escapeHtml(target.id)}">Supprimer définitivement</button>
+      </div>
+    </section>
+  </div>`;
+}
+
+function workshopSectionFields(type, names) {
+  const fields = FORM_FIELDS[type] || [];
+  return names.map(name => fields.find(field => field.name === name)).filter(Boolean);
+}
+
+function renderWorkshopSection(type, section, item) {
+  const fields = workshopSectionFields(type, section.fields);
+  if (!fields.length) return "";
+  return `<fieldset class="workshop-form-section">
+    <legend>${escapeHtml(section.title)}</legend>
+    <div class="form-grid">${fields.map(field => renderField(field, item, type)).join("")}</div>
+  </fieldset>`;
+}
+
+function workshopFieldPatchValue(field, raw) {
+  if (field.name === "tags") return tagsToArray(raw);
+  if (field.name === "floor_budgets") return String(raw || "").trim() ? parseFloorBudgets(raw) : [];
+  if (field.type === "number") {
+    if (String(raw ?? "").trim() === "") return null;
+    let value = Number(raw);
+    if (!Number.isFinite(value)) return null;
+    if (field.min != null) value = Math.max(Number(field.min), value);
+    if (field.max != null) value = Math.min(Number(field.max), value);
+    return value;
+  }
+  return String(raw ?? "").trim();
+}
+
+function applyWorkshopDerivedFields(type, entity, changedFields) {
+  const changed = name => changedFields.has(name);
+  if (["dungeons","creatures","npcs","quests","loot_items","interactables"].includes(type) && changed("name")) {
+    entity.slug = slugify(entity.name || "");
+  }
+  if (type === "creatures" && changed("dungeon_id")) {
+    const dungeon = findById("dungeons", entity.dungeon_id);
+    entity.dungeon_name = dungeon?.name || "";
+    entity.dungeon_slug = dungeon?.slug || "";
+  }
+  if (type === "quests") {
+    if (changed("dungeon_id")) entity.dungeon_name = findById("dungeons", entity.dungeon_id)?.name || "";
+    if (changed("npc_id")) entity.npc_name = findById("npcs", entity.npc_id)?.name || "";
+  }
+  if (type === "loot_items" && changed("creature_id")) {
+    entity.creature_name = findById("creatures", entity.creature_id)?.name || "";
+  }
+  if (type === "interactables" && changed("dungeon_id")) {
+    entity.dungeon_name = findById("dungeons", entity.dungeon_id)?.name || "";
+  }
+  if (type === "brouhaha_effects" && changed("dungeon_id")) {
+    entity.dungeon_name = entity.dungeon_id ? (findById("dungeons", entity.dungeon_id)?.name || "") : "";
+  }
+}
+
+function validateWorkshopForm(type, form) {
+  if (!form.reportValidity()) return false;
+  for (const name of WORKSHOP_REQUIRED_FIELDS[type] || []) {
+    const control = form.elements.namedItem(name);
+    const value = control && "value" in control ? String(control.value || "").trim() : "";
+    if (!value && name !== "level") {
+      control?.focus?.();
+      toast(`Le champ « ${FORM_FIELDS[type]?.find(field => field.name === name)?.label || name} » est obligatoire.`, "warn");
+      return false;
+    }
+  }
+  return true;
+}
+
+function renderWorkshopStatus() {
+  const stateName = state.workshop.dirty ? "dirty" : state.workshop.status;
+  return `<span class="workshop-save-state" data-workshop-status data-state="${escapeHtml(stateName)}">${escapeHtml(workshopStatusLabel())}</span>`;
+}
+
+async function reloadWorkshopDataWithoutRender() {
+  const raw = await loadAllData();
+  hydrateState(raw);
+  state.logs = await getLogs(100);
+}
+
+async function saveEntityFromWorkshopForm(type, form, options = {}) {
+  const renderAfter = options.renderAfter !== false;
+  const toastAfter = options.toastAfter !== false;
+  const id = String(form.dataset.id || "");
+  const isNew = state.workshop.isNew && String(state.ui.workshopSelectedId || "") === id;
+  if (!validateWorkshopForm(type, form)) return null;
+
+  const existing = await getById(type, id);
+  if (!isNew && !existing) throw new Error("L'enregistrement à modifier n'existe plus dans IndexedDB.");
+  if (isNew && existing) throw new Error("Un enregistrement portant déjà cet identifiant existe. Aucun écrasement n'a été effectué.");
+  if (!isNew && !state.workshop.dirty) {
+    if (toastAfter) toast("Aucune modification à enregistrer.", "info");
+    return existing;
+  }
+
+  state.workshop.status = "saving";
+  syncWorkshopDirtyIndicators();
+
+  const entity = existing ? structuredClone(existing) : { id };
+  const values = new FormData(form);
+  const fields = (FORM_FIELDS[type] || []).filter(field => field.name !== "loot_lines");
+  const changedFields = isNew
+    ? new Set(fields.map(field => field.name))
+    : new Set([...state.workshop.dirtyFields].filter(name => name !== "image_file"));
+
+  for (const field of fields) {
+    if (!changedFields.has(field.name)) continue;
+    entity[field.name] = workshopFieldPatchValue(field, values.get(field.name));
+  }
+
+  applyWorkshopDerivedFields(type, entity, changedFields);
+
+  const fileInput = form.querySelector('input[name="image_file"]');
+  const file = fileInput?.files?.[0] || state.workshop.draftFile || null;
+  if (file) {
+    await saveMediaForEntity(type, entity, file);
+    changedFields.add("image_path");
+  }
+
+  entity.updated_at = nowISO();
+  if (!entity.created_at) entity.created_at = nowISO();
+  await putOne(type, entity);
+
+  await reloadWorkshopDataWithoutRender();
+  state.ui.workshopType = type;
+  state.ui.workshopSelectedId = entity.id;
+  workshopResetRuntime("saved");
+  state.workshop.editorOpen = true;
+  await saveUiState(state.ui);
+
+  if (toastAfter) toast("Enregistré localement", "success");
+  else if (renderAfter) render();
+  return entity;
+}
+
+async function deleteWorkshopEntity(type, id) {
+  const existing = await getById(type, id);
+  if (!existing) {
+    state.workshop.deleteTarget = null;
+    toast("Cette fiche n'existe plus.", "warn");
+    return false;
+  }
+  await deleteOne(type, id);
+  await reloadWorkshopDataWithoutRender();
+  workshopResetRuntime("clean");
+  state.ui.workshopType = type;
+  state.ui.workshopSelectedId = state.data[type]?.[0]?.id || "";
+  state.workshop.editorOpen = false;
+  if (state.ui.codexSelectedId === id) state.ui.codexSelectedId = state.data[type]?.[0]?.id || "";
+  await saveUiState(state.ui);
+  toast("Entité supprimée. Les relations et médias liés ont été conservés.", "info");
+  return true;
+}
+
+async function performWorkshopNavigation(pending) {
+  if (!pending) return;
+  workshopResetRuntime("clean");
+
+  if (pending.kind === "view") {
+    clearCodexContext(true);
+    state.ui.view = pending.view || "home";
+    state.ui.codexReturnStack = [];
+    if (state.ui.view === "codex") state.ui.codexDetailOpen = false;
+  } else if (pending.kind === "jump-codex") {
+    clearCodexContext(true);
+    state.ui.codexReturnStack = [];
+    state.ui.globalSearch = "";
+    state.ui.view = "codex";
+    state.ui.codexType = pending.type;
+    state.ui.codexSelectedId = pending.id;
+    if (pending.type === "creatures") {
+      ensureBestiaryUi();
+      state.ui.bestiary.selectedId = pending.id;
+    } else if (pending.type === "dungeons") {
+      ensureCodexFamilyUi();
+      state.ui.codexFamilies.dungeons.selectedId = pending.id;
+    } else if (pending.type === "heroes") {
+      ensureCodexFamilyUi();
+      const hero = findById("heroes", pending.id);
+      const group = hero ? heroGroupByKey(heroBaseKey(hero)) : null;
+      if (group) {
+        state.ui.codexFamilies.heroes.selectedBase = group.key;
+        rememberHeroLevel(group, hero.level);
+      }
+    } else if (["npcs","quests","loot_items","interactables","brouhaha_effects"].includes(pending.type)) {
+      ensureCodexFamilyUi();
+      state.ui.codexFamilies[pending.type].selectedId = pending.id;
+    }
+    state.ui.codexDetailOpen = true;
+  } else if (pending.kind === "type") {
+    state.ui.workshopType = pending.type;
+    state.ui.workshopSelectedId = state.data[pending.type]?.[0]?.id || "";
+    state.workshop.editorOpen = false;
+  } else if (pending.kind === "select") {
+    state.ui.workshopType = pending.type;
+    state.ui.workshopSelectedId = pending.id;
+    state.workshop.editorOpen = true;
+  } else if (pending.kind === "new") {
+    const draft = createWorkshopDraft(pending.type);
+    state.ui.workshopType = pending.type;
+    state.ui.workshopSelectedId = draft.id;
+    state.workshop.draft = draft;
+    state.workshop.isNew = true;
+    state.workshop.dirty = true;
+    state.workshop.dirtyFields = new Set();
+    state.workshop.status = "dirty";
+    state.workshop.editorOpen = true;
+  } else if (pending.kind === "discard-new") {
+    state.ui.workshopSelectedId = state.data[state.ui.workshopType]?.[0]?.id || "";
+    state.workshop.editorOpen = false;
+  }
+
+  await saveUiState(state.ui);
+  render();
+}
+
+async function requestWorkshopNavigation(pending) {
+  if (state.workshop.dirty) {
+    state.workshop.pending = pending;
+    render();
+    return false;
+  }
+  await performWorkshopNavigation(pending);
+  return true;
+}
+
+function wireWorkshopUnloadGuard() {
+  window.addEventListener("beforeunload", event => {
+    if (!state.workshop.dirty) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+}
+
 function renderAtelier() {
-  const type = state.ui.workshopType;
+  const type = WORKSHOP_TYPES.includes(state.ui.workshopType) ? state.ui.workshopType : "creatures";
+  state.ui.workshopType = type;
   const items = getFilteredList(type, "atelier");
-  const selected = items.find(item => item.id === state.ui.workshopSelectedId) || items[0] || null;
+  let selected = workshopSelectedItem(type);
+  if (!selected && items.length) {
+    selected = items[0];
+    state.ui.workshopSelectedId = selected.id;
+  }
+  const isDraft = Boolean(state.workshop.isNew && selected && String(selected.id) === String(state.ui.workshopSelectedId));
+  const listItems = isDraft ? [selected, ...items.filter(item => item.id !== selected.id)] : items;
+  const editorOpen = state.workshop.editorOpen || isDraft;
 
   return renderShell(`
-    <section class="panel">
-      <div class="panel-title">
-        <h2>Atelier</h2>
-        <div class="muted">La seule zone d'édition des données métier.</div>
-      </div>
+    <section class="workshop-v6 ${editorOpen ? "editor-open" : ""} ${state.workshop.dirty ? "is-dirty" : ""}">
+      <header class="workshop-head-v6">
+        <div><span class="eyebrow">Administration locale</span><h1>Atelier</h1><p>Le Codex consulte. L'Atelier crée, modifie et supprime uniquement après action explicite.</p></div>
+        ${renderWorkshopStatus()}
+      </header>
 
-      <div class="segmented wrap">
-        ${["dungeons","creatures","heroes","npcs","quests","loot_items","interactables","brouhaha_effects"].map(t => `<button class="tab ${t === type ? "active" : ""}" data-action="set-workshop-type" data-type="${t}">${getLabel(t)}</button>`).join("")}
-      </div>
+      <nav class="workshop-family-menu" aria-label="Familles éditables">
+        ${WORKSHOP_TYPES.map(family => `<button type="button" class="${family === type ? "active" : ""}" data-action="set-workshop-type" data-type="${family}">
+          <img src="${V6_ICON_PATH}${workshopFamilyIcon(family)}" alt="">
+          <span>${escapeHtml(getLabel(family))}</span>
+        </button>`).join("")}
+      </nav>
 
-      <div class="panel-subtitle">
-        <span>${items.length} entrée(s)</span>
-        <button class="primary" type="button" data-action="new-item" data-type="${type}">＋ Créer</button>
+      <div class="workshop-toolbar-v6">
+        <div><strong>${escapeHtml(getLabel(type))}</strong><span>${items.length} fiche${items.length > 1 ? "s" : ""}</span></div>
+        <button class="primary" type="button" data-action="new-item" data-type="${type}">＋ Nouveau</button>
         ${type === "creatures" ? renderCreatureDungeonFilter(state.ui.workshopCreatureDungeonId, "atelier-creature-dungeon-filter") : ""}
         ${type === "quests" ? renderQuestDungeonFilter(state.ui.workshopQuestDungeonId, "atelier-quest-dungeon-filter") : ""}
       </div>
 
-      <div class="two-col workshop">
-        <div class="list-column">
-          <div class="card-list">
-            ${items.map(item => renderWorkshopCard(type, item, selected?.id === item.id)).join("") || `<div class="empty">Aucune donnée.</div>`}
+      <div class="workshop-layout-v6">
+        <aside class="workshop-list-pane panel">
+          <div class="workshop-list-title"><strong>Liste</strong><span>Sélectionne une fiche à modifier</span></div>
+          <div class="workshop-list-v6">
+            ${listItems.map(item => renderWorkshopCard(type, item, String(item.id) === String(selected?.id), isDraft && String(item.id) === String(selected?.id))).join("") || `<div class="empty">Aucune fiche dans cette famille.</div>`}
           </div>
-        </div>
-        <div class="detail-column">
-          ${selected ? renderWorkshopEditor(type, selected) : `<div class="empty">Sélectionnez une fiche.</div>`}
-        </div>
+        </aside>
+
+        <main class="workshop-editor-pane">
+          <button class="ghost workshop-back-list" type="button" data-action="workshop-back-list">${shellIcon("back")}<span>Retour à la liste</span></button>
+          ${selected ? renderWorkshopEditor(type, selected, isDraft) : `<div class="panel empty">Sélectionne une fiche ou utilise « Nouveau ».</div>`}
+        </main>
       </div>
+
+      ${renderWorkshopGuardModal()}
+      ${renderWorkshopDeleteModal()}
     </section>
   `);
 }
 
-function renderWorkshopCard(type, item, active) {
-  const title = item.name || item.title || item.hero_base_name || item.label || "";
-  const subtitle = codexSubtitle(type, item);
-  const image = type === "media_assets" ? thumbUrlForAsset(item) : codexImageFor(type, item);
+function renderWorkshopCard(type, item, active, draft = false) {
+  const title = item.name || item.title || item.hero_base_name || item.label || (draft ? "Nouveau brouillon" : item.id || "Sans nom");
+  const subtitle = draft ? "Non enregistré" : codexSubtitle(type, item);
+  const image = codexImageFor(type, item);
   return `
-    <button class="codex-card ${active ? "active" : ""}" data-action="select-workshop" data-type="${type}" data-id="${item.id}">
-      <div class="card-img">${image ? `<img src="${escapeHtml(image)}" alt="">` : `<div class="placeholder">${escapeHtml((title || "?").slice(0,2).toUpperCase())}</div>`}</div>
-      <div class="card-body">
-        <strong>${escapeHtml(title)}</strong>
-        <span>${escapeHtml(subtitle)}</span>
-        <em>${escapeHtml(codexBadge(type, item))}</em>
-      </div>
+    <button class="workshop-list-card ${active ? "active" : ""} ${draft ? "draft" : ""}" type="button" data-action="select-workshop" data-type="${type}" data-id="${escapeHtml(String(item.id || ""))}">
+      <div class="workshop-list-thumb">${image ? `<img src="${escapeHtml(image)}" alt="">` : `<img src="${V6_ICON_PATH}${workshopFamilyIcon(type)}" alt="">`}</div>
+      <span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(subtitle || getLabel(type))}</small></span>
+      ${draft ? `<em>Brouillon</em>` : ""}
     </button>
   `;
 }
 
-function renderWorkshopEditor(type, item) {
-  const fields = FORM_FIELDS[type] || [];
+function renderWorkshopEditor(type, item, isDraft = false) {
+  const sections = WORKSHOP_SECTIONS[type] || [{ title: "Fiche", fields: (FORM_FIELDS[type] || []).map(field => field.name) }];
+  const relations = isDraft ? [] : workshopRelationSummary(type, item);
+  const title = item.name || item.title || item.hero_base_name || item.label || (isDraft ? "Nouveau brouillon" : item.id || "Fiche");
   return `
-    <form class="edit-form" data-form="${type}" data-id="${item.id}">
-      <input type="hidden" name="id" value="${escapeHtml(item.id)}">
-      <div class="form-grid">
-        ${fields.map(field => renderField(field, item)).join("")}
+    <form class="edit-form workshop-edit-form" data-form="${type}" data-id="${escapeHtml(String(item.id || ""))}" data-workshop-form="true" novalidate>
+      <header class="workshop-editor-head panel">
+        <div><span class="eyebrow">${isDraft ? "Nouveau brouillon" : "Fiche d'édition"}</span><h2>${escapeHtml(title)}</h2><small>ID · ${escapeHtml(String(item.id || ""))}</small></div>
+        ${renderWorkshopStatus()}
+      </header>
+
+      <div class="workshop-sections-v6">
+        ${sections.map(section => renderWorkshopSection(type, section, item)).join("")}
       </div>
-      <div class="form-actions">
-        <button class="primary" type="submit">💾 Enregistrer</button>
-        <button class="danger" type="button" data-action="delete-item" data-type="${type}" data-id="${item.id}">🗑️ Supprimer</button>
+
+      <section class="workshop-danger-zone">
+        <div><span>Zone Danger</span><strong>${isDraft ? "Abandonner ce brouillon" : "Supprimer cette entité"}</strong>
+          <small>${isDraft ? "Aucune donnée métier n'a encore été créée." : (relations.length ? relations.map(row => `${row.count} ${row.label.toLowerCase()}`).join(" · ") : "Aucune relation par ID connue.")}</small>
+        </div>
+        ${isDraft
+          ? `<button class="danger ghost" type="button" data-action="workshop-discard-new">Abandonner le brouillon</button>`
+          : `<button class="danger ghost" type="button" data-action="delete-item" data-type="${type}" data-id="${escapeHtml(String(item.id || ""))}">Supprimer…</button>`}
+      </section>
+
+      <div class="workshop-savebar">
+        <div>${renderWorkshopStatus()}</div>
+        <button class="primary" type="submit" data-workshop-save ${!state.workshop.dirty && !isDraft ? "disabled" : ""}>Enregistrer</button>
       </div>
     </form>
   `;
 }
 
-function renderField(field, item) {
+function renderField(field, item, type = state.ui.workshopType) {
+  const currentValue = item?.[field.name] ?? "";
+  const required = workshopRequiredField(type, field.name) ? "required" : "";
+
+  if (field.name === "loot_lines" && type === "creatures") {
+    const value = getLootTextForCreature(item);
+    return `
+      <label class="wide workshop-readonly-field">
+        <span>Butin lié</span>
+        <textarea rows="${field.rows || 5}" disabled>${escapeHtml(value || "Aucun Loot lié.")}</textarea>
+        <small>Lecture seule ici pour préserver les IDs et propriétés des Loots existants. Modifie-les dans la famille Loot.</small>
+        <button class="ghost" type="button" data-action="set-workshop-type" data-type="loot_items">Ouvrir Loot dans l'Atelier</button>
+      </label>
+    `;
+  }
+
   if (field.type === "select") {
     let options = [];
     if (field.options === "mediaEntityTypes") {
@@ -4472,59 +4974,65 @@ function renderField(field, item) {
     } else {
       options = state.data[field.options] || [];
     }
-    const currentValue = item[field.name] ?? "";
+    const optionData = options.map(opt => {
+      const isStatic = typeof opt === "string" || (opt && typeof opt === "object" && "value" in opt);
+      const value = field.options === "mediaEntityTypes"
+        ? opt
+        : isStatic
+          ? (typeof opt === "string" ? opt : opt.value)
+          : opt.id;
+      const label = field.options === "mediaEntityTypes"
+        ? opt
+        : isStatic
+          ? (typeof opt === "string" ? opt : opt.label || opt.value)
+          : (opt.name || opt.title || opt.hero_base_name || opt.id || "");
+      return { value: String(value ?? ""), label: String(label ?? "") };
+    });
+    const current = String(currentValue ?? "");
+    const known = optionData.some(opt => opt.value === current);
     return `
-      <label class="${field.type === "textarea" ? "wide" : ""}">
+      <label>
         <span>${escapeHtml(field.label)}</span>
-        <select name="${field.name}">
-          ${field.allowEmpty ? `<option value="">—</option>` : ""}
-          ${options.map(opt => {
-            const isStatic = typeof opt === "string" || (opt && typeof opt === "object" && "value" in opt);
-            const val = field.options === "mediaEntityTypes"
-              ? opt
-              : isStatic
-                ? (typeof opt === "string" ? opt : opt.value)
-                : opt.id;
-            const label = field.options === "mediaEntityTypes"
-              ? opt
-              : isStatic
-                ? (typeof opt === "string" ? opt : opt.label || opt.value)
-                : (opt.name || opt.title || opt.hero_base_name || "");
-            const selected = String(val) === String(currentValue) ? "selected" : "";
-            return `<option value="${escapeHtml(val)}" ${selected}>${escapeHtml(label)}</option>`;
-          }).join("")}
+        <select name="${field.name}" ${required}>
+          ${field.allowEmpty || !current ? `<option value="">—</option>` : ""}
+          ${current && !known ? `<option value="${escapeHtml(current)}" selected>Valeur actuelle indisponible · ${escapeHtml(current)}</option>` : ""}
+          ${optionData.map(opt => `<option value="${escapeHtml(opt.value)}" ${opt.value === current ? "selected" : ""}>${escapeHtml(opt.label)}</option>`).join("")}
         </select>
       </label>
     `;
   }
 
   if (field.type === "textarea") {
-    const value = field.name === "loot_lines" ? getLootTextForCreature(item) : (item[field.name] ?? "");
     return `
       <label class="wide">
         <span>${escapeHtml(field.label)}</span>
-        <textarea name="${field.name}" rows="${field.rows || 4}" placeholder="${escapeHtml(field.placeholder || "")}">${escapeHtml(value)}</textarea>
+        <textarea name="${field.name}" rows="${field.rows || 4}" placeholder="${escapeHtml(field.placeholder || "")}" ${required}>${escapeHtml(currentValue)}</textarea>
       </label>
     `;
   }
 
   if (field.type === "image") {
-    const preview = item.image_path ? imageUrlForEntity(item) : "";
+    const preview = item?.image_path ? imageUrlForEntity(item) : "";
     return `
-      <label class="wide">
+      <label class="wide workshop-image-field">
         <span>${escapeHtml(field.label)}</span>
-        <input name="image_file" type="file" accept="image/*">
-        <input name="image_path" value="${escapeHtml(item.image_path || "")}" placeholder="assets/images/...">
-        ${preview ? `<div class="field-preview"><img src="${escapeHtml(preview)}" alt=""></div>` : `<small class="muted">Chemin relatif enregistré dans le JSON. Le fichier est stocké localement dans IndexedDB.</small>`}
+        <div class="workshop-image-row">
+          ${preview ? `<div class="field-preview"><img src="${escapeHtml(preview)}" alt=""></div>` : `<div class="field-preview placeholder"><img src="${V6_ICON_PATH}${workshopFamilyIcon(type)}" alt=""></div>`}
+          <div>
+            <input name="image_file" type="file" accept="image/*">
+            <label class="workshop-path-label"><span>Chemin enregistré</span><input name="image_path" value="${escapeHtml(currentValue)}" placeholder="assets/images/..."></label>
+            <small>L'image n'est écrite qu'au clic Enregistrer. L'original média existant n'est jamais remplacé automatiquement.</small>
+          </div>
+        </div>
       </label>
     `;
   }
 
-  const type = field.type === "number" ? "number" : "text";
-  const value = item[field.name] ?? "";
+  const inputType = field.type === "number" ? "number" : "text";
   const attrs = [
     `name="${field.name}"`,
-    `type="${type}"`,
+    `type="${inputType}"`,
+    required,
     field.min != null ? `min="${field.min}"` : "",
     field.max != null ? `max="${field.max}"` : "",
     field.step != null ? `step="${field.step}"` : "",
@@ -4533,7 +5041,7 @@ function renderField(field, item) {
   return `
     <label>
       <span>${escapeHtml(field.label)}</span>
-      <input ${attrs} value="${escapeHtml(value)}">
+      <input ${attrs} value="${escapeHtml(currentValue)}">
     </label>
   `;
 }
@@ -4940,97 +5448,13 @@ async function saveMediaForEntity(type, entity, file) {
   return entity;
 }
 
-async function saveEntityFromForm(type, form) {
-  const existing = findById(type, form.dataset.id) || blankEntity(type);
-  const values = Object.fromEntries(new FormData(form).entries());
-  let entity = structuredClone(existing);
-
-  entity = importRowToEntity(type, values, entity);
-
-  if (type === "creatures") {
-    entity.dungeon_name = findById("dungeons", entity.dungeon_id)?.name || entity.dungeon_name || "";
-    entity.dungeon_slug = findById("dungeons", entity.dungeon_id)?.slug || entity.dungeon_slug || "";
-  }
-  if (type === "quests") {
-    entity.dungeon_name = findById("dungeons", entity.dungeon_id)?.name || entity.dungeon_name || "";
-    entity.npc_name = findById("npcs", entity.npc_id)?.name || entity.npc_name || "";
-  }
-  if (type === "loot_items") {
-    entity.creature_name = findById("creatures", entity.creature_id)?.name || entity.creature_name || "";
-  }
-  if (type === "brouhaha_effects") {
-    entity.dungeon_name = findById("dungeons", entity.dungeon_id)?.name || "";
-  }
-
-  const fileInput = form.querySelector('input[name="image_file"]');
-  const file = fileInput?.files?.[0];
-  if (file) {
-    entity = await saveMediaForEntity(type, entity, file);
-  }
-
-  entity.updated_at = nowISO();
-  if (!entity.created_at) entity.created_at = nowISO();
-
-  if (type === "creatures") {
-    const lootLines = String(values.loot_lines || "").trim();
-    const parsedLoot = parseLootLines(lootLines, entity.id, entity.name || "");
-    entity.loot_items = parsedLoot;
-
-    // Sauver la créature d'abord
-    await putOne("creatures", entity);
-
-    // Supprimer uniquement le loot de cette créature
-    await deleteWhere("loot_items", l => l.creature_id === entity.id);
-
-    // Réinsérer le loot propre
-    if (parsedLoot.length) {
-      await putMany("loot_items", parsedLoot.map(l => ({
-        ...l,
-        creature_id: entity.id,
-        creature_name: entity.name || l.creature_name || ""
-      })));
-    }
-  } else if (type === "media_assets") {
-    await putOne(type, entity);
-  } else {
-    await putOne(type, entity);
-  }
-
-  await refreshData();
-  if (type === "dungeons") state.ui.generator.dungeonId = entity.id;
-  if (type === "dungeons") state.ui.brouhaha.dungeonId = entity.id;
-  if (type === "quests") state.ui.questDungeonId = entity.dungeon_id || state.ui.questDungeonId;
-  if (type === "creatures") state.ui.codexSelectedId = entity.id;
-  state.ui.workshopSelectedId = entity.id;
-  await saveUiState(state.ui);
-  toast("💾 Fiche enregistrée", "success");
+async function saveEntityFromForm(type, form, options = {}) {
+  return saveEntityFromWorkshopForm(type, form, options);
 }
 
 async function deleteEntityWithConfirm(type, id) {
-  const label = getLabel(type);
-  if (!confirm(`Supprimer cette fiche ${label} ?`)) return;
-
-  if (type === "creatures") {
-    await deleteWhere("loot_items", l => l.creature_id === id);
-  }
-  if (type === "dungeons") {
-    const creatureIds = (state.data.creatures || [])
-      .filter(c => c.dungeon_id === id)
-      .map(c => c.id);
-
-    await deleteWhere("loot_items", l => creatureIds.includes(l.creature_id));
-    await deleteWhere("creatures", c => c.dungeon_id === id);
-    await deleteWhere("quests", q => q.dungeon_id === id);
-    await deleteWhere("brouhaha_effects", b => b.dungeon_id === id);
-  }
-
-  await deleteOne(type, id);
-  await refreshData();
-
-  if (state.ui.codexSelectedId === id) state.ui.codexSelectedId = state.data[type]?.[0]?.id || "";
-  if (state.ui.workshopSelectedId === id) state.ui.workshopSelectedId = state.data[type]?.[0]?.id || "";
-  await saveUiState(state.ui);
-  toast("🗑️ Fiche supprimée", "info");
+  state.workshop.deleteTarget = { type, id };
+  render();
 }
 
 function generateEncounter(dungeonId, floorIndex, bossChecked, miniBossChecked) {
@@ -5310,6 +5734,18 @@ function bindEvents() {
     if (!btn) return;
     const action = btn.dataset.action;
     try {
+      if (state.ui.view === "atelier" && state.workshop.dirty) {
+        if ((action === "go-home" || action === "set-view") && (btn.dataset.view || "home") !== "atelier") {
+          state.workshop.pending = { kind: "view", view: btn.dataset.view || "home" };
+          render();
+          return;
+        }
+        if (action === "jump-codex") {
+          state.workshop.pending = { kind: "jump-codex", type: btn.dataset.type, id: btn.dataset.id };
+          render();
+          return;
+        }
+      }
       switch (action) {
         case "go-home":
         case "set-view": {
@@ -5635,31 +6071,66 @@ function bindEvents() {
           render();
           requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
           return;
-        case "set-workshop-type":
-          state.ui.workshopType = btn.dataset.type;
-          state.ui.workshopSelectedId = (state.data[state.ui.workshopType] || [])[0]?.id || "";
-          await saveUiState(state.ui);
-          render();
-          return;
-        case "select-workshop":
-          state.ui.workshopType = btn.dataset.type;
-          state.ui.workshopSelectedId = btn.dataset.id;
-          await saveUiState(state.ui);
-          render();
-          return;
-        case "new-item": {
+        case "set-workshop-type": {
           const type = btn.dataset.type;
-          const item = newEntity(type);
-          await putOne(type, item);
-          await refreshData();
-          state.ui.workshopType = type;
-          state.ui.workshopSelectedId = item.id;
-          await saveUiState(state.ui);
-          toast(`＋ Nouvelle fiche ${getLabel(type)}`, "success");
+          if (!WORKSHOP_TYPES.includes(type)) return;
+          if (type === state.ui.workshopType && !state.workshop.isNew) return;
+          await requestWorkshopNavigation({ kind: "type", type });
           return;
         }
+        case "select-workshop": {
+          const type = btn.dataset.type;
+          const id = btn.dataset.id;
+          if (type === state.ui.workshopType && String(id) === String(state.ui.workshopSelectedId)) {
+            state.workshop.editorOpen = true;
+            render();
+            return;
+          }
+          await requestWorkshopNavigation({ kind: "select", type, id });
+          return;
+        }
+        case "new-item":
+          await requestWorkshopNavigation({ kind: "new", type: btn.dataset.type });
+          return;
+        case "workshop-back-list":
+          state.workshop.editorOpen = false;
+          render();
+          return;
+        case "workshop-guard-stay":
+          state.workshop.pending = null;
+          render();
+          return;
+        case "workshop-guard-discard": {
+          const pending = state.workshop.pending;
+          state.workshop.pending = null;
+          workshopResetRuntime("clean");
+          await performWorkshopNavigation(pending);
+          return;
+        }
+        case "workshop-guard-save": {
+          const pending = state.workshop.pending;
+          const form = app.querySelector('form[data-workshop-form="true"]');
+          if (!form) return;
+          const saved = await saveEntityFromWorkshopForm(form.dataset.form, form, { renderAfter: false, toastAfter: false });
+          if (!saved) return;
+          state.workshop.pending = null;
+          await performWorkshopNavigation(pending);
+          toast("Enregistré localement", "success");
+          return;
+        }
+        case "workshop-discard-new":
+          state.workshop.pending = { kind: "discard-new" };
+          render();
+          return;
         case "delete-item":
           await deleteEntityWithConfirm(btn.dataset.type, btn.dataset.id);
+          return;
+        case "workshop-delete-cancel":
+          state.workshop.deleteTarget = null;
+          render();
+          return;
+        case "workshop-delete-confirm":
+          await deleteWorkshopEntity(btn.dataset.type, btn.dataset.id);
           return;
         case "session-start": {
           const session = ensureSessionContext();
@@ -5795,6 +6266,10 @@ function bindEvents() {
     if (!(el instanceof HTMLElement)) return;
     const action = el.dataset.action;
     try {
+      if (state.ui.view === "atelier" && el.closest?.('form[data-workshop-form="true"]') && el.getAttribute("name")) {
+        captureWorkshopControl(el);
+        if (!action) return;
+      }
       switch (action) {
         case "session-start-dungeon": {
           const session = ensureSessionContext();
@@ -5963,6 +6438,10 @@ function bindEvents() {
   app.addEventListener("input", async (ev) => {
     const el = ev.target;
     if (!(el instanceof HTMLElement)) return;
+    if (state.ui.view === "atelier" && el.closest?.('form[data-workshop-form="true"]') && el.getAttribute("name")) {
+      captureWorkshopControl(el);
+      return;
+    }
     if (el.dataset.action === "search") {
       state.ui.globalSearch = el.value;
       if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
@@ -6107,6 +6586,7 @@ async function bootstrap() {
   state.logs = await getLogs(100);
   state.ready = true;
   wireGlobalErrors();
+  wireWorkshopUnloadGuard();
   bindEvents();
   wireBestiaryScrollTracking();
   wireCodexFamilyScrollTracking();
