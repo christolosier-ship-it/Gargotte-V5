@@ -227,6 +227,7 @@ const state = {
     view: "home",
     codexType: "creatures",
     codexSelectedId: "",
+    codexDetailOpen: false,
     workshopType: "creatures",
     workshopSelectedId: "",
     codexCreatureDungeonId: "",
@@ -1112,51 +1113,69 @@ function toTemplateRows(type, list) {
   return list.map(entity => formatExportRow(type, entity));
 }
 
-function renderShell(content) {
-  return `
-  <div class="shell">
-    <header class="topbar">
-      <button class="brand" data-action="go-home" title="Accueil">
-        <img src="assets/images/logo-192.png" alt="Gargottex">
-        <div>
-          <div class="brand-title">Gargottex V5.3</div>
-          <div class="brand-subtitle">offline-first, local et têtu</div>
-        </div>
-      </button>
-      <div class="topbar-right">
-        <div class="search-wrap">
-          <input class="search" data-action="search" placeholder="Recherche globale..." value="${escapeHtml(state.ui.globalSearch)}">
-          ${state.ui.globalSearch ? renderSearchResults() : ""}
-        </div>
-        <button class="ghost" data-action="toggle-journal">🧯 Journal</button>
-      </div>
-    </header>
 
-    <nav class="mainnav">
-      ${navButton("home", "🍺 Accueil")}
-      ${navButton("codex", "📚 Codex")}
-      ${navButton("generator", "🎲 Générateur")}
-      ${navButton("brouhaha", "🔥 Brouhaha")}
-      ${navButton("quests", "📜 Quêtes")}
-      ${navButton("atelier", "🛠️ Atelier")}
-      ${navButton("media", "🖼️ Médias")}
-      ${navButton("import", "⬇️ Import/Export")}
-    </nav>
+const V6_ICON_PATH = "assets/ui-v6/icons/";
 
-    <main class="page">${content}</main>
-
-    <aside class="toast-stack">
-      ${state.toasts.map(t => `<div class="toast ${t.tone}">${escapeHtml(t.message)}</div>`).join("")}
-    </aside>
-
-    ${renderImageViewer()}
-    ${state.ui.journalOpen ? renderJournalDrawer() : ""}
-  </div>`;
+function shellIcon(name, className = "") {
+  const icons = {
+    home: '<path d="M3 10.8 12 3l9 7.8"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9 21v-7h6v7"/>',
+    game: '<rect x="3" y="7" width="18" height="11" rx="4"/><path d="M8 10v5M5.5 12.5h5M16.5 11.5h.01M19 14h.01"/>',
+    tool: '<path d="M14.7 6.3a4 4 0 0 0-5-5L7 4l3 3-2.2 2.2"/><path d="m6.5 10.5-4.8 4.8a2.4 2.4 0 0 0 3.4 3.4l4.8-4.8"/><path d="m13.5 10.5 8 8-3 3-8-8"/>',
+    image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/>',
+    transfer: '<path d="M7 7h13"/><path d="m16 3 4 4-4 4"/><path d="M17 17H4"/><path d="m8 13-4 4 4 4"/>',
+    journal: '<path d="M5 3h12a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2V3Z"/><path d="M9 7h6M9 11h6M9 15h4"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+    more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+    back: '<path d="m15 18-6-6 6-6"/>',
+    wifi: '<path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/>'
+  };
+  return '<svg class="ui-icon '+className+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'+(icons[name] || icons.more)+'</svg>';
 }
-
-function navButton(view, label) {
-  const active = state.ui.view === view ? "active" : "";
-  return `<button class="navbtn ${active}" data-action="set-view" data-view="${view}">${label}</button>`;
+function shellEmblem(file, className = "nav-emblem") {
+  return '<img class="'+className+'" src="'+V6_ICON_PATH+file+'" alt="" aria-hidden="true">';
+}
+function navButton(view,label,iconHtml){
+  const active=state.ui.view===view?"active":"";
+  return '<button class="navbtn '+active+'" data-action="set-view" data-view="'+view+'" '+(active?'aria-current="page"':'')+'>'+iconHtml+'<span class="nav-label">'+label+'</span></button>';
+}
+function mobileNavButton(view,label,iconHtml){
+  const active=state.ui.view===view?"active":"";
+  return '<button class="mobile-nav-item '+active+'" data-action="set-view" data-view="'+view+'" '+(active?'aria-current="page"':'')+'>'+iconHtml+'<span>'+label+'</span></button>';
+}
+function renderShell(content){
+  const gameActive=["generator","brouhaha"].includes(state.ui.view);
+  const moreActive=["atelier","media","import"].includes(state.ui.view);
+  return [
+    '<div class="v6-app">',
+      '<aside class="v6-sidebar" aria-label="Navigation principale">',
+        '<button class="brand v6-brand" data-action="go-home" data-view="home" title="Accueil Gargottex"><img src="assets/images/logo-512.png" alt=""><div class="brand-copy"><b>Gargottex</b><span>Codex & outils de partie</span></div></button>',
+        '<div class="nav-title">Principal</div><nav class="v6-nav">',
+          navButton("home","Accueil",shellIcon("home")),
+          navButton("codex","Codex",shellEmblem("Sigil_Basique.webp")),
+          navButton("generator","Générateur",shellIcon("game")),
+          navButton("brouhaha","Brouhaha",shellEmblem("Icone_Entite_OBJET_BROUHAHA.webp")),
+          navButton("quests","Quêtes",shellEmblem("Icone_Entite_QUETE.webp")),
+        '</nav><div class="nav-title">Administration</div><nav class="v6-nav">',
+          navButton("atelier","Atelier",shellIcon("tool")),
+          navButton("media","Médias",shellIcon("image")),
+          navButton("import","Import / Export",shellIcon("transfer")),
+        '</nav><div class="side-foot"><span class="local-dot"></span><span class="nav-label">Local-first · hors ligne</span></div>',
+      '</aside>',
+      '<div class="shell"><header class="topbar">',
+        '<button class="mobile-brand" data-action="go-home" data-view="home" aria-label="Accueil Gargottex"><img src="assets/images/logo-192.png" alt=""></button>',
+        '<div class="search-wrap"><span class="search-leading">'+shellIcon("search")+'</span><input class="search" data-action="search" aria-label="Recherche globale" placeholder="Rechercher dans Gargottex…" value="'+escapeHtml(state.ui.globalSearch)+'">'+(state.ui.globalSearch?renderSearchResults():"")+'</div>',
+        '<div class="topbar-right"><span class="offline-badge" title="Données locales disponibles">'+shellIcon("wifi")+'<span>Local</span></span><button class="ghost topbar-action" data-action="toggle-journal" aria-label="Ouvrir le journal">'+shellIcon("journal")+'<span>Journal</span></button></div>',
+      '</header><main class="page v6-main" id="main-content">'+content+'</main>',
+      '<aside class="toast-stack" aria-live="polite" aria-atomic="true">'+state.toasts.map(t=>'<div class="toast '+t.tone+'">'+escapeHtml(t.message)+'</div>').join("")+'</aside>',
+      renderImageViewer(), state.ui.journalOpen?renderJournalDrawer():"",
+      '<nav class="mobile-bottom" aria-label="Navigation téléphone">',
+        mobileNavButton("home","Accueil",shellIcon("home")),
+        mobileNavButton("codex","Codex",shellEmblem("Sigil_Basique.webp","mobile-emblem")),
+        '<details class="mobile-nav-group '+(gameActive?"active":"")+'"><summary>'+shellIcon("game")+'<span>Jeu</span></summary><div class="mobile-nav-popover" role="menu"><button data-action="set-view" data-view="generator" role="menuitem">'+shellIcon("game")+'<span>Générateur</span></button><button data-action="set-view" data-view="brouhaha" role="menuitem">'+shellEmblem("Icone_Entite_OBJET_BROUHAHA.webp","mobile-emblem")+'<span>Brouhaha</span></button></div></details>',
+        mobileNavButton("quests","Quêtes",shellEmblem("Icone_Entite_QUETE.webp","mobile-emblem")),
+        '<details class="mobile-nav-group '+(moreActive?"active":"")+'"><summary>'+shellIcon("more")+'<span>Plus</span></summary><div class="mobile-nav-popover mobile-nav-popover-right" role="menu"><button data-action="set-view" data-view="atelier" role="menuitem">'+shellIcon("tool")+'<span>Atelier</span></button><button data-action="set-view" data-view="media" role="menuitem">'+shellIcon("image")+'<span>Médias</span></button><button data-action="set-view" data-view="import" role="menuitem">'+shellIcon("transfer")+'<span>Import / Export</span></button><button data-action="toggle-journal" role="menuitem">'+shellIcon("journal")+'<span>Journal</span></button></div></details>',
+      '</nav></div></div>'
+  ].join("");
 }
 
 function renderSearchResults() {
@@ -1270,13 +1289,14 @@ function renderCodex() {
         ${type === "quests" ? renderQuestDungeonFilter(state.ui.codexQuestDungeonId, "codex-quest-dungeon-filter") : ""}
       </div>
 
-      <div class="two-col encounter-columns">
+      <div class="two-col encounter-columns codex-sequential ${state.ui.codexDetailOpen ? "detail-open" : "collection-open"}">
         <div class="list-column">
           <div class="card-list">
             ${items.map(item => renderCodexCard(type, item, selected?.id === item.id)).join("") || `<div class="empty">Aucune donnée.</div>`}
           </div>
         </div>
         <div class="detail-column">
+          <button class="ghost codex-back" data-action="codex-back" type="button">${shellIcon("back")}<span>Retour à la collection</span></button>
           ${selected ? renderCodexDetail(type, selected) : `<div class="empty">Sélectionnez une fiche.</div>`}
         </div>
       </div>
@@ -2735,11 +2755,14 @@ function bindEvents() {
     try {
       switch (action) {
         case "go-home":
-        case "set-view":
-          state.ui.view = btn.dataset.view || "home";
+        case "set-view": {
+          const nextView = btn.dataset.view || "home";
+          state.ui.view = nextView;
+          if (nextView === "codex") state.ui.codexDetailOpen = false;
           await saveUiState(state.ui);
           render();
           return;
+        }
         case "toggle-journal":
           state.ui.journalOpen = !state.ui.journalOpen;
           await saveUiState(state.ui);
@@ -2756,12 +2779,19 @@ function bindEvents() {
         case "set-codex-type":
           state.ui.codexType = btn.dataset.type;
           state.ui.codexSelectedId = (state.data[state.ui.codexType] || [])[0]?.id || "";
+          state.ui.codexDetailOpen = false;
           await saveUiState(state.ui);
           render();
           return;
         case "select-codex":
           state.ui.codexType = btn.dataset.type;
           state.ui.codexSelectedId = btn.dataset.id;
+          state.ui.codexDetailOpen = true;
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "codex-back":
+          state.ui.codexDetailOpen = false;
           await saveUiState(state.ui);
           render();
           return;
@@ -2769,6 +2799,7 @@ function bindEvents() {
           state.ui.view = "codex";
           state.ui.codexType = btn.dataset.type;
           state.ui.codexSelectedId = btn.dataset.id;
+          state.ui.codexDetailOpen = true;
           await saveUiState(state.ui);
           render();
           return;

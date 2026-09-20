@@ -480,3 +480,40 @@ UI-1 est validée lorsque :
 8. textures conformes aux niveaux 0/1/2 ;
 9. reduced motion et focus-visible présents ;
 10. aucun changement de données IndexedDB n'est requis par le design system seul.
+---
+
+# 17. Implémentation UI-1 sur V5.3
+
+Statut : **LIVRÉ — 20 septembre 2026**
+
+Pré-check :
+
+- Périmètre : design system V6 + shell commun ;
+- Impact données : aucun contrat métier ;
+- IndexedDB : inchangé, DB_VERSION et object stores non modifiés ;
+- Référence V3 : shell desktop/tablette/téléphone, proportions, matières, emblèmes, focus et reduced motion ;
+- Risque principal traité : conservation du routage et des actions V5.3 existantes.
+
+`Données : N/A, aucun contrat métier modifié.`
+
+Implémentation :
+
+- tokens UI-1 et alias temporaires pour compatibilité avec les écrans V5.3 ;
+- Inter Variable et Alegreya Variable embarquées localement sous licence OFL ;
+- ressources premium V3 réutilisées en production sous `assets/ui-v6/`, sans modifier les originaux de `docs/mockup-assets/` ;
+- sidebar desktop 236 px, rail tablette 78 px, navigation téléphone `Accueil | Codex | Jeu | Quêtes | Plus` ;
+- Codex séquentiel sous 1200 px avec retour explicite à la collection ;
+- focus-visible, cibles tactiles 44 px, états disabled/loading/error et reduced motion ;
+- matières niveaux 0/1/2 disponibles via primitives communes ;
+- cache PWA `gargottex-v6-ui1` incluant fontes, textures, ornements et emblèmes.
+
+Contrôles de clôture UI-1 :
+
+- desktop >= 1200 px : sidebar permanente + topbar V3 ;
+- tablette paysage/portrait 768–1199 px : rail compact + Codex séquentiel ;
+- téléphone <= 767 px : bottom navigation 5 entrées + menus Jeu/Plus ;
+- PWA/offline : nouveaux assets précachés, aucune donnée IndexedDB vidée ;
+- accessibilité : focus visible et `prefers-reduced-motion` ;
+- comparaison V3 : proportions du shell, palette, matières, navigation et emblèmes alignés ; les écrans métier restent volontairement V5.3 jusqu’aux lots suivants.
+
+UI-2 n’est pas démarré par ce commit.
