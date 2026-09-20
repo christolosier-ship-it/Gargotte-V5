@@ -353,3 +353,64 @@ test("mobile WebKit critical navigation smoke @webkit", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Atelier" })).toBeVisible();
   await assertNoHorizontalOverflow(page);
 });
+
+
+test("cutout audit keeps originals and transparent derivatives valid", async ({ page }) => {
+  await page.goto("/docs/mockup-assets/generated-data/cutout-audit.json");
+  const audit = JSON.parse(await page.locator("body").innerText());
+  expect(audit.model).toBe("isnet-general-use");
+  expect(audit.originals_preserved).toBe(true);
+  const rows = [...Object.values(audit.creatures || {}), ...Object.values(audit.heroes || {})];
+  expect(rows.length).toBeGreaterThanOrEqual(50);
+  for (const row of rows) {
+    expect(row.source_sha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(row.alpha_bbox).toBeTruthy();
+    expect(row.transparent_ratio).toBeGreaterThan(0.01);
+    expect(row.transparent_ratio).toBeLessThan(0.99);
+    expect(row.width).toBeGreaterThan(0);
+    expect(row.height).toBeGreaterThan(0);
+  }
+
+  await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".v6-app")).toBeVisible();
+  await gotoView(page, "codex");
+  await page.locator('[data-action="select-codex"][data-type="creatures"]').first().click();
+  const figure = page.locator(".creature-figure-v6 img").first();
+  if (await figure.count()) {
+    const style = await figure.evaluate(el => {
+      const own = getComputedStyle(el);
+      const parent = getComputedStyle(el.parentElement);
+      return { objectFit: own.objectFit, ownBackground: own.backgroundColor, parentBackground: parent.backgroundColor };
+    });
+    expect(style.objectFit).toBe("contain");
+    expect(style.ownBackground).not.toBe("rgb(255, 255, 255)");
+  }
+});
+
+test("reflow proxy and critical interactions stay responsive", async ({ page }) => {
+  await page.setViewportSize({ width: 640, height: 900 });
+  await ready(page);
+  await assertNoHorizontalOverflow(page);
+
+  await gotoView(page, "codex");
+  const latency = await page.evaluate(async () => {
+    const input = document.querySelector('[data-action="bestiary-search"]');
+    const start = performance.now();
+    input.value = "gob";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return performance.now() - start;
+  });
+  expect(latency).toBeLessThan(200);
+  await assertNoHorizontalOverflow(page);
+
+  const nav = await page.evaluate(() => {
+    const entry = performance.getEntriesByType("navigation")[0];
+    return entry ? {
+      dom: entry.domContentLoadedEventEnd,
+      load: entry.loadEventEnd || performance.now()
+    } : null;
+  });
+  expect(nav).not.toBeNull();
+  expect(nav.dom).toBeLessThan(2500);
+});
