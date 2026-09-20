@@ -342,6 +342,132 @@ test("large datasets, long text and missing relations remain usable", async ({ p
   await expect(page.locator(".creature-sheet-v6")).toBeVisible();
 });
 
+test("Bestiary filters, sorting, display mode and persistence", async ({ page }) => {
+  await ready(page);
+  await gotoView(page, "codex");
+
+  await page.locator('[data-action="bestiary-search"]').fill("gobelin");
+  await expect(page.locator(".bestiary-result-label")).toContainText("résultat");
+  await page.locator('[data-action="bestiary-category"]').selectOption("basique");
+  await page.locator('[data-action="bestiary-sort"]').selectOption("menace");
+  await page.locator('[data-action="bestiary-toggle-direction"]').click();
+  await page.locator('[data-action="bestiary-mode"][data-mode="list"]').click();
+  await expect(page.locator(".bestiary-results.list")).toBeVisible();
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".v6-app")).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator('[data-action="bestiary-search"]')).toHaveValue("gobelin");
+  await expect(page.locator('[data-action="bestiary-category"]')).toHaveValue("basique");
+  await expect(page.locator('[data-action="bestiary-sort"]')).toHaveValue("menace");
+  await expect(page.locator('[data-action="bestiary-mode"][data-mode="list"]')).toHaveAttribute("aria-pressed", "true");
+});
+
+test("Codex cross-family navigation covers dungeon context, hero levels, NPC quest and global search", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
+  await gotoView(page, "codex");
+
+  await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
+  await page.locator('[data-action="select-family-codex"][data-type="dungeons"][data-id="dungeon_le-cabaret-des-joyeuses"]').first().click();
+  await expect(page.getByRole("heading", { name: "Le Cabaret des Joyeuses" })).toBeVisible();
+
+  const seeAll = page.locator('[data-action="dungeon-see-all"][data-type="creatures"]').first();
+  await expect(seeAll).toBeVisible();
+  await seeAll.click();
+  await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+  await expect(page.locator('[data-action="bestiary-dungeon"]')).toHaveValue("dungeon_le-cabaret-des-joyeuses");
+  await page.locator('[data-action="codex-context-back"]').click();
+  await expect(page.getByRole("heading", { name: "Le Cabaret des Joyeuses" })).toBeVisible();
+
+  await page.locator('[data-action="set-codex-type"][data-type="heroes"]').first().click();
+  await page.locator('[data-action="select-family-codex"][data-type="heroes"]').first().click();
+  const skillCounts = [];
+  for (const level of [1,2,3,4]) {
+    const button = page.locator(`[data-action="hero-level"][data-level="${level}"]`);
+    await expect(button).toBeEnabled();
+    await button.click();
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    skillCounts.push(await page.locator(".hero-skill-v6").count());
+  }
+  for (let i = 1; i < skillCounts.length; i++) expect(skillCounts[i]).toBeGreaterThanOrEqual(skillCounts[i-1]);
+
+  await page.locator('[data-action="set-codex-type"][data-type="npcs"]').first().click();
+  await page.locator('[data-action="select-family-codex"][data-type="npcs"][data-id="npc_mirelda-trois-tentacules"]').click();
+  await expect(page.getByRole("heading", { name: "Mirelda Trois-Tentacules" })).toBeVisible();
+  const questLink = page.locator('[data-action="open-related"][data-type="quests"][data-id="quest_test_le-cabaret-des-joyeuses"]');
+  await questLink.click();
+  await expect(page.locator(".quest-sheet-v6")).toBeVisible();
+  await page.locator('[data-action="codex-related-back"]').click();
+  await expect(page.getByRole("heading", { name: "Mirelda Trois-Tentacules" })).toBeVisible();
+
+  const globalSearch = page.locator('[data-action="search"]');
+  await globalSearch.fill("Brünhilda");
+  await expect(page.locator("#global-codex-search-results")).toBeVisible();
+  const heroResult = page.locator('.global-search-result[data-type="heroes"]').first();
+  await heroResult.click();
+  await expect(page.locator(".hero-sheet-v6")).toBeVisible();
+});
+
+test("session Generator, Brouhaha and Quest flows remain coherent", async ({ page }) => {
+  await ready(page);
+
+  const dungeonSelect = page.locator('[data-action="session-start-dungeon"]');
+  await dungeonSelect.selectOption("dungeon_le-cabaret-des-joyeuses");
+  await page.locator('[data-action="session-start"]').click();
+  await expect(page.getByText("Partie en cours")).toBeVisible();
+
+  await gotoView(page, "generator");
+  const generate = page.locator('[data-action="generate-session-encounter"]');
+  await expect(generate).toBeEnabled();
+  await generate.click();
+  await expect(page.locator(".session-encounter-v6")).toBeVisible();
+  const eliminate = page.locator('[data-action="session-eliminate-creature"]').first();
+  const beforeRemaining = Number(await page.locator(".encounter-remaining-v6 b").innerText());
+  await eliminate.click();
+  const afterRemaining = Number(await page.locator(".encounter-remaining-v6 b").innerText());
+  expect(afterRemaining).toBeLessThan(beforeRemaining);
+
+  await gotoView(page, "brouhaha");
+  await page.locator('[data-action="session-brouhaha-plus"]').click();
+  await page.locator('[data-action="session-brouhaha-plus"]').click();
+  await expect(page.locator(".brouhaha-session-core strong")).toHaveText("2");
+  await page.locator('[data-action="session-brouhaha-draw"]').click();
+  await expect(page.locator(".brouhaha-current-ticket")).toContainText("Test");
+  await expect(page.locator(".brouhaha-history-row")).toHaveCount(1);
+
+  await gotoView(page, "quests");
+  await page.locator('[data-action="session-quest-reroll"]').click();
+  await expect(page.locator(".session-quest-card")).toContainText("test");
+  const codexQuest = page.locator('[data-action="jump-codex"][data-type="quests"][data-id="quest_test_le-cabaret-des-joyeuses"]');
+  await codexQuest.click();
+  await expect(page.locator(".quest-sheet-v6")).toBeVisible();
+});
+
+test("Media library opens detail without altering originals", async ({ page }) => {
+  await ready(page);
+  await gotoView(page, "media");
+  const before = await page.evaluate(async () => {
+    const db = await new Promise((resolve,reject) => { const req=indexedDB.open("gargottex-v5-offline"); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
+    const tx=db.transaction("media_assets","readonly"), req=tx.objectStore("media_assets").getAll();
+    const rows=await new Promise((resolve,reject)=>{ req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
+    db.close();
+    return rows.map(row=>({id:row.id,size:row.blob?.size||0,type:row.blob?.type||"",path:row.path||""}));
+  });
+  const card = page.locator('[data-action="media-select"]').first();
+  await card.click();
+  await expect(page.locator(".media-detail-v6")).toBeVisible();
+  await expect(page.locator(".media-variant-card.original")).toBeVisible();
+  const after = await page.evaluate(async () => {
+    const db = await new Promise((resolve,reject) => { const req=indexedDB.open("gargottex-v5-offline"); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
+    const tx=db.transaction("media_assets","readonly"), req=tx.objectStore("media_assets").getAll();
+    const rows=await new Promise((resolve,reject)=>{ req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
+    db.close();
+    return rows.map(row=>({id:row.id,size:row.blob?.size||0,type:row.blob?.type||"",path:row.path||""}));
+  });
+  expect(after).toEqual(before);
+});
+
 test("mobile WebKit critical navigation smoke @webkit", async ({ page }) => {
   await ready(page);
   await expect(page.locator(".mobile-bottom")).toBeVisible();
