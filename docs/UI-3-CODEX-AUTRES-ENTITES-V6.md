@@ -663,3 +663,76 @@ Livré :
 - rareté/difficulté accessibles par texte + couleur : validées.
 
 **UI-3B est clos. UI-3 global reste ACTIF pour UI-3C / UI-3D.**
+
+---
+
+# 19. Implémentation UI-3C sur V5.3
+
+Statut : **LIVRÉ — 20 septembre 2026**
+
+Périmètre fermé : **Objets interactifs + Brouhaha référentiel uniquement**. UI-3D n'est pas démarré par ce chantier.
+
+## Pré-check
+
+- aucune migration IndexedDB ;
+- stores existants `interactables` et `brouhaha_effects` lus tels quels ;
+- seed actuel : aucun Objet interactif et un effet Brouhaha universel de niveau 2 ; l'UI accepte donc aussi bien une collection vide que les données de production réelles ;
+- aucune logique de session Brouhaha réutilisée dans les fiches Codex ;
+- ressources premium V3 déjà disponibles offline.
+
+## Objets interactifs
+
+Livré :
+
+- libellé utilisateur de famille : **Objets interactifs** ;
+- mode initial Liste ;
+- Galerie alternative ;
+- recherche locale, mode, sélection et scroll mémorisés ;
+- fiche type plan technique inspirée de la V3 ;
+- nom, type, Donjon, PV lorsqu'il existe, actions autorisées, effet et tags ;
+- valeur PV `0` conservée et affichée ;
+- Donjon résolu par `dungeon_id`, puis `dungeon_name` exact uniquement si unique ;
+- relation non résolue affichée comme donnée déclarée, sans lien fictif ;
+- aucune confusion avec le Loot ;
+- ancien libellé « Objets du décor » absent de l'UI de production ;
+- anciens classeurs/backups utilisant la feuille `Objets` restent importables via un alias de lecture, tandis que les nouveaux exports utilisent `Objets interactifs`.
+
+## Brouhaha référentiel
+
+Livré :
+
+- collection initiale Cartes ;
+- Liste alternative ;
+- tri par niveau numérique croissant lorsque disponible ;
+- recherche locale, mode, sélection et scroll mémorisés ;
+- niveau toujours visible textuellement ;
+- Donjon relié uniquement si la relation est fiable ;
+- valeur **Universel** uniquement lorsque ni `dungeon_id` ni `dungeon_name` ne sont renseignés ;
+- nom/label historique affiché s'il existe, sinon libellé neutre `Effet niveau X` ;
+- effet de référence au premier plan ;
+- intensité visuelle graduée par le niveau sans masquer sa valeur textuelle ;
+- écran explicitement marqué **Référentiel Codex** ;
+- aucune action de tirage, aucun changement de niveau courant, aucune écriture dans `state.ui.brouhaha.history` ou `drawn`.
+
+## Responsive
+
+- grand desktop confortable : master-detail possible ;
+- tablette paysage/portrait : `Collection -> Fiche -> Retour` ;
+- téléphone : `Collection -> Fiche -> Retour`.
+
+## Données / offline
+
+- `src/storage/idb.js` inchangé ;
+- DB `gargottex-v5-offline`, version 2 inchangée ;
+- aucun original média modifié ;
+- Service Worker inchangé : logos Objets interactifs, Brouhaha, Donjon, PV et Actions déjà précachés.
+
+## Gate UI-3C
+
+- Objets interactifs : validé ;
+- Brouhaha référentiel : validé ;
+- ancien libellé de famille supprimé de l'UI de production : validé ;
+- séparation avec Brouhaha de session : validée ;
+- responsive séquentiel tablette/téléphone : validé.
+
+**UI-3C est clos. UI-3 global reste ACTIF pour UI-3D.**

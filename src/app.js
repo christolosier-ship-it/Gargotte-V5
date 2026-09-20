@@ -55,7 +55,7 @@ const ENTITY_LABELS = {
   npcs: "PNJ",
   quests: "Quêtes",
   loot_items: "Loot",
-  interactables: "Objets",
+  interactables: "Objets interactifs",
   brouhaha_effects: "Brouhaha",
   media_assets: "Médias"
 };
@@ -67,10 +67,21 @@ const ENTITY_SHEETS = {
   npcs: "PNJ",
   quests: "Quêtes",
   loot_items: "Loot",
-  interactables: "Objets",
+  interactables: "Objets interactifs",
   brouhaha_effects: "Brouhaha",
   media_assets: "Médias"
 };
+
+const ENTITY_SHEET_ALIASES = {
+  interactables: ["Objets"]
+};
+
+function entitySheetNames(type) {
+  return [...new Set([
+    ENTITY_SHEETS[type] || getLabel(type),
+    ...(ENTITY_SHEET_ALIASES[type] || [])
+  ].filter(Boolean))];
+}
 
 const TEMPLATE_HEADERS = {
   dungeons: ["name", "description", "floor_budgets", "boss_name", "tags", "image_path"],
@@ -238,7 +249,9 @@ const state = {
       heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} },
       npcs: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
       quests: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
-      loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" }
+      loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
+      interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
+      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "" }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     workshopType: "creatures",
@@ -275,7 +288,9 @@ function defaultBlankUi() {
       heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} },
       npcs: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
       quests: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
-      loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" }
+      loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
+      interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
+      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "" }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     workshopType: "creatures",
@@ -319,7 +334,9 @@ function defaultCodexFamiliesUi() {
     heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} },
     npcs: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
     quests: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
-    loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" }
+    loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
+    interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
+    brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "" }
   };
 }
 
@@ -331,14 +348,18 @@ function ensureCodexFamilyUi() {
     heroes: { ...defaults.heroes, ...(current.heroes || {}) },
     npcs: { ...defaults.npcs, ...(current.npcs || {}) },
     quests: { ...defaults.quests, ...(current.quests || {}) },
-    loot_items: { ...defaults.loot_items, ...(current.loot_items || {}) }
+    loot_items: { ...defaults.loot_items, ...(current.loot_items || {}) },
+    interactables: { ...defaults.interactables, ...(current.interactables || {}) },
+    brouhaha_effects: { ...defaults.brouhaha_effects, ...(current.brouhaha_effects || {}) }
   };
   const allowedModes = {
     dungeons: ["gallery", "list"],
     heroes: ["gallery", "list"],
     npcs: ["gallery", "list"],
     quests: ["list", "cards"],
-    loot_items: ["gallery", "list"]
+    loot_items: ["gallery", "list"],
+    interactables: ["list", "gallery"],
+    brouhaha_effects: ["cards", "list"]
   };
   for (const type of Object.keys(allowedModes)) {
     if (!allowedModes[type].includes(state.ui.codexFamilies[type].mode)) {
@@ -448,7 +469,7 @@ function familyCollectionInitialId(type) {
     const level = selectedHeroLevel(group);
     return level?.id || "";
   }
-  if (["npcs", "quests", "loot_items"].includes(type)) {
+  if (["npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(type)) {
     const selected = state.ui.codexFamilies[type]?.selectedId;
     if (selected && findById(type, selected)) return selected;
   }
@@ -654,8 +675,22 @@ function getSimpleFamilyCollection(type) {
       } else if (type === "loot_items") {
         const rarity = lootRarityMeta(item);
         parts = [item.name, item.type, item.effect, item.creature_name, rarity?.label, ...tagsToArray(item.tags)];
+      } else if (type === "interactables") {
+        parts = [item.name, item.dungeon_name, item.type, item.hp, item.actions_allowed, item.effect, ...tagsToArray(item.tags)];
+      } else if (type === "brouhaha_effects") {
+        const scope = brouhahaScope(item);
+        parts = [brouhahaReferenceLabel(item), item.level, scope.label, item.effect_text];
       }
-      return normalizeBestiaryText(parts.filter(Boolean).join(" ")).includes(q);
+      return normalizeBestiaryText(parts.filter(value => value !== null && value !== undefined && value !== "").join(" ")).includes(q);
+    });
+  }
+  if (type === "brouhaha_effects") {
+    return items.sort((a, b) => {
+      const an = Number(a.level), bn = Number(b.level);
+      const aFinite = Number.isFinite(an), bFinite = Number.isFinite(bn);
+      if (aFinite && bFinite && an !== bn) return an - bn;
+      if (aFinite !== bFinite) return aFinite ? -1 : 1;
+      return brouhahaReferenceLabel(a).localeCompare(brouhahaReferenceLabel(b), "fr", { sensitivity: "base" });
     });
   }
   return items.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "fr", { sensitivity: "base" }));
@@ -666,10 +701,58 @@ function familyModeOptions(type) {
     { value: "list", label: "Liste", icon: "list" },
     { value: "cards", label: "Cartes", icon: "grid" }
   ];
+  if (type === "brouhaha_effects") return [
+    { value: "cards", label: "Cartes", icon: "grid" },
+    { value: "list", label: "Liste", icon: "list" }
+  ];
   return [
     { value: "gallery", label: "Galerie", icon: "grid" },
     { value: "list", label: "Liste", icon: "list" }
   ];
+}
+
+function resolveEntityDungeon(item) {
+  if (!item) return null;
+  const direct = item.dungeon_id ? findById("dungeons", item.dungeon_id) : null;
+  if (direct) return direct;
+  const target = normalizeBestiaryText(item.dungeon_name);
+  if (!target) return null;
+  const matches = (state.data.dungeons || []).filter(dungeon => normalizeBestiaryText(dungeon.name) === target);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function interactableActions(item) {
+  const raw = item?.actions_allowed;
+  if (Array.isArray(raw)) return raw.map(value => String(value).trim()).filter(Boolean);
+  const text = String(raw || "").trim();
+  if (!text) return [];
+  const parts = text.split(/[;,|]+/).map(value => value.trim()).filter(Boolean);
+  return parts.length ? parts : [text];
+}
+
+function brouhahaReferenceLabel(item) {
+  const explicit = String(item?.name || item?.label || item?.title || "").trim();
+  if (explicit) return explicit;
+  const level = item?.level === null || item?.level === undefined || item?.level === "" ? "—" : String(item.level);
+  return `Effet niveau ${level}`;
+}
+
+function brouhahaScope(item) {
+  const dungeon = resolveEntityDungeon(item);
+  if (dungeon) return { label: dungeon.name || "Donjon", dungeon, universal: false, unresolved: false };
+  const declared = String(item?.dungeon_name || "").trim();
+  if (declared) return { label: declared, dungeon: null, universal: false, unresolved: true };
+  if (item?.dungeon_id) return { label: "Donjon indisponible", dungeon: null, universal: false, unresolved: true };
+  return { label: "Universel", dungeon: null, universal: true, unresolved: false };
+}
+
+function brouhahaIntensityClass(level) {
+  const n = Number(level);
+  if (!Number.isFinite(n)) return "unknown";
+  if (n >= 10) return "critical";
+  if (n >= 7) return "hot";
+  if (n >= 4) return "loud";
+  return "low";
 }
 
 function defaultBestiaryUi() {
@@ -861,7 +944,7 @@ function ensureSelectionExists() {
   if (!state.data.dungeons?.some(item => String(item.id) === String(state.ui.codexFamilies.dungeons.selectedId))) {
     state.ui.codexFamilies.dungeons.selectedId = state.data.dungeons?.[0]?.id || "";
   }
-  for (const type of ["npcs", "quests", "loot_items"]) {
+  for (const type of ["npcs", "quests", "loot_items", "interactables", "brouhaha_effects"]) {
     if (!(state.data[type] || []).some(item => String(item.id) === String(state.ui.codexFamilies[type].selectedId))) {
       state.ui.codexFamilies[type].selectedId = state.data[type]?.[0]?.id || "";
     }
@@ -2153,6 +2236,7 @@ function getCreatureRelations(item) {
 
 function codexEntityTitle(type, item) {
   if (!item) return getLabel(type);
+  if (type === "brouhaha_effects") return brouhahaReferenceLabel(item);
   return String(item.name || item.title || item.hero_base_name || item.label || item.file_name || item.id || getLabel(type));
 }
 
@@ -2891,16 +2975,142 @@ function renderLootDetailV6(item) {
     </article>`;
 }
 
+function renderInteractableCollectionCard(item, mode = "list", active = false) {
+  const image = imageUrlForEntity(item);
+  const dungeon = resolveEntityDungeon(item);
+  const hpPresent = item.hp !== null && item.hp !== undefined && String(item.hp).trim() !== "";
+  return `
+    <button class="interactable-codex-card ${mode} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="interactables" data-id="${escapeHtml(String(item.id || ""))}">
+      <span class="interactable-card-media">
+        ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>Illustration indisponible</span>` : `<span class="interactable-media-fallback"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_INTERACTIF.webp" alt=""></span>`}
+      </span>
+      <span class="interactable-card-copy">
+        <small>Objet interactif${item.type ? ` · ${escapeHtml(item.type)}` : ""}</small>
+        <strong>${escapeHtml(item.name || "Objet sans nom")}</strong>
+        ${dungeon || item.dungeon_name ? `<em>${escapeHtml(dungeon?.name || item.dungeon_name)}</em>` : ""}
+        ${hpPresent ? `<span>PV ${escapeHtml(String(item.hp))}</span>` : ""}
+      </span>
+    </button>`;
+}
+
+function renderInteractableDetailV6(item) {
+  if (!item) return `<div class="panel empty">Objet interactif indisponible.</div>`;
+  const image = imageUrlForEntity(item);
+  const dungeon = resolveEntityDungeon(item);
+  const actions = interactableActions(item);
+  const hpPresent = item.hp !== null && item.hp !== undefined && String(item.hp).trim() !== "";
+  const tags = tagsToArray(item.tags).filter(Boolean);
+  const name = String(item.name || "").trim() || "Objet sans nom";
+  return `
+    <article class="interactable-sheet-v6">
+      <section class="interactable-blueprint-v6">
+        <div class="interactable-grid-lines" aria-hidden="true"></div>
+        ${image ? `
+          <img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(name)}" data-safe-media>
+          <span class="relation-media-fallback" hidden>Illustration indisponible</span>
+          <button class="ghost interactable-fullscreen" type="button" data-action="open-image" data-src="${escapeHtml(image)}" data-alt="${escapeHtml(name)}">${shellIcon("image")}<span>Plein écran</span></button>
+        ` : `<div class="interactable-media-fallback large"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_INTERACTIF.webp" alt=""><span>Illustration non renseignée</span></div>`}
+        <span class="interactable-blueprint-label">Objet interactif</span>
+      </section>
+      <section class="interactable-data-v6">
+        <header>
+          <div class="eyebrow"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_INTERACTIF.webp" alt="" aria-hidden="true">Objet interactif</div>
+          <h1>${escapeHtml(name)}</h1>
+          ${item.type ? `<span class="interactable-type-v6">${escapeHtml(item.type)}</span>` : ""}
+        </header>
+        <div class="interactable-facts-v6">
+          ${dungeon || item.dungeon_name ? `
+            <div><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="" aria-hidden="true"><span>Donjon</span>
+              ${dungeon ? `<button type="button" data-action="open-related" data-type="dungeons" data-id="${escapeHtml(String(dungeon.id || ""))}">${escapeHtml(dungeon.name || "Donjon")}</button>` : `<b>${escapeHtml(item.dungeon_name || "Donjon indisponible")}</b>`}
+            </div>
+          ` : ""}
+          ${hpPresent ? `<div><img src="${V6_ICON_PATH}Icone_Gameplay_PV.webp" alt="" aria-hidden="true"><span>PV</span><b>${escapeHtml(String(item.hp))}</b></div>` : ""}
+        </div>
+        <section class="interactable-actions-v6">
+          <div class="interactable-section-label"><img src="${V6_ICON_PATH}Icone_Gameplay_ACTION.webp" alt="" aria-hidden="true"><span>Actions autorisées</span></div>
+          ${actions.length ? `<div>${actions.map(action=>`<b>${escapeHtml(action)}</b>`).join("")}</div>` : `<div class="empty small">Aucune action renseignée.</div>`}
+        </section>
+        ${item.effect ? `
+          <section class="interactable-effect-v6">
+            <span>Effet</span>
+            <p>${escapeHtml(item.effect)}</p>
+          </section>
+        ` : ""}
+        ${tags.length ? `<div class="interactable-tags-v6">${tags.map(tag=>`<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+      </section>
+    </article>`;
+}
+
+function renderBrouhahaCollectionCard(item, mode = "cards", active = false) {
+  const scope = brouhahaScope(item);
+  const level = item.level === null || item.level === undefined || item.level === "" ? "—" : String(item.level);
+  const intensity = brouhahaIntensityClass(item.level);
+  return `
+    <button class="brouhaha-ref-card ${mode} ${intensity} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="brouhaha_effects" data-id="${escapeHtml(String(item.id || ""))}">
+      <span class="brouhaha-ref-level"><small>Niveau</small><b>${escapeHtml(level)}</b></span>
+      <span class="brouhaha-ref-copy">
+        <strong>${escapeHtml(brouhahaReferenceLabel(item))}</strong>
+        <small>${escapeHtml(scope.label)}</small>
+        ${item.effect_text ? `<em>${escapeHtml(item.effect_text)}</em>` : ""}
+      </span>
+      <span class="brouhaha-ref-mark"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt=""></span>
+    </button>`;
+}
+
+function renderNoiseWave() {
+  return `<div class="brouhaha-noise-wave" aria-hidden="true">${Array.from({length:7},()=>"<i></i>").join("")}</div>`;
+}
+
+function renderBrouhahaReferenceDetailV6(item) {
+  if (!item) return `<div class="panel empty">Effet Brouhaha indisponible.</div>`;
+  const scope = brouhahaScope(item);
+  const image = imageUrlForEntity(item);
+  const level = item.level === null || item.level === undefined || item.level === "" ? "—" : String(item.level);
+  const intensity = brouhahaIntensityClass(item.level);
+  const title = brouhahaReferenceLabel(item);
+  return `
+    <article class="brouhaha-reference-sheet-v6 ${intensity}">
+      <section class="brouhaha-reference-visual">
+        ${image ? `<img src="${escapeHtml(image)}" alt="" data-safe-media><span class="relation-media-fallback" hidden>Illustration indisponible</span>` : `<div class="brouhaha-ref-emblem"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt=""></div>`}
+        <div class="brouhaha-reference-number" aria-hidden="true">${escapeHtml(level)}</div>
+        ${renderNoiseWave()}
+      </section>
+      <section class="brouhaha-reference-copy">
+        <header>
+          <div class="eyebrow"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt="" aria-hidden="true">Brouhaha · Référentiel Codex</div>
+          <div class="brouhaha-level-text">Niveau <b>${escapeHtml(level)}</b></div>
+          <h1>${escapeHtml(title)}</h1>
+        </header>
+        <section class="brouhaha-scope-v6">
+          <img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="" aria-hidden="true">
+          <div><span>Portée du référentiel</span>
+          ${scope.dungeon ? `<button type="button" data-action="open-related" data-type="dungeons" data-id="${escapeHtml(String(scope.dungeon.id || ""))}">${escapeHtml(scope.label)}</button>` : `<b>${escapeHtml(scope.label)}</b>`}
+          ${scope.unresolved ? `<small>Donjon déclaré, relation non résolue.</small>` : ""}
+          </div>
+        </section>
+        <section class="brouhaha-reference-effect">
+          <span>Effet de référence</span>
+          <p>${escapeHtml(item.effect_text || "Effet non renseigné.")}</p>
+        </section>
+        <div class="brouhaha-reference-note" role="note">Référence Codex uniquement. Cet écran ne modifie ni le niveau courant, ni le tirage, ni l’historique Brouhaha de session.</div>
+      </section>
+    </article>`;
+}
+
 function renderSimpleFamilyMasterItem(type, item, active = false) {
   if (type === "npcs") return renderNpcCollectionCard(item, "list", active);
   if (type === "quests") return renderQuestCollectionCard(item, "list", active);
-  return renderLootCollectionCard(item, "list", active);
+  if (type === "loot_items") return renderLootCollectionCard(item, "list", active);
+  if (type === "interactables") return renderInteractableCollectionCard(item, "list", active);
+  return renderBrouhahaCollectionCard(item, "list", active);
 }
 
 function renderSimpleFamilyDetail(type, item) {
   if (type === "npcs") return renderNpcDetailV6(item);
   if (type === "quests") return renderQuestDetailV6(item);
-  return renderLootDetailV6(item);
+  if (type === "loot_items") return renderLootDetailV6(item);
+  if (type === "interactables") return renderInteractableDetailV6(item);
+  return renderBrouhahaReferenceDetailV6(item);
 }
 
 function renderSimpleFamilyCodex(type) {
@@ -2908,7 +3118,9 @@ function renderSimpleFamilyCodex(type) {
   const meta = {
     npcs: { label: "PNJ", singular: "PNJ" },
     quests: { label: "Quêtes", singular: "Quête" },
-    loot_items: { label: "Loot", singular: "Loot" }
+    loot_items: { label: "Loot", singular: "Loot" },
+    interactables: { label: "Objets interactifs", singular: "Objet interactif" },
+    brouhaha_effects: { label: "Brouhaha", singular: "Effet Brouhaha" }
   }[type];
   const ui = state.ui.codexFamilies[type];
   const items = getSimpleFamilyCollection(type);
@@ -2920,7 +3132,7 @@ function renderSimpleFamilyCodex(type) {
       <section class="codex-family-v6 ${type}-codex-v6">
         ${renderCodexReturnBar()}
         <div class="codex-family-detail-top">
-          <button class="ghost codex-family-back" type="button" data-action="codex-family-back" data-type="${type}">${shellIcon("back")}<span>Retour aux ${meta.label}</span></button>
+          <button class="ghost codex-family-back" type="button" data-action="codex-family-back" data-type="${type}">${shellIcon("back")}<span>${type === "brouhaha_effects" ? "Retour au Brouhaha" : `Retour aux ${meta.label}`}</span></button>
           ${renderCodexTabs(type)}
         </div>
         <div class="codex-family-master-detail">
@@ -2937,7 +3149,9 @@ function renderSimpleFamilyCodex(type) {
     const active = String(item.id) === String(ui.selectedId);
     if (type === "npcs") return renderNpcCollectionCard(item, ui.mode, active);
     if (type === "quests") return renderQuestCollectionCard(item, ui.mode, active);
-    return renderLootCollectionCard(item, ui.mode, active);
+    if (type === "loot_items") return renderLootCollectionCard(item, ui.mode, active);
+    if (type === "interactables") return renderInteractableCollectionCard(item, ui.mode, active);
+    return renderBrouhahaCollectionCard(item, ui.mode, active);
   }).join("");
 
   return renderShell(`
@@ -2958,7 +3172,7 @@ function renderCodex() {
   if (type === "creatures") return renderBestiaryCollection();
   if (type === "dungeons") return renderDungeonCodex();
   if (type === "heroes") return renderHeroCodex();
-  if (["npcs", "quests", "loot_items"].includes(type)) return renderSimpleFamilyCodex(type);
+  if (["npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(type)) return renderSimpleFamilyCodex(type);
 
   const items = getFilteredList(type, "codex");
   const selected = findById(type, state.ui.codexSelectedId) || items[0] || null;
@@ -3274,52 +3488,11 @@ function renderLootDetail(item) {
 }
 
 function renderInteractableDetail(item) {
-  return `
-    <div class="detail-card">
-      <div class="detail-head">
-        <div>
-          <span class="badge">Objet</span>
-          <h3>${escapeHtml(item.name || "")}</h3>
-          <div class="muted">${escapeHtml(item.dungeon_name || "")}</div>
-        </div>
-      </div>
-      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
-        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🧱</div>`}
-      </div>
-      <div class="stat-grid">
-        <div><strong>Type</strong><span>${escapeHtml(item.type || "—")}</span></div>
-        <div><strong>PV</strong><span>${item.hp || 0}</span></div>
-        <div><strong>Actions</strong><span>${escapeHtml(item.actions_allowed || "—")}</span></div>
-      </div>
-      <p><strong>Effet :</strong> ${escapeHtml(item.effect || "—")}</p>
-      <p><strong>Tags :</strong> ${escapeHtml(tagsToText(item.tags))}</p>
-    </div>
-  `;
+  return renderInteractableDetailV6(item);
 }
 
 function renderBrouhahaEffectDetail(item) {
-  return `
-    <div class="detail-card">
-      <div class="detail-head">
-        <div>
-          <span class="badge">Brouhaha</span>
-          <h3>Niveau ${item.level ?? 0}</h3>
-          <div class="muted">${escapeHtml(item.dungeon_name || "Universel")}</div>
-        </div>
-      </div>
-      <p><strong>Effet :</strong> ${escapeHtml(item.effect_text || "—")}</p>
-    </div>
-  `;
-}
-
-function renderMediaAssetCard(asset, active = false) {
-  const img = thumbUrlForAsset(asset);
-  return `
-    <figure class="gallery-item ${active ? "active" : ""}">
-      ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(asset.label || asset.file_name || "")}" loading="lazy">` : `<div class="placeholder large">🖼️</div>`}
-      <figcaption>${escapeHtml(asset.label || asset.file_name || asset.path || asset.id)}</figcaption>
-    </figure>
-  `;
+  return renderBrouhahaReferenceDetailV6(item);
 }
 
 function renderMediaAssetDetail(asset) {
@@ -3874,7 +4047,7 @@ function wireBestiaryScrollTracking() {
 }
 
 function restoreCodexFamilyScrollAfterRender() {
-  if (state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(state.ui.codexType)) return;
+  if (state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(state.ui.codexType)) return;
   ensureCodexFamilyUi();
   const top = Math.max(0, Number(state.ui.codexFamilies[state.ui.codexType].scrollTop || 0));
   restoringCodexFamilyScroll = true;
@@ -3887,7 +4060,7 @@ function restoreCodexFamilyScrollAfterRender() {
 function wireCodexFamilyScrollTracking() {
   window.addEventListener("scroll", () => {
     const type = state.ui.codexType;
-    if (restoringCodexFamilyScroll || state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(type)) return;
+    if (restoringCodexFamilyScroll || state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(type)) return;
     ensureCodexFamilyUi();
     state.ui.codexFamilies[type].scrollTop = Math.max(0, window.scrollY || 0);
     if (codexFamilyScrollSaveTimer) clearTimeout(codexFamilyScrollSaveTimer);
@@ -4411,8 +4584,8 @@ async function importFullBackupFile(file) {
   const parsedXlsx = await readXlsxFile(wbBytes.buffer.slice(wbBytes.byteOffset, wbBytes.byteOffset + wbBytes.byteLength));
 
   for (const type of ENTITY_ORDER) {
-    const wanted = (ENTITY_SHEETS[type] || getLabel(type)).trim().toLowerCase();
-    const sheet = (parsedXlsx.sheets || []).find(s => String(s.sheetName || "").trim().toLowerCase() === wanted);
+    const wanted = entitySheetNames(type).map(name => String(name).trim().toLowerCase());
+    const sheet = (parsedXlsx.sheets || []).find(s => wanted.includes(String(s.sheetName || "").trim().toLowerCase()));
     const rows = (sheet?.rows || []).map(row => normalizeTemplateRow(type, row));
     const current = state.data[type] || [];
     const existingMap = new Map(current.map(item => [buildConflictKeyFromEntity(type, item), item]));
@@ -4474,8 +4647,8 @@ async function parseImportFile(file, type) {
   let rows = [];
   if (ext === "xlsx") {
     const parsed = await readXlsxFile(file);
-    const wanted = ENTITY_SHEETS[type] || getLabel(type);
-    const sheet = (parsed.sheets || []).find(s => String(s.sheetName || "").trim().toLowerCase() === String(wanted).trim().toLowerCase()) || parsed;
+    const wanted = entitySheetNames(type).map(name => String(name).trim().toLowerCase());
+    const sheet = (parsed.sheets || []).find(s => wanted.includes(String(s.sheetName || "").trim().toLowerCase())) || parsed;
     rows = (sheet.rows || []).map(row => normalizeTemplateRow(type, row));
   } else if (ext === "csv") {
     rows = parseCsv(await file.text()).map(normalizeTemplateRow.bind(null, type));
@@ -4557,7 +4730,7 @@ function bindEvents() {
           return;
         case "family-mode": {
           const type = btn.dataset.type;
-          if (!["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(type)) return;
+          if (!["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(type)) return;
           ensureCodexFamilyUi();
           const allowed = familyModeOptions(type).map(mode => mode.value);
           state.ui.codexFamilies[type].mode = allowed.includes(btn.dataset.mode) ? btn.dataset.mode : defaultCodexFamiliesUi()[type].mode;
@@ -4568,7 +4741,7 @@ function bindEvents() {
         }
         case "select-family-codex": {
           const type = btn.dataset.type;
-          if (!["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(type)) return;
+          if (!["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(type)) return;
           ensureCodexFamilyUi();
           state.ui.codexReturnStack = [];
           state.ui.codexType = type;
@@ -4599,7 +4772,7 @@ function bindEvents() {
         }
         case "codex-family-back": {
           const type = btn.dataset.type;
-          if (!["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(type)) return;
+          if (!["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(type)) return;
           state.ui.codexReturnStack = [];
           state.ui.codexDetailOpen = false;
           await saveUiState(state.ui);
@@ -4665,7 +4838,7 @@ function bindEvents() {
               state.ui.codexFamilies.heroes.selectedBase = group.key;
               rememberHeroLevel(group, hero.level);
             }
-          } else if (["npcs", "quests", "loot_items"].includes(previous.type)) {
+          } else if (["npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(previous.type)) {
             ensureCodexFamilyUi();
             state.ui.codexFamilies[previous.type].selectedId = previous.id;
           }
@@ -4708,7 +4881,7 @@ function bindEvents() {
               state.ui.codexFamilies.heroes.selectedBase = group.key;
               rememberHeroLevel(group, target.level);
             }
-          } else if (["npcs", "quests", "loot_items"].includes(targetType)) {
+          } else if (["npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(targetType)) {
             ensureCodexFamilyUi();
             state.ui.codexFamilies[targetType].selectedId = targetId;
           }
@@ -4797,7 +4970,7 @@ function bindEvents() {
               state.ui.codexFamilies.heroes.selectedBase = group.key;
               rememberHeroLevel(group, hero.level);
             }
-          } else if (["npcs", "quests", "loot_items"].includes(btn.dataset.type)) {
+          } else if (["npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(btn.dataset.type)) {
             ensureCodexFamilyUi();
             state.ui.codexFamilies[btn.dataset.type].selectedId = btn.dataset.id;
           }
@@ -5127,7 +5300,7 @@ function bindEvents() {
     }
     if (el.dataset.action === "family-search") {
       const type = el.dataset.type;
-      if (!["dungeons", "heroes", "npcs", "quests", "loot_items"].includes(type)) return;
+      if (!["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(type)) return;
       ensureCodexFamilyUi();
       state.ui.codexFamilies[type].search = el.value;
       state.ui.codexFamilies[type].scrollTop = 0;
@@ -5233,7 +5406,9 @@ async function bootstrap() {
         },
         npcs: { ...defaultBlankUi().codexFamilies.npcs, ...(savedUi.codexFamilies?.npcs || {}) },
         quests: { ...defaultBlankUi().codexFamilies.quests, ...(savedUi.codexFamilies?.quests || {}) },
-        loot_items: { ...defaultBlankUi().codexFamilies.loot_items, ...(savedUi.codexFamilies?.loot_items || {}) }
+        loot_items: { ...defaultBlankUi().codexFamilies.loot_items, ...(savedUi.codexFamilies?.loot_items || {}) },
+        interactables: { ...defaultBlankUi().codexFamilies.interactables, ...(savedUi.codexFamilies?.interactables || {}) },
+        brouhaha_effects: { ...defaultBlankUi().codexFamilies.brouhaha_effects, ...(savedUi.codexFamilies?.brouhaha_effects || {}) }
       },
       bestiary: { ...defaultBlankUi().bestiary, ...(savedUi.bestiary || {}) }
     };
