@@ -1475,6 +1475,23 @@ function renderBestiaryTagFilter() {
     </details>`;
 }
 
+function renderBestiaryMasterRailItem(item) {
+  const meta = creatureCategoryMeta(item.category);
+  const image = imageUrlForEntity(item);
+  const selected = String(state.ui.bestiary.selectedId || "") === String(item.id || "");
+  return `
+    <button class="bestiary-master-item ${meta.key} ${selected ? "selected" : ""}" data-action="select-codex" data-type="creatures" data-id="${escapeHtml(String(item.id || ""))}">
+      <span class="bestiary-master-thumb">
+        ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy">` : `<img class="fallback-sigil" src="${V6_ICON_PATH}${meta.sigil}" alt="">`}
+      </span>
+      <span class="bestiary-master-copy">
+        <strong>${escapeHtml(item.name || "Créature sans nom")}</strong>
+        <small>${escapeHtml(item.dungeon_name || "Donjon non renseigné")}</small>
+        <span class="bestiary-master-meta"><img src="${V6_ICON_PATH}${meta.sigil}" alt="" aria-hidden="true">${escapeHtml(meta.label)} · Menace ${escapeHtml(String(item.menace ?? "—"))}</span>
+      </span>
+    </button>`;
+}
+
 function renderBestiaryCollection() {
   ensureBestiaryUi();
   const b = state.ui.bestiary;
@@ -1485,13 +1502,24 @@ function renderBestiaryCollection() {
 
   if (state.ui.codexDetailOpen) {
     return renderShell(`
-      <section class="bestiary-v6 bestiary-detail-bridge">
-        <div class="panel">
-          <div class="bestiary-detail-top">
-            <button class="ghost codex-back" data-action="codex-back" type="button">${shellIcon("back")}<span>Retour au Bestiaire</span></button>
-            ${renderCodexTabs("creatures")}
+      <section class="bestiary-v6 bestiary-detail-page">
+        <div class="bestiary-detail-top">
+          <button class="ghost codex-back creature-detail-back" data-action="codex-back" type="button">${shellIcon("back")}<span>Retour au Bestiaire</span></button>
+          ${renderCodexTabs("creatures")}
+        </div>
+        <div class="bestiary-master-detail">
+          <aside class="panel bestiary-master-rail" aria-label="Collection Bestiaire">
+            <div class="bestiary-master-head">
+              <button class="ghost" data-action="codex-back" type="button">${shellIcon("back")}<span>Bestiaire</span></button>
+              <span>${items.length}</span>
+            </div>
+            <div class="bestiary-master-list">
+              ${items.length ? items.map(renderBestiaryMasterRailItem).join("") : `<div class="empty small">Aucun résultat dans le contexte actuel.</div>`}
+            </div>
+          </aside>
+          <div class="bestiary-detail-column">
+            ${selected ? renderCreatureDetail(selected, true) : `<div class="panel empty">Cette créature n’est plus disponible.</div>`}
           </div>
-          ${selected ? renderCreatureDetail(selected, true) : `<div class="empty">Cette créature n’est plus disponible.</div>`}
         </div>
       </section>`);
   }
@@ -1721,38 +1749,145 @@ function renderDungeonDetail(item, readOnly = false) {
   `;
 }
 
-function renderCreatureDetail(item) {
-  const lootItems = item.loot_items || [];
+function creatureCategoryCssColor(key) {
+  const vars = {
+    basique: "var(--game-basic)",
+    tactique: "var(--game-tactical)",
+    speciale: "var(--game-special)",
+    brute: "var(--game-brute)",
+    mini_boss: "var(--game-mini)",
+    boss: "var(--game-boss)"
+  };
+  return vars[key] || "var(--color-border-strong)";
+}
+
+function safeCreatureAccent(item) {
+  const dungeon = findById("dungeons", item?.dungeon_id) || findByName("dungeons", item?.dungeon_name || "");
+  const candidate = String(dungeon?.accent || dungeon?.accent_color || dungeon?.color || "").trim();
+  return /^#[0-9a-f]{6}$/i.test(candidate) || /^#[0-9a-f]{3}$/i.test(candidate) ? candidate : "#8A5E31";
+}
+
+function formatCreatureSocle(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  return /mm\b/i.test(text) ? text : `${text} mm`;
+}
+
+function renderCreatureStat(icon, label, value) {
+  const display = value === null || value === undefined || value === "" ? "—" : String(value);
   return `
-    <div class="detail-card">
-      <div class="detail-head">
-        <div>
-          <span class="badge">${escapeHtml(item.category || "")}</span>
-          <h3>${escapeHtml(item.name)}</h3>
-          <div class="muted">${escapeHtml(item.dungeon_name || "")}</div>
+    <div class="creature-stat-v6">
+      <img src="${V6_ICON_PATH}${icon}" alt="" aria-hidden="true">
+      <b>${escapeHtml(display)}</b>
+      <span>${label}</span>
+    </div>`;
+}
+
+function renderCreatureDetail(item) {
+  if (!item) return `<div class="panel empty">Créature indisponible.</div>`;
+
+  const image = imageUrlForEntity(item);
+  const categoryRaw = String(item.category || "").trim();
+  const category = categoryRaw ? creatureCategoryMeta(categoryRaw) : null;
+  const accent = safeCreatureAccent(item);
+  const tags = creatureTags(item);
+  const lootItems = Array.isArray(item.loot_items) ? item.loot_items.filter(Boolean) : [];
+  const abilityName = String(item.special_attack_name || "").trim();
+  const abilityNoise = Number(item.special_attack_noise || 0);
+  const behavior = String(item.ai_behavior || "").trim();
+  const target = String(item.ai_target_priority || "").trim();
+  const lore = String(item.lore || "").trim();
+  const dungeonName = String(item.dungeon_name || "").trim();
+  const socle = formatCreatureSocle(item.socle);
+  const menacePresent = item.menace !== null && item.menace !== undefined && item.menace !== "";
+  const name = String(item.name || "").trim() || "Créature sans nom";
+
+  return `
+    <article class="creature-sheet-v6 ${category?.key || "uncategorized"}" style="--creature-cat:${creatureCategoryCssColor(category?.key)};--dungeon-accent:${accent}">
+      <section class="creature-art-v6" aria-label="Illustration">
+        <div class="creature-art-frame" aria-hidden="true"></div>
+        <div class="creature-plinth" aria-hidden="true"></div>
+        ${image ? `
+          <button class="ghost creature-fullscreen" type="button" data-action="open-image" data-src="${escapeHtml(image)}" data-alt="${escapeHtml(name)}" aria-label="Ouvrir l’image de ${escapeHtml(name)} en plein écran">${shellIcon("image")}<span>Plein écran</span></button>
+          <div class="creature-figure"><img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(name)}"></div>
+        ` : `
+          <div class="creature-figure creature-figure-missing">
+            ${category ? `<img src="${V6_ICON_PATH}${category.sigil}" alt="" aria-hidden="true">` : ""}
+            <span>Image indisponible</span>
+          </div>
+        `}
+      </section>
+
+      <section class="creature-detail-v6">
+        <header class="creature-identity-v6">
+          <div class="creature-identity-copy">
+            ${dungeonName ? `<div class="creature-dungeon-v6"><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="" aria-hidden="true"><span>${escapeHtml(dungeonName)}</span></div>` : ""}
+            <h1>${escapeHtml(name)}</h1>
+            <div class="creature-identity-chips">
+              ${category ? `<span class="creature-category-v6"><img src="${V6_ICON_PATH}${category.sigil}" alt="" aria-hidden="true">${escapeHtml(category.label)}</span>` : ""}
+              ${menacePresent ? `<span class="creature-meta-chip"><img src="${V6_ICON_PATH}Icone_Gameplay_MENACE.webp" alt="" aria-hidden="true">Menace ${escapeHtml(String(item.menace))}</span>` : ""}
+              ${socle ? `<span class="creature-meta-chip"><img src="${V6_ICON_PATH}Icone_Gameplay_SOCLE.webp" alt="" aria-hidden="true">Socle ${escapeHtml(socle)}</span>` : ""}
+            </div>
+          </div>
+          ${category ? `<div class="creature-sigil-v6"><img src="${V6_ICON_PATH}${category.sigil}" alt="Sigil ${escapeHtml(category.label)}"></div>` : ""}
+        </header>
+
+        <div class="creature-stats-v6" aria-label="Statistiques">
+          ${renderCreatureStat("Icone_Gameplay_PV.webp", "PV", item.pv)}
+          ${renderCreatureStat("Icone_Gameplay_ATK.webp", "ATK", item.atk)}
+          ${renderCreatureStat("Icone_Gameplay_DEF.webp", "DEF", item.def)}
+          ${renderCreatureStat("Icone_Gameplay_ZONE.webp", "Portée / Zone", item.zone)}
+          ${renderCreatureStat("Icone_Gameplay_ACTION.webp", "Actions", item.actions)}
         </div>
-      </div>
-      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
-        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">👹</div>`}
-      </div>
-      <div class="stat-grid">
-        <div><strong>PV</strong><span>${item.pv || 0}</span></div>
-        <div><strong>ATK</strong><span>${item.atk || 0}</span></div>
-        <div><strong>DEF</strong><span>${item.def || 0}</span></div>
-        <div><strong>Zone</strong><span>${item.zone || 1}</span></div>
-        <div><strong>Actions</strong><span>${item.actions || 2}</span></div>
-        <div><strong>Menace</strong><span>${item.menace || 0}</span></div>
-      </div>
-      <p><strong>Compétence :</strong> ${escapeHtml(item.special_attack_name || "—")}</p>
-      <p><strong>IA :</strong> ${escapeHtml(item.ai_behavior || "—")}</p>
-      <p><strong>Cible :</strong> ${escapeHtml(item.ai_target_priority || "—")}</p>
-      <p><strong>Lore :</strong> ${escapeHtml(item.lore || "—")}</p>
-      <p><strong>Tags :</strong> ${escapeHtml(tagsToText(item.tags))}</p>
-      <div class="subpanel">
-        <h4>Loot</h4>
-        ${renderLootList(lootItems)}
-      </div>
-    </div>
+
+        ${abilityName ? `
+          <section class="creature-ability-v6">
+            <div class="creature-section-kicker"><img src="${V6_ICON_PATH}Icone_Gameplay_COMPETENCE.webp" alt="" aria-hidden="true"><span>Compétence</span></div>
+            <h2>${escapeHtml(abilityName)}</h2>
+            ${abilityNoise ? `<div class="creature-ability-meta">Brouhaha ${abilityNoise > 0 ? "+" : ""}${escapeHtml(String(abilityNoise))}</div>` : ""}
+          </section>
+        ` : ""}
+
+        ${behavior || target ? `
+          <section class="creature-functional-section">
+            <h2><img src="${V6_ICON_PATH}Icone_Gameplay_COMPORTEMENT.webp" alt="" aria-hidden="true">Comportement</h2>
+            ${behavior ? `<p>${escapeHtml(behavior)}</p>` : ""}
+            ${target ? `<dl><dt>Priorité de cible</dt><dd>${escapeHtml(target)}</dd></dl>` : ""}
+          </section>
+        ` : ""}
+
+        ${lootItems.length ? `
+          <section class="creature-functional-section creature-loot-v6">
+            <h2><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt="" aria-hidden="true">Butin</h2>
+            <div class="creature-loot-list">
+              ${lootItems.map(loot => `
+                <article class="creature-loot-item">
+                  <strong>${escapeHtml(loot?.name || "Butin")}</strong>
+                  ${loot?.type ? `<span>${escapeHtml(loot.type)}</span>` : ""}
+                  ${loot?.effect ? `<p>${escapeHtml(loot.effect)}</p>` : ""}
+                  ${loot?.gold_value !== null && loot?.gold_value !== undefined && loot?.gold_value !== "" ? `<small>${escapeHtml(String(loot.gold_value))} or</small>` : ""}
+                </article>
+              `).join("")}
+            </div>
+          </section>
+        ` : ""}
+
+        ${lore ? `
+          <section class="creature-lore-v6">
+            <h2><img src="${V6_ICON_PATH}Icone_Gameplay_LORE.webp" alt="" aria-hidden="true">Lore</h2>
+            <p>${escapeHtml(lore)}</p>
+          </section>
+        ` : ""}
+
+        ${tags.length ? `
+          <section class="creature-tags-v6" aria-label="Tags">
+            ${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}
+          </section>
+        ` : ""}
+
+        <div class="creature-relations-slot" data-ui2c-slot aria-hidden="true"></div>
+      </section>
+    </article>
   `;
 }
 
@@ -3098,19 +3233,24 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           return;
-        case "select-codex":
+        case "select-codex": {
+          const wasDetailOpen = state.ui.codexDetailOpen;
           state.ui.codexType = btn.dataset.type;
           state.ui.codexSelectedId = btn.dataset.id;
           if (btn.dataset.type === "creatures") {
             ensureBestiaryUi();
             state.ui.bestiary.selectedId = btn.dataset.id;
-            state.ui.bestiary.scrollTop = Math.max(0, window.scrollY || 0);
+            if (!wasDetailOpen) state.ui.bestiary.scrollTop = Math.max(0, window.scrollY || 0);
           }
           state.ui.codexDetailOpen = true;
           await saveUiState(state.ui);
           render();
-          if (btn.dataset.type === "creatures") requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+          const desktopMasterDetail = btn.dataset.type === "creatures" && window.matchMedia?.("(min-width: 1480px)").matches;
+          if (btn.dataset.type === "creatures" && !desktopMasterDetail) {
+            requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+          }
           return;
+        }
         case "codex-back":
           state.ui.codexDetailOpen = false;
           await saveUiState(state.ui);
@@ -3146,6 +3286,10 @@ function bindEvents() {
           state.ui.view = "codex";
           state.ui.codexType = btn.dataset.type;
           state.ui.codexSelectedId = btn.dataset.id;
+          if (btn.dataset.type === "creatures") {
+            ensureBestiaryUi();
+            state.ui.bestiary.selectedId = btn.dataset.id;
+          }
           state.ui.codexDetailOpen = true;
           await saveUiState(state.ui);
           render();

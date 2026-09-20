@@ -443,3 +443,99 @@ html{background:var(--color-bg-0);color-scheme:dark}body{margin:0;min-height:100
   .bestiary-card-meta{gap:4px}
   .bestiary-category-chip,.bestiary-menace-chip{font-size:8px;padding-right:6px}
 }
+
+
+/* ==========================================================================
+   Gargottex V6 · UI-2B · Fiche Créature
+   ========================================================================== */
+.bestiary-detail-page{max-width:1660px;margin:0 auto}
+.bestiary-detail-page>.bestiary-detail-top{margin-bottom:12px}
+.bestiary-master-detail{display:grid;grid-template-columns:minmax(0,1fr);gap:13px;align-items:start}
+.bestiary-master-rail{display:none;position:sticky;top:calc(var(--top) + 12px);max-height:calc(100vh - var(--top) - 24px);overflow:hidden;padding:9px}
+.bestiary-master-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:1px 1px 8px;border-bottom:1px solid var(--color-border-subtle)}
+.bestiary-master-head>span{min-width:30px;text-align:center;font:800 18px Alegreya,Georgia,serif;color:var(--color-accent-gold-soft)}
+.bestiary-master-list{display:grid;gap:6px;max-height:calc(100vh - var(--top) - 86px);overflow:auto;padding:8px 2px 4px}
+.bestiary-master-item{--cat:var(--game-basic);position:relative;width:100%;min-height:78px;display:grid;grid-template-columns:58px minmax(0,1fr);gap:8px;align-items:center;padding:7px;border:1px solid var(--color-border-subtle);border-radius:11px;background:rgba(16,11,8,.82);color:var(--color-text-primary);text-align:left}
+.bestiary-master-item:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cat)}
+.bestiary-master-item.basique{--cat:var(--game-basic)}.bestiary-master-item.tactique{--cat:var(--game-tactical)}.bestiary-master-item.speciale{--cat:var(--game-special)}.bestiary-master-item.brute{--cat:var(--game-brute)}.bestiary-master-item.mini_boss{--cat:var(--game-mini)}.bestiary-master-item.boss{--cat:var(--game-boss)}
+.bestiary-master-item:hover,.bestiary-master-item.selected{border-color:color-mix(in srgb,var(--cat) 60%,var(--color-border-strong));background:linear-gradient(90deg,color-mix(in srgb,var(--cat) 7%,var(--color-surface-1)),var(--color-surface-1))}
+.bestiary-master-thumb{height:62px;display:grid;place-items:center;overflow:hidden;border:1px solid color-mix(in srgb,var(--cat) 32%,var(--color-border-subtle));border-radius:8px;background:#0d0907}
+.bestiary-master-thumb img{width:100%;height:100%;object-fit:contain}.bestiary-master-thumb .fallback-sigil{width:40px;height:40px;opacity:.75}
+.bestiary-master-copy{min-width:0;display:grid;gap:3px}.bestiary-master-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 15px/1.05 Alegreya,Georgia,serif}.bestiary-master-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-text-tertiary);font-size:9px}.bestiary-master-meta{display:flex;align-items:center;gap:4px;color:var(--color-text-secondary);font-size:8px}.bestiary-master-meta img{width:17px;height:17px;object-fit:contain}
+.bestiary-detail-column{min-width:0}
+.creature-sheet-v6{--creature-cat:var(--color-border-strong);--dungeon-accent:#8A5E31;display:grid;grid-template-columns:minmax(330px,38%) minmax(0,1fr);min-height:760px;border:1px solid color-mix(in srgb,var(--dungeon-accent) 42%,var(--color-border));border-radius:24px;overflow:hidden;background:#100b08;box-shadow:0 18px 48px #0006,inset 0 2px 0 color-mix(in srgb,var(--creature-cat) 34%,transparent)}
+.creature-art-v6{position:relative;min-height:760px;overflow:hidden;border-right:1px solid var(--color-border-subtle);background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--creature-cat) 14%,transparent),transparent 34%),linear-gradient(180deg,rgba(10,6,4,.12),rgba(10,6,4,.82)),url("assets/ui-v6/textures/grain-dark.svg") repeat}
+.creature-art-v6:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0b080660,transparent 25%,transparent 76%,#0b080680);pointer-events:none}
+.creature-art-frame{position:absolute;inset:15px;z-index:2;border:1px solid rgba(240,207,147,.42);border-radius:15px;pointer-events:none}
+.creature-art-frame:before,.creature-art-frame:after{content:"";position:absolute;width:80px;height:80px;background:url("assets/ui-v6/ornaments/corner-brass.svg") center/contain no-repeat;opacity:.92}
+.creature-art-frame:before{top:-8px;left:-8px}.creature-art-frame:after{right:-8px;bottom:-8px;transform:rotate(180deg)}
+.creature-plinth{position:absolute;z-index:2;left:14%;right:14%;bottom:6%;height:8%;border-radius:50%;background:radial-gradient(ellipse,rgba(212,164,95,.25),rgba(0,0,0,.72) 66%,transparent 72%);filter:blur(.4px)}
+.creature-figure{position:absolute;inset:5% 2% 3%;z-index:3;display:flex;align-items:center;justify-content:center}
+.creature-figure>img{width:100%;height:100%;object-fit:contain;object-position:center;filter:saturate(1.05) contrast(1.04) drop-shadow(0 18px 16px #0009)}
+.creature-figure-missing{position:absolute;inset:20% 12%;display:grid;place-items:center;align-content:center;gap:12px;color:var(--color-text-tertiary);font-size:10px;text-transform:uppercase;letter-spacing:.1em}
+.creature-figure-missing>img{width:min(150px,50%);height:auto;opacity:.68;filter:drop-shadow(0 10px 18px #0009)}
+.creature-fullscreen{position:absolute;z-index:7;right:25px;top:25px;display:inline-flex;align-items:center;gap:6px;background:rgba(11,8,6,.75);backdrop-filter:blur(4px)}
+.creature-fullscreen .ui-icon{width:17px;height:17px}
+.creature-detail-v6{min-width:0;padding:24px 25px 22px;background:linear-gradient(rgba(15,10,8,.90),rgba(15,10,8,.96)),url("assets/ui-v6/textures/grain-dark.svg") repeat}
+.creature-identity-v6{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:15px;padding-bottom:17px;border-bottom:1px solid color-mix(in srgb,var(--dungeon-accent) 34%,var(--color-border-subtle))}
+.creature-dungeon-v6{display:flex;align-items:center;gap:8px;color:color-mix(in srgb,var(--dungeon-accent) 62%,var(--color-accent-gold-soft));font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase}
+.creature-dungeon-v6 img{width:24px;height:24px;object-fit:contain}
+.creature-identity-v6 h1{margin:6px 0 10px;font:800 clamp(36px,4vw,53px)/.94 Alegreya,Georgia,serif;color:#fff0df;overflow-wrap:anywhere}
+.creature-identity-chips{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.creature-category-v6,.creature-meta-chip{min-height:32px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--color-border);border-radius:999px;padding:3px 9px 3px 5px;background:#0002;color:var(--color-text-secondary);font-size:10px;font-weight:800}
+.creature-category-v6{border-color:color-mix(in srgb,var(--creature-cat) 50%,var(--color-border));color:color-mix(in srgb,var(--creature-cat) 65%,#fff)}
+.creature-category-v6 img,.creature-meta-chip img{width:24px;height:24px;object-fit:contain}
+.creature-sigil-v6{width:84px;height:84px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--creature-cat) 64%,var(--color-border-subtle));border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--creature-cat) 10%,transparent),transparent 69%);box-shadow:0 0 28px color-mix(in srgb,var(--creature-cat) 13%,transparent),inset 0 0 0 4px rgba(0,0,0,.13)}
+.creature-sigil-v6 img{width:76px;height:76px;object-fit:contain;filter:drop-shadow(0 5px 9px #000a)}
+.creature-stats-v6{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:16px 0}
+.creature-stat-v6{min-height:106px;display:grid;grid-template-rows:48px auto auto;place-items:center;padding:8px;border:1px solid var(--color-border-subtle);border-top-color:color-mix(in srgb,var(--creature-cat) 28%,var(--color-border-subtle));border-radius:13px;background:rgba(23,17,13,.82)}
+.creature-stat-v6 img{width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 5px 8px #0009)}.creature-stat-v6 b{font:800 24px/1 Alegreya,Georgia,serif;color:#fff0df}.creature-stat-v6 span{font-size:8px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.09em;text-align:center}
+.creature-ability-v6{position:relative;overflow:hidden;margin:0 0 13px;padding:17px 18px 18px;border:1px solid rgba(212,164,95,.48);border-radius:14px;background:linear-gradient(rgba(42,29,19,.88),rgba(27,18,13,.93)),url("assets/ui-v6/textures/brass-aged.svg") center/cover;box-shadow:inset 3px 0 var(--creature-cat)}
+.creature-ability-v6:after{content:"";position:absolute;inset:0;background:#21170fca;pointer-events:none}.creature-ability-v6>*{position:relative;z-index:1}
+.creature-section-kicker{display:flex;align-items:center;gap:8px;color:var(--color-accent-gold);font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.creature-section-kicker img{width:28px;height:28px;object-fit:contain}
+.creature-ability-v6 h2{margin:3px 0 4px;font:700 24px Alegreya,Georgia,serif;color:var(--color-accent-gold-soft)}.creature-ability-meta{margin-top:6px;color:var(--color-text-secondary);font-size:10px}
+.creature-functional-section{margin-top:11px;padding:13px;border:1px solid var(--color-border-subtle);border-radius:13px;background:rgba(23,17,13,.73)}
+.creature-functional-section h2,.creature-lore-v6 h2{display:flex;align-items:center;gap:8px;margin:0 0 8px;font:700 17px Alegreya,Georgia,serif;color:#f3dfc4}.creature-functional-section h2 img,.creature-lore-v6 h2 img{width:28px;height:28px;object-fit:contain}
+.creature-functional-section p{margin:0;color:#cdbba5;font-size:12px;line-height:1.55}.creature-functional-section dl{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;margin:10px 0 0;padding-top:9px;border-top:1px solid var(--color-border-subtle);font-size:11px}.creature-functional-section dt{color:var(--color-text-tertiary);font-weight:800}.creature-functional-section dd{margin:0;color:var(--color-text-secondary)}
+.creature-loot-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.creature-loot-item{position:relative;padding:9px 10px 9px 12px;border:1px solid var(--color-border-subtle);border-radius:9px;background:#0002}.creature-loot-item:before{content:"";position:absolute;left:0;top:7px;bottom:7px;width:2px;background:var(--color-accent-gold)}.creature-loot-item strong{display:block;font:700 14px Alegreya,Georgia,serif;color:var(--color-text-primary)}.creature-loot-item span,.creature-loot-item small{display:block;margin-top:2px;color:var(--color-text-tertiary);font-size:9px}.creature-loot-item p{margin:5px 0 0;color:var(--color-text-secondary);font-size:10px;line-height:1.4}
+.creature-lore-v6{position:relative;overflow:hidden;margin-top:11px;padding:15px 16px;border:1px solid #75583b;border-radius:13px;background:linear-gradient(rgba(245,223,184,.84),rgba(228,195,145,.82)),url("assets/ui-v6/textures/paper-warm.svg") center/cover;color:#3e2b1d;box-shadow:inset 0 0 30px rgba(62,36,17,.16)}
+.creature-lore-v6 h2{color:#4a2f1d}.creature-lore-v6 h2 img{filter:sepia(.2) saturate(.8) contrast(1.05)}.creature-lore-v6 p{position:relative;z-index:1;margin:0;color:#3e2b1d;font-size:12px;line-height:1.62}
+.creature-tags-v6{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}.creature-tags-v6 span{min-height:28px;display:inline-flex;align-items:center;padding:3px 9px;border:1px solid var(--color-border);border-radius:999px;background:#0002;color:var(--color-text-secondary);font-size:9px}
+.creature-relations-slot{display:none}
+
+@media(min-width:1480px){
+  .bestiary-master-detail{grid-template-columns:310px minmax(0,1fr)}
+  .bestiary-master-rail{display:block}
+  .bestiary-detail-page>.bestiary-detail-top .creature-detail-back{display:none}
+}
+@media(max-width:1479px){
+  .creature-sheet-v6{grid-template-columns:minmax(320px,38%) minmax(0,1fr)}
+}
+@media(max-width:1199px){
+  .bestiary-detail-page>.bestiary-detail-top{align-items:flex-start;flex-direction:column}
+  .bestiary-detail-page>.bestiary-detail-top .codex-family-tabs{width:100%}
+  .creature-sheet-v6{grid-template-columns:minmax(280px,38%) minmax(0,1fr);min-height:680px}
+  .creature-art-v6{min-height:680px}
+  .creature-detail-v6{padding:20px}
+  .creature-stats-v6{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+  .creature-stat-v6{min-height:94px}
+}
+@media(max-width:767px){
+  .creature-sheet-v6{display:block;border-radius:18px;min-height:0}
+  .creature-art-v6{min-height:58vh;border-right:0;border-bottom:1px solid var(--color-border-subtle)}
+  .creature-fullscreen{right:18px;top:18px}.creature-fullscreen span{display:none}
+  .creature-detail-v6{padding:16px}
+  .creature-identity-v6{grid-template-columns:minmax(0,1fr) 66px;gap:10px}
+  .creature-identity-v6 h1{font-size:36px}
+  .creature-sigil-v6{width:64px;height:64px}.creature-sigil-v6 img{width:58px;height:58px}
+  .creature-stats-v6{grid-template-columns:repeat(5,minmax(58px,1fr));overflow-x:auto;padding-bottom:4px}
+  .creature-stat-v6{min-width:58px;min-height:88px;padding:6px}.creature-stat-v6 img{width:38px;height:38px}.creature-stat-v6 b{font-size:20px}.creature-stat-v6 span{font-size:7px}
+  .creature-loot-list{grid-template-columns:1fr}
+}
+@media(max-width:430px){
+  .creature-art-v6{min-height:52vh}
+  .creature-detail-v6{padding:13px}
+  .creature-identity-v6{grid-template-columns:minmax(0,1fr) 58px}
+  .creature-identity-v6 h1{font-size:31px}
+  .creature-sigil-v6{width:56px;height:56px}.creature-sigil-v6 img{width:51px;height:51px}
+}

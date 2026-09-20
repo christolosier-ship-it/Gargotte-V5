@@ -385,3 +385,51 @@ Validation UI-2A :
 - aucune réécriture d'une Créature lors de sa lecture ;
 - aucun original média modifié ;
 - UI-2B non démarré.
+
+---
+
+# 18. Implémentation UI-2B sur V5.3
+
+Statut : **LIVRÉ — 20 septembre 2026**
+
+Pré-check :
+
+- périmètre : vraie fiche Créature V6, sans relations avancées ni regroupement boss/phases ;
+- impact données : lecture seule des Créatures, Donjons, Loot et médias déjà présents ;
+- IndexedDB : aucun changement de schéma, aucun changement de version, aucune réécriture lors de la lecture ;
+- référence V3 : composition illustration/détail, sigil, cinq stats, compétence laiton, sections fonctionnelles et Lore papier ;
+- images : aucun traitement rembg déclenché dans ce sous-lot, aucun original ni dérivé média modifié ;
+- hébergement : Vercel n'est plus utilisé pour Gargotte et n'entre plus dans la validation de ce chantier.
+
+Livré :
+
+- illustration majeure avec silhouette complète en `object-fit: contain` ;
+- ouverture plein écran via la visionneuse existante ;
+- identité, Donjon, Catégorie, Menace et Socle ;
+- cinq statistiques `PV | ATK | DEF | PORTÉE / ZONE | ACTIONS` avec emblèmes premium ;
+- Compétence avec emblème premium et information Brouhaha lorsqu'elle existe ;
+- Comportement et priorité de cible sans inventer d'IA absente ;
+- Butin issu des relations locales déjà reconstruites ;
+- Lore sur matière papier claire avec texte brun sombre ;
+- tags uniquement lorsqu'ils existent ;
+- slot DOM réservé à UI-2C sans contenu artificiel ;
+- sections absentes supprimées du flux au lieu d'afficher des blocs vides ;
+- catégorie inconnue/absente et valeurs anciennes tolérées sans casser la fiche.
+
+Responsive UI-2B :
+
+- grand desktop confortable (>= 1480 px) : rail Bestiaire compact + fiche simultanée ;
+- desktop plus étroit : fiche pleine largeur + Retour ;
+- tablette paysage/portrait : fiche seule + Retour ;
+- téléphone : fiche seule + Retour, illustration prioritaire et stats accessibles sans écrasement ;
+- retour vers la collection conservant le contexte UI-2A et son scroll.
+
+Validation :
+
+- aucune migration IndexedDB ;
+- `DB_VERSION` attendu inchangé à 2 ;
+- aucune écriture métier déclenchée par `renderCreatureDetail` ;
+- assets premium déjà précachés par le Service Worker UI-1, aucun nouvel asset nécessaire ;
+- données manquantes : les sections Compétence, Comportement, Butin, Lore et Tags se réduisent proprement ;
+- comparaison V3 : même hiérarchie et même mise en scène, sans recopier les handlers fictifs de la maquette ;
+- UI-2C non démarré.
