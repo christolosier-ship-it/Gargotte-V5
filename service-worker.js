@@ -1,5 +1,5 @@
 
-const CACHE = "gargottex-v6-ui6";
+const CACHE = "gargottex-v6-ui6-final";
 const ASSETS = [
   "./",
   "./index.html",
