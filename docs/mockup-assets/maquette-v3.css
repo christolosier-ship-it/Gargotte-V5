@@ -584,7 +584,7 @@
 .material-board{
   background-image:
     linear-gradient(rgba(30,20,13,.86),rgba(17,12,9,.94)),
-    url('./textures/wood-dark.svg');
+    url('./textures/wood-charred.svg');
   background-size:auto,520px auto;
   box-shadow:inset 0 1px rgba(240,207,147,.08),inset 0 -18px 42px rgba(0,0,0,.20);
 }
@@ -890,4 +890,29 @@ body.cinematic-open{overflow:hidden}
 @media(max-width:620px){
   .gargotte-cinematic{padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom)}
   .cinematic-card{max-height:calc(100svh - 32px);overflow:auto}
+}
+
+
+/* V3 stability pass · dungeon fallbacks */
+.dungeon-ambient-fallback{
+  min-height:220px;
+  display:grid!important;
+  place-items:center;
+  overflow:hidden;
+}
+.dungeon-ambient-fallback .family-mark{
+  width:88px!important;
+  height:88px!important;
+  opacity:.72;
+  filter:drop-shadow(0 12px 26px rgba(0,0,0,.45));
+}
+.dungeon-cover .dungeon-ambient-fallback{
+  position:absolute!important;
+  inset:0;
+  min-height:100%;
+  border:0!important;
+  background:
+    radial-gradient(circle at 62% 26%,color-mix(in srgb,var(--dungeon-glow) 24%,transparent),transparent 30%),
+    linear-gradient(145deg,color-mix(in srgb,var(--dungeon-accent) 24%,#21170f),#0b0806 76%),
+    url('./textures/grain-dark.svg')!important;
 }

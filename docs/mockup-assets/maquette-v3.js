@@ -270,9 +270,9 @@ function familyMark(type,cls='family-mark'){
   return m.premium?emblem(m.premium,cls,''):utilIcon(m.util,cls);
 }
 function familyMedia(type,item,cls='family-media'){
-  return item.image
-    ? '<div class="'+cls+'"><img src="'+item.image+'" alt="Illustration de '+item.name+'"></div>'
-    : '<div class="'+cls+' placeholder">'+familyMark(type,'family-mark')+'<span>Image / média</span></div>';
+  if(item.image)return '<div class="'+cls+'"><img src="'+item.image+'" alt="Illustration de '+item.name+'"></div>';
+  if(type==='dungeons')return '<div class="'+cls+' placeholder dungeon-ambient-fallback">'+familyMark(type,'family-mark')+'</div>';
+  return '<div class="'+cls+' placeholder">'+familyMark(type,'family-mark')+'<span>Image / média</span></div>';
 }
 function itemTier(type,item){
   if(type==='quests')return item.difficultyTier||null;
@@ -307,8 +307,8 @@ function familyCard(type,item,mode){
 function dungeonDetail(d){
   const floors=d.floorBudgets?.length?'<div class="floor-track" aria-label="Étages du donjon">'+d.floorBudgets.map((b,i)=>'<div class="floor-stop"><span class="floor-label">Étage</span><b>'+(i+1)+'</b><span class="floor-budget">Budget '+b+'</span></div>').join('')+'</div>':'<div class="empty-inline">Budgets d’étages non présents dans la source actuellement utilisée.</div>';
   const bossVisual=d.bossImage?'<img src="'+d.bossImage+'" alt="Illustration de '+d.boss+'">':'<div class="boss-sigil-fallback">'+emblem('Sigil_Boss.webp','boss-fallback-logo','')+'</div>';
-  const bossMeta=(d.bossThreat?'Menace '+d.bossThreat+' · ':'')+(d.bossSource||'Source à confirmer');
-  return '<article class="dungeon-sheet family-detail-card" style="--dungeon-accent:'+d.accent+';--dungeon-glow:'+d.glow+'"><div class="dungeon-cover material-stage">'+familyMedia('dungeons',d,'dungeon-cover-media')+'<div class="dungeon-cover-seal">'+familyMark('dungeons','section-logo')+'<span>'+(d.image?'Couverture Drive':'Ambiance typée')+'</span></div><div class="dungeon-cover-copy"><div class="eyebrow">Donjon '+d.number+'</div><h2>'+d.name+'</h2><p>'+d.atmosphere+'</p></div></div><div class="dungeon-brief material-board"><section class="expedition-route"><div class="eyebrow">Progression · carte d’expédition</div><h3 class="serif">Étages & budgets</h3>'+floors+'</section><button class="dungeon-boss-showcase" type="button" data-boss-reveal="'+d.id+'" aria-label="Révéler le boss '+d.boss+'"><span class="boss-media">'+bossVisual+'</span><span class="boss-copy"><span class="boss-overline">Boss final</span><strong>'+(d.boss||'Non verrouillé')+'</strong><small>'+bossMeta+'</small><em>Lever le rideau</em></span></button></div><div class="dungeon-links cabinet-links"><button class="preview-mini" data-see-all="creatures">'+emblem('Sigil_Basique.webp','section-logo')+'<b>Créatures</b><span>Bestiaire préfiltré</span></button><button class="preview-mini" data-see-all="quests">'+familyMark('quests','section-logo')+'<b>Quêtes</b><span>Références liées</span></button><button class="preview-mini" data-see-all="interactables">'+familyMark('interactables','section-logo')+'<b>Objets interactifs</b><span>Éléments de salle</span></button><button class="preview-mini" data-see-all="brouhaha">'+familyMark('brouhaha','section-logo')+'<b>Brouhaha</b><span>Effets du donjon</span></button></div></article>';
+  const bossMeta=d.bossThreat?'Menace '+d.bossThreat:'Menace à confirmer';
+  return '<article class="dungeon-sheet family-detail-card" style="--dungeon-accent:'+d.accent+';--dungeon-glow:'+d.glow+'"><div class="dungeon-cover material-stage">'+familyMedia('dungeons',d,'dungeon-cover-media')+'<div class="dungeon-cover-seal">'+familyMark('dungeons','section-logo')+'<span>'+(d.image?'Illustration du donjon':'Ambiance du donjon')+'</span></div><div class="dungeon-cover-copy"><div class="eyebrow">Donjon '+d.number+'</div><h2>'+d.name+'</h2><p>'+d.atmosphere+'</p></div></div><div class="dungeon-brief material-board"><section class="expedition-route"><div class="eyebrow">Progression · carte d’expédition</div><h3 class="serif">Étages & budgets</h3>'+floors+'</section><button class="dungeon-boss-showcase" type="button" data-boss-reveal="'+d.id+'" aria-label="Révéler le boss '+d.boss+'"><span class="boss-media">'+bossVisual+'</span><span class="boss-copy"><span class="boss-overline">Boss final</span><strong>'+(d.boss||'Non verrouillé')+'</strong><small>'+bossMeta+'</small><em>Lever le rideau</em></span></button></div><div class="dungeon-links cabinet-links"><button class="preview-mini" data-see-all="creatures">'+emblem('Sigil_Basique.webp','section-logo')+'<b>Créatures</b><span>Bestiaire préfiltré</span></button><button class="preview-mini" data-see-all="quests">'+familyMark('quests','section-logo')+'<b>Quêtes</b><span>Références liées</span></button><button class="preview-mini" data-see-all="interactables">'+familyMark('interactables','section-logo')+'<b>Objets interactifs</b><span>Éléments de salle</span></button><button class="preview-mini" data-see-all="brouhaha">'+familyMark('brouhaha','section-logo')+'<b>Brouhaha</b><span>Effets du donjon</span></button></div></article>';
 }
 function heroDetail(h){
   const wanted=heroLevelState[h.id]||1;
@@ -605,7 +605,7 @@ function openConfirm(title,copy,onConfirm,confirmLabel='Confirmer'){
 function initOverlays(){
   $$('[data-close]').forEach(b=>b.onclick=()=>closeOverlay(b.dataset.close));
   $$('.drawer-backdrop,.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open')}));
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')$$('.drawer-backdrop.open,.modal-backdrop.open').forEach(x=>x.classList.remove('open'));if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#search-modal').classList.add('open');setTimeout(()=>$('#global-search-input').focus(),0)}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){$$('.drawer-backdrop.open,.modal-backdrop.open').forEach(x=>x.classList.remove('open'));hideCinematic()}if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#search-modal').classList.add('open');setTimeout(()=>$('#global-search-input').focus(),0)}});
   $('#open-search').onclick=()=>{$('#search-modal').classList.add('open');setTimeout(()=>$('#global-search-input').focus(),0)};$('#open-sync').onclick=()=>$('#sync-drawer').classList.add('open');
 }
 function initSearch(){
@@ -617,6 +617,7 @@ function safeInit(name,fn){
   try{fn()}catch(err){console.error('[Gargottex mockup] '+name,err)}
 }
 function init(){
+  safeInit('image-fallbacks',initImageFallbacks);
   safeInit('styles',injectCreatureStageStyles);
   safeInit('navigation',initNav);
   safeInit('codex',()=>{initCodex();renderCodexType('creatures')});
@@ -629,7 +630,6 @@ function init(){
   safeInit('overlays',initOverlays);
   safeInit('search',initSearch);
   safeInit('mockup',initMockup);
-  safeInit('image-fallbacks',initImageFallbacks);
   Promise.resolve().then(prepareCreatureImages).catch(err=>console.warn('[Gargottex mockup] creature images',err));
 }
 document.addEventListener('DOMContentLoaded',init);
