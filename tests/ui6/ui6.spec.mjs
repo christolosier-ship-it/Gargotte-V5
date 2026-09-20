@@ -4,6 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 async function ready(page, path = "/index.html") {
   await page.goto(path, { waitUntil: "domcontentloaded" });
   await expect(page.locator(".v6-app")).toBeVisible();
+  await page.waitForLoadState("networkidle");
 }
 
 async function clickVisible(page, selector) {
@@ -421,8 +422,7 @@ test("reflow proxy and critical interactions stay responsive", async ({ page }) 
 
   await gotoView(page, "codex");
   await expect(page.locator('[data-action="bestiary-search"]')).toBeVisible();
-  const latency = await page.evaluate(async () => {
-    const input = document.querySelector('[data-action="bestiary-search"]');
+  const latency = await page.locator('[data-action="bestiary-search"]').evaluate(async input => {
     const start = performance.now();
     input.value = "gob";
     input.dispatchEvent(new Event("input", { bubbles: true }));
