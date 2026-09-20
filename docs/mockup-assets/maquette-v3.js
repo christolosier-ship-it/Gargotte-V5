@@ -37,7 +37,7 @@ const sessionQuests=[
 let selectedCreature=localStorage.getItem('mockup:selectedCreature')||'rainette';
 let bestiaryMode=localStorage.getItem('mockup:bestiaryMode')||(isPhone()?'list':'gallery');
 let currentView='home', currentCodex='creatures', dirty=false, mobileDetailOpen=false;
-let encounter={rainette:2,trixie:1}, bhLevel=7, questIndex=0;
+let encounter={rainette:2,trixie:1}, encounterVictoryShown=false, bhLevel=7, questIndex=0;
 
 const codexFamilyMeta={
   dungeons:{label:'Donjons',singular:'Donjon',defaultMode:'gallery',color:'#c98d4e',premium:'Icone_Gameplay_DONJON.webp'},
@@ -48,31 +48,35 @@ const codexFamilyMeta={
   interactables:{label:'Objets du décor',singular:'Objet du décor',defaultMode:'list',color:'#6d8f9f',premium:'Icone_Entite_OBJET_INTERACTIF.webp'},
   brouhaha:{label:'Brouhaha',singular:'Brouhaha',defaultMode:'gallery',color:'#a34d45',premium:'Icone_Entite_OBJET_BROUHAHA.webp'}
 };
-const dungeonNames=[
-  'Le Château de Bastognac','La Forêt en Chantier','Hôtel Zombifornia','Le Cabaret des Joyeuses',
-  'Le Sanctuaire du Houblon Noir','Le Panthéon des Fermentations Interdites','La Brasserie Céleste',
-  'L’enfer de la Sobriété Éternelle','Le Bastion du Sauciflard','Les Thermes de la Bonne Trempette',
-  'La Ruche Royale','Le Monastère des Dénaturées','Les Marécages Infectés',
-  'La Citadelle des Tonneaux Perchés','Le Gynécotron du Gnome Tordu'
+const dungeonVisuals=[
+  {name:'Le Château de Bastognac',accent:'#b57a43',glow:'#d4a45f',atmosphere:'Vieille pierre, bannières violettes et chaos royal très mal tenu.',description:'Donjon importé depuis le bestiaire Le Château de Bastognac.',floorBudgets:[3,5,7,9,11],image:'./mockup-assets/donjon/D871AE54-E99A-4CE5-B7FA-2753A24FC1A2.PNG',boss:'Baron Pas-Très-Terrifiant',bossThreat:5,bossImage:null,bossSource:'Export Gargottex'},
+  {name:'La Forêt en Chantier',accent:'#6e915f',glow:'#9aba70',atmosphere:'Bois vivant, mousse, racines et chantier qui a manifestement perdu son chef de sécurité.',description:'Donjon importé depuis le bestiaire La Forêt en Chantier.',floorBudgets:[3,5,7,9,11],image:null,boss:'Maître Chantierius',bossThreat:5,bossImage:null,bossSource:'Export Gargottex'},
+  {name:'Hôtel Zombifornia',accent:'#8d6f62',glow:'#c39a83',atmosphere:'Velours fatigué, service éternel et luxe qui refuse de mourir proprement.',description:'Donjon importé depuis le bestiaire Hôtel Zombifornia.',floorBudgets:[3,5,7,9,11],image:null,boss:'Directrice Éternelle',bossThreat:5,bossImage:null,bossSource:'Export Gargottex'},
+  {name:'Le Cabaret des Joyeuses',accent:'#b85e6d',glow:'#e69a75',atmosphere:'Rideaux rouges, bougies, paillettes de comptoir et catastrophe scénique permanente.',description:'Donjon importé depuis le bestiaire Le Cabaret des Joyeuses.',floorBudgets:[3,5,7,9,11],image:'./mockup-assets/donjon/AC294837-DDA4-42D9-968E-39A2EF00D1DE.PNG',boss:'Madame Carminia',bossThreat:5,bossImage:null,bossSource:'Export Gargottex'},
+  {name:'Le Sanctuaire du Houblon Noir',accent:'#77634b',glow:'#b28b55',atmosphere:'Cuves sombres, cuivre, houblon noir et ferveur brassicole vaguement inquiétante.',description:'Données disponibles dans le Gargottex export.',floorBudgets:[3,5,7,9,11],image:null,boss:'Archi-Brasseuse du Houblon Noir',bossThreat:5,bossImage:null,bossSource:'Export Gargottex'},
+  {name:'Le Panthéon des Fermentations Interdites',accent:'#8e7bbb',glow:'#c4b3e3',atmosphere:'Pierre rituelle, recettes impossibles et divinités qui ont lu la notice à l’envers.',description:'Données disponibles dans le Gargottex export.',floorBudgets:[3,5,7,9,11],image:'./mockup-assets/donjon/476B3B53-E12A-4788-9492-55918D05515B.PNG',boss:'Entité Brassicole Primordiale',bossThreat:5,bossImage:null,bossSource:'Export Gargottex'},
+  {name:'La Brasserie Céleste',accent:'#d6b66b',glow:'#f2df9f',atmosphere:'Ivoire, lumière fermentée et mousse sacrée qui déborde des marges.',description:'Données disponibles dans le Gargottex export.',floorBudgets:[3,5,7,9,11],image:null,boss:'Plusieurs boss référencés dans l’export',bossThreat:null,bossImage:null,bossSource:'Export Gargottex · arbitrage canonique restant'},
+  {name:'L’enfer de la Sobriété Éternelle',accent:'#b14d3f',glow:'#ef775c',atmosphere:'Noir brûlé, eau punitive et chaleur infernale sans une seule bonne pinte.',description:'Données disponibles dans le Gargottex export.',floorBudgets:[3,5,7,9,11],image:null,boss:'Séraphine de la Sobriété Éternelle',bossThreat:8,bossImage:null,bossSource:'Export Gargottex'},
+  {name:'Le Bastion du Sauciflard',accent:'#a85e46',glow:'#d69067',atmosphere:'Pierre froide, boyaux cérémoniels et discipline charcutière inutilement majestueuse.',description:'Données disponibles dans le Gargottex export.',floorBudgets:[3,5,7,9,11],image:null,boss:'Grande Matrone Saucissophère',bossThreat:5,bossImage:null,bossSource:'Export Gargottex'},
+  {name:'Les Thermes de la Bonne Trempette',accent:'#5896a8',glow:'#8bd0d8',atmosphere:'Carrelage humide, vapeur, bassins et dignité qui glisse très vite.',description:'Données disponibles dans le Gargottex export.',floorBudgets:[3,5,7,9,11],image:null,boss:'Reine Néréide',bossThreat:5,bossImage:null,bossSource:'Export Gargottex'},
+  {name:'La Ruche Royale',accent:'#c69635',glow:'#f0c75e',atmosphere:'Cire, miel, alvéoles et monarchie bourdonnante à haute densité.',description:'Données disponibles dans le Gargottex export.',floorBudgets:[3,5,7,9,11],image:null,boss:'Reine des Mille Dards',bossThreat:5,bossImage:null,bossSource:'Export Gargottex'},
+  {name:'Le Monastère des Dénaturées',accent:'#8268a2',glow:'#b69ad1',atmosphere:'Pierre pâle, silence trop poli et caprines qui ont manifestement pris le règlement au sérieux.',description:'Données disponibles dans le Gargottex export.',floorBudgets:[3,5,7,9,11],image:null,boss:'Deux fiches boss présentes dans l’export',bossThreat:5,bossImage:null,bossSource:'Caprine Absolue / Nymphe Absolue · arbitrage restant'},
+  {name:'Les Marécages Infectés',accent:'#667747',glow:'#9aa55d',atmosphere:'Vase, spores, racines mouillées et fermentation qui a clairement quitté le laboratoire.',description:'Données disponibles dans le Gargottex export.',floorBudgets:[3,5,7,9,11],image:null,boss:'Plusieurs boss référencés dans l’export',bossThreat:null,bossImage:null,bossSource:'Export Gargottex · arbitrage canonique restant'},
+  {name:'La Citadelle des Tonneaux Perchés',accent:'#8b6b55',glow:'#c39061',atmosphere:'Hauteur, cordages, tonneaux suspendus et oiseaux qui ont pris possession du plancher.',description:'Ressources visuelles présentes dans le dossier Drive du donjon.',floorBudgets:[],image:null,boss:'Sa Grasduchesse Écarlate',bossThreat:null,bossImage:null,bossSource:'Nom de ressource Drive · statut gameplay à confirmer'},
+  {name:'Le Gynécotron du Gnome Tordu',accent:'#b94ea4',glow:'#e06bd0',atmosphere:'Cuivre, verre, câbles, cristaux et mauvaise idée gnome arrivée au stade industriel.',description:'Donjon 15 en cours d’intégration au corpus Gargottex.',floorBudgets:[],image:null,boss:'Professeur Grindelbur Rivetroux',bossThreat:5,bossImage:null,bossSource:'Ressources Drive du Donjon 15'}
 ];
-const codexDungeons=dungeonNames.map((name,i)=>({
-  id:'dungeon-'+(i+1),number:i+1,name,
-  description:i===0?'Donjon importé depuis le bestiaire Le Château de Bastognac.':'Description disponible dans le champ description du Donjon.',
-  floorBudgets:i===0?[3,5,7,9,11]:[],
-  boss:i===0?'':null,
-  tags:i===0?['le-chateau-de-bastognac']:[],
-  image:i===0?'../assets/images/logo-512.png':null
-}));
+const dungeonNames=dungeonVisuals.map(d=>d.name);
+const codexDungeons=dungeonVisuals.map((d,i)=>({id:'dungeon-'+(i+1),number:i+1,tags:[],...d}));
 const brunhildaLevels=[
-  {level:1,name:'Brünhilda la Torgnole - Mur en slip',title:'Mur en slip',role:'Tank',pv:12,atk:3,def:4,zone:1,actions:3,ability:'Ivresse Héroïque',effect:"Gagne +2 DEF pendant 1 tour et repousse les ennemis adjacents d'une case.",brouhaha:'',image:'../assets/images/bruna.jpeg'},
-  {level:2,name:'Brünhilda la Torgnole - Pare-Baffes',title:'Pare-Baffes',role:'Tank',pv:14,atk:3,def:4,zone:1,actions:3,ability:'-',effect:'',brouhaha:'',image:'../assets/images/bruna.jpeg'},
-  {level:3,name:'Brünhilda la Torgnole - Rempart à Mandales',title:'Rempart à Mandales',role:'Tank',pv:16,atk:3,def:4,zone:1,actions:3,ability:'Torgnole Monumentale',effect:"Baffe circulaire qui repousse les créatures adjacentes de 2 cases et leur fait perdre 1 PV, la baffe ignore la DEF et touche les ennemis, les alliés et les objets.",brouhaha:'+1',image:'../assets/images/bruna.jpeg'},
-  {level:4,name:'Brünhilda la Torgnole - Forteresse à Torgnoles',title:'Forteresse à Torgnoles',role:'Tank',pv:18,atk:3,def:5,zone:1,actions:3,ability:'Rugissement de la Gargote',effect:'Bloque tout les déplacements ennemis et alliés au prochain tour',brouhaha:'+1',image:'../assets/images/bruna.jpeg'}
+  {level:1,name:'Brünhilda la Torgnole - Mur en slip',title:'Mur en slip',role:'Tank',pv:12,atk:3,def:4,zone:1,actions:3,ability:'Ivresse Héroïque',effect:"Gagne +2 DEF pendant 1 tour et repousse les ennemis adjacents d'une case.",brouhaha:'',image:'./mockup-assets/heros/Brünhilda la Torgnole - Level 1.PNG'},
+  {level:2,name:'Brünhilda la Torgnole - Pare-Baffes',title:'Pare-Baffes',role:'Tank',pv:14,atk:3,def:4,zone:1,actions:3,ability:'-',effect:'',brouhaha:'',image:'./mockup-assets/heros/Brünhilda la Torgnole - Level 2.PNG'},
+  {level:3,name:'Brünhilda la Torgnole - Rempart à Mandales',title:'Rempart à Mandales',role:'Tank',pv:16,atk:3,def:4,zone:1,actions:3,ability:'Torgnole Monumentale',effect:"Baffe circulaire qui repousse les créatures adjacentes de 2 cases et leur fait perdre 1 PV, la baffe ignore la DEF et touche les ennemis, les alliés et les objets.",brouhaha:'+1',image:'./mockup-assets/heros/Brünhilda la Torgnole - Level 3.PNG'},
+  {level:4,name:'Brünhilda la Torgnole - Forteresse à Torgnoles',title:'Forteresse à Torgnoles',role:'Tank',pv:18,atk:3,def:5,zone:1,actions:3,ability:'Rugissement de la Gargote',effect:'Bloque tout les déplacements ennemis et alliés au prochain tour',brouhaha:'+1',image:'./mockup-assets/heros/Brünhilda la Torgnole - Level 4.PNG'}
 ];
 const familySlug=text=>String(text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const heroSkeleton=name=>({id:familySlug(name),name,image:null,levels:[1,2,3,4].map(level=>({level,name:name+' - Level '+level}))});
 const codexHeroes=[
-  {id:'brunhilda',name:'Brünhilda la Torgnole',image:'../assets/images/bruna.jpeg',levels:brunhildaLevels},
+  {id:'brunhilda',name:'Brünhilda la Torgnole',image:'./mockup-assets/heros/Brünhilda la Torgnole - Level 1.PNG',levels:brunhildaLevels},
   heroSkeleton('Hector Coeurdacier'),heroSkeleton('Firmin Tronçebois'),heroSkeleton('Dolorès Boumbardine'),
   heroSkeleton('Géraldine Pintelance'),heroSkeleton('Clara Ferlipette')
 ];
@@ -144,7 +148,7 @@ function injectCreatureStageStyles(){
   style.id='creature-stage-v2-styles';
   style.textContent=`
     .art{background:#0d0907;isolation:isolate}
-    .art:before{background:radial-gradient(circle at 50% 43%,color-mix(in srgb,var(--cat) 19%,transparent),transparent 37%),linear-gradient(180deg,#21170f 0%,#120d09 52%,#0b0806 100%),url('./mockup-assets/textures/grain-dark.svg') repeat!important;filter:none!important;opacity:1}
+    .art:before{background:radial-gradient(circle at 66% 24%,color-mix(in srgb,var(--dungeon-accent,#8a5e31) 20%,transparent),transparent 38%),radial-gradient(circle at 50% 43%,color-mix(in srgb,var(--cat) 19%,transparent),transparent 37%),linear-gradient(180deg,rgba(33,23,15,.72) 0%,rgba(18,13,9,.86) 52%,rgba(11,8,6,.94) 100%),var(--dungeon-bg,url('./mockup-assets/textures/grain-dark.svg')) center/cover!important;filter:none!important;opacity:1}
     .art:after{background:radial-gradient(ellipse at 50% 82%,rgba(0,0,0,.08),rgba(0,0,0,.62) 72%),linear-gradient(90deg,#0b08066e,transparent 24%,transparent 76%,#0b080685)}
     .figure{inset:4% 5% 3%}
     .figure img{width:100%;height:100%;object-fit:contain;object-position:center;background:transparent;filter:drop-shadow(0 20px 18px rgba(0,0,0,.48)) saturate(1.06) contrast(1.03)}
@@ -212,6 +216,11 @@ async function prepareCreatureImages(){
 }
 
 function showToast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(showToast.t);showToast.t=setTimeout(()=>t.classList.remove('show'),2600)}
+const cinematicSeen=new Set();
+function ensureCinematicLayer(){let layer=$('#gargotte-cinematic');if(layer)return layer;layer=document.createElement('div');layer.id='gargotte-cinematic';layer.className='gargotte-cinematic';layer.setAttribute('role','dialog');layer.setAttribute('aria-modal','true');layer.setAttribute('aria-live','polite');document.body.append(layer);return layer}
+function hideCinematic(){const layer=$('#gargotte-cinematic');if(!layer)return;layer.classList.remove('show');clearTimeout(showCinematic.timer)}
+function showCinematic(kind,payload){payload=payload||{};const layer=ensureCinematicLayer(),image=payload.image||'',accent=payload.accent||'#D4A45F';clearTimeout(showCinematic.timer);const icon=kind==='victory'?'Icone_Gameplay_BUTIN.webp':kind==='boss'?'Sigil_Boss.webp':'Icone_Gameplay_DONJON.webp';const eyebrow=kind==='victory'?'RENCONTRE TERMINÉE':kind==='boss'?'BOSS EN VUE':'NOUVEAU LIEU';const title=payload.title||(kind==='victory'?'Salle nettoyée':'Découverte');const copy=payload.copy||(kind==='victory'?'Le silence revient. C’est presque inquiétant.':'');layer.dataset.kind=kind;layer.style.setProperty('--cinematic-bg',image?"url('"+image+"')":'none');layer.style.setProperty('--cinematic-accent',accent);layer.innerHTML='<div class="cinematic-backdrop"></div><div class="cinematic-curtain left"></div><div class="cinematic-curtain right"></div><div class="cinematic-card"><img class="cinematic-emblem" src="'+ICON_BASE+icon+'" alt=""><div class="cinematic-eyebrow">'+eyebrow+'</div><h2>'+title+'</h2><p>'+copy+'</p><div class="cinematic-sparks" aria-hidden="true">'+Array.from({length:9},(_,i)=>'<i style="--i:'+i+'"></i>').join('')+'</div><button class="btn cinematic-skip" type="button">Continuer</button></div>';layer.onclick=e=>{if(e.target===layer||e.target.closest('.cinematic-skip'))hideCinematic()};requestAnimationFrame(()=>layer.classList.add('show'));showCinematic.timer=setTimeout(hideCinematic,kind==='victory'?3200:2500)}
+
 function normalizeView(view){return view==='plus'?'more':view}
 function show(requested){
   const view=normalizeView(requested);
@@ -249,8 +258,9 @@ function selectCreature(id){
 }
 function renderCreature(){
   const c=creatures.find(x=>x.id===selectedCreature)||creatures[0],m=catMeta[c.cat],host=$('#creature-detail');if(!host)return;
-  const src=creatureSrc(c);
-  host.innerHTML=`<article class="sheet ${c.cat}"><div class="art"><div class="art-frame"></div><div class="figure-plinth" aria-hidden="true"></div><button class="btn iconbtn fullscreen-btn" id="full-image" aria-label="Ouvrir l’image en plein écran">${utilIcon('i-expand')}</button><div class="figure"><img src="${src}" alt="Illustration de ${c.name}"></div></div><div class="detail"><nav class="codex-breadcrumb" aria-label="Fil d’Ariane"><span>Codex</span><i>›</i><span>${c.dungeon}</span><i>›</i><b>${c.name}</b></nav><div class="identity"><div><button class="dungeon btn tertiary" data-codex="dungeons">${emblem('Icone_Gameplay_DONJON.webp','dungeon-logo','')}<span>${c.dungeon}</span></button><h2 class="creature-name">${c.name}</h2><div class="row wrap">${catChip(c.cat)}<span class="chip neutral">${emblem('Icone_Gameplay_MENACE.webp')}Menace ${c.threat}</span><span class="chip neutral">${emblem('Icone_Gameplay_SOCLE.webp')}Socle ${c.base} mm</span></div></div><div class="sigil">${emblem(m.sigil,'sigil-logo','Sigil '+m.label)}</div></div><div class="stats"><div class="stat">${emblem('Icone_Gameplay_PV.webp','stat-logo')}<b>${c.pv}</b><span>PV</span></div><div class="stat">${emblem('Icone_Gameplay_ATK.webp','stat-logo')}<b>${c.atk}</b><span>ATK</span></div><div class="stat">${emblem('Icone_Gameplay_DEF.webp','stat-logo')}<b>${c.def}</b><span>DEF</span></div><div class="stat">${emblem('Icone_Gameplay_ZONE.webp','stat-logo')}<b>${c.range}</b><span>Portée / Zone</span></div><div class="stat">${emblem('Icone_Gameplay_ACTION.webp','stat-logo')}<b>${c.actions}</b><span>Actions</span></div></div><section class="ability"><div class="caps" style="display:flex;align-items:center;gap:8px">${emblem('Icone_Gameplay_COMPETENCE.webp','chip-logo')}<span>Compétence</span></div><h3>${c.ability}</h3><p>${c.copy}</p></section><div class="sections"><section class="section"><h4>${emblem('Icone_Gameplay_COMPORTEMENT.webp','section-logo')}Comportement</h4><p>${c.ai}</p></section><section class="section"><h4>${emblem('Icone_Gameplay_BUTIN.webp','section-logo')}Butin</h4><div class="loot-items">${c.loot.map(x=>`<button class="loot-item" data-codex="loot">${x}</button>`).join('')}</div></section><section class="section lore"><h4>${emblem('Icone_Gameplay_LORE.webp','section-logo')}Lore</h4><p>${c.lore}</p></section></div><div class="tags">${c.tags.map(t=>`<span class="chip neutral">${t}</span>`).join('')}</div><div class="related related-rail"><div class="row" style="justify-content:space-between"><h4 class="serif" style="margin:0">Entités liées</h4><span class="small muted">Même donjon puis relations explicites</span></div><div class="related-grid"><button class="related-card" data-codex="dungeons"><b>${c.dungeon}</b><div class="small muted">Donjon</div></button><button class="related-card" data-codex="loot"><b>${c.loot[0]}</b><div class="small muted">Loot</div></button><button class="related-card" data-codex="quests"><b>Le tonneau qui savait trop</b><div class="small muted">Quête liée</div></button></div></div></div></article>`;
+  const src=creatureSrc(c),dungeon=codexDungeons.find(d=>d.name===c.dungeon);
+  const dungeonBg=dungeon?.image?'url("'+dungeon.image+'")':"url('./mockup-assets/textures/grain-dark.svg')";
+  host.innerHTML=`<article class="sheet ${c.cat} has-dungeon-bg" style="--dungeon-accent:${dungeon?.accent||'#8a5e31'};--dungeon-bg:${dungeonBg}"><div class="art"><div class="art-frame"></div><div class="figure-plinth" aria-hidden="true"></div><button class="btn iconbtn fullscreen-btn" id="full-image" aria-label="Ouvrir l’image en plein écran">${utilIcon('i-expand')}</button><div class="figure"><img src="${src}" alt="Illustration de ${c.name}"></div></div><div class="detail"><nav class="codex-breadcrumb" aria-label="Fil d’Ariane"><span>Codex</span><i>›</i><span>${c.dungeon}</span><i>›</i><b>${c.name}</b></nav><div class="identity"><div><button class="dungeon btn tertiary" data-codex="dungeons">${emblem('Icone_Gameplay_DONJON.webp','dungeon-logo','')}<span>${c.dungeon}</span></button><h2 class="creature-name">${c.name}</h2><div class="row wrap">${catChip(c.cat)}<span class="chip neutral">${emblem('Icone_Gameplay_MENACE.webp')}Menace ${c.threat}</span><span class="chip neutral">${emblem('Icone_Gameplay_SOCLE.webp')}Socle ${c.base} mm</span></div></div><div class="sigil">${emblem(m.sigil,'sigil-logo','Sigil '+m.label)}</div></div><div class="stats"><div class="stat">${emblem('Icone_Gameplay_PV.webp','stat-logo')}<b>${c.pv}</b><span>PV</span></div><div class="stat">${emblem('Icone_Gameplay_ATK.webp','stat-logo')}<b>${c.atk}</b><span>ATK</span></div><div class="stat">${emblem('Icone_Gameplay_DEF.webp','stat-logo')}<b>${c.def}</b><span>DEF</span></div><div class="stat">${emblem('Icone_Gameplay_ZONE.webp','stat-logo')}<b>${c.range}</b><span>Portée / Zone</span></div><div class="stat">${emblem('Icone_Gameplay_ACTION.webp','stat-logo')}<b>${c.actions}</b><span>Actions</span></div></div><section class="ability"><div class="caps" style="display:flex;align-items:center;gap:8px">${emblem('Icone_Gameplay_COMPETENCE.webp','chip-logo')}<span>Compétence</span></div><h3>${c.ability}</h3><p>${c.copy}</p></section><div class="sections"><section class="section"><h4>${emblem('Icone_Gameplay_COMPORTEMENT.webp','section-logo')}Comportement</h4><p>${c.ai}</p></section><section class="section"><h4>${emblem('Icone_Gameplay_BUTIN.webp','section-logo')}Butin</h4><div class="loot-items">${c.loot.map(x=>`<button class="loot-item" data-codex="loot">${x}</button>`).join('')}</div></section><section class="section lore"><h4>${emblem('Icone_Gameplay_LORE.webp','section-logo')}Lore</h4><p>${c.lore}</p></section></div><div class="tags">${c.tags.map(t=>`<span class="chip neutral">${t}</span>`).join('')}</div><div class="related related-rail"><div class="row" style="justify-content:space-between"><h4 class="serif" style="margin:0">Entités liées</h4><span class="small muted">Même donjon puis relations explicites</span></div><div class="related-grid"><button class="related-card" data-codex="dungeons"><b>${c.dungeon}</b><div class="small muted">Donjon</div></button><button class="related-card" data-codex="loot"><b>${c.loot[0]}</b><div class="small muted">Loot</div></button><button class="related-card" data-codex="quests"><b>Le tonneau qui savait trop</b><div class="small muted">Quête liée</div></button></div></div></div></article>`;
   $('#full-image').onclick=()=>openImage(src,c.name);
   $$('[data-codex]',host).forEach(b=>b.onclick=()=>openCodex(b.dataset.codex));
 }
@@ -287,21 +297,18 @@ function familySubtitle(type,item){
 function familyCard(type,item,mode){
   const tier=itemTier(type,item);
   const tierStyle=tier?'--tier:var(--'+({basique:'basic',tactique:'tactical',speciale:'special',brute:'brute',mini_boss:'mini',boss:'boss'}[tier])+');':'';
+  const dungeonStyle=type==='dungeons'?'--dungeon-accent:'+(item.accent||'#8a5e31')+';--dungeon-glow:'+(item.glow||'#d4a45f')+';':'';
   const badge=type==='quests'?tierBadge('quest',tier,item.difficulty):type==='loot'?tierBadge('loot',tier,item.rarity):'';
   const kicker=mode==='list'?'<div class="family-card-kicker"><span>'+codexFamilyMeta[type].singular+'</span></div>':'';
-  return '<button class="family-card '+mode+(tier?' tier-card '+tier:'')+'" data-family-item="'+item.id+'" style="--family:'+codexFamilyMeta[type].color+';'+tierStyle+'">'+
+  return '<button class="family-card '+mode+(tier?' tier-card '+tier:'')+(type==='dungeons'?' dungeon-card':'')+'" data-family-item="'+item.id+'" style="--family:'+codexFamilyMeta[type].color+';'+tierStyle+dungeonStyle+'">'+
     familyMedia(type,item,'family-card-media')+
     '<div class="family-card-copy">'+kicker+'<strong>'+item.name+'</strong>'+badge+'<span>'+familySubtitle(type,item)+'</span></div></button>';
 }
 function dungeonDetail(d){
-  const floors=d.floorBudgets?.length
-    ? '<div class="floor-track" aria-label="Étages du donjon">'+d.floorBudgets.map((b,i)=>'<div class="floor-stop"><span class="floor-label">Étage</span><b>'+(i+1)+'</b><span class="floor-budget">Budget '+b+'</span></div>').join('')+'</div>'
-    : '<div class="empty-inline">Budgets d’étages disponibles quand le champ floor_budgets est renseigné.</div>';
-  return '<article class="dungeon-sheet family-detail-card">'+
-    '<div class="dungeon-cover">'+familyMedia('dungeons',d,'dungeon-cover-media')+'<div class="dungeon-cover-seal">'+familyMark('dungeons','section-logo')+'<span>Couverture de donjon</span></div><div class="dungeon-cover-copy"><div class="eyebrow">Donjon '+d.number+'</div><h2>'+d.name+'</h2><p>'+(d.description||'')+'</p></div></div>'+
-    '<div class="dungeon-brief"><section class="expedition-route"><div class="eyebrow">Progression · carte d’expédition</div><h3 class="serif">Étages & budgets</h3>'+floors+'</section><aside class="dungeon-boss"><div class="eyebrow">Boss final</div><strong>'+(d.boss||'Non renseigné')+'</strong><span>Champ boss_name</span></aside></div>'+
-    '<div class="dungeon-links cabinet-links"><button class="preview-mini" data-see-all="creatures">'+emblem('Sigil_Basique.webp','section-logo')+'<b>Créatures</b><span>Bestiaire préfiltré</span></button><button class="preview-mini" data-see-all="quests">'+familyMark('quests','section-logo')+'<b>Quêtes</b><span>Références liées</span></button><button class="preview-mini" data-see-all="interactables">'+familyMark('interactables','section-logo')+'<b>Objets interactifs</b><span>Éléments de salle</span></button><button class="preview-mini" data-see-all="brouhaha">'+familyMark('brouhaha','section-logo')+'<b>Brouhaha</b><span>Effets du donjon</span></button></div>'+
-  '</article>';
+  const floors=d.floorBudgets?.length?'<div class="floor-track" aria-label="Étages du donjon">'+d.floorBudgets.map((b,i)=>'<div class="floor-stop"><span class="floor-label">Étage</span><b>'+(i+1)+'</b><span class="floor-budget">Budget '+b+'</span></div>').join('')+'</div>':'<div class="empty-inline">Budgets d’étages non présents dans la source actuellement utilisée.</div>';
+  const bossVisual=d.bossImage?'<img src="'+d.bossImage+'" alt="Illustration de '+d.boss+'">':'<div class="boss-sigil-fallback">'+emblem('Sigil_Boss.webp','boss-fallback-logo','')+'</div>';
+  const bossMeta=(d.bossThreat?'Menace '+d.bossThreat+' · ':'')+(d.bossSource||'Source à confirmer');
+  return '<article class="dungeon-sheet family-detail-card" style="--dungeon-accent:'+d.accent+';--dungeon-glow:'+d.glow+'"><div class="dungeon-cover material-stage">'+familyMedia('dungeons',d,'dungeon-cover-media')+'<div class="dungeon-cover-seal">'+familyMark('dungeons','section-logo')+'<span>'+(d.image?'Couverture Drive':'Ambiance typée')+'</span></div><div class="dungeon-cover-copy"><div class="eyebrow">Donjon '+d.number+'</div><h2>'+d.name+'</h2><p>'+d.atmosphere+'</p></div></div><div class="dungeon-brief material-board"><section class="expedition-route"><div class="eyebrow">Progression · carte d’expédition</div><h3 class="serif">Étages & budgets</h3>'+floors+'</section><button class="dungeon-boss-showcase" type="button" data-boss-reveal="'+d.id+'" aria-label="Révéler le boss '+d.boss+'"><span class="boss-media">'+bossVisual+'</span><span class="boss-copy"><span class="boss-overline">Boss final</span><strong>'+(d.boss||'Non verrouillé')+'</strong><small>'+bossMeta+'</small><em>Lever le rideau</em></span></button></div><div class="dungeon-links cabinet-links"><button class="preview-mini" data-see-all="creatures">'+emblem('Sigil_Basique.webp','section-logo')+'<b>Créatures</b><span>Bestiaire préfiltré</span></button><button class="preview-mini" data-see-all="quests">'+familyMark('quests','section-logo')+'<b>Quêtes</b><span>Références liées</span></button><button class="preview-mini" data-see-all="interactables">'+familyMark('interactables','section-logo')+'<b>Objets interactifs</b><span>Éléments de salle</span></button><button class="preview-mini" data-see-all="brouhaha">'+familyMark('brouhaha','section-logo')+'<b>Brouhaha</b><span>Effets du donjon</span></button></div></article>';
 }
 function heroDetail(h){
   const wanted=heroLevelState[h.id]||1;
@@ -376,11 +383,13 @@ function renderFamilyBrowser(type){
     list.innerHTML=all.filter(x=>(x.name+' '+familySubtitle(type,x)).toLowerCase().includes(q)).map(x=>familyCard(type,x,mode)).join('')||'<div class="empty-inline">Aucun résultat.</div>';
     $$('[data-family-item]',list).forEach(b=>b.onclick=()=>selectFamilyItem(type,b.dataset.familyItem));
   };
-  $$('[data-see-all]',host).forEach(b=>b.onclick=()=>{renderCodexType(b.dataset.seeAll);showToast('Collection liée ouverte')});
+  $('[data-see-all]',host).forEach(b=>b.onclick=()=>{renderCodexType(b.dataset.seeAll);showToast('Collection liée ouverte')});
+  $('[data-boss-reveal]',host).forEach(b=>b.onclick=()=>{const d=codexDungeons.find(x=>x.id===b.dataset.bossReveal);if(d)showCinematic('boss',{title:d.boss||'Boss',copy:(d.bossThreat?'Menace '+d.bossThreat+' · ':'')+(d.atmosphere||''),image:d.bossImage||d.image,accent:d.accent})});
   $$('[data-hero-level]',host).forEach(b=>b.onclick=()=>{heroLevelState[b.dataset.heroId]=Number(b.dataset.heroLevel);localStorage.setItem('mockup:heroLevel:'+b.dataset.heroId,b.dataset.heroLevel);renderFamilyBrowser(type);applyFamilyResponsive(type)});
 }
 function selectFamilyItem(type,id){
   familySelected[type]=id;localStorage.setItem('mockup:familySelected:'+type,id);familyDetailOpen[type]=true;renderFamilyBrowser(type);applyFamilyResponsive(type);
+  if(type==='dungeons'){const d=codexDungeons.find(x=>x.id===id);if(d&&!cinematicSeen.has(id)){cinematicSeen.add(id);setTimeout(()=>showCinematic('discovery',{title:d.name,copy:d.atmosphere,image:d.image,accent:d.accent}),90)}}
   if(isBestiarySequential())window.scrollTo({top:0,behavior:'smooth'});
 }
 function applyFamilyResponsive(type){
@@ -461,10 +470,10 @@ function renderEncounter(){
       ${qty===0?'<div class="loot-reveal">Groupe terminé. Tous les tirages de Butin ont été effectués.</div>':''}
     </div>`;
   }).join('');
-  $$('[data-eliminate]',host).forEach(b=>b.onclick=()=>{const id=b.dataset.eliminate;if(encounter[id]>0){encounter[id]--;renderEncounter();showToast('1 occurrence éliminée · Butin tiré une seule fois')}});
+  $('[data-eliminate]',host).forEach(b=>b.onclick=()=>{const id=b.dataset.eliminate;if(encounter[id]>0){encounter[id]--;renderEncounter();showToast('1 occurrence éliminée · Butin tiré une seule fois');if(!encounterVictoryShown&&Object.values(encounter).every(q=>q===0)){encounterVictoryShown=true;setTimeout(()=>showCinematic('victory',{title:'Salle nettoyée',copy:'Le butin est tombé. Le silence aussi. Personne ne fait confiance au silence.'}),180)}}});
   $$('[data-open-creature]',host).forEach(b=>b.onclick=()=>{selectedCreature=b.dataset.openCreature;mobileDetailOpen=true;renderCreature();openCodex('creatures')});
 }
-function initGenerator(){$$('.enc-mode').forEach(b=>b.onclick=()=>{$$('.enc-mode').forEach(x=>x.classList.remove('active'));b.classList.add('active')});$('#generate').onclick=()=>{encounter={rainette:2,trixie:1};$('#generator')?.classList.add('generated');renderEncounter();showToast('Rencontre générée localement')};renderEncounter()}
+function initGenerator(){$('.enc-mode').forEach(b=>b.onclick=()=>{$('.enc-mode').forEach(x=>x.classList.remove('active'));b.classList.add('active')});$('#generate').onclick=()=>{encounter={rainette:2,trixie:1};encounterVictoryShown=false;$('#generator')?.classList.add('generated');renderEncounter();showToast('Rencontre générée localement')};renderEncounter()}
 
 function initBrouhaha(){
   const update=()=>{
