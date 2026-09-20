@@ -90,12 +90,8 @@ test("IndexedDB v1 -> V6 v2 preserves IDs, unknown fields, relations and Blobs t
   expect(reopened.thumbBytes).toEqual(upgraded.thumbBytes);
   expect(reopened.counts).toEqual(upgraded.counts);
 
-  await page.evaluate(async () => {
-    await navigator.serviceWorker.ready;
-    if (!navigator.serviceWorker.controller) {
-      await new Promise(resolve => navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true }));
-    }
-  });
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller), null, { timeout: 10_000 });
 
   await context.setOffline(true);
   await page.reload({ waitUntil: "domcontentloaded" });
