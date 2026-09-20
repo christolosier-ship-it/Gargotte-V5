@@ -538,3 +538,72 @@ Aucune cascade vers Créatures, Quêtes, Loot, Brouhaha, Objets interactifs ou M
 - IndexedDB : schéma inchangé.
 
 **UI-5A est clos. UI-5B et UI-5C ne sont pas démarrés par ce sous-lot.**
+
+---
+
+# 23. Implémentation UI-5B sur V5.3
+
+Statut : **LIVRÉ — UI-5B uniquement — 20 septembre 2026**
+
+UI-5 global reste **ACTIF** pour UI-5C.
+
+## Modèle média compatible production
+
+Aucune migration IndexedDB n'est requise. Les anciens médias gardent `blob`, `thumb_blob`, `path` et `thumb_path`.
+
+Pour les nouveaux médias :
+- `blob` = original local immutable, copie byte-à-byte ;
+- `thumb_blob` = thumbnail régénérable ;
+- `preview_blob` = aperçu WebP régénérable ;
+- `transparent_blob` = dérivé PNG RGBA séparé et régénérable.
+
+Toutes les nouvelles propriétés sont facultatives.
+
+## Original immutable et pipeline rembg
+
+Le moteur reste `rembg` + IS-Net / DIS + `isnet-general-use`.
+
+Le script `scripts/media/process_transparent_derivative.py` produit localement un PNG RGBA séparé, refuse d'écraser la source, compare le SHA-256 avant/après et produit un audit JSON.
+
+Lors de l'import dans la PWA, l'original est relu et haché, le dérivé est écrit uniquement dans les propriétés `transparent_*`, puis l'original est relu et rehaché. Toute variation déclenche un STOP sécurité.
+
+## Audit alpha + contrôle visuel
+
+La PWA vérifie signature PNG, alpha réel, dimensions, ratio transparent, bords semi-transparents, opaque et bbox alpha.
+
+Un audit réussi reste en `Contrôle visuel requis`. Le Codex ne préfère le dérivé qu'après `Valider visuellement`.
+
+Un dérivé à corriger ou en échec d'audit n'est jamais publié.
+
+## Bibliothèque
+
+- Ajouter ;
+- recherche locale ;
+- Tous / Liés / Orphelins ;
+- cartes et détail ;
+- Original / Thumbnail / Aperçu / Dérivé transparent ;
+- rattachement exact par `entity_type + entity_id` ;
+- état local et état du dérivé.
+
+Le retrait disponible dans UI-5B concerne uniquement le dérivé régénérable. Le retrait/suppression de l'original n'est pas proposé sans sauvegarde externe saine, qui relève de UI-5C.
+
+## Offline
+
+Aucun Neon, aucun cloud, aucune Auth distante, aucun CDN. IndexedDB reste en version 2 et le Service Worker n'a pas besoin de migration.
+
+## Gate UI-5B
+
+- originaux intacts : validé par construction et empreinte ;
+- dérivés séparés : validé ;
+- rembg / isnet-general-use : validé via pipeline local générique ;
+- PNG RGBA + audit alpha : validés ;
+- contrôle visuel explicite : validé ;
+- bibliothèque + détail : validés ;
+- Tous / Liés / Orphelins + recherche : validés ;
+- rattachement fiable par ID : validé ;
+- aucun fond blanc forcé : validé ;
+- compatibilité anciens médias : validée structurellement ;
+- aucune migration IndexedDB : validé ;
+- aucun cloud : validé.
+
+**UI-5B est clos. UI-5C n'est pas démarré par ce sous-lot.**

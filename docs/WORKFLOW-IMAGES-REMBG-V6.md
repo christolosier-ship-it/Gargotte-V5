@@ -218,3 +218,17 @@ Une ressource détourée est validée si :
 6. socle/appendices conservés ;
 7. association original/dérivé traçable ;
 8. UI affiche bien le dérivé sans fond blanc forcé.
+
+---
+
+# 14. Intégration production UI-5B
+
+Utilitaire local générique :
+
+```bash
+python scripts/media/process_transparent_derivative.py original.jpg derive-transparent.png
+```
+
+Il refuse l'écrasement de la source, utilise `rembg` + `isnet-general-use`, écrit un PNG RGBA séparé, compare le SHA-256 de la source avant/après et produit un `.audit.json`.
+
+La PWA importe ensuite le PNG comme `transparent_blob`, refait son audit alpha localement puis exige un contrôle visuel explicite avant utilisation par le Codex.

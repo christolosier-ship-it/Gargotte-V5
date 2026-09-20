@@ -337,7 +337,7 @@ const state = {
     questsResult: null,
     questDungeonId: "",
     import: { type: "creatures", fileName: "", preview: null },
-    media: { filterType: "gallery", filterEntity: "", fileQueueName: "" },
+    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "" },
     journalOpen: false,
     globalSearch: ""
   },
@@ -378,7 +378,7 @@ function defaultBlankUi() {
     questsResult: null,
     questDungeonId: "",
     import: { type: "creatures", fileName: "", preview: null },
-    media: { filterType: "gallery", filterEntity: "", fileQueueName: "" },
+    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "" },
     journalOpen: false,
     globalSearch: ""
   };
@@ -998,21 +998,22 @@ function transparentDerivativeUrlForEntity(entity, type = "heroes") {
     const candidate = pathUrl(entity[field]);
     if (candidate) return candidate;
   }
-  const explicitAssets = (state.data.media_assets || []).filter(asset => {
+  const entityAssets = (state.data.media_assets || []).filter(asset => {
     const entityType = relationStore(asset.entity_type);
-    if (entityType !== type || String(asset.entity_id || "") !== String(entity.id || "")) return false;
-    const marker = normalizeBestiaryText([
-      asset.variant,
-      asset.purpose,
-      asset.role,
-      asset.derivative_type,
-      asset.processing
-    ].filter(Boolean).join(" "));
+    return entityType === type && String(asset.entity_id || "") === String(entity.id || "");
+  });
+  const approved = entityAssets.find(asset =>
+    asset.transparent_blob &&
+    asset.transparent_review_status === "approved" &&
+    asset.transparent_audit?.pass === true
+  );
+  if (approved) return mediaTransparentUrlForAsset(approved) || mediaUrlForAsset(approved, false);
+  const legacy = entityAssets.find(asset => {
+    const marker = normalizeBestiaryText([asset.variant, asset.purpose, asset.role, asset.derivative_type, asset.processing].filter(Boolean).join(" "));
     return asset.is_transparent === true || asset.is_cutout === true ||
       marker.includes("transparent") || marker.includes("cutout") || marker.includes("rembg");
   });
-  const derivative = explicitAssets[0];
-  return derivative ? mediaUrlForAsset(derivative, false) : imageUrlForEntity(entity);
+  return legacy ? mediaUrlForAsset(legacy, false) : imageUrlForEntity(entity);
 }
 
 function dungeonAccent(item) {
@@ -1676,35 +1677,44 @@ function rebuildMediaCache() {
   }
   state.mediaUrlCache.clear();
   state.mediaUrlReverse.clear();
-
   for (const asset of state.data.media_assets || []) {
-    if (asset.thumb_blob) {
-      const url = URL.createObjectURL(asset.thumb_blob);
-      state.mediaUrlCache.set(`${asset.id}:thumb`, url);
-      state.mediaUrlReverse.set(`${asset.id}:thumb`, url);
-    }
-    if (asset.blob) {
-      const url = URL.createObjectURL(asset.blob);
-      state.mediaUrlCache.set(`${asset.id}:full`, url);
-      state.mediaUrlReverse.set(`${asset.id}:full`, url);
+    const variants = [["original", asset.blob],["preview", asset.preview_blob],["thumb", asset.thumb_blob],["transparent", asset.transparent_blob]];
+    for (const [kind, blob] of variants) {
+      if (!blob) continue;
+      const url = URL.createObjectURL(blob);
+      state.mediaUrlCache.set(`${asset.id}:${kind}`, url);
+      state.mediaUrlReverse.set(`${asset.id}:${kind}`, url);
     }
   }
 }
 
-function mediaUrlForAsset(asset, thumb = false) {
+function mediaOriginalUrlForAsset(asset) {
   if (!asset) return "";
-  const key = `${asset.id}:${thumb ? "thumb" : "full"}`;
-  const cached = state.mediaUrlCache.get(key);
-  if (cached) return cached;
-  if (thumb && asset.thumb_path) return asset.thumb_path;
-  if (!thumb && asset.path) return asset.path;
-  if (asset.path) return asset.path;
-  return "";
+  return state.mediaUrlCache.get(`${asset.id}:original`) || asset.path || "";
+}
+
+function mediaTransparentUrlForAsset(asset) {
+  if (!asset) return "";
+  return state.mediaUrlCache.get(`${asset.id}:transparent`) || asset.transparent_path || "";
+}
+
+function mediaUrlForAsset(asset, variant = false) {
+  if (!asset) return "";
+  const kind = variant === true ? "thumb" : variant === false ? "preview" : String(variant || "preview");
+  if (kind === "original") return mediaOriginalUrlForAsset(asset);
+  if (kind === "transparent") return mediaTransparentUrlForAsset(asset);
+  if (kind === "thumb") return state.mediaUrlCache.get(`${asset.id}:thumb`) || asset.thumb_path || state.mediaUrlCache.get(`${asset.id}:preview`) || asset.preview_path || mediaOriginalUrlForAsset(asset);
+  return state.mediaUrlCache.get(`${asset.id}:preview`) || asset.preview_path || mediaOriginalUrlForAsset(asset);
 }
 
 function imageUrlForEntity(entity) {
   if (!entity?.image_path) return "";
-  const asset = (state.data.media_assets || []).find(m => m.path === entity.image_path || m.thumb_path === entity.image_path);
+  const asset = (state.data.media_assets || []).find(m =>
+    m.path === entity.image_path || m.preview_path === entity.image_path || m.thumb_path === entity.image_path || m.transparent_path === entity.image_path
+  );
+  if (asset?.transparent_blob && asset.transparent_review_status === "approved" && asset.transparent_audit?.pass === true) {
+    return mediaTransparentUrlForAsset(asset) || mediaUrlForAsset(asset, false);
+  }
   return mediaUrlForAsset(asset, false) || entity.image_path || "";
 }
 
@@ -4256,24 +4266,72 @@ function renderBrouhahaEffectDetail(item) {
 }
 
 function renderMediaAssetDetail(asset) {
-  const preview = mediaUrlForAsset(asset, false) || asset.path || "";
-  return `
-    <div class="detail-card">
-      <div class="detail-head">
-        <div>
-          <span class="badge">${escapeHtml(asset.entity_type || "gallery")}</span>
-          <h3>${escapeHtml(asset.label || asset.file_name || asset.id)}</h3>
-          <div class="muted">${escapeHtml(asset.path || "")}</div>
-        </div>
-      </div>
-      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(preview || "")}" data-alt="${escapeHtml(asset.label || asset.file_name || asset.id)}">
-        ${preview ? `<img src="${escapeHtml(preview)}" alt="${escapeHtml(asset.label || asset.file_name || asset.id)}" loading="lazy">` : `<div class="placeholder large">🖼️</div>`}
-      </div>
-      <p><strong>Nom de fichier :</strong> ${escapeHtml(asset.file_name || "—")}</p>
-      <p><strong>Type MIME :</strong> ${escapeHtml(asset.mime_type || "—")}</p>
-      <p><strong>Entité :</strong> ${escapeHtml(asset.entity_type || "gallery")} · ${escapeHtml(asset.entity_id || "—")}</p>
+  if (!asset) return `<div class="panel empty">Sélectionne un média.</div>`;
+  const original = mediaOriginalUrlForAsset(asset);
+  const preview = mediaUrlForAsset(asset, "preview");
+  const thumb = mediaUrlForAsset(asset, "thumb");
+  const transparent = mediaTransparentUrlForAsset(asset);
+  const attachment = mediaAttachment(asset);
+  const derivative = mediaDerivativeState(asset);
+  const audit = asset.transparent_audit || null;
+  const ui = state.ui.media || {};
+  const linkType = ui.selectedId === asset.id ? (ui.linkType || asset.entity_type || "gallery") : (asset.entity_type || "gallery");
+  const linkEntityId = ui.selectedId === asset.id ? (ui.linkEntityId || asset.entity_id || "") : (asset.entity_id || "");
+  const linkTypes = ["gallery","dungeons","creatures","heroes","npcs","quests","loot_items","interactables","brouhaha_effects"];
+  const entityOptions = linkType === "gallery" ? [] : (state.data[linkType] || []);
+  const originalSize = asset.original_size || asset.blob?.size || 0;
+  return `<section class="media-detail-v6 panel">
+    <button class="ghost media-back-library" type="button" data-action="media-back-library">${shellIcon("back")}<span>Bibliothèque</span></button>
+    <header class="media-detail-head-v6">
+      <div><span class="eyebrow">Média local</span><h2>${escapeHtml(asset.label || asset.file_name || asset.id || "Média")}</h2><p>${escapeHtml(asset.file_name || "Nom de fichier non renseigné")}</p></div>
+      <div class="media-detail-state"><span class="local">Local</span><span class="${derivative.tone}">${escapeHtml(derivative.label)}</span></div>
+    </header>
+    <div class="media-variant-grid">
+      ${renderMediaVariant("Original", original, "original", `${asset.mime_type || "type inconnu"} · ${mediaBytes(originalSize)}`)}
+      ${renderMediaVariant("Thumbnail", thumb, "thumb", asset.thumb_blob ? "Dérivé local" : "Fallback original")}
+      ${renderMediaVariant("Aperçu", preview, "preview", asset.preview_blob ? "WebP local" : "Fallback original")}
+      ${renderMediaVariant("Dérivé transparent", transparent, "transparent", asset.transparent_blob ? "PNG RGBA" : "À générer")}
     </div>
-  `;
+    <div class="media-detail-columns">
+      <section class="media-detail-box">
+        <span class="eyebrow">Rattachement</span>
+        <h3>${attachment ? `${escapeHtml(getLabel(attachment.type))} · ${escapeHtml(mediaEntityTitle(attachment.type, attachment.entity))}` : "Sans rattachement fiable"}</h3>
+        <label><span>Famille</span><select data-action="media-link-type">
+          ${linkTypes.map(type => `<option value="${type}" ${type === linkType ? "selected" : ""}>${type === "gallery" ? "Sans rattachement" : escapeHtml(getLabel(type))}</option>`).join("")}
+        </select></label>
+        <label><span>Entité</span><select data-action="media-link-entity" ${linkType === "gallery" ? "disabled" : ""}>
+          <option value="">—</option>
+          ${entityOptions.map(entity => `<option value="${escapeHtml(String(entity.id || ""))}" ${String(entity.id) === String(linkEntityId) ? "selected" : ""}>${escapeHtml(mediaEntityTitle(linkType, entity))}</option>`).join("")}
+        </select></label>
+        <button class="secondary" type="button" data-action="media-attach" data-id="${escapeHtml(String(asset.id || ""))}">Enregistrer le rattachement</button>
+      </section>
+      <section class="media-detail-box rembg-box">
+        <span class="eyebrow">Détourage figurine</span><h3>rembg · IS-Net / DIS</h3>
+        <p>Modèle validé : <code>isnet-general-use</code>. L'original ci-dessus n'est jamais réécrit.</p>
+        <div class="media-rembg-actions">
+          <button class="ghost" type="button" data-action="media-download-original" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob ? "" : "disabled"}>Télécharger l'original</button>
+          <label class="secondary ${asset.blob ? "" : "disabled"}">Importer le PNG rembg<input type="file" accept="image/png,.png" data-action="media-derivative-upload" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob ? "" : "disabled"} hidden></label>
+        </div>
+        ${asset.blob ? "" : `<small class="media-warning">Ce média historique ne possède pas de Blob original local. Aucun dérivé ne peut être validé ici sans source vérifiable.</small>`}
+        ${audit ? `<div class="media-alpha-audit ${audit.pass ? "pass" : "fail"}">
+          <div><span>Alpha réel</span><b>${audit.has_alpha_channel ? "Oui" : "Non"}</b></div>
+          <div><span>Transparent</span><b>${Number(audit.transparent_ratio || 0).toFixed(3)}</b></div>
+          <div><span>Bords doux</span><b>${Number(audit.soft_edge_ratio || 0).toFixed(3)}</b></div>
+          <div><span>Dimensions</span><b>${audit.width || "?"}×${audit.height || "?"}</b></div>
+          <div class="wide"><span>BBox alpha</span><b>${audit.alpha_bbox ? audit.alpha_bbox.join(" · ") : "Aucune"}</b></div>
+        </div>` : `<div class="media-workflow-note">Original immutable → rembg → PNG RGBA → audit alpha → contrôle visuel.</div>`}
+        ${asset.transparent_blob ? `<div class="media-review-actions">
+          <button class="primary" type="button" data-action="media-derivative-approve" data-id="${escapeHtml(String(asset.id || ""))}" ${audit?.pass ? "" : "disabled"}>Valider visuellement</button>
+          <button class="ghost" type="button" data-action="media-derivative-reject" data-id="${escapeHtml(String(asset.id || ""))}">À corriger</button>
+          <button class="danger ghost" type="button" data-action="media-derivative-remove" data-id="${escapeHtml(String(asset.id || ""))}">Retirer le dérivé</button>
+        </div>` : ""}
+      </section>
+    </div>
+    <footer class="media-original-proof">
+      <span>Original</span><strong>${asset.original_sha256 ? `SHA-256 ${escapeHtml(String(asset.original_sha256).slice(0,16))}…` : "Empreinte calculée lors du prochain traitement rembg"}</strong>
+      <small>${asset.transparent_source_sha256 && asset.original_sha256 === asset.transparent_source_sha256 ? "Source vérifiée inchangée pendant la création du dérivé." : "Aucun détourage n'écrase le Blob original."}</small>
+    </footer>
+  </section>`;
 }
 
 function renderGenerator() {
@@ -5046,48 +5104,100 @@ function renderField(field, item, type = state.ui.workshopType) {
   `;
 }
 
+function mediaAttachment(asset) {
+  const type = relationStore(asset?.entity_type);
+  const id = String(asset?.entity_id || "");
+  if (!type || !id || !state.data[type]) return null;
+  const entity = findById(type, id);
+  return entity ? { type, entity } : null;
+}
+
+function mediaIsLinked(asset) { return Boolean(mediaAttachment(asset)); }
+
+function mediaEntityTitle(type, entity) { return entity?.name || entity?.title || entity?.hero_base_name || entity?.label || entity?.id || getLabel(type); }
+
+function mediaBytes(value) {
+  const n = Number(value || 0);
+  if (!Number.isFinite(n) || n <= 0) return "—";
+  if (n < 1024) return `${n} o`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} Ko`;
+  return `${(n / (1024 * 1024)).toFixed(1)} Mo`;
+}
+
+function mediaDerivativeState(asset) {
+  if (!asset?.transparent_blob) return { key: "none", label: "Aucun dérivé", tone: "muted" };
+  if (asset.transparent_review_status === "approved" && asset.transparent_audit?.pass === true) return { key: "approved", label: "Dérivé validé", tone: "ok" };
+  if (asset.transparent_review_status === "needs_fix" || asset.transparent_audit?.pass === false) return { key: "needs_fix", label: "Dérivé à corriger", tone: "err" };
+  return { key: "pending", label: "Contrôle visuel requis", tone: "warn" };
+}
+
+function mediaFilteredAssets() {
+  const ui = state.ui.media || {};
+  const scope = ["all","linked","orphan"].includes(ui.scope) ? ui.scope : "all";
+  const query = normalizeBestiaryText(ui.search || "");
+  return [...(state.data.media_assets || [])].filter(asset => {
+    const linked = mediaIsLinked(asset);
+    if (scope === "linked" && !linked) return false;
+    if (scope === "orphan" && linked) return false;
+    if (!query) return true;
+    const attachment = mediaAttachment(asset);
+    const hay = normalizeBestiaryText([
+      asset.label, asset.file_name, asset.path, asset.mime_type, asset.entity_type, asset.entity_id,
+      attachment ? mediaEntityTitle(attachment.type, attachment.entity) : "",
+      asset.transparent_review_status, asset.transparent_model, asset.transparent_processing
+    ].filter(Boolean).join(" "));
+    return hay.includes(query);
+  }).sort((a,b) => String(a.label || a.file_name || a.id).localeCompare(String(b.label || b.file_name || b.id), "fr", { sensitivity: "base" }));
+}
+
+function renderMediaAssetCard(asset, active = false) {
+  const preview = thumbUrlForAsset(asset);
+  const attachment = mediaAttachment(asset);
+  const derivative = mediaDerivativeState(asset);
+  return `
+    <button class="media-card-v6 ${active ? "active" : ""}" type="button" data-action="media-select" data-id="${escapeHtml(String(asset.id || ""))}">
+      <div class="media-card-visual">${preview ? `<img src="${escapeHtml(preview)}" alt="" loading="lazy">` : `<div class="media-empty-visual">Aperçu indisponible</div>`}</div>
+      <div class="media-card-copy-v6">
+        <div class="media-card-kicker"><span class="media-local-dot"></span><span>Original local</span></div>
+        <strong>${escapeHtml(asset.label || asset.file_name || asset.id || "Média")}</strong>
+        <small>${attachment ? `${escapeHtml(getLabel(attachment.type))} · ${escapeHtml(mediaEntityTitle(attachment.type, attachment.entity))}` : "Orphelin · sans rattachement"}</small>
+        <div class="media-card-state ${derivative.tone}"><i></i><span>${escapeHtml(derivative.label)}</span></div>
+      </div>
+    </button>`;
+}
+
+function renderMediaVariant(label, url, kind, meta = "") {
+  return `<article class="media-variant-card ${kind}">
+    <header><strong>${escapeHtml(label)}</strong>${meta ? `<span>${escapeHtml(meta)}</span>` : ""}</header>
+    <div class="media-variant-preview ${kind === "transparent" ? "checker" : ""}">
+      ${url ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(label)}" loading="lazy">` : `<span>Non disponible</span>`}
+    </div>
+  </article>`;
+}
+
 function renderMedia() {
-  const filterType = state.ui.media.filterType || "gallery";
-  const assets = filterType === "gallery"
-    ? state.data.media_assets || []
-    : (state.data.media_assets || []).filter(a => a.entity_type === filterType);
-
+  const assets = mediaFilteredAssets();
+  const selected = assets.find(asset => String(asset.id) === String(state.ui.media.selectedId || "")) ||
+    (state.ui.media.selectedId ? findById("media_assets", state.ui.media.selectedId) : null) || assets[0] || null;
+  const scope = ["all","linked","orphan"].includes(state.ui.media.scope) ? state.ui.media.scope : "all";
   return renderShell(`
-    <section class="panel">
-      <div class="panel-title">
-        <h2>Médias</h2>
-        <div class="muted">Images locales, miniatures, stockage en IndexedDB. Les images ne passent pas par XLSX.</div>
+    <section class="media-library-v6 ${selected && state.ui.media.selectedId ? "detail-open" : ""}">
+      <header class="media-library-head">
+        <div><span class="eyebrow">Administration locale</span><h1>Médias</h1><p>Originaux, miniatures, aperçus et dérivés transparents restent distincts.</p></div>
+        <label class="primary media-add-button">Ajouter<input type="file" accept="image/*" multiple data-action="media-upload" hidden></label>
+      </header>
+      <div class="media-toolbar-v6">
+        <label class="media-search-v6"><span>Recherche</span><input type="search" data-action="media-search" value="${escapeHtml(state.ui.media.search || "")}" placeholder="Rechercher un média…"></label>
+        <div class="segmented" role="group" aria-label="Filtre de bibliothèque">
+          ${[["all","Tous"],["linked","Liés"],["orphan","Orphelins"]].map(([value,label]) => `<button type="button" data-action="media-scope" data-scope="${value}" class="${scope === value ? "active" : ""}" aria-pressed="${scope === value ? "true" : "false"}">${label}</button>`).join("")}
+        </div>
+        <span class="media-count-v6">${assets.length} média${assets.length > 1 ? "s" : ""}</span>
       </div>
-
-      <div class="media-toolbar">
-        <label>
-          <span>Type</span>
-          <select data-action="media-filter-type">
-            <option value="gallery" ${filterType === "gallery" ? "selected" : ""}>Galerie</option>
-            <option value="dungeons" ${filterType === "dungeons" ? "selected" : ""}>Donjons</option>
-            <option value="creatures" ${filterType === "creatures" ? "selected" : ""}>Créatures</option>
-            <option value="heroes" ${filterType === "heroes" ? "selected" : ""}>Héros</option>
-            <option value="npcs" ${filterType === "npcs" ? "selected" : ""}>PNJ</option>
-            <option value="quests" ${filterType === "quests" ? "selected" : ""}>Quêtes</option>
-            <option value="loot_items" ${filterType === "loot_items" ? "selected" : ""}>Loot</option>
-          </select>
-        </label>
-        ${filterType === "gallery" ? `<div class="muted">Aucune entité liée pour la galerie générale.</div>` : `<label>
-          <span>Entité liée</span>
-          <select data-action="media-filter-entity">
-            <option value="">—</option>
-            ${(state.data[filterType] || []).map(it => `<option value="${escapeHtml(it.id)}" ${state.ui.media.filterEntity === it.id ? "selected" : ""}>${escapeHtml(it.name || it.title || it.hero_base_name || it.label || "")}</option>`).join("")}
-          </select>
-        </label>`}
-        <input type="file" accept="image/*" multiple data-action="media-upload">
-        <button class="ghost" data-action="media-refresh">Rafraîchir</button>
+      <div class="media-library-layout">
+        <section class="media-grid-v6">${assets.map(asset => renderMediaAssetCard(asset, selected && String(asset.id) === String(selected.id))).join("") || `<div class="panel empty">Aucun média pour ce filtre.</div>`}</section>
+        <aside class="media-detail-pane-v6">${selected ? renderMediaAssetDetail(selected) : `<div class="panel empty">Sélectionne un média.</div>`}</aside>
       </div>
-
-      <div class="gallery">
-        ${assets.map(asset => renderMediaAssetCard(asset, false)).join("") || `<div class="empty">Aucune image.</div>`}
-      </div>
-    </section>
-  `);
+    </section>`);
 }
 
 function renderImportExport() {
@@ -5413,32 +5523,66 @@ function resolveTargetEntityFromMediaForm() {
   return { type, id };
 }
 
-async function storeMediaFile(file, entityType = "gallery", entityId = "") {
-  const safe = safeFilename(file.name);
-  const unique = `${safe}_${uid("img").split("_").pop()}`;
-  const main = await fileToOptimizedBlob(file, 1600, 0.84);
-  const thumb = await fileToOptimizedBlob(file, 512, 0.78);
-  const path = `assets/images/${entityType}/${unique}.webp`;
-  const thumbPath = `assets/images/${entityType}/thumbs/${unique}.webp`;
+async function sha256Blob(blob) {
+  if (!blob?.arrayBuffer || !globalThis.crypto?.subtle) return "";
+  const digest = await crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
+  return [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, "0")).join("");
+}
 
+async function auditTransparentPng(file) {
+  const buffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  const signature = [137,80,78,71,13,10,26,10];
+  const png = bytes.length > 26 && signature.every((value,index) => bytes[index] === value);
+  if (!png) throw new Error("Le dérivé doit être un PNG.");
+  const colorType = bytes[25];
+  let hasTrns = false;
+  for (let i = 8; i + 12 <= bytes.length;) {
+    const length = ((bytes[i] << 24) >>> 0) + (bytes[i+1] << 16) + (bytes[i+2] << 8) + bytes[i+3];
+    const type = String.fromCharCode(bytes[i+4],bytes[i+5],bytes[i+6],bytes[i+7]);
+    if (type === "tRNS") hasTrns = true;
+    i += 12 + length;
+    if (type === "IEND") break;
+  }
+  const hasAlphaChannel = colorType === 4 || colorType === 6 || hasTrns;
+  const url = URL.createObjectURL(new Blob([buffer], { type: "image/png" }));
+  try {
+    const img = await loadImage(url);
+    const width = img.naturalWidth || img.width, height = img.naturalHeight || img.height;
+    const canvas = document.createElement("canvas"); canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) throw new Error("Canvas indisponible pour l'audit alpha.");
+    ctx.clearRect(0,0,width,height); ctx.drawImage(img,0,0,width,height);
+    const data = ctx.getImageData(0,0,width,height).data, total = Math.max(1,width*height);
+    let transparent=0,soft=0,opaque=0,minX=width,minY=height,maxX=-1,maxY=-1;
+    for(let p=0,idx=0;p<total;p++,idx+=4){
+      const alpha=data[idx+3];
+      if(alpha<16) transparent++; else if(alpha<240) soft++; else opaque++;
+      if(alpha>0){const x=p%width,y=Math.floor(p/width);if(x<minX)minX=x;if(y<minY)minY=y;if(x>maxX)maxX=x;if(y>maxY)maxY=y;}
+    }
+    const transparentRatio=transparent/total,softRatio=soft/total,opaqueRatio=opaque/total,bbox=maxX>=0?[minX,minY,maxX+1,maxY+1]:null;
+    return {pass:Boolean(hasAlphaChannel&&bbox&&transparentRatio>0.01),decodable:true,png:true,has_alpha_channel:hasAlphaChannel,color_type:colorType,width,height,transparent_ratio:Number(transparentRatio.toFixed(5)),soft_edge_ratio:Number(softRatio.toFixed(5)),opaque_ratio:Number(opaqueRatio.toFixed(5)),alpha_bbox:bbox};
+  } finally { URL.revokeObjectURL(url); }
+}
+
+async function storeMediaFile(file, entityType = "gallery", entityId = "") {
+  const originalBuffer = await file.arrayBuffer();
+  const originalBlob = new Blob([originalBuffer], { type: file.type || "application/octet-stream" });
+  const safe = safeFilename(file.name || "image");
+  const unique = `${safe}_${uid("img").split("_").pop()}`;
+  const preview = await fileToOptimizedBlob(file, 1600, 0.84);
+  const thumb = await fileToOptimizedBlob(file, 512, 0.78);
+  const path = `local-media/${entityType}/${unique}`;
   const media = {
-    id: uid("media"),
-    label: file.name,
-    file_name: file.name,
-    path,
-    thumb_path: thumbPath,
-    mime_type: "image/webp",
-    entity_type: entityType,
-    entity_id: entityId || "",
-    blob: main.blob,
-    thumb_blob: thumb.blob,
-    width: main.width,
-    height: main.height,
-    created_at: nowISO(),
-    updated_at: nowISO()
+    id: uid("media"), label: file.name || safe, file_name: file.name || safe, path,
+    preview_path:`local-media/${entityType}/previews/${unique}.webp`,
+    thumb_path:`local-media/${entityType}/thumbs/${unique}.webp`,
+    mime_type:file.type || "application/octet-stream", entity_type:entityType || "gallery", entity_id:entityId || "",
+    blob:originalBlob, preview_blob:preview.blob, thumb_blob:thumb.blob,
+    width:preview.width,height:preview.height,original_size:originalBlob.size,original_sha256:await sha256Blob(originalBlob),
+    media_schema:"v6-local-original-preview-derivative",created_at:nowISO(),updated_at:nowISO()
   };
-  await putOne("media_assets", media);
-  return media;
+  await putOne("media_assets", media); return media;
 }
 
 async function saveMediaForEntity(type, entity, file) {
@@ -5536,21 +5680,62 @@ function shuffle(arr) {
 }
 
 async function handleMediaUpload(files) {
-  const entityType = state.ui.media.filterType || "gallery";
-  const entityId = state.ui.media.filterEntity || "";
-  for (const file of files) {
-    const media = await storeMediaFile(file, entityType, entityId);
-    if (entityType !== "gallery" && entityId) {
-      const list = state.data[entityType] || [];
-      const entity = list.find(x => x.id === entityId);
-      if (entity) {
-        entity.image_path = media.path;
-        await putOne(entityType, entity);
-      }
-    }
-  }
+  for (const file of files) await storeMediaFile(file, "gallery", "");
   await refreshData();
-  toast("🖼️ Image(s) ajoutée(s)", "success");
+  const latest = (state.data.media_assets || []).slice().sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")))[0];
+  if (latest) { state.ui.media.selectedId=latest.id; state.ui.media.linkType=latest.entity_type||"gallery"; state.ui.media.linkEntityId=latest.entity_id||""; await saveUiState(state.ui); }
+  toast("Média ajouté localement. Original conservé.", "success");
+}
+
+async function saveTransparentDerivative(assetId, file) {
+  const existing = await getById("media_assets", assetId);
+  if (!existing) throw new Error("Média introuvable.");
+  if (!existing.blob) throw new Error("Original Blob local absent : impossible de valider la source.");
+  const beforeHash = await sha256Blob(existing.blob);
+  const audit = await auditTransparentPng(file);
+  const derivativeBuffer = await file.arrayBuffer();
+  const entityType = relationStore(existing.entity_type) || "gallery";
+  const safe = safeFilename((existing.file_name || existing.label || existing.id || "media").replace(/\.[^.]+$/,""));
+  const next = structuredClone(existing);
+  next.transparent_blob=new Blob([derivativeBuffer],{type:"image/png"});
+  next.transparent_path=`local-media/${entityType}/transparent/${safe}_${existing.id}.png`;
+  next.transparent_mime_type="image/png"; next.transparent_width=audit.width; next.transparent_height=audit.height;
+  next.transparent_audit=audit; next.transparent_review_status=audit.pass?"pending":"needs_fix";
+  next.transparent_model="isnet-general-use"; next.transparent_processing="rembg / IS-Net DIS";
+  next.transparent_source_sha256=beforeHash; if(!next.original_sha256) next.original_sha256=beforeHash;
+  next.transparent_created_at=nowISO(); next.updated_at=nowISO();
+  await putOne("media_assets",next);
+  const persisted=await getById("media_assets",assetId),afterHash=await sha256Blob(persisted?.blob);
+  if(!afterHash||afterHash!==beforeHash) throw new Error("STOP sécurité : empreinte de l'original modifiée après écriture du dérivé.");
+  await refreshData(); state.ui.media.selectedId=assetId; await saveUiState(state.ui); return audit;
+}
+
+async function setTransparentDerivativeReview(assetId, status) {
+  const existing=await getById("media_assets",assetId);
+  if(!existing?.transparent_blob) return false;
+  if(status==="approved"&&existing.transparent_audit?.pass!==true) throw new Error("L'audit alpha doit être valide avant approbation visuelle.");
+  const next=structuredClone(existing); next.transparent_review_status=status==="approved"?"approved":"needs_fix"; next.transparent_reviewed_at=nowISO(); next.updated_at=nowISO();
+  await putOne("media_assets",next); await refreshData(); state.ui.media.selectedId=assetId; await saveUiState(state.ui); return true;
+}
+
+async function removeTransparentDerivative(assetId) {
+  const existing=await getById("media_assets",assetId); if(!existing) return false;
+  const originalHash=existing.blob?await sha256Blob(existing.blob):"";
+  const next=structuredClone(existing);
+  for(const key of ["transparent_blob","transparent_path","transparent_mime_type","transparent_width","transparent_height","transparent_audit","transparent_review_status","transparent_model","transparent_processing","transparent_source_sha256","transparent_created_at","transparent_reviewed_at"]) delete next[key];
+  next.updated_at=nowISO(); await putOne("media_assets",next);
+  const persisted=await getById("media_assets",assetId);
+  if(originalHash&&await sha256Blob(persisted?.blob)!==originalHash) throw new Error("STOP sécurité : l'original a changé pendant le retrait du dérivé.");
+  await refreshData(); state.ui.media.selectedId=assetId; await saveUiState(state.ui); return true;
+}
+
+async function attachMediaAsset(assetId, type, entityId) {
+  const existing=await getById("media_assets",assetId); if(!existing) throw new Error("Média introuvable.");
+  const next=structuredClone(existing);
+  if(type==="gallery"){next.entity_type="gallery";next.entity_id="";}
+  else {const target=findById(type,entityId);if(!target)throw new Error("Entité de rattachement introuvable.");next.entity_type=type;next.entity_id=String(target.id);}
+  next.updated_at=nowISO(); await putOne("media_assets",next); await refreshData();
+  state.ui.media.selectedId=assetId;state.ui.media.linkType=next.entity_type;state.ui.media.linkEntityId=next.entity_id;await saveUiState(state.ui);
 }
 
 async function exportEntityFile(type) {
@@ -6232,6 +6417,30 @@ function bindEvents() {
           toast(`Quête : ${quest.name || "tirée"}`, "success");
           return;
         }
+        case "media-scope":
+          state.ui.media.scope = ["all","linked","orphan"].includes(btn.dataset.scope) ? btn.dataset.scope : "all";
+          state.ui.media.selectedId = "";
+          await saveUiState(state.ui); render(); return;
+        case "media-select": {
+          const asset = findById("media_assets", btn.dataset.id); if (!asset) return;
+          state.ui.media.selectedId=String(asset.id); state.ui.media.linkType=asset.entity_type||"gallery"; state.ui.media.linkEntityId=asset.entity_id||"";
+          await saveUiState(state.ui); render(); return;
+        }
+        case "media-back-library":
+          state.ui.media.selectedId=""; await saveUiState(state.ui); render(); return;
+        case "media-attach":
+          await attachMediaAsset(btn.dataset.id,state.ui.media.linkType||"gallery",state.ui.media.linkEntityId||""); toast("Rattachement média enregistré.","success"); return;
+        case "media-download-original": {
+          const asset=await getById("media_assets",btn.dataset.id); if(!asset?.blob){toast("Original local indisponible.","warn");return;}
+          downloadBlob(asset.blob,asset.file_name||"original"); return;
+        }
+        case "media-derivative-approve":
+          await setTransparentDerivativeReview(btn.dataset.id,"approved"); toast("Dérivé transparent validé visuellement.","success"); return;
+        case "media-derivative-reject":
+          await setTransparentDerivativeReview(btn.dataset.id,"needs_fix"); toast("Dérivé marqué à corriger. L'original reste utilisé.","warn"); return;
+        case "media-derivative-remove":
+          if(!confirm("Retirer uniquement le dérivé transparent ? L'original et sa miniature seront conservés.")) return;
+          await removeTransparentDerivative(btn.dataset.id); toast("Dérivé retiré. Original intact.","info"); return;
         case "media-refresh":
           await refreshData();
           return;
@@ -6396,6 +6605,10 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           return;
+        case "media-link-type":
+          state.ui.media.linkType=el.value||"gallery"; state.ui.media.linkEntityId=""; await saveUiState(state.ui); render(); return;
+        case "media-link-entity":
+          state.ui.media.linkEntityId=el.value||""; await saveUiState(state.ui); return;
         case "media-filter-entity":
           state.ui.media.filterEntity = el.value;
           await saveUiState(state.ui);
@@ -6406,6 +6619,12 @@ function bindEvents() {
           if (!files.length) return;
           await handleMediaUpload(files);
           el.value = "";
+          return;
+        }
+        case "media-derivative-upload": {
+          const file=el.files?.[0]; if(!file) return;
+          const audit=await saveTransparentDerivative(el.dataset.id,file); el.value="";
+          toast(audit.pass ? "Audit alpha valide. Contrôle visuel requis." : "Audit alpha insuffisant. Dérivé conservé à corriger.", audit.pass ? "success" : "warn");
           return;
         }
         case "import-file": {
@@ -6440,6 +6659,12 @@ function bindEvents() {
     if (!(el instanceof HTMLElement)) return;
     if (state.ui.view === "atelier" && el.closest?.('form[data-workshop-form="true"]') && el.getAttribute("name")) {
       captureWorkshopControl(el);
+      return;
+    }
+    if (el.dataset.action === "media-search") {
+      state.ui.media.search=el.value; state.ui.media.selectedId="";
+      if(searchDebounceTimer)clearTimeout(searchDebounceTimer);
+      searchDebounceTimer=setTimeout(async()=>{await saveUiState(state.ui);render();requestAnimationFrame(()=>{const input=app.querySelector('[data-action="media-search"]');if(input){input.focus({preventScroll:true});input.setSelectionRange?.(input.value.length,input.value.length);}})},140);
       return;
     }
     if (el.dataset.action === "search") {
