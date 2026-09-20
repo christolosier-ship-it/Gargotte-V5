@@ -7,6 +7,10 @@ on:
     branches: [ui6-polish-validation-v6]
   workflow_dispatch:
 
+concurrency:
+  group: ui6-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
