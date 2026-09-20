@@ -500,3 +500,82 @@ Une nouvelle UI ne force pas la réécriture de toutes les entités.
 - `Voir tout` préfiltré ;
 - retour/contexte restauré ;
 - aucune relation fictive.
+
+---
+
+# 17. Implémentation UI-3A sur V5.3
+
+Statut : **LIVRÉ — 20 septembre 2026**
+
+Périmètre fermé : **Donjons + Héros uniquement**. UI-3B, UI-3C et UI-3D ne sont pas démarrés par ce chantier.
+
+## Pré-check
+
+- IndexedDB : aucune migration, aucun store modifié, aucune réécriture d’entité lors de la lecture ;
+- Donjons : lecture des champs historiques `name`, `description`, `floor_budgets`, `boss_name`, `tags`, `image_path`, avec tolérance des champs optionnels anciens ;
+- Héros : regroupement en mémoire des enregistrements de niveaux existants par `hero_base_name` exact ;
+- ancien Héros sans `hero_base_name` : isolé par ID, jamais fusionné par similarité de nom ;
+- workflow image relu : original immutable, dérivé transparent séparé, fallback original autorisé lorsque aucun dérivé n’existe.
+
+## Donjons
+
+Livré :
+
+- collection Galerie/Liste avec recherche locale, dernier mode et scroll mémorisés ;
+- couverture majeure et ambiance pilotée par l’image réelle et, si présent, un accent explicitement stocké ; sinon accent V6 neutre ;
+- description sans phrase d’ambiance inventée ;
+- progression des étages en rail horizontal scrollable, lisible de quelques étages à plusieurs dizaines / 100 ;
+- support de `base_floor_count` ancien sans exiger ce champ ;
+- Boss final résolu par `boss_name` exact dans le Donjon, ou par un unique Boss catégorisé dans ce Donjon ; en cas d’ambiguïté, aucune Créature n’est choisie arbitrairement ;
+- aperçus fiables Créatures, Quêtes, Objets interactifs et Brouhaha à partir de `dungeon_id`, avec fallback par nom exact seulement si le Donjon est unique ;
+- ouverture des entrées d’aperçu via la navigation liée existante ;
+- image/couverture absente ou illisible : fallback de mise en page, sans mutation média.
+
+Le moteur transversal `Voir tout` préfiltré reste réservé à UI-3D conformément au découpage du document.
+
+## Héros
+
+Livré :
+
+- une carte de collection par `hero_base_name` exact ;
+- regroupement de tous les enregistrements de niveaux sans modification des données ;
+- recherche locale, Galerie/Liste, sélection et scroll mémorisés ;
+- dernier niveau consulté mémorisé par Héros dans `meta.ui_state` ;
+- niveau initial = dernier niveau consulté s’il existe, sinon plus petit niveau disponible ;
+- sélecteur N1/N2/N3/N4, avec niveaux absents désactivés et niveaux supplémentaires anciens conservés ;
+- image propre à l’enregistrement du niveau sélectionné ;
+- préférence aux dérivés transparents explicitement associés : champs de dérivé dédiés ou média lié par `entity_type + entity_id` avec métadonnée transparent/cutout/rembg ;
+- aucun rapprochement de média par ressemblance de nom ;
+- fallback sur l’original existant si aucun dérivé transparent n’existe, conformément au workflow ;
+- stats du niveau courant ;
+- compétences cumulées uniquement jusqu’au niveau courant ;
+- `-` et `—` ne créent pas de fausse compétence ;
+- tampon `Brouhaha +X` placé sur la compétence qui porte réellement la valeur ;
+- changement de niveau sans changement de Héros et sans retour forcé en haut de page.
+
+## Responsive
+
+- grand desktop confortable : master-detail autorisé ;
+- desktop plus étroit : fiche seule avec Retour ;
+- tablette paysage/portrait : `Collection -> Fiche -> Retour` ;
+- téléphone : `Collection -> Fiche -> Retour`.
+
+## Données et médias
+
+- `src/storage/idb.js` inchangé ;
+- DB `gargottex-v5-offline`, version 2 attendue inchangée ;
+- aucun original média remplacé ;
+- aucun rembg lancé automatiquement par UI-3A ;
+- aucun nouvel asset premium requis : UI-3A réutilise les ressources UI-1 déjà disponibles offline.
+
+## Gate UI-3A
+
+- Donjons complets : validé ;
+- progression scalable : validé ;
+- Héros groupés : validé ;
+- images par niveau : validé ;
+- compétences cumulées : validé ;
+- Brouhaha tampon : validé ;
+- tablette/téléphone séquentiels : validé.
+
+**UI-3A est clos. UI-3 global reste ACTIF pour UI-3B / UI-3C / UI-3D.**

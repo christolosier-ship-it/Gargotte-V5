@@ -205,6 +205,8 @@ let backupBusy = false;
 let searchDebounceTimer = null;
 let bestiaryScrollSaveTimer = null;
 let restoringBestiaryScroll = false;
+let codexFamilyScrollSaveTimer = null;
+let restoringCodexFamilyScroll = false;
 
 const ENTITY_DOWNLOAD_FILES = {
   dungeons: "dungeons.xlsx",
@@ -231,6 +233,10 @@ const state = {
     codexSelectedId: "",
     codexDetailOpen: false,
     codexReturnStack: [],
+    codexFamilies: {
+      dungeons: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
+      heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} }
+    },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     workshopType: "creatures",
     workshopSelectedId: "",
@@ -261,6 +267,10 @@ function defaultBlankUi() {
     codexSelectedId: "",
     codexDetailOpen: false,
     codexReturnStack: [],
+    codexFamilies: {
+      dungeons: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
+      heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} }
+    },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     workshopType: "creatures",
     workshopSelectedId: "",
@@ -296,6 +306,224 @@ const CREATURE_CATEGORY_META = {
   mini_boss: { label: "Mini-boss", sigil: "Sigil_MiniBoss.webp" },
   boss: { label: "Boss", sigil: "Sigil_Boss.webp" }
 };
+
+function defaultCodexFamiliesUi() {
+  return {
+    dungeons: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
+    heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} }
+  };
+}
+
+function ensureCodexFamilyUi() {
+  const defaults = defaultCodexFamiliesUi();
+  const current = state.ui.codexFamilies && typeof state.ui.codexFamilies === "object" ? state.ui.codexFamilies : {};
+  state.ui.codexFamilies = {
+    dungeons: { ...defaults.dungeons, ...(current.dungeons || {}) },
+    heroes: { ...defaults.heroes, ...(current.heroes || {}) }
+  };
+  for (const type of ["dungeons", "heroes"]) {
+    if (!["gallery", "list"].includes(state.ui.codexFamilies[type].mode)) {
+      state.ui.codexFamilies[type].mode = "gallery";
+    }
+    state.ui.codexFamilies[type].search = String(state.ui.codexFamilies[type].search || "");
+    state.ui.codexFamilies[type].scrollTop = Math.max(0, Number(state.ui.codexFamilies[type].scrollTop || 0));
+  }
+  const levels = state.ui.codexFamilies.heroes.levelByBase;
+  state.ui.codexFamilies.heroes.levelByBase = levels && typeof levels === "object" && !Array.isArray(levels) ? levels : {};
+}
+
+function heroBaseKey(hero) {
+  const base = String(hero?.hero_base_name || "").trim();
+  return base ? `base:${base}` : `id:${String(hero?.id || "")}`;
+}
+
+function buildHeroGroups() {
+  const groups = new Map();
+  for (const hero of state.data.heroes || []) {
+    const key = heroBaseKey(hero);
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        baseName: String(hero.hero_base_name || hero.name || "Héros sans nom").trim() || "Héros sans nom",
+        levels: []
+      });
+    }
+    groups.get(key).levels.push(hero);
+  }
+  return [...groups.values()]
+    .map(group => ({
+      ...group,
+      levels: group.levels.slice().sort((a, b) => {
+        const level = Number(a.level ?? 0) - Number(b.level ?? 0);
+        return level || String(a.id || "").localeCompare(String(b.id || ""), "fr", { sensitivity: "base" });
+      })
+    }))
+    .sort((a, b) => a.baseName.localeCompare(b.baseName, "fr", { sensitivity: "base" }));
+}
+
+function heroGroupByKey(key) {
+  return buildHeroGroups().find(group => group.key === key) || null;
+}
+
+function selectedHeroLevel(group) {
+  if (!group?.levels?.length) return null;
+  ensureCodexFamilyUi();
+  const remembered = Number(state.ui.codexFamilies.heroes.levelByBase[group.key]);
+  if (Number.isFinite(remembered)) {
+    const match = group.levels.find(item => Number(item.level) === remembered);
+    if (match) return match;
+  }
+  return group.levels[0];
+}
+
+function rememberHeroLevel(group, level) {
+  ensureCodexFamilyUi();
+  if (!group) return;
+  state.ui.codexFamilies.heroes.levelByBase[group.key] = Number(level);
+}
+
+function getHeroCollection() {
+  ensureCodexFamilyUi();
+  const q = normalizeBestiaryText(state.ui.codexFamilies.heroes.search);
+  let groups = buildHeroGroups();
+  if (q) {
+    groups = groups.filter(group => normalizeBestiaryText(group.levels.flatMap(level => [
+      group.baseName,
+      level.name,
+      level.role,
+      level.title,
+      level.ability_text,
+      level.effect_text,
+      ...tagsToArray(level.tags)
+    ]).filter(Boolean).join(" ")).includes(q));
+  }
+  return groups;
+}
+
+function getDungeonCollection() {
+  ensureCodexFamilyUi();
+  const q = normalizeBestiaryText(state.ui.codexFamilies.dungeons.search);
+  let items = [...(state.data.dungeons || [])];
+  if (q) {
+    items = items.filter(item => normalizeBestiaryText([
+      item.name,
+      item.description,
+      item.boss_name,
+      ...tagsToArray(item.tags)
+    ].filter(Boolean).join(" ")).includes(q));
+  }
+  return items.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "fr", { sensitivity: "base" }));
+}
+
+function familyCollectionInitialId(type) {
+  ensureCodexFamilyUi();
+  if (type === "dungeons") {
+    const selected = state.ui.codexFamilies.dungeons.selectedId;
+    if (selected && findById("dungeons", selected)) return selected;
+    return getDungeonCollection()[0]?.id || state.data.dungeons?.[0]?.id || "";
+  }
+  if (type === "heroes") {
+    const groups = buildHeroGroups();
+    const selectedKey = state.ui.codexFamilies.heroes.selectedBase;
+    const group = groups.find(item => item.key === selectedKey) || groups[0] || null;
+    const level = selectedHeroLevel(group);
+    return level?.id || "";
+  }
+  return (state.data[type] || [])[0]?.id || "";
+}
+
+function pathUrl(path) {
+  const clean = String(path || "").trim();
+  if (!clean) return "";
+  const asset = (state.data.media_assets || []).find(media => media.path === clean || media.thumb_path === clean);
+  return mediaUrlForAsset(asset, false) || clean;
+}
+
+function transparentDerivativeUrlForEntity(entity, type = "heroes") {
+  if (!entity) return "";
+  for (const field of ["transparent_image_path", "image_transparent_path", "cutout_path", "image_cutout_path", "rembg_path"]) {
+    const candidate = pathUrl(entity[field]);
+    if (candidate) return candidate;
+  }
+  const explicitAssets = (state.data.media_assets || []).filter(asset => {
+    const entityType = relationStore(asset.entity_type);
+    if (entityType !== type || String(asset.entity_id || "") !== String(entity.id || "")) return false;
+    const marker = normalizeBestiaryText([
+      asset.variant,
+      asset.purpose,
+      asset.role,
+      asset.derivative_type,
+      asset.processing
+    ].filter(Boolean).join(" "));
+    return asset.is_transparent === true || asset.is_cutout === true ||
+      marker.includes("transparent") || marker.includes("cutout") || marker.includes("rembg");
+  });
+  const derivative = explicitAssets[0];
+  return derivative ? mediaUrlForAsset(derivative, false) : imageUrlForEntity(entity);
+}
+
+function dungeonAccent(item) {
+  for (const value of [item?.accent, item?.accent_color, item?.color]) {
+    const candidate = String(value || "").trim();
+    if (/^#[0-9a-f]{6}$/i.test(candidate) || /^#[0-9a-f]{3}$/i.test(candidate)) return candidate;
+  }
+  return "#8A5E31";
+}
+
+function dungeonFloorBudgets(item) {
+  const raw = item?.floor_budgets;
+  let budgets = [];
+  if (Array.isArray(raw)) budgets = raw.slice();
+  else if (raw !== null && raw !== undefined && String(raw).trim()) budgets = parseFloorBudgets(raw);
+  const explicitCount = Number(item?.base_floor_count);
+  const count = Math.max(budgets.length, Number.isFinite(explicitCount) && explicitCount > 0 ? Math.floor(explicitCount) : 0);
+  return Array.from({ length: count }, (_, index) => budgets[index] ?? null);
+}
+
+function entityBelongsToDungeon(entity, dungeon) {
+  if (!entity || !dungeon) return false;
+  if (entity.dungeon_id) return String(entity.dungeon_id) === String(dungeon.id);
+  const stored = normalizeBestiaryText(entity.dungeon_name);
+  const target = normalizeBestiaryText(dungeon.name);
+  if (!stored || stored !== target) return false;
+  const matches = (state.data.dungeons || []).filter(item => normalizeBestiaryText(item.name) === target);
+  return matches.length === 1;
+}
+
+function dungeonLinkedEntities(dungeon) {
+  return {
+    creatures: (state.data.creatures || []).filter(item => entityBelongsToDungeon(item, dungeon)),
+    quests: (state.data.quests || []).filter(item => entityBelongsToDungeon(item, dungeon)),
+    interactables: (state.data.interactables || []).filter(item => entityBelongsToDungeon(item, dungeon)),
+    brouhaha_effects: (state.data.brouhaha_effects || []).filter(item => entityBelongsToDungeon(item, dungeon))
+  };
+}
+
+function resolveDungeonBoss(dungeon) {
+  const linked = dungeonLinkedEntities(dungeon).creatures;
+  const explicitName = String(dungeon?.boss_name || "").trim();
+  if (explicitName) {
+    const matches = linked.filter(item => normalizeBestiaryText(item.name) === normalizeBestiaryText(explicitName));
+    return { name: explicitName, entity: matches.length === 1 ? matches[0] : null, reliable: matches.length === 1 };
+  }
+  const bosses = linked.filter(item => creatureCategoryMeta(item.category).key === "boss");
+  if (bosses.length === 1) return { name: String(bosses[0].name || "Boss"), entity: bosses[0], reliable: true };
+  return { name: "", entity: null, reliable: false };
+}
+
+function abilityIsPresent(value) {
+  const text = String(value || "").trim();
+  return Boolean(text && text !== "-" && text !== "—");
+}
+
+function formatBrouhahaStamp(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  if (/^[+-]/.test(text)) return text;
+  const n = Number(text);
+  if (Number.isFinite(n)) return n >= 0 ? `+${n}` : String(n);
+  return text;
+}
 
 function defaultBestiaryUi() {
   return { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null };
@@ -455,6 +683,7 @@ function findByName(type, name) {
 
 function ensureUiDefaults() {
   ensureBestiaryUi();
+  ensureCodexFamilyUi();
   ensureCodexReturnStack();
   if (!state.ui.bestiary.mode) {
     state.ui.bestiary.mode = typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches ? "list" : "gallery";
@@ -481,6 +710,14 @@ function ensureUiDefaults() {
 
 function ensureSelectionExists() {
   ensureBestiaryUi();
+  ensureCodexFamilyUi();
+  if (!state.data.dungeons?.some(item => String(item.id) === String(state.ui.codexFamilies.dungeons.selectedId))) {
+    state.ui.codexFamilies.dungeons.selectedId = state.data.dungeons?.[0]?.id || "";
+  }
+  const heroGroups = buildHeroGroups();
+  if (!heroGroups.some(group => group.key === state.ui.codexFamilies.heroes.selectedBase)) {
+    state.ui.codexFamilies.heroes.selectedBase = heroGroups[0]?.key || "";
+  }
   if (!state.data.creatures?.some(x => x.id === state.ui.bestiary.selectedId)) {
     state.ui.bestiary.selectedId = state.data.creatures?.[0]?.id || "";
   }
@@ -1527,6 +1764,7 @@ const RELATION_STORE_ALIASES = {
   quest: "quests", quests: "quests", quete: "quests", quetes: "quests",
   loot: "loot_items", loot_item: "loot_items", loot_items: "loot_items",
   interactable: "interactables", interactables: "interactables", objet: "interactables", objets: "interactables",
+  brouhaha: "brouhaha_effects", brouhaha_effect: "brouhaha_effects", brouhaha_effects: "brouhaha_effects",
   media: "media_assets", medias: "media_assets", media_asset: "media_assets", media_assets: "media_assets"
 };
 
@@ -2007,9 +2245,317 @@ function renderBestiaryCollection() {
     </section>`);
 }
 
+function renderFamilyToolbar(type, count) {
+  ensureCodexFamilyUi();
+  const ui = state.ui.codexFamilies[type];
+  const label = type === "dungeons" ? "donjons" : "héros";
+  return `
+    <div class="codex-family-toolbar">
+      <label class="codex-family-search">
+        <span class="sr-only">Rechercher dans les ${label}</span>
+        ${shellIcon("search")}
+        <input class="field" data-action="family-search" data-type="${type}" value="${escapeHtml(ui.search)}" placeholder="Rechercher dans les ${label}…">
+      </label>
+      <div class="segmented" aria-label="Mode d’affichage">
+        <button class="${ui.mode === "gallery" ? "active" : ""}" type="button" data-action="family-mode" data-type="${type}" data-mode="gallery" aria-pressed="${ui.mode === "gallery"}">${shellIcon("grid")}<span>Galerie</span></button>
+        <button class="${ui.mode === "list" ? "active" : ""}" type="button" data-action="family-mode" data-type="${type}" data-mode="list" aria-pressed="${ui.mode === "list"}">${shellIcon("list")}<span>Liste</span></button>
+      </div>
+      <span class="codex-family-count">${count} entrée${count > 1 ? "s" : ""}</span>
+    </div>`;
+}
+
+function renderDungeonCollectionCard(item, mode = "gallery", active = false) {
+  const image = imageUrlForEntity(item);
+  const floors = dungeonFloorBudgets(item);
+  const boss = resolveDungeonBoss(item);
+  return `
+    <button class="dungeon-collection-card ${mode} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="dungeons" data-id="${escapeHtml(String(item.id || ""))}" style="--dungeon-accent:${dungeonAccent(item)}">
+      <span class="dungeon-collection-media">
+        ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>Couverture indisponible</span>` : `<span class="dungeon-cover-fallback"><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt=""></span>`}
+      </span>
+      <span class="dungeon-collection-copy">
+        <small>Donjon · ${floors.length ? `${floors.length} étage${floors.length > 1 ? "s" : ""}` : "progression non renseignée"}</small>
+        <strong>${escapeHtml(item.name || "Donjon sans nom")}</strong>
+        ${boss.name ? `<em>Boss · ${escapeHtml(boss.name)}</em>` : ""}
+      </span>
+    </button>`;
+}
+
+function renderDungeonRailItem(item, active = false) {
+  return renderDungeonCollectionCard(item, "list", active);
+}
+
+function renderDungeonFloors(item) {
+  const floors = dungeonFloorBudgets(item);
+  if (!floors.length) return `<div class="empty small">Progression des étages non renseignée.</div>`;
+  return `
+    <div class="dungeon-floor-track" aria-label="Progression des étages">
+      ${floors.map((budget, index) => `
+        <div class="dungeon-floor-stop">
+          <span>Étage</span>
+          <b>${index + 1}</b>
+          <small>Budget ${budget === null || budget === undefined || budget === "" ? "—" : escapeHtml(String(budget))}</small>
+        </div>
+      `).join("")}
+    </div>`;
+}
+
+function dungeonPreviewTitle(type, item) {
+  if (type === "brouhaha_effects") return `Niveau ${item.level ?? "—"}`;
+  return String(item.name || item.title || item.label || "Entrée");
+}
+
+function renderDungeonPreview(type, items, label, icon) {
+  const preview = items.slice(0, 3);
+  return `
+    <section class="dungeon-linked-preview">
+      <header><div><img src="${V6_ICON_PATH}${icon}" alt="" aria-hidden="true"><strong>${label}</strong></div><span>${items.length}</span></header>
+      <div class="dungeon-linked-items">
+        ${preview.length ? preview.map(item => `
+          <button type="button" data-action="open-related" data-type="${type}" data-id="${escapeHtml(String(item.id || ""))}">
+            <b>${escapeHtml(dungeonPreviewTitle(type, item))}</b>
+          </button>
+        `).join("") : `<span class="muted small">Aucune entrée liée.</span>`}
+      </div>
+    </section>`;
+}
+
+function renderDungeonDetailV6(item) {
+  if (!item) return `<div class="panel empty">Donjon indisponible.</div>`;
+  const image = imageUrlForEntity(item);
+  const accent = dungeonAccent(item);
+  const floors = dungeonFloorBudgets(item);
+  const linked = dungeonLinkedEntities(item);
+  const boss = resolveDungeonBoss(item);
+  const tags = tagsToArray(item.tags).filter(Boolean);
+  const name = String(item.name || "").trim() || "Donjon sans nom";
+  return `
+    <article class="dungeon-sheet-v6" style="--dungeon-accent:${accent}">
+      <section class="dungeon-cover-v6">
+        ${image ? `
+          <img src="${escapeHtml(image)}" alt="Couverture de ${escapeHtml(name)}" data-safe-media>
+          <span class="relation-media-fallback dungeon-cover-error" hidden>Couverture indisponible</span>
+          <button class="ghost dungeon-cover-fullscreen" type="button" data-action="open-image" data-src="${escapeHtml(image)}" data-alt="${escapeHtml(name)}">${shellIcon("image")}<span>Plein écran</span></button>
+        ` : `
+          <div class="dungeon-cover-fallback large"><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt=""><span>Couverture non renseignée</span></div>
+        `}
+        <div class="dungeon-cover-copy-v6">
+          <div class="eyebrow">Donjon</div>
+          <h1>${escapeHtml(name)}</h1>
+          ${floors.length ? `<span>${floors.length} étage${floors.length > 1 ? "s" : ""}</span>` : ""}
+        </div>
+      </section>
+
+      <div class="dungeon-hub-v6">
+        ${item.description ? `
+          <section class="dungeon-description-v6">
+            <div class="eyebrow">Description</div>
+            <p>${escapeHtml(item.description)}</p>
+          </section>
+        ` : ""}
+
+        <section class="dungeon-progression-v6">
+          <div class="dungeon-section-head"><div><span class="eyebrow">Progression</span><h2>Étages & budgets</h2></div><span>${floors.length || "—"}</span></div>
+          ${renderDungeonFloors(item)}
+        </section>
+
+        <section class="dungeon-boss-v6">
+          <div class="dungeon-section-head"><div><span class="eyebrow">Boss final</span><h2>${escapeHtml(boss.name || "Non renseigné")}</h2></div><img src="${V6_ICON_PATH}Sigil_Boss.webp" alt="" aria-hidden="true"></div>
+          ${boss.entity ? `
+            <button class="dungeon-boss-card" type="button" data-action="open-related" data-type="creatures" data-id="${escapeHtml(String(boss.entity.id || ""))}">
+              <span>${renderSafeRelationMedia(imageUrlForEntity(boss.entity), boss.entity.name || boss.name, "Illustration absente")}</span>
+              <strong>${escapeHtml(boss.entity.name || boss.name)}</strong>
+              <small>Menace ${escapeHtml(String(boss.entity.menace ?? "—"))}</small>
+            </button>
+          ` : boss.name ? `<div class="dungeon-boss-unresolved">Nom stocké dans le Donjon, sans relation Créature non ambiguë.</div>` : `<div class="empty small">Aucun Boss final fiable dans les données.</div>`}
+        </section>
+
+        <section class="dungeon-linked-v6">
+          <div class="dungeon-section-head"><div><span class="eyebrow">Aperçus liés</span><h2>Dans ce Donjon</h2></div></div>
+          <div class="dungeon-linked-grid">
+            ${renderDungeonPreview("creatures", linked.creatures, "Créatures", "Sigil_Basique.webp")}
+            ${renderDungeonPreview("quests", linked.quests, "Quêtes", "Icone_Entite_QUETE.webp")}
+            ${renderDungeonPreview("interactables", linked.interactables, "Objets interactifs", "Icone_Entite_OBJET_INTERACTIF.webp")}
+            ${renderDungeonPreview("brouhaha_effects", linked.brouhaha_effects, "Brouhaha", "Icone_Entite_OBJET_BROUHAHA.webp")}
+          </div>
+        </section>
+
+        ${tags.length ? `<div class="dungeon-tags-v6">${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+      </div>
+    </article>`;
+}
+
+function renderDungeonCodex() {
+  ensureCodexFamilyUi();
+  const ui = state.ui.codexFamilies.dungeons;
+  const items = getDungeonCollection();
+  let selected = findById("dungeons", ui.selectedId || state.ui.codexSelectedId);
+  if (!selected && items.length) selected = items[0];
+
+  if (state.ui.codexDetailOpen) {
+    return renderShell(`
+      <section class="codex-family-v6 dungeon-codex-v6">
+        ${renderCodexReturnBar()}
+        <div class="codex-family-detail-top">
+          <button class="ghost codex-family-back" type="button" data-action="codex-family-back" data-type="dungeons">${shellIcon("back")}<span>Retour aux Donjons</span></button>
+          ${renderCodexTabs("dungeons")}
+        </div>
+        <div class="codex-family-master-detail">
+          <aside class="panel codex-family-master-rail">
+            <div class="codex-family-master-head"><strong>Donjons</strong><span>${items.length}</span></div>
+            <div class="codex-family-master-list">${items.map(item => renderDungeonRailItem(item, String(item.id) === String(selected?.id))).join("") || `<div class="empty small">Aucun Donjon.</div>`}</div>
+          </aside>
+          <div class="codex-family-detail-host">${selected ? renderDungeonDetailV6(selected) : `<div class="panel empty">Donjon indisponible.</div>`}</div>
+        </div>
+      </section>`);
+  }
+
+  return renderShell(`
+    <section class="codex-family-v6 dungeon-codex-v6">
+      <div class="panel codex-family-collection-panel">
+        <div class="codex-family-heading"><div><div class="eyebrow">Codex</div><h2>Donjons</h2></div></div>
+        ${renderCodexTabs("dungeons")}
+        ${renderFamilyToolbar("dungeons", items.length)}
+        <div class="codex-family-results ${ui.mode}">
+          ${items.length ? items.map(item => renderDungeonCollectionCard(item, ui.mode, String(item.id) === String(ui.selectedId))).join("") : `<div class="empty">Aucun Donjon ne correspond.</div>`}
+        </div>
+      </div>
+    </section>`);
+}
+
+function renderHeroCollectionCard(group, mode = "gallery", active = false) {
+  const level = selectedHeroLevel(group);
+  const image = transparentDerivativeUrlForEntity(level, "heroes");
+  const role = String(level?.role || group.levels.find(item => item.role)?.role || "").trim();
+  return `
+    <button class="hero-collection-card ${mode} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="heroes" data-base="${escapeHtml(group.key)}">
+      <span class="hero-collection-media">
+        ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>Illustration indisponible</span>` : `<span class="hero-media-fallback"><img src="${V6_ICON_PATH}Icone_Entite_HEROS.webp" alt=""></span>`}
+      </span>
+      <span class="hero-collection-copy">
+        <small>Héros · ${group.levels.length} niveau${group.levels.length > 1 ? "x" : ""}</small>
+        <strong>${escapeHtml(group.baseName)}</strong>
+        ${role ? `<em>${escapeHtml(role)}</em>` : ""}
+        ${level ? `<span>N${escapeHtml(String(level.level ?? "—"))} consulté</span>` : ""}
+      </span>
+    </button>`;
+}
+
+function renderHeroStat(icon, label, value) {
+  const display = value === null || value === undefined || value === "" ? "—" : String(value);
+  return `<div class="hero-stat-v6"><img src="${V6_ICON_PATH}${icon}" alt="" aria-hidden="true"><b>${escapeHtml(display)}</b><span>${label}</span></div>`;
+}
+
+function renderHeroDetailV6(group) {
+  if (!group?.levels?.length) return `<div class="panel empty">Héros indisponible.</div>`;
+  const current = selectedHeroLevel(group) || group.levels[0];
+  const image = transparentDerivativeUrlForEntity(current, "heroes");
+  const acquired = group.levels.filter(level => Number(level.level ?? 0) <= Number(current.level ?? 0) && abilityIsPresent(level.ability_text));
+  const availableLevels = [...new Set([1,2,3,4,...group.levels.map(level => Number(level.level)).filter(Number.isFinite)])].sort((a,b)=>a-b);
+  const tags = tagsToArray(current.tags).filter(Boolean);
+  return `
+    <article class="hero-sheet-v6">
+      <aside class="hero-identity-v6">
+        <div class="hero-portrait-v6 level-${escapeHtml(String(current.level ?? 1))}">
+          ${image ? `
+            <img src="${escapeHtml(image)}" alt="Illustration niveau ${escapeHtml(String(current.level ?? "—"))} de ${escapeHtml(group.baseName)}" data-safe-media>
+            <span class="relation-media-fallback" hidden>Illustration indisponible</span>
+            <button class="ghost hero-fullscreen" type="button" data-action="open-image" data-src="${escapeHtml(image)}" data-alt="${escapeHtml(group.baseName)}">${shellIcon("image")}<span>Plein écran</span></button>
+          ` : `<div class="hero-media-fallback large"><img src="${V6_ICON_PATH}Icone_Entite_HEROS.webp" alt=""><span>Illustration non renseignée</span></div>`}
+        </div>
+        <div class="hero-nameplate-v6">
+          <div class="eyebrow"><img src="${V6_ICON_PATH}Icone_Entite_HEROS.webp" alt="" aria-hidden="true">Héros</div>
+          <h1>${escapeHtml(group.baseName)}</h1>
+          ${current.role ? `<span>${escapeHtml(current.role)}</span>` : ""}
+        </div>
+        <div class="hero-level-selector-v6" aria-label="Niveaux du héros">
+          ${availableLevels.map(levelNumber => {
+            const available = group.levels.some(item => Number(item.level) === levelNumber);
+            return `<button type="button" data-action="hero-level" data-base="${escapeHtml(group.key)}" data-level="${levelNumber}" class="${Number(current.level) === levelNumber ? "active" : ""}" ${available ? "" : "disabled"} aria-pressed="${Number(current.level) === levelNumber}">N${levelNumber}</button>`;
+          }).join("")}
+        </div>
+      </aside>
+
+      <section class="hero-playbook-v6">
+        <header class="hero-level-head-v6">
+          <div class="eyebrow">Niveau ${escapeHtml(String(current.level ?? "—"))}</div>
+          <h2>${escapeHtml(current.title || current.name || group.baseName)}</h2>
+          ${current.role ? `<span>${escapeHtml(current.role)}</span>` : ""}
+        </header>
+
+        <div class="hero-stats-v6">
+          ${renderHeroStat("Icone_Gameplay_PV.webp", "PV", current.pv)}
+          ${renderHeroStat("Icone_Gameplay_ATK.webp", "ATK", current.atk)}
+          ${renderHeroStat("Icone_Gameplay_DEF.webp", "DEF", current.def)}
+          ${renderHeroStat("Icone_Gameplay_ZONE.webp", "Zone", current.zone)}
+          ${renderHeroStat("Icone_Gameplay_ACTION.webp", "Actions", current.actions)}
+        </div>
+
+        <section class="hero-skills-v6">
+          <div class="hero-section-head"><span class="eyebrow">Compétences acquises</span><strong>${acquired.length}</strong></div>
+          ${acquired.length ? acquired.map(skill => {
+            const stamp = formatBrouhahaStamp(skill.brouhaha);
+            return `
+              <article class="hero-skill-v6 ${Number(skill.level) === Number(current.level) ? "current" : ""}">
+                <header>
+                  <div><img src="${V6_ICON_PATH}Icone_Gameplay_COMPETENCE.webp" alt="" aria-hidden="true"><span>Compétence · N${escapeHtml(String(skill.level ?? "—"))}</span></div>
+                  ${stamp ? `<b class="hero-brouhaha-stamp">Brouhaha ${escapeHtml(stamp)}</b>` : ""}
+                </header>
+                <h3>${escapeHtml(skill.ability_text)}</h3>
+                ${skill.effect_text ? `<p>${escapeHtml(skill.effect_text)}</p>` : ""}
+              </article>`;
+          }).join("") : `<div class="empty small">Aucune compétence renseignée jusqu’à ce niveau.</div>`}
+        </section>
+
+        ${tags.length ? `<div class="hero-tags-v6">${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+      </section>
+    </article>`;
+}
+
+function renderHeroCodex() {
+  ensureCodexFamilyUi();
+  const ui = state.ui.codexFamilies.heroes;
+  const groups = getHeroCollection();
+  let selected = heroGroupByKey(ui.selectedBase);
+  if (!selected && groups.length) selected = groups[0];
+  const selectedLevel = selectedHeroLevel(selected);
+
+  if (state.ui.codexDetailOpen) {
+    return renderShell(`
+      <section class="codex-family-v6 hero-codex-v6">
+        ${renderCodexReturnBar()}
+        <div class="codex-family-detail-top">
+          <button class="ghost codex-family-back" type="button" data-action="codex-family-back" data-type="heroes">${shellIcon("back")}<span>Retour aux Héros</span></button>
+          ${renderCodexTabs("heroes")}
+        </div>
+        <div class="codex-family-master-detail">
+          <aside class="panel codex-family-master-rail">
+            <div class="codex-family-master-head"><strong>Héros</strong><span>${groups.length}</span></div>
+            <div class="codex-family-master-list">${groups.map(group => renderHeroCollectionCard(group, "list", group.key === selected?.key)).join("") || `<div class="empty small">Aucun Héros.</div>`}</div>
+          </aside>
+          <div class="codex-family-detail-host">${selected ? renderHeroDetailV6(selected) : `<div class="panel empty">Héros indisponible.</div>`}</div>
+        </div>
+      </section>`);
+  }
+
+  return renderShell(`
+    <section class="codex-family-v6 hero-codex-v6">
+      <div class="panel codex-family-collection-panel">
+        <div class="codex-family-heading"><div><div class="eyebrow">Codex</div><h2>Héros</h2></div></div>
+        ${renderCodexTabs("heroes")}
+        ${renderFamilyToolbar("heroes", groups.length)}
+        <div class="codex-family-results ${ui.mode}">
+          ${groups.length ? groups.map(group => renderHeroCollectionCard(group, ui.mode, group.key === ui.selectedBase)).join("") : `<div class="empty">Aucun Héros ne correspond.</div>`}
+        </div>
+      </div>
+    </section>`);
+}
+
 function renderCodex() {
   const type = state.ui.codexType;
   if (type === "creatures") return renderBestiaryCollection();
+  if (type === "dungeons") return renderDungeonCodex();
+  if (type === "heroes") return renderHeroCodex();
 
   const items = getFilteredList(type, "codex");
   const selected = findById(type, state.ui.codexSelectedId) || items[0] || null;
@@ -2145,28 +2691,8 @@ function renderCodexDetail(type, item) {
   }
 }
 
-function renderDungeonDetail(item, readOnly = false) {
-  const creatureCount = (state.data.creatures || []).filter(c => c.dungeon_id === item.id).length;
-  const questCount = (state.data.quests || []).filter(q => q.dungeon_id === item.id).length;
-  return `
-    <div class="detail-card">
-      <div class="detail-head">
-        <div>
-          <span class="badge">Donjon</span>
-          <h3>${escapeHtml(item.name)}</h3>
-          <div class="muted">${escapeHtml(item.slug || "")}</div>
-        </div>
-      </div>
-      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
-        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🏰</div>`}
-      </div>
-      <p><strong>Description :</strong> ${escapeHtml(item.description || "—")}</p>
-      <p><strong>Budgets :</strong> ${escapeHtml((item.floor_budgets || []).join(" · "))}</p>
-      <p><strong>Créatures liées :</strong> ${creatureCount}</p>
-      <p><strong>Quêtes liées :</strong> ${questCount}</p>
-      <p><strong>Tags :</strong> ${escapeHtml(tagsToText(item.tags))}</p>
-    </div>
-  `;
+function renderDungeonDetail(item) {
+  return renderDungeonDetailV6(item);
 }
 
 function creatureCategoryCssColor(key) {
@@ -2328,40 +2854,8 @@ function renderLootList(list) {
 }
 
 function renderHeroDetail(item) {
-  const siblings = (state.data.heroes || []).filter(h => h.hero_base_name === item.hero_base_name).sort((a,b) => Number(a.level) - Number(b.level));
-  const abilities = siblings.filter(h => h.ability_text).map(h => ({ level: h.level, ability_text: h.ability_text, effect_text: h.effect_text }));
-  return `
-    <div class="detail-card">
-      <div class="detail-head">
-        <div>
-          <span class="badge">Niveau ${item.level}</span>
-          <h3>${escapeHtml(item.name)}</h3>
-          <div class="muted">${escapeHtml(item.role || "")}</div>
-        </div>
-      </div>
-      <div class="detail-image" data-action="open-image" data-src="${escapeHtml(imageUrlForEntity(item) || "")}" data-alt="${escapeHtml(item.name || "")}">
-        ${item.image_path ? `<img src="${escapeHtml(imageUrlForEntity(item))}" alt="${escapeHtml(item.name || "")}" loading="lazy">` : `<div class="placeholder large">🛡️</div>`}
-      </div>
-      <div class="stat-grid">
-        <div><strong>PV</strong><span>${item.pv || 0}</span></div>
-        <div><strong>ATK</strong><span>${item.atk || 0}</span></div>
-        <div><strong>DEF</strong><span>${item.def || 0}</span></div>
-        <div><strong>Portée</strong><span>${item.zone || 1}</span></div>
-        <div><strong>Actions</strong><span>${item.actions || 3}</span></div>
-        <div><strong>Brouhaha</strong><span>${escapeHtml(item.brouhaha || "")}</span></div>
-      </div>
-      <p><strong>Titre :</strong> ${escapeHtml(item.title || "—")}</p>
-      <p><strong>Compétence :</strong> ${escapeHtml(item.ability_text || "—")}</p>
-      <p><strong>Effet :</strong> ${escapeHtml(item.effect_text || "—")}</p>
-      <p><strong>Tags :</strong> ${escapeHtml(tagsToText(item.tags))}</p>
-      <div class="subpanel">
-        <h4>Compétences cumulées</h4>
-        <div class="ability-list">
-          ${abilities.length ? abilities.map(a => `<div class="ability"><strong>Niv ${a.level}</strong><span>${escapeHtml(a.ability_text)}</span><small>${escapeHtml(a.effect_text || "")}</small></div>`).join("") : `<div class="empty small">Aucune compétence.</div>`}
-        </div>
-      </div>
-    </div>
-  `;
+  const group = heroGroupByKey(heroBaseKey(item));
+  return renderHeroDetailV6(group || { key: heroBaseKey(item), baseName: item?.hero_base_name || item?.name || "Héros sans nom", levels: item ? [item] : [] });
 }
 
 function renderNpcDetail(item) {
@@ -3026,6 +3520,28 @@ function wireBestiaryScrollTracking() {
   }, { passive: true });
 }
 
+function restoreCodexFamilyScrollAfterRender() {
+  if (state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes"].includes(state.ui.codexType)) return;
+  ensureCodexFamilyUi();
+  const top = Math.max(0, Number(state.ui.codexFamilies[state.ui.codexType].scrollTop || 0));
+  restoringCodexFamilyScroll = true;
+  requestAnimationFrame(() => {
+    window.scrollTo({ top, left: 0, behavior: "auto" });
+    requestAnimationFrame(() => { restoringCodexFamilyScroll = false; });
+  });
+}
+
+function wireCodexFamilyScrollTracking() {
+  window.addEventListener("scroll", () => {
+    const type = state.ui.codexType;
+    if (restoringCodexFamilyScroll || state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes"].includes(type)) return;
+    ensureCodexFamilyUi();
+    state.ui.codexFamilies[type].scrollTop = Math.max(0, window.scrollY || 0);
+    if (codexFamilyScrollSaveTimer) clearTimeout(codexFamilyScrollSaveTimer);
+    codexFamilyScrollSaveTimer = setTimeout(() => saveUiState(state.ui).catch(() => {}), 180);
+  }, { passive: true });
+}
+
 function wireCreatureMediaFallbacks() {
   app.addEventListener("error", ev => {
     const img = ev.target;
@@ -3047,6 +3563,7 @@ function wireCreatureMediaFallbacks() {
 function render() {
   app.innerHTML = renderPage();
   restoreBestiaryScrollAfterRender();
+  restoreCodexFamilyScrollAfterRender();
 }
 
 function toast(message, tone = "info") {
@@ -3677,13 +4194,72 @@ function bindEvents() {
           state.ui.codexReturnStack = [];
           state.ui.codexType = btn.dataset.type;
           ensureBestiaryUi();
+          ensureCodexFamilyUi();
           state.ui.codexSelectedId = state.ui.codexType === "creatures"
             ? (state.ui.bestiary.selectedId || state.data.creatures?.[0]?.id || "")
-            : ((state.data[state.ui.codexType] || [])[0]?.id || "");
+            : familyCollectionInitialId(state.ui.codexType);
           state.ui.codexDetailOpen = false;
           await saveUiState(state.ui);
           render();
           return;
+        case "family-mode": {
+          const type = btn.dataset.type;
+          if (!["dungeons", "heroes"].includes(type)) return;
+          ensureCodexFamilyUi();
+          state.ui.codexFamilies[type].mode = btn.dataset.mode === "list" ? "list" : "gallery";
+          state.ui.codexFamilies[type].scrollTop = 0;
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
+        case "select-family-codex": {
+          const type = btn.dataset.type;
+          if (!["dungeons", "heroes"].includes(type)) return;
+          ensureCodexFamilyUi();
+          state.ui.codexReturnStack = [];
+          state.ui.codexType = type;
+          state.ui.codexFamilies[type].scrollTop = Math.max(0, window.scrollY || 0);
+          if (type === "dungeons") {
+            const id = String(btn.dataset.id || "");
+            if (!findById("dungeons", id)) return;
+            state.ui.codexFamilies.dungeons.selectedId = id;
+            state.ui.codexSelectedId = id;
+          } else {
+            const group = heroGroupByKey(btn.dataset.base);
+            if (!group) return;
+            state.ui.codexFamilies.heroes.selectedBase = group.key;
+            const level = selectedHeroLevel(group);
+            state.ui.codexSelectedId = level?.id || "";
+          }
+          state.ui.codexDetailOpen = true;
+          await saveUiState(state.ui);
+          render();
+          const comfortable = window.matchMedia?.("(min-width: 1480px)").matches;
+          if (!comfortable) requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+          return;
+        }
+        case "codex-family-back": {
+          const type = btn.dataset.type;
+          if (!["dungeons", "heroes"].includes(type)) return;
+          state.ui.codexReturnStack = [];
+          state.ui.codexDetailOpen = false;
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
+        case "hero-level": {
+          ensureCodexFamilyUi();
+          const group = heroGroupByKey(btn.dataset.base);
+          const levelNumber = Number(btn.dataset.level);
+          const level = group?.levels?.find(item => Number(item.level) === levelNumber);
+          if (!group || !level) return;
+          state.ui.codexFamilies.heroes.selectedBase = group.key;
+          rememberHeroLevel(group, levelNumber);
+          state.ui.codexSelectedId = level.id;
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
         case "select-codex": {
           const wasDetailOpen = state.ui.codexDetailOpen;
           state.ui.codexReturnStack = [];
@@ -3719,6 +4295,17 @@ function bindEvents() {
           if (previous.type === "creatures") {
             ensureBestiaryUi();
             state.ui.bestiary.selectedId = previous.id;
+          } else if (previous.type === "dungeons") {
+            ensureCodexFamilyUi();
+            state.ui.codexFamilies.dungeons.selectedId = previous.id;
+          } else if (previous.type === "heroes") {
+            ensureCodexFamilyUi();
+            const hero = findById("heroes", previous.id);
+            const group = hero ? heroGroupByKey(heroBaseKey(hero)) : null;
+            if (group) {
+              state.ui.codexFamilies.heroes.selectedBase = group.key;
+              rememberHeroLevel(group, hero.level);
+            }
           }
           await saveUiState(state.ui);
           render();
@@ -3749,6 +4336,16 @@ function bindEvents() {
           if (targetType === "creatures") {
             ensureBestiaryUi();
             state.ui.bestiary.selectedId = targetId;
+          } else if (targetType === "dungeons") {
+            ensureCodexFamilyUi();
+            state.ui.codexFamilies.dungeons.selectedId = targetId;
+          } else if (targetType === "heroes") {
+            ensureCodexFamilyUi();
+            const group = heroGroupByKey(heroBaseKey(target));
+            if (group) {
+              state.ui.codexFamilies.heroes.selectedBase = group.key;
+              rememberHeroLevel(group, target.level);
+            }
           }
           await saveUiState(state.ui);
           render();
@@ -3824,6 +4421,17 @@ function bindEvents() {
           if (btn.dataset.type === "creatures") {
             ensureBestiaryUi();
             state.ui.bestiary.selectedId = btn.dataset.id;
+          } else if (btn.dataset.type === "dungeons") {
+            ensureCodexFamilyUi();
+            state.ui.codexFamilies.dungeons.selectedId = btn.dataset.id;
+          } else if (btn.dataset.type === "heroes") {
+            ensureCodexFamilyUi();
+            const hero = findById("heroes", btn.dataset.id);
+            const group = hero ? heroGroupByKey(heroBaseKey(hero)) : null;
+            if (group) {
+              state.ui.codexFamilies.heroes.selectedBase = group.key;
+              rememberHeroLevel(group, hero.level);
+            }
           }
           state.ui.codexDetailOpen = true;
           await saveUiState(state.ui);
@@ -4149,6 +4757,27 @@ function bindEvents() {
       }, 160);
       return;
     }
+    if (el.dataset.action === "family-search") {
+      const type = el.dataset.type;
+      if (!["dungeons", "heroes"].includes(type)) return;
+      ensureCodexFamilyUi();
+      state.ui.codexFamilies[type].search = el.value;
+      state.ui.codexFamilies[type].scrollTop = 0;
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(async () => {
+        await saveUiState(state.ui);
+        render();
+        requestAnimationFrame(() => {
+          const input = app.querySelector(`[data-action="family-search"][data-type="${type}"]`);
+          if (input) {
+            input.focus({ preventScroll: true });
+            const end = input.value.length;
+            input.setSelectionRange?.(end, end);
+          }
+        });
+      }, 140);
+      return;
+    }
     if (el.dataset.action === "bestiary-search") {
       ensureBestiaryUi();
       state.ui.bestiary.search = el.value;
@@ -4227,6 +4856,14 @@ async function bootstrap() {
       brouhaha: { ...defaultBlankUi().brouhaha, ...(savedUi.brouhaha || {}) },
       import: { ...defaultBlankUi().import, ...(savedUi.import || {}) },
       media: { ...defaultBlankUi().media, ...(savedUi.media || {}) },
+      codexFamilies: {
+        dungeons: { ...defaultBlankUi().codexFamilies.dungeons, ...(savedUi.codexFamilies?.dungeons || {}) },
+        heroes: {
+          ...defaultBlankUi().codexFamilies.heroes,
+          ...(savedUi.codexFamilies?.heroes || {}),
+          levelByBase: { ...defaultBlankUi().codexFamilies.heroes.levelByBase, ...(savedUi.codexFamilies?.heroes?.levelByBase || {}) }
+        }
+      },
       bestiary: { ...defaultBlankUi().bestiary, ...(savedUi.bestiary || {}) }
     };
   } else {
@@ -4242,6 +4879,7 @@ async function bootstrap() {
   wireGlobalErrors();
   bindEvents();
   wireBestiaryScrollTracking();
+  wireCodexFamilyScrollTracking();
   wireCreatureMediaFallbacks();
   render();
 
