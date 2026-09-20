@@ -614,7 +614,7 @@ Aucun Neon, aucun cloud, aucune Auth distante, aucun CDN. IndexedDB reste en ver
 
 Statut : **LIVRÉ — UI-5C — 20 septembre 2026**
 
-JSON et XLSX disposent de deux entrées distinctes. Le preview est calculé en mémoire et affiche total, valides, warnings, erreurs et effet prévu. Les warnings sont importables, les erreurs et doublons ambigus sont exclus. Aucun write métier n'a lieu avant confirmation.
+JSON et XLSX disposent de deux entrées distinctes. Le preview est calculé entièrement en mémoire et affiche total, valides, warnings, erreurs et effet prévu. Le changement de famille, la sélection du fichier, l'analyse et même une erreur de parsing n'écrivent ni données métier, ni meta, ni logs avant confirmation. Les warnings sont importables, les erreurs et doublons ambigus sont exclus. Aucun write métier n'a lieu avant confirmation.
 
 Les updates préservent les enregistrements existants et les relations par nom ne deviennent des IDs que lorsqu'une cible exacte et unique existe. L'import Créatures ne supprime plus les Loots liés. Médias est exclu des imports structurés car JSON/XLSX ne contiennent pas les Blobs. La restauration ZIP destructive historique est désactivée.
 

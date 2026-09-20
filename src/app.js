@@ -6529,7 +6529,11 @@ function bindEvents() {
           return;
         }
         case "import-type":
-          state.ui.import.type=IMPORT_TYPES.includes(el.value)?el.value:"creatures";state.importRuntime.preview=null;state.importRuntime.lastResult=null;await saveUiState(state.ui);render();return;
+          state.ui.import.type=IMPORT_TYPES.includes(el.value)?el.value:"creatures";
+          state.importRuntime.preview=null;
+          state.importRuntime.lastResult=null;
+          render();
+          return;
         case "media-filter-type":
           state.ui.media.filterType = el.value;
           state.ui.media.filterEntity = "";
@@ -6560,7 +6564,23 @@ function bindEvents() {
         }
         case "import-json-file":
         case "import-xlsx-file": {
-          const file=el.files?.[0];if(!file)return;const type=state.ui.import.type||"creatures",format=action==="import-json-file"?"json":"xlsx";state.importRuntime.preview=await parseImportFile(file,type,format);state.importRuntime.lastResult=null;el.value="";render();toast("Preview calculé en mémoire. Aucune donnée métier écrite.","success");return;
+          const file=el.files?.[0];
+          if(!file)return;
+          const type=state.ui.import.type||"creatures";
+          const format=action==="import-json-file"?"json":"xlsx";
+          try{
+            state.importRuntime.preview=await parseImportFile(file,type,format);
+            state.importRuntime.lastResult=null;
+            toast("Preview calculé en mémoire. Aucune écriture locale effectuée.","success");
+          }catch(err){
+            state.importRuntime.preview=null;
+            state.importRuntime.lastResult=null;
+            toast(`Import non analysé : ${err?.message||String(err)}`,"error");
+          }finally{
+            el.value="";
+            render();
+          }
+          return;
         }
       }
     } catch (err) {
