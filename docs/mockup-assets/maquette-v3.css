@@ -334,7 +334,7 @@
 .hero-level-portrait img{
   object-fit:contain!important;
   object-position:center bottom!important;
-  background:#fff;
+  background:transparent!important;
   transition:filter var(--motion-normal),transform var(--motion-normal);
 }
 .hero-level-portrait.level-1 img{filter:saturate(.92) contrast(.98)}
