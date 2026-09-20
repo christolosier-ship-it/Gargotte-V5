@@ -139,7 +139,7 @@ test("keyboard focus, Escape and modal focus restoration", async ({ page }) => {
   await expect(guard.getByRole("button", { name: "Rester" })).toBeFocused();
 
   await page.keyboard.press("Shift+Tab");
-  await expect(guard.getByRole("button", { name: "Enregistrer" })).toBeFocused();
+  await expect(guard.getByRole("button", { name: "Enregistrer", exact: true })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(guard.getByRole("button", { name: "Rester" })).toBeFocused();
 
