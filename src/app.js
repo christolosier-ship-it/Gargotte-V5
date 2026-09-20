@@ -281,6 +281,7 @@ let bestiaryScrollSaveTimer = null;
 let restoringBestiaryScroll = false;
 let codexFamilyScrollSaveTimer = null;
 let restoringCodexFamilyScroll = false;
+let overlayFocusReturn = null;
 
 const ENTITY_DOWNLOAD_FILES = {
   dungeons: "dungeons.xlsx",
@@ -1975,8 +1976,8 @@ function renderImageViewer() {
   const { src, alt } = state.imageViewer;
   return `
     <div class="image-viewer-overlay" data-action="close-image-viewer">
-      <div class="image-viewer-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(alt || "Image agrandie")}">
-        <button class="ghost image-viewer-close" type="button" data-action="close-image-viewer">✕</button>
+      <div class="image-viewer-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(alt || "Image agrandie")}" tabindex="-1">
+        <button class="ghost image-viewer-close" type="button" data-action="close-image-viewer" aria-label="Fermer l’image agrandie">✕</button>
         <img src="${escapeHtml(src)}" alt="${escapeHtml(alt || "")}">
       </div>
     </div>
@@ -4650,7 +4651,7 @@ function workshopRelationSummary(type, item) {
 function renderWorkshopGuardModal() {
   if (!state.workshop.pending) return "";
   return `<div class="workshop-modal-backdrop" role="presentation">
-    <section class="workshop-modal" role="dialog" aria-modal="true" aria-labelledby="workshop-unsaved-title">
+    <section class="workshop-modal" role="dialog" aria-modal="true" aria-labelledby="workshop-unsaved-title" tabindex="-1">
       <span class="eyebrow">Atelier</span>
       <h2 id="workshop-unsaved-title">Modifications non enregistrées</h2>
       <p>Cette fiche contient des changements qui n'ont pas encore été écrits dans IndexedDB.</p>
@@ -4671,7 +4672,7 @@ function renderWorkshopDeleteModal() {
   const title = item.name || item.title || item.hero_base_name || item.label || item.id;
   const relations = workshopRelationSummary(target.type, item);
   return `<div class="workshop-modal-backdrop danger-layer" role="presentation">
-    <section class="workshop-modal danger-modal" role="dialog" aria-modal="true" aria-labelledby="workshop-delete-title">
+    <section class="workshop-modal danger-modal" role="dialog" aria-modal="true" aria-labelledby="workshop-delete-title" tabindex="-1">
       <span class="eyebrow">Zone Danger</span>
       <h2 id="workshop-delete-title">Supprimer « ${escapeHtml(title)} » ?</h2>
       <p>Seule cette entité sera supprimée. Les enregistrements liés et les médias ne seront pas supprimés automatiquement.</p>
@@ -4754,7 +4755,7 @@ function validateWorkshopForm(type, form) {
 
 function renderWorkshopStatus() {
   const stateName = state.workshop.dirty ? "dirty" : state.workshop.status;
-  return `<span class="workshop-save-state" data-workshop-status data-state="${escapeHtml(stateName)}">${escapeHtml(workshopStatusLabel())}</span>`;
+  return `<span class="workshop-save-state" data-workshop-status data-state="${escapeHtml(stateName)}" role="status" aria-live="polite">${escapeHtml(workshopStatusLabel())}</span>`;
 }
 
 async function reloadWorkshopDataWithoutRender() {
@@ -5249,7 +5250,7 @@ function renderImportExport(){
 
 function renderImportPreview(preview){
   const s=preview.summary;
-  return`<section class="import-preview-v6"><header><div><span class="eyebrow">Preview obligatoire</span><h3>${escapeHtml(preview.fileName||"Fichier")}</h3><p>${escapeHtml(String(preview.format||"").toUpperCase())} · ${escapeHtml(getLabel(preview.type))}</p></div><span class="import-no-write">Aucune donnée métier écrite</span></header>
+  return`<section class="import-preview-v6" aria-live="polite" aria-atomic="false"><header><div><span class="eyebrow">Preview obligatoire</span><h3>${escapeHtml(preview.fileName||"Fichier")}</h3><p>${escapeHtml(String(preview.format||"").toUpperCase())} · ${escapeHtml(getLabel(preview.type))}</p></div><span class="import-no-write">Aucune donnée métier écrite</span></header>
   <div class="metric-grid import-metrics-v6"><div class="metric"><span>Total</span><b>${s.total}</b></div><div class="metric ok"><span>Valides</span><b>${s.valid}</b></div><div class="metric warn"><span>Warnings</span><b>${s.warningRows}</b><small>${s.warnings} message(s)</small></div><div class="metric err"><span>Erreurs</span><b>${s.errorRows}</b><small>${s.errors} bloquante(s)</small></div></div>
   <div class="import-effect-plan"><strong>Effet prévu</strong><span>${s.create} création(s) · ${s.update} mise(s) à jour · ${s.exclude} exclue(s)</span></div>
   <div class="import-plan-table">${preview.rows.slice(0,60).map(row=>`<article class="import-plan-row ${row.effect}"><span class="import-row-index">#${row.index}</span><div><strong>${escapeHtml(row.label)}</strong>${row.warnings.map(m=>`<small class="warning">⚠ ${escapeHtml(m)}</small>`).join("")}${row.errors.map(m=>`<small class="error">✕ ${escapeHtml(m)}</small>`).join("")}</div><span class="import-effect-badge">${row.effect==="create"?"Créer":row.effect==="update"?"Mettre à jour":"Exclure"}</span></article>`).join("")}</div>
@@ -5259,10 +5260,10 @@ function renderImportPreview(preview){
 function renderJournalDrawer() {
   return `
     <div class="drawer-overlay">
-      <div class="drawer journal">
+      <div class="drawer journal" role="dialog" aria-modal="true" aria-labelledby="journal-title" tabindex="-1">
         <div class="panel-title">
-          <h2>Journal d'erreurs</h2>
-          <button class="ghost" data-action="toggle-journal">✕</button>
+          <h2 id="journal-title">Journal d'erreurs</h2>
+          <button class="ghost" type="button" data-action="toggle-journal" aria-label="Fermer le journal">✕</button>
         </div>
         <div class="history-list">
           ${state.logs.length ? state.logs.map(log => `<div class="history-row ${escapeHtml(log.level)}"><strong>${escapeHtml(log.level)}</strong><span>${escapeHtml(log.message)}</span><small>${escapeHtml(log.created_at)}</small></div>`).join("") : `<div class="empty">Aucun journal.</div>`}
@@ -5347,10 +5348,105 @@ function wireCreatureMediaFallbacks() {
   }, true);
 }
 
+const OVERLAY_FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function focusDescriptor(element) {
+  if (!(element instanceof HTMLElement) || !app.contains(element)) return null;
+  const dataset = {};
+  for (const key of ["action","view","type","id","base","level","src"]) {
+    if (element.dataset?.[key]) dataset[key] = element.dataset[key];
+  }
+  return {
+    tag: element.tagName.toLowerCase(),
+    dataset,
+    name: element.getAttribute("name") || "",
+    ariaLabel: element.getAttribute("aria-label") || ""
+  };
+}
+
+function findFocusDescriptor(descriptor) {
+  if (!descriptor) return null;
+  const candidates = Array.from(app.querySelectorAll(descriptor.tag || "button"));
+  return candidates.find(element => {
+    if (!(element instanceof HTMLElement) || element.offsetParent === null) return false;
+    if (descriptor.name && element.getAttribute("name") !== descriptor.name) return false;
+    if (descriptor.ariaLabel && element.getAttribute("aria-label") !== descriptor.ariaLabel) return false;
+    return Object.entries(descriptor.dataset || {}).every(([key,value]) => element.dataset?.[key] === value);
+  }) || null;
+}
+
+function focusDialog(dialog) {
+  if (!(dialog instanceof HTMLElement)) return;
+  const focusable = Array.from(dialog.querySelectorAll(OVERLAY_FOCUSABLE)).filter(element => element instanceof HTMLElement && element.offsetParent !== null);
+  (focusable[0] || dialog).focus({ preventScroll: true });
+}
+
+function closeActiveOverlay(dialog) {
+  if (!(dialog instanceof HTMLElement)) return false;
+  const selector = dialog.classList.contains("danger-modal")
+    ? '[data-action="workshop-delete-cancel"]'
+    : dialog.classList.contains("workshop-modal")
+      ? '[data-action="workshop-guard-stay"]'
+      : dialog.classList.contains("image-viewer-panel")
+        ? '[data-action="close-image-viewer"]'
+        : dialog.classList.contains("journal")
+          ? '[data-action="toggle-journal"]'
+          : "";
+  const control = selector ? dialog.querySelector(selector) : null;
+  if (control instanceof HTMLElement) {
+    control.click();
+    return true;
+  }
+  return false;
+}
+
+function wireOverlayKeyboard() {
+  document.addEventListener("keydown", event => {
+    const dialog = app.querySelector('[role="dialog"][aria-modal="true"]');
+    if (!(dialog instanceof HTMLElement)) return;
+    if (event.key === "Escape") {
+      if (closeActiveOverlay(dialog)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(dialog.querySelectorAll(OVERLAY_FOCUSABLE)).filter(element => element instanceof HTMLElement && element.offsetParent !== null);
+    if (!focusable.length) {
+      event.preventDefault();
+      dialog.focus({ preventScroll: true });
+      return;
+    }
+    const first = focusable[0], last = focusable[focusable.length - 1], active = document.activeElement;
+    if (event.shiftKey && (active === first || !dialog.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+}
+
 function render() {
+  const previousDialog = app.querySelector('[role="dialog"][aria-modal="true"]');
+  const hadDialog = previousDialog instanceof HTMLElement;
+  const focusBefore = hadDialog ? null : focusDescriptor(document.activeElement);
   app.innerHTML = renderPage();
   restoreBestiaryScrollAfterRender();
   restoreCodexFamilyScrollAfterRender();
+
+  const nextDialog = app.querySelector('[role="dialog"][aria-modal="true"]');
+  const hasDialog = nextDialog instanceof HTMLElement;
+  if (hasDialog && !hadDialog) {
+    overlayFocusReturn = focusBefore;
+    requestAnimationFrame(() => focusDialog(nextDialog));
+  } else if (!hasDialog && hadDialog) {
+    const descriptor = overlayFocusReturn;
+    overlayFocusReturn = null;
+    requestAnimationFrame(() => findFocusDescriptor(descriptor)?.focus({ preventScroll: true }));
+  }
 }
 
 function toast(message, tone = "info") {
@@ -6747,6 +6843,7 @@ async function bootstrap() {
   wireGlobalErrors();
   wireWorkshopUnloadGuard();
   wirePwaInstallPrompt();
+  wireOverlayKeyboard();
   bindEvents();
   wireBestiaryScrollTracking();
   wireCodexFamilyScrollTracking();
