@@ -80,6 +80,17 @@ test("V3 visual comparison pack: production and reference sections", async ({ pa
   ];
   for (const [selector, name] of refs) {
     await page.evaluate(targetSelector => {
+      const familyBySelector = {
+        "#dungeons-browser": "dungeons",
+        "#heroes-browser": "heroes",
+        "#npcs-browser": "npcs",
+        "#quests-browser": "quests",
+        "#loot-browser": "loot"
+      };
+      if (familyBySelector[targetSelector] && typeof renderCodexType === "function") {
+        show?.("codex");
+        renderCodexType(familyBySelector[targetSelector]);
+      }
       const target = document.querySelector(targetSelector);
       if (!target) throw new Error("Référence V3 absente : " + targetSelector);
       document.querySelectorAll(".page").forEach(node => node.classList.remove("active"));
