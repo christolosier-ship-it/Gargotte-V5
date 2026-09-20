@@ -67,6 +67,17 @@ test("V3 visual comparison pack: production and reference sections", async ({ pa
     ["#importexport", "v3-13-import-export"]
   ];
   for (const [selector, name] of refs) {
+    await page.evaluate(targetSelector => {
+      const target = document.querySelector(targetSelector);
+      if (!target) throw new Error("Référence V3 absente : " + targetSelector);
+      document.querySelectorAll(".page").forEach(node => node.classList.remove("active"));
+      document.querySelectorAll(".entity-demo").forEach(node => node.classList.remove("active"));
+      const ownerPage = target.matches(".page") ? target : target.closest(".page");
+      ownerPage?.classList.add("active");
+      const ownerDemo = target.matches(".entity-demo") ? target : target.closest(".entity-demo");
+      ownerDemo?.classList.add("active");
+      target.scrollIntoView({ block: "start", behavior: "auto" });
+    }, selector);
     await attachShot(page.locator(selector), name, testInfo);
   }
 });
