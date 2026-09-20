@@ -1,213 +1,222 @@
-# Gargottex V6 - UI-4 Accueil & outils de partie
+# Gargottex V6 - UI-4 Accueil & Outils de partie
 
 ## Statut
 
-**VERROUILLÉ - source de vérité pour l'Accueil et les outils de session**
+**ACTIF - source de vérité des outils de session**
 
-Ce document couvre : Accueil, Générateur, Brouhaha de session et Quêtes de session.
+Principe :
 
-Principe directeur :
+> **Pendant une partie, Gargottex réduit les sélections répétées et montre l'information utile avant la décoration.**
 
-> **Pendant une partie, Gargottex doit réduire les sélections répétées et les gestes inutiles.**
-
-UI-4 ne transforme pas Gargottex en moteur de campagne, VTT ou tracker de combat complet.
+La session reste locale et temporaire.
 
 ---
 
-# 1. Contexte de partie partagé
+# 1. SessionContext
 
-Le contexte de partie est un état UI local et temporaire comprenant au minimum :
+État UI temporaire :
 
-- donjon actif ;
+- Donjon actif ;
 - étage actif ;
-- mode de rencontre ;
-- rencontre générée éventuelle ;
-- Brouhaha courant et historique ;
-- quête tirée éventuelle.
+- mode Normal / Mini-boss / Boss ;
+- rencontre générée ;
+- quantités restantes ;
+- Brouhaha courant ;
+- historique Brouhaha ;
+- quête tirée.
 
-Il ne s'agit pas d'une nouvelle donnée métier, ni d'une campagne longue durée.
+Ce contexte ne devient pas une campagne persistante complexe.
 
-Le même donjon est partagé entre Accueil, Générateur, Brouhaha et Quêtes de session.
-
----
-
-# 2. Changement de donjon
-
-Sans état de session significatif, le changement est immédiat.
-
-Si une rencontre, un Brouhaha ou une quête tirée existe déjà, afficher une confirmation indiquant clairement que les états temporaires incompatibles seront remis à zéro.
-
-Le Codex n'est jamais modifié par cette action.
+Il ne modifie pas les données métier du Codex.
 
 ---
 
-# 3. Changement d'étage
+# 2. Accueil
 
-L'étage appartient au contexte partagé mais concerne principalement le Générateur.
-
-Règle verrouillée :
-
-- sans rencontre générée, le changement est immédiat ;
-- si une rencontre existe pour l'étage courant, demander confirmation ;
-- après confirmation, invalider uniquement la rencontre courante et son état local associé ;
-- le Brouhaha et la quête tirée ne sont pas réinitialisés par un simple changement d'étage.
-
----
-
-# 4. Accueil
-
-L'Accueil est le comptoir de départ et de reprise de Gargottex.
-
-## 4.1 Sans session active
-
-Afficher :
+## Sans session
 
 - identité Gargottex ;
-- choix / reprise d'un donjon ;
-- accès rapides ;
-- quelques compteurs discrets.
+- accès Codex ;
+- démarrer/reprendre un contexte ;
+- accès rapides.
 
-La galerie média générique n'appartient plus à l'Accueil.
+## Partie en cours
 
-## 4.2 Partie en cours
+Résumé actionnable :
 
-Afficher un résumé directement actionnable :
+- Donjon ;
+- étage ;
+- rencontre ;
+- Brouhaha ;
+- quête ;
+- Terminer la partie.
 
-```text
-Donjon actif
-Étage éventuel
+La composition « comptoir » de la V3 sert de référence.
 
-Rencontre
-Brouhaha
-Quête
+Éviter les petites phrases décoratives redondantes.
 
-Terminer la partie
-```
+---
 
-Chaque bloc ouvre l'outil correspondant sans redemander le donjon.
-
-## 4.3 Terminer la partie
+# 3. Terminer la partie
 
 Confirmation obligatoire.
 
-Cette action nettoie uniquement le contexte temporaire de session. Elle ne supprime aucune donnée métier, aucun média et aucune donnée synchronisée.
+Nettoie uniquement :
+
+- SessionContext ;
+- rencontre ;
+- Brouhaha session ;
+- historique ;
+- quête tirée.
+
+Ne touche jamais :
+
+- Codex ;
+- IndexedDB métier ;
+- médias ;
+- imports ;
+- préférences générales.
 
 ---
 
-# 5. Générateur
+# 4. Changement de Donjon
 
-## 5.1 Configuration
+Sans état temporaire : immédiat.
+
+Avec rencontre/Brouhaha/quête :
+
+- confirmation ;
+- expliquer ce qui sera réinitialisé ;
+- ne pas modifier le Codex.
+
+---
+
+# 5. Changement d'étage
+
+Sans rencontre : immédiat.
+
+Avec rencontre existante :
+
+- confirmation ;
+- invalider uniquement la rencontre de l'étage précédent.
+
+Brouhaha et quête restent inchangés.
+
+---
+
+# 6. Générateur
 
 Ordre :
 
-```text
-Donjon actif
-Étage
-Mode de rencontre
-Budget
-Générer
-```
+1. Donjon ;
+2. étage ;
+3. mode ;
+4. budget ;
+5. Générer.
 
-Le mode de rencontre est exclusif :
+Mode exclusif :
 
 `Normal | Mini-boss | Boss`
 
-Une seule valeur peut être active.
+Le budget vient des données existantes.
 
-Le budget vient des données métier existantes.
+Après génération, le résultat devient prioritaire et la configuration se compacte.
 
-## 5.2 Après génération
+---
 
-Le résultat devient prioritaire. Les paramètres se compactent en résumé modifiable.
+# 7. Résultat de rencontre
 
-Le résultat distingue :
+Deux types :
 
 - Créatures ;
 - Objets interactifs.
 
-Chaque entrée permet une ouverture rapide sans quitter la session.
+## Créature
 
-## 5.3 Plusieurs exemplaires d'une même créature
+Afficher :
 
-Si une rencontre contient plusieurs exemplaires d'une même créature, l'état de session doit distinguer la **quantité restante**.
+- type/catégorie coloré ;
+- image ;
+- nom ;
+- PV ;
+- ATK ;
+- DEF ;
+- ACTION ;
+- MENACE ;
+- nom de Compétence ;
+- quantité restante ;
+- Fiche ;
+- Éliminer.
 
-Règle verrouillée :
+La maquette V3 sert de référence visuelle.
 
-- `Éliminer` retire **une occurrence** ;
-- chaque occurrence éliminée déclenche son tirage de Loot une seule fois ;
-- la ligne reste visible tant qu'au moins une occurrence reste ;
-- lorsque la quantité atteint zéro, le groupe est marqué éliminé / terminé.
+## Objet interactif
 
-Aucun tracker de PV individuel n'est introduit.
+Afficher :
 
-## 5.4 Mini-fiche de rencontre
-
-Créature : image, nom, stats principales, capacité/comportement utile, ouverture fiche complète, `Éliminer`.
-
-Objet interactif : nom, type, PV, actions autorisées, effet, ouverture fiche complète.
-
-La mini-fiche réutilise la grammaire du Codex au lieu d'inventer une seconde présentation.
-
----
-
-# 6. Ce que le Générateur ne devient pas
-
-Hors périmètre :
-
-- tracker de PV ;
-- initiative ;
-- ordre de tour ;
-- conditions ;
-- compteur de rounds ;
-- carte tactique ;
-- dés virtuels généralistes ;
-- journal de combat complet.
+- nom ;
+- type ;
+- PV si présent ;
+- actions autorisées ;
+- effet ;
+- ouverture fiche.
 
 ---
 
-# 7. Brouhaha de session
+# 8. Élimination
 
-Principe :
+Si plusieurs occurrences :
+
+- `Éliminer` retire une occurrence ;
+- la quantité baisse ;
+- le Loot est tiré une fois pour cette occurrence ;
+- la ligne reste tant que quantité > 0 ;
+- aucune gestion de PV individuel.
+
+Le Générateur ne devient pas un tracker de combat.
+
+---
+
+# 9. Brouhaha session
+
+Le comportement fonctionnel :
+
+- niveau 0-12 ;
+- -1 ;
+- +1 ;
+- Tirer un effet ;
+- effet courant ;
+- historique ;
+- Réinitialiser.
+
+Règle :
 
 > **Changer le niveau n'est pas tirer un effet.**
 
-Hiérarchie :
+La direction émotionnelle de la V3 est verrouillée :
 
-```text
-Donjon actif
-Niveau 0-12
--1 / +1
-Tirer un effet
-Effet courant
-Historique
-Réinitialiser
-```
+- asymétrie ;
+- pression ;
+- fissures/traces ;
+- agitation croissante ;
+- commandes moins « tableau de bord » ;
+- chaos contrôlé.
 
-Le niveau et le tirage sont deux actions distinctes.
+Le niveau et les actions restent parfaitement compréhensibles.
 
-`Réinitialiser` demande confirmation et remet à zéro le Brouhaha et son historique de session uniquement.
-
-L'intensité visuelle peut augmenter avec le niveau, mais ne remplace jamais le texte ni les états accessibles.
+Avec reduced motion, la pression est transmise sans animation obligatoire.
 
 ---
 
-# 8. Quêtes de session
+# 10. Quêtes de session
 
-La vue de session sert à **tirer et utiliser une quête**, pas à parcourir la bibliothèque complète.
+Vue courte.
 
-La bibliothèque Quêtes appartient au Codex UI-3.
+Après tirage :
 
-## 8.1 Avant tirage
-
-Afficher : donjon actif + action principale `Tirer une quête`.
-
-## 8.2 Après tirage
-
-Afficher une fiche courte :
-
-- nom ;
+- titre ;
 - difficulté ;
-- PNJ éventuel ;
+- commanditaire ;
 - description ;
 - objectif ;
 - récompense.
@@ -217,84 +226,89 @@ Actions :
 - `Tirer à nouveau` ;
 - `Ouvrir dans le Codex`.
 
-## 8.3 Tirer à nouveau
+`Tirer à nouveau` remplace immédiatement la quête temporaire.
 
-Règle verrouillée : **le nouveau tirage remplace immédiatement la quête courante, sans modal de confirmation**.
-
-La quête courante est un état temporaire de session, pas une donnée modifiée du Codex.
-
-Aucun historique de quêtes tirées n'est ajouté dans UI-4.
+Pas de confirmation.
 
 ---
 
-# 9. Navigation entre outils
+# 11. Offline
 
-Lorsque le contexte existe, le passage entre Accueil, Générateur, Brouhaha et Quêtes doit être immédiat et conserver l'état courant.
+Tous les outils de session fonctionnent avec les données locales disponibles.
 
-Sur téléphone :
+Aucune étape n'attend un backend distant.
 
-- `Jeu` donne accès à Générateur et Brouhaha ;
-- Quêtes conserve son entrée dédiée ;
-- le donjon actif reste visible de façon compacte dans les outils de session.
+Un état réseau ne doit pas bloquer :
 
----
-
-# 10. Responsive
-
-Les règles globales appartiennent à UI-1/UI-6.
-
-UI-4 impose seulement :
-
-- grandes cibles tactiles ;
-- faible profondeur de navigation ;
-- action principale évidente ;
-- résultat visible sans chercher ;
-- pas de colonnes comprimées sur téléphone ;
-- mini-fiches en drawer/sheet ou vue courte selon la largeur.
-
-La tablette est une cible prioritaire pour l'usage autour d'une table.
+- Générateur ;
+- Brouhaha ;
+- Quêtes ;
+- navigation locale.
 
 ---
 
-# 11. Offline et synchronisation
+# 12. Responsive
 
-Les outils de session travaillent sur les données locales disponibles.
+Téléphone :
 
-Aucune action de session ne doit attendre Neon pour mettre l'interface à jour.
+- entrée `Jeu` ;
+- onglets Générateur/Brouhaha ;
+- Quêtes garde son entrée dédiée.
 
-La synchronisation distante reste secondaire et ses états visibles sont définis dans UI-5.
+Tablette :
+
+- priorité à la lisibilité autour d'une table ;
+- résultats larges ;
+- grandes cibles tactiles.
+
+Desktop :
+
+- densité utile ;
+- raccourcis ;
+- résultats lisibles sans profondeur inutile.
 
 ---
 
-# 12. États à gérer
+# 13. États à gérer
 
-Accueil : aucune session, session partielle, partie en cours, donjon manquant.
+Accueil :
 
-Générateur : aucun donjon, étage sans budget, aucun candidat compatible, résultat normal, rencontre partiellement consommée, rencontre terminée.
+- aucune session ;
+- session partielle ;
+- session active.
 
-Brouhaha : niveau 0, historique vide, effet absent, niveau critique.
+Générateur :
 
-Quêtes : aucune quête disponible, quête tirée, PNJ absent, média absent.
+- pas de Donjon ;
+- budget absent ;
+- aucun candidat ;
+- rencontre active ;
+- terminée.
+
+Brouhaha :
+
+- 0 ;
+- historique vide ;
+- critique.
+
+Quêtes :
+
+- aucune disponible ;
+- tirée ;
+- commanditaire absent.
 
 ---
 
-# 13. Gate UI-4
+# 14. Gate UI-4
 
-UI-4 est validée lorsque :
-
-1. le donjon n'est sélectionné qu'une fois pour une session normale ;
-2. le contexte survit au passage entre outils ;
-3. changer de donjon ne détruit jamais silencieusement l'état temporaire ;
-4. changer d'étage avec rencontre demande confirmation puis invalide uniquement la rencontre ;
-5. `Normal | Mini-boss | Boss` est exclusif ;
-6. le résultat devient prioritaire après génération ;
-7. `Éliminer` agit occurrence par occurrence et tire le Loot une seule fois par occurrence ;
-8. le Générateur ne dérive pas vers un combat tracker ;
-9. le Brouhaha sépare niveau et tirage ;
-10. `Tirer à nouveau` remplace immédiatement la quête de session ;
-11. la bibliothèque Quêtes reste dans le Codex ;
-12. terminer une partie ne touche jamais aux données métier ;
-13. les outils restent utilisables offline ;
-14. aucun détail du design system ou de la synchronisation technique n'est dupliqué ici.
-
-**UI-4 devient la source de vérité de l'Accueil et des outils de session.**
+1. contexte partagé réel ;
+2. aucune sélection répétée inutile ;
+3. changements Donjon/étage sûrs ;
+4. résultat généré prioritaire ;
+5. objets interactifs inclus ;
+6. élimination occurrence par occurrence ;
+7. pas de tracker de combat ;
+8. Brouhaha fonctionnel + émotion V3 ;
+9. quête de session distincte du Codex ;
+10. Terminer la partie ne touche jamais aux données métier ;
+11. fonctionnement offline.

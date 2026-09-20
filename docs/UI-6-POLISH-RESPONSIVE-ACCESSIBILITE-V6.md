@@ -1,223 +1,206 @@
-# Gargottex V6 - UI-6 Polish responsive, accessibilité & validation finale
+# Gargottex V6 - UI-6 Polish, Accessibilité & Validation finale
 
 ## Statut
 
-**VERROUILLÉ - source de vérité pour la validation finale de la refonte UI/UX**
+**ACTIF - Gate finale de la refonte UI V6**
 
-UI-6 ne redessine pas Gargottex et n'ajoute pas de nouvelle fonctionnalité produit par défaut.
+UI-6 ne redessine pas l'application.
 
-Principe directeur :
-
-> **UI-6 polit, mesure et valide. Elle ne recommence pas la conception.**
+Elle vérifie que UI-1 à UI-5, la maquette V3 et la préservation des données existantes ont été correctement réunies.
 
 ---
 
-# 1. Décisions verrouillées
+# 1. Ordre de priorité de la Gate
 
-1. UI-6 ne redéfinit pas UI-1 à UI-5 sans défaut démontré.
-2. Les familles de breakpoints restent celles du design system.
-3. Des ajustements intermédiaires sont permis uniquement lorsqu'un composant casse réellement.
-4. Cibles principales : iPhone, iPad portrait, iPad paysage, desktop étroit, desktop large.
-5. Un smoke test Chrome Android complète la matrice.
-6. Cible : WCAG 2.2 AA sur les parcours essentiels.
-7. Les actions tactiles importantes respectent la cible définie par UI-1.
-8. Navigation clavier desktop obligatoire.
-9. Playwright couvre les parcours principaux.
-10. axe couvre les erreurs d'accessibilité automatisables.
-11. Une visual regression ciblée protège les vues structurantes.
-12. Les performances utilisent des budgets réalistes, pas un score parfait obligatoire.
-13. Offline, reconnexion, sync en attente et médias distants sont testés.
-14. Les gros volumes sont testés.
-15. Safe areas iOS obligatoires.
-16. La rotation tablette conserve le contexte.
-17. Zoom, taille de texte et reflow sont testés.
-18. `prefers-reduced-motion` est respecté.
-19. La Gate exige zéro anomalie bloquante et zéro majeure.
-20. La Gate combine automatisation et appareils réels.
-21. Une matrice de validation finale est conservée dans la documentation.
+1. aucune perte de données ;
+2. parcours critiques fonctionnels ;
+3. responsive ;
+4. accessibilité ;
+5. fidélité V3 ;
+6. performance ;
+7. polish.
+
+Un défaut visuel ne justifie jamais un risque sur IndexedDB.
 
 ---
 
-# 2. Portée
-
-Valider toutes les zones UI-1 à UI-5 :
-
-- shell et navigation ;
-- recherche globale ;
-- Codex et fiches ;
-- Accueil et outils de partie ;
-- Atelier ;
-- Médias ;
-- Import/Export ;
-- Auth visible ;
-- synchronisation ;
-- Journal/diagnostics ;
-- modales, drawers, toasts et visionneuse ;
-- états vides, offline, partiels et erreurs.
-
----
-
-# 3. Matrice responsive
-
-Les valeurs suivantes servent de **cibles de validation UI-6**. Elles ne remplacent pas les breakpoints du design system.
+# 2. Matrice responsive
 
 ## Téléphone
 
-Tester au minimum :
+Tester environ :
 
-- étroit : environ 320 à 360 px ;
-- courant : environ 390 px ;
-- grand téléphone : environ 430 px.
+- 320-360 px ;
+- 390 px ;
+- 430 px.
 
-Vérifier : pas de débordement involontaire, navigation utilisable, actions non masquées, clavier virtuel, bottom nav, sheets et images.
+## Tablette portrait
 
-## Tablette
+Environ 768-834 px.
 
-Tester au minimum :
+Codex :
 
-- portrait : environ 768 à 834 px ;
-- paysage : environ 1024 à 1194 px ;
-- rotation en cours d'usage.
+`Collection -> Fiche -> Retour`
 
-Vérifier : rail, master-detail quand prévu, drawer en portrait, formulaires, illustrations, tactiles et conservation de contexte.
+## Tablette paysage
+
+Environ 1024-1194 px.
+
+Codex :
+
+`Collection -> Fiche -> Retour`
+
+**Aucun panneau fiche à droite de la collection dans le Codex tablette.**
+
+Atelier : règles propres UI-5.
 
 ## Desktop
 
-Tester au minimum :
+Tester :
 
-- étroit : environ 1200 à 1366 px ;
-- courant : environ 1440 à 1600 px ;
-- large : 1920 px et plus.
+- 1200-1366 ;
+- 1440-1600 ;
+- 1920+.
 
-Vérifier : sidebar, largeur de lecture, master-detail, clavier, focus, densité et espaces vides.
-
-Un breakpoint supplémentaire n'est ajouté que pour résoudre un problème de contenu observé et reproductible.
+Master-detail Codex autorisé.
 
 ---
 
-# 4. Conservation de contexte
+# 3. Comparaison visuelle
 
-La rotation ou le redimensionnement ne doit pas perdre :
+Baseline :
 
-- vue active ;
-- entité ouverte ;
-- recherche ;
-- filtres ;
-- scroll lorsque pertinent ;
-- niveau Héros ;
-- contexte de partie ;
+- maquette V3 ;
+- ressources V3 ;
+- cahier des vues REV2 comme aide seulement.
+
+Captures à protéger :
+
+- Accueil ;
+- Bestiaire collection ;
+- fiche Créature ;
+- Donjon ;
+- Héros ;
+- PNJ ;
+- Quête ;
+- Loot ;
+- Générateur ;
 - Brouhaha ;
-- quête de session ;
-- modifications Atelier non enregistrées.
+- Atelier ;
+- Médias ;
+- Import/Export.
+
+Une variation est acceptable si elle :
+
+- corrige un bug ;
+- améliore accessibilité ;
+- gère mieux les données réelles ;
+- améliore performance ;
+
+sans dégrader l'intention visuelle.
 
 ---
 
-# 5. Safe areas et clavier virtuel
+# 4. Non-régression données IndexedDB
 
-Valider particulièrement sur iOS :
+Gate obligatoire.
 
-- topbar ;
-- bottom nav ;
-- barre Enregistrer ;
-- modales et sheets ;
-- visionneuse ;
-- boutons proches des bords ;
-- viewport après ouverture/fermeture du clavier.
+Tester sur une copie représentative :
 
-Aucune action critique ne doit être cachée par le home indicator ou le clavier.
+1. installation version précédente ;
+2. création de données/médias ;
+3. mise à jour vers V6 ;
+4. ouverture de toutes les familles ;
+5. édition d'une entité ;
+6. fermeture/réouverture ;
+7. fonctionnement offline ;
+8. export après migration.
 
----
+Vérifier :
 
-# 6. Cohérence transversale
+- nombres d'enregistrements ;
+- IDs ;
+- relations ;
+- Blobs médias ;
+- champs inconnus préservés ;
+- absence de reset.
 
-UI-6 vérifie que les mêmes patterns se comportent de la même façon partout :
+Interdit comme « solution de test » :
 
-- retour ;
-- boutons ;
-- drawers ;
-- modales ;
-- focus ;
-- actions destructives ;
-- états vides ;
-- filtres ;
-- wording local/distant ;
-- erreurs ;
-- confirmations.
-
-Une divergence doit être corrigée ou explicitement justifiée par un besoin métier.
+- supprimer IndexedDB puis constater que la nouvelle version fonctionne.
 
 ---
 
-# 7. Accessibilité
+# 5. Accessibilité
 
-## 7.1 Contrastes
+Cible : WCAG 2.2 AA sur les parcours essentiels.
 
-Tester les tokens UI-1 **sur leurs surfaces réelles**, notamment :
-
-- textes secondaires/tertiaires ;
-- catégories ;
-- badges ;
-- boutons ;
-- focus ;
-- warning/danger ;
-- sync et erreurs.
-
-Si une combinaison ne respecte pas la cible AA pour l'usage prévu, corriger l'usage ou le token dans UI-1 plutôt que créer une exception locale.
-
-Les couleurs de catégorie et les couleurs système peuvent être proches, mais leur sens doit toujours rester différencié par texte, icône et contexte.
-
-## 7.2 Clavier
+## Clavier desktop
 
 Tester :
 
-- navigation globale ;
+- navigation ;
 - recherche ;
 - filtres ;
 - Galerie/Liste ;
-- liens contextuels ;
-- formulaires ;
-- segmented controls ;
-- drawers ;
+- fiches ;
 - modales ;
+- drawers ;
 - visionneuse ;
-- Journal ;
-- preview d'import.
+- Atelier ;
+- import preview.
 
-Exigences : ordre logique, focus visible, restauration du focus, pas de piège hors modal, fermeture `Escape` lorsque sûre.
+Exigences :
 
-## 7.3 Lecteur d'écran réel
+- ordre logique ;
+- focus visible ;
+- focus restauré ;
+- Escape lorsque sûr ;
+- pas de piège.
 
-La Gate inclut un **smoke test VoiceOver sur iPhone ou iPad réel** couvrant au minimum :
+## VoiceOver
+
+Smoke réel iPhone/iPad :
 
 - navigation mobile ;
-- ouverture d'une fiche Créature ;
-- boutons icon-only ;
-- accordéons ;
-- modal de confirmation ;
+- ouvrir une Créature ;
+- bouton icon-only ;
+- retour collection ;
 - formulaire Atelier ;
-- statut de synchronisation.
+- confirmation destructrice ;
+- état d'import.
 
-Axe complète ce test mais ne le remplace pas.
+## Zoom/reflow
 
-Un smoke test TalkBack peut être ajouté lors du contrôle Android si disponible, sans devenir une seconde matrice complète.
+100, 125, 150, 200 %.
 
-## 7.4 Texte, zoom et reflow
+Pas de texte critique inaccessible.
 
-Tester au minimum les paliers de zoom usuels 100 %, 125 %, 150 % et 200 %, puis un scénario de reflow à forte magnification sur les parcours essentiels.
+---
 
-Objectifs :
+# 6. Couleur et sémantique
 
-- pas de texte critique inaccessible ;
-- pas de chevauchement destructif ;
-- pas de scroll horizontal à deux dimensions pour la lecture ordinaire ;
-- contrôles toujours accessibles ;
-- les cartes changent de disposition plutôt que réduire excessivement le texte.
+Tester :
 
-Les exceptions naturelles, comme certains contenus intrinsèquement bidimensionnels, doivent rester rares et justifiées.
+- catégories ;
+- rareté ;
+- difficulté ;
+- warning ;
+- danger ;
+- sélection.
 
-## 7.5 Reduced motion
+Toujours texte + couleur + forme/emblème lorsque nécessaire.
 
-Aucune animation n'est indispensable à la compréhension. Avec reduced motion, les mouvements décoratifs et transitions non nécessaires sont supprimés ou fortement réduits.
+---
+
+# 7. Motion
+
+`prefers-reduced-motion` :
+
+- Brouhaha reste compréhensible ;
+- révélations restent lisibles ;
+- aucune animation indispensable ;
+- pas de nausée/flash.
 
 ---
 
@@ -225,265 +208,205 @@ Aucune animation n'est indispensable à la compréhension. Avec reduced motion, 
 
 Valider :
 
-- miniatures en collections ;
-- lazy-loading ;
-- dimensions réservées ;
-- original chargé seulement si utile ;
-- mémoire maîtrisée ;
-- URLs objet libérées lorsque nécessaire ;
-- état `remote_only` ;
+- figurines détourées ;
+- originaux ;
+- thumbnails ;
+- images très hautes ;
+- images très larges ;
 - média absent ;
-- image très haute / très large.
+- dérivé absent ;
+- lazy-loading.
 
-La qualité de l'original n'est jamais réduite pour gagner un score de performance.
+Vérifier que :
+
+- l'original n'est jamais recompressé par une simple consultation ;
+- aucun fond blanc CSS n'est ajouté sous les détourages ;
+- les dimensions évitent les sauts de layout.
 
 ---
 
-# 9. Outillage de test
+# 9. Gros volumes
 
-## Playwright
+Tester au minimum :
+
+- plusieurs centaines de Créatures ;
+- dizaines de Donjons ;
+- nombreux Héros/niveaux ;
+- nombreuses Quêtes ;
+- nombreux médias ;
+- lore long ;
+- noms longs ;
+- relations absentes ;
+- images absentes.
+
+Virtualisation/pagination uniquement si les mesures l'exigent.
+
+---
+
+# 10. Playwright
 
 Parcours minimum :
 
-1. Accueil -> Codex -> Bestiaire -> Créature -> retour ;
-2. recherche globale -> résultat -> fiche ;
-3. Galerie/Liste avec conservation du contexte ;
-4. Donjon -> relation contextuelle -> retour ;
-5. Héros -> changement de niveau ;
-6. Générateur -> rencontre -> mini-fiche -> élimination d'une occurrence ;
-7. Brouhaha -> niveau -> tirage -> historique ;
-8. Quête de session -> nouveau tirage -> Codex ;
-9. Atelier -> dirty state -> Enregistrer ;
-10. Atelier -> quitter non enregistré -> confirmation ;
-11. Médias -> états local/distant -> détail ;
-12. Import -> preview -> annuler / confirmer sur données de test ;
-13. Journal -> filtre -> fermeture ;
-14. session Auth expirée -> sync en pause -> reconnexion ;
-15. navigation mobile.
-
-## axe
-
-Automatiser les contrôles détectables : noms accessibles, rôles, labels, structure ARIA, contrastes détectables et erreurs communes.
-
-## Visual regression
-
-Captures ciblées seulement sur les vues structurantes : Accueil, Bestiaire, fiche Créature, fiche Donjon, Générateur, Brouhaha, Atelier, Médias, Import preview.
-
-Tailles de référence recommandées :
-
-- 390 x 844 ;
-- environ 820 x 1180 ;
-- environ 1180 x 820 ;
-- 1366 x 768 ;
-- 1920 x 1080.
-
-Une baseline n'est mise à jour qu'après changement intentionnel validé.
+1. Accueil -> Codex -> Bestiaire -> fiche -> retour ;
+2. recherche/filtres/tri Bestiaire ;
+3. Galerie/Liste et persistance ;
+4. Donjon -> Voir tout préfiltré -> retour Donjon ;
+5. Héros -> N1/N2/N3/N4 -> compétences cumulées ;
+6. PNJ -> Quête associée ;
+7. recherche globale multi-familles ;
+8. Générateur -> rencontre -> éliminer occurrence ;
+9. Brouhaha -> niveau -> tirage -> historique ;
+10. Quête session -> reroll -> Codex ;
+11. Atelier -> modifier -> Enregistrer ;
+12. Atelier -> quitter dirty -> modal ;
+13. Médias -> détail ;
+14. Import -> preview -> confirmation ;
+15. navigation téléphone ;
+16. tablette collection -> fiche -> retour.
 
 ---
 
-# 10. Performance
+# 11. axe
 
-Les budgets servent de garde-fous.
+Automatiser :
 
-Objectifs fonctionnels :
+- noms accessibles ;
+- labels ;
+- rôles ;
+- ARIA ;
+- erreurs fréquentes ;
+- contrastes détectables.
 
-- ouverture d'une donnée locale sans attente réseau ;
-- recherche et filtres sans blocage perceptible ;
-- drawers/modales fluides ;
-- aucun chargement massif d'originaux ;
-- pas de rerender inutile d'une grosse collection à chaque frappe.
+axe complète, ne remplace pas les tests manuels.
 
-## Indicateurs Web Vitals
+---
 
-Sur un scénario de référence raisonnable :
+# 12. Performance
 
-- CLS cible <= 0,10 ;
-- INP cible <= 200 ms ;
-- LCP cible <= 2,5 s lorsque la mesure est pertinente.
+Objectifs de vigilance :
 
-## Lighthouse
+- CLS <= 0,10 ;
+- INP <= 200 ms ;
+- LCP <= 2,5 s lorsque pertinent.
 
-Seuils de vigilance, non absolus :
+Lighthouse indicatif :
 
 - Performance >= 80 ;
 - Accessibilité >= 95 ;
 - Best Practices >= 90.
 
-Une baisse est analysée avant toute concession sur le contenu ou la qualité média.
+Ne pas dégrader la qualité des originaux pour gagner un score.
 
 ---
 
-# 11. Stress dataset
+# 13. PWA / Offline
 
-Tester au minimum :
-
-- plusieurs centaines de créatures ;
-- plusieurs dizaines de donjons et quêtes ;
-- nombreux médias ;
-- noms très longs ;
-- lore long ;
-- nombreux tags ;
-- entités sans image ;
-- relations cassées ;
-- boss multi-phases ;
-- médias distants non locaux ;
-- erreurs sync ;
-- import avec warnings et erreurs.
-
-Pagination/virtualisation ne sont ajoutées que si les mesures démontrent un besoin réel.
-
----
-
-# 12. Réseau, offline et Auth
-
-Scénarios obligatoires :
-
-- online normal ;
-- offline avant lancement ;
-- perte réseau pendant édition ;
-- reconnexion ;
-- session Auth expirée ;
-- synchronisation en attente ;
-- média distant non local ;
-- erreur de téléchargement ;
-- récupération après retry.
-
-Le travail local sain ne doit jamais être présenté comme perdu à cause d'une panne distante.
-
----
-
-# 13. PWA réelle
-
-Valider :
+Tester :
 
 - installation ;
-- lancement depuis l'écran d'accueil ;
-- offline ;
+- lancement depuis écran d'accueil ;
+- première ouverture offline si supportée ;
+- réouverture offline ;
 - retour multitâche ;
-- reprise du contexte de session ;
-- reprise de l'état Atelier lorsque l'architecture le supporte ;
-- mise à jour du service worker ;
-- absence de cache fantôme après mise à jour.
-
-Sur iOS, tester également l'aide d'installation si elle est exposée par l'UI.
+- mise à jour Service Worker ;
+- données IndexedDB intactes ;
+- ressources UI disponibles.
 
 ---
 
-# 14. Appareils réels
+# 14. Architecture distante hors Gate
 
-Gate minimale :
+Ne pas bloquer UI-6 sur :
 
-- iPhone réel ;
-- iPad réel portrait ;
-- iPad réel paysage ;
+- Neon ;
+- Auth distante ;
+- remote_only ;
+- sync cloud.
+
+Ces scénarios reviendront avec le futur chantier technique.
+
+Si une fonctionnalité distante existe déjà réellement dans la production au moment de UI-6, elle est alors ajoutée à la matrice sur la base de son implémentation réelle.
+
+---
+
+# 15. Appareils réels
+
+Minimum :
+
+- iPhone ;
+- iPad portrait ;
+- iPad paysage ;
 - desktop étroit ;
 - desktop large ;
-- Chrome Android en smoke test.
+- Chrome Android smoke.
 
-L'émulation navigateur augmente la couverture mais ne remplace pas les appareils réels.
+L'émulation ne remplace pas l'iPad réel pour valider le comportement tablette.
 
 ---
 
-# 15. Sévérité des anomalies
+# 16. Sévérité
 
 ## Bloquant
 
-Empêche un parcours critique ou risque une perte de données/média.
+- perte/risque de perte de données ;
+- application inutilisable ;
+- migration IndexedDB cassée ;
+- parcours critique impossible.
 
 ## Majeur
 
-Fonction utilisable avec difficulté importante ou accessibilité essentielle cassée.
+- fonctionnalité fortement dégradée ;
+- responsive essentiel faux ;
+- accessibilité essentielle cassée ;
+- régression visuelle importante non justifiée.
 
 ## Mineur
 
-Défaut cosmétique ou friction faible sans perte de fonction.
+- friction/cosmétique sans impact fonctionnel.
 
-Critère de sortie :
+Sortie :
 
 ```text
 Bloquants : 0
 Majeurs   : 0
-Mineurs   : documentés et acceptés
+Mineurs   : documentés
 ```
-
----
-
-# 16. Wording à contrôler
-
-Vérifier notamment :
-
-- Objets interactifs ;
-- Butin pour la section Créature / Loot pour la famille du Codex ;
-- Éliminer ;
-- Enregistrer ;
-- Enregistré localement ;
-- Synchronisé avec Neon ;
-- Original sauvegardé et vérifié ;
-- Retirer de cet appareil ;
-- Supprimer définitivement.
-
-Les anciens libellés contradictoires ne doivent pas survivre.
 
 ---
 
 # 17. Matrice finale
 
-Conserver un tableau avec :
+Conserver :
 
-- cible/appareil ;
-- orientation/viewport ;
-- commit testé ;
-- vues testées ;
-- clavier/tactile ;
-- VoiceOver lorsque prévu ;
+- appareil ;
+- viewport/orientation ;
+- commit ;
+- vue ;
+- tactile/clavier ;
 - offline ;
-- Auth/sync ;
-- Médias ;
+- IndexedDB upgrade ;
+- images ;
+- accessibilité ;
 - résultat ;
-- anomalies restantes ;
-- décision finale.
+- anomalies ;
+- décision.
 
 ---
 
-# 18. Ordre d'exécution
+# 18. Gate UI-6
 
-```text
-Implémentation UI-1 -> UI-5
-Smoke automatisé
-Audit responsive
-Audit accessibilité automatisé
-Corrections
-Visual regression
-Stress dataset
-Offline / Auth / sync / médias
-Appareils réels + VoiceOver
-Corrections finales
-Re-test
-Matrice finale
-Gate UI-6
-```
+La V6 peut être proposée en production lorsque :
 
----
-
-# 19. Gate UI-6
-
-La refonte UI/UX V6 est validée lorsque :
-
-1. UI-1 à UI-5 sont implémentées conformément à leurs responsabilités ;
-2. aucun Bloquant ou Majeur ne subsiste ;
-3. les parcours essentiels atteignent la cible d'accessibilité retenue ;
-4. clavier et VoiceOver smoke sont validés ;
-5. reflow/zoom ne casse pas les parcours essentiels ;
-6. iPhone et iPad réels sont validés ;
-7. desktop étroit et large sont validés ;
-8. Android smoke est validé ;
-9. rotation conserve le contexte ;
-10. offline, Auth et reconnexion fonctionnent ;
-11. les médias local/distant fonctionnent sans perte de qualité ;
-12. le stress dataset ne provoque pas de panne majeure ;
-13. Playwright/axe passent sur la suite retenue ;
-14. les regressions visuelles sont expliquées ;
-15. la matrice finale est complétée ;
-16. les anomalies mineures restantes sont documentées et acceptées.
-
-**Après cette Gate, la conception UI/UX V6 est close. Toute évolution ultérieure devient un nouveau chantier versionné.**
+1. UI-1 à UI-5 sont fermées ;
+2. aucune perte de données n'est observée ;
+3. upgrade IndexedDB est validé s'il existe ;
+4. PWA/offline validés ;
+5. responsive téléphone/tablette/desktop validé ;
+6. Codex tablette séquentiel ;
+7. VoiceOver smoke validé ;
+8. clavier desktop validé ;
+9. Playwright/axe passent ;
+10. V3 reste reconnaissable ;
+11. performances acceptables ;
+12. Bloquants = 0 ;
+13. Majeurs = 0.

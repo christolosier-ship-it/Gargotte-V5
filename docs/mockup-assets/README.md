@@ -1,80 +1,152 @@
-# Gargottex V6 — Mockup Assets Lab
-
-Ressources graphiques créées pour la maquette navigable V6.
+# Gargottex V6 - Ressources de la maquette V3
 
 ## Statut
 
-**Expérimental / maquette.**
+**Référence visuelle validée pour la future UI, mais pas copie automatique vers la production.**
 
-Ces ressources peuvent être promues plus tard vers `assets/ui/` après validation visuelle, responsive et accessibilité. Elles ne sont pas encore des assets de production.
+Ce dossier contient les ressources utilisées pour éprouver la direction UI V6.
 
-## Contenu
+La production doit reprendre les ressources validées pertinentes en respectant :
 
-- `icons/premium-symbols.svg` : sprite SVG des 6 catégories de créatures et des pictogrammes gameplay.
-- `textures/grain-dark.svg` : grain maître sombre, usage global léger.
-- `textures/wood-charred.svg` : bois noirci premium, usage sidebar / home / couverture.
-- `textures/paper-warm.svg` : ancien papier chaud sombre conservé pour référence.
-- `textures/paper-aged-light.svg` : parchemin beige très clair, nuancé, légèrement usé et taché ; référence pour Lore, histoire et blocs narratifs.
-- `textures/brass-aged.svg` : laiton vieilli, usage filets / cadres / accents.
-- `textures/leather-dark.svg` : cuir sombre, usage exceptionnel uniquement.
-- `ornaments/corner-brass.svg` : coin décoratif laiton pour les panneaux narratifs premium.
+- `docs/REFONTE-UI-UX-V6.md`
+- `docs/UI-1-DESIGN-SYSTEM-V6.md`
+- `docs/WORKFLOW-IMAGES-REMBG-V6.md`
 
-## Règles
+---
 
-- Navigation : icônes d'interface sobres, pas de couleur de catégorie.
-- Gameplay : pictogrammes premium monochromes, couleur laiton / ivoire.
-- Catégories : `icône + texte + couleur` selon UI-1.
-- Textures : jamais derrière les formulaires ou les stats compactes.
-- Le laiton reste un accent, pas un fond massif.
-- Le cuir est événementiel, jamais systémique.
-- Les SVG sont conçus pour être redimensionnables et recolorables avec `currentColor`.
+# 1. Maquette
 
-## Catégories
+- `maquette-v3.css`
+- `maquette-v3.js`
+- HTML principal : `../GARGOTTEX-V6-MAQUETTE-PREMIUM-V3.html`
 
-- Basique : pierre facettée.
-- Tactique : viseur / nœud stratégique.
-- Spéciale : étoile mystique.
-- Brute : marteau fracturé.
-- Mini-boss : couronne.
-- Boss : crâne.
+La maquette définit la composition, l'émotion et la hiérarchie visuelle.
 
-## Pictogrammes gameplay
+Elle ne définit pas à elle seule la logique métier de production.
 
-`PV`, `ATK`, `DEF`, `Portée/Zone`, `Actions`, `Menace`, `Socle`, `Comportement/IA`, `Butin`, `Lore`, `Donjon`.
+---
 
-À créer : `Compétence`, `Héros`, `PNJ`, `Quête`, `Objet interactif`, `Brouhaha`.
+# 2. Emblèmes premium
 
-## Rareté et difficulté
+Répertoire : `icons/`
 
-Les six couleurs Créature servent aussi de référentiel commun :
+## Sigils
 
-- Basique : Loot **Mauvais** / Quête **Très facile** ;
-- Tactique : Loot **Commun** / Quête **Facile** ;
-- Spéciale : Loot **Inhabituel** / Quête **Normale** ;
-- Brute : Loot **Rare** / Quête **Difficile** ;
-- Mini-boss : Loot **Épique** / Quête **Très difficile** ;
-- Boss : Loot **Légendaire** / Quête **Extrême**.
+- Basique
+- Tactique
+- Spéciale
+- Brute
+- Mini-boss
+- Boss
 
-Ces niveaux utilisent des badges texte + couleur ; **aucune icône supplémentaire n'est requise** pour la rareté ou la difficulté.
+Les sigils validés utilisent une famille de crânes fantasy cartoon absurdes.
 
-## Détourage des figurines
+## Gameplay
 
-Le moteur retenu pour les dérivés transparents de la maquette est **IS-Net / DIS** via `rembg`. Les originaux restent intacts ; seuls les fichiers de `creatures-transparent/` sont régénérés.
+- PV
+- ATK
+- DEF
+- Portée / Zone
+- Actions
+- Menace
+- Socle
+- Comportement
+- Butin
+- Lore
+- Donjon
+- Compétence
 
-## Lore
+## Entités
 
-Les blocs Lore, histoire et assimilés utilisent `paper-aged-light.svg` : parchemin beige très clair, fibres nuancées, usure et taches légères, avec texte brun foncé pour préserver le contraste.
+- Héros
+- PNJ
+- Quête
+- Objet interactif
+- Brouhaha
 
+Les icônes utilitaires simples restent séparées de ces emblèmes.
 
-## Sources UI-3 de la maquette
+---
 
-Les propositions UI-3 utilisent des exemples réels issus du Drive Gargotte et des templates existants de l'application :
+# 3. Textures et ornements
 
-- 15 dossiers de Donjon ;
-- dossier Héros avec quatre images par niveau pour plusieurs héros ;
-- dossier PNJ avec portraits nommés ;
-- classeur de Quêtes ;
-- classeur de Loot ;
-- classeur Brouhaha.
+`textures/`
 
-Les exemples servent à éprouver les volumes, les noms longs, les images et la navigation. Ils ne créent aucun nouveau champ métier. Les fiches proposées restent volontairement différentes visuellement : dossier d'expédition pour Donjon, folio évolutif pour Héros, portrait narratif pour PNJ, contrat pour Quête, table d'inspection pour Loot, plan technique pour Objet interactif et carte d'incident pour Brouhaha.
+- grain sombre ;
+- bois noirci ;
+- papier clair vieilli ;
+- laiton ;
+- cuir rare.
+
+`ornaments/`
+
+- détails décoratifs validés pour les surfaces narratives.
+
+Les textures sont des références de matière. La production peut utiliser des versions optimisées.
+
+---
+
+# 4. Ressources d'épreuve
+
+## Créatures
+
+- originaux de test : `creatures/`
+- dérivés : `creatures-transparent/`
+
+## Héros
+
+- originaux de test : `heros/`
+- dérivés : `heros-transparent/`
+
+## Donjons
+
+- `donjon/`
+
+## Données
+
+- `stat-export/`
+- `generated-data/`
+
+Ces ressources servent à stresser la maquette. Elles ne représentent pas l'intégralité des données réelles IndexedDB de production.
+
+---
+
+# 5. Détourage
+
+Workflow :
+
+- `rembg`
+- IS-Net / DIS
+- `isnet-general-use`
+
+Voir `docs/WORKFLOW-IMAGES-REMBG-V6.md`.
+
+Originals intacts, dérivés séparés.
+
+---
+
+# 6. Rareté / difficulté
+
+Même échelle couleur que les catégories Créature :
+
+- Basique -> Loot Mauvais / Quête Très facile
+- Tactique -> Commun / Facile
+- Spéciale -> Inhabituel / Normale
+- Brute -> Rare / Difficile
+- Mini-boss -> Épique / Très difficile
+- Boss -> Légendaire / Extrême
+
+Toujours texte + couleur.
+
+---
+
+# 7. Règle de promotion vers la production
+
+Avant de déplacer/copier une ressource vers les assets finaux :
+
+1. vérifier qu'elle est utilisée dans la V3 ;
+2. vérifier son format et sa taille ;
+3. vérifier son contraste ;
+4. vérifier son rendu desktop/tablette/téléphone ;
+5. vérifier l'accessibilité si sémantique ;
+6. ne jamais écraser un média utilisateur IndexedDB.

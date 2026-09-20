@@ -2,317 +2,323 @@
 
 ## Statut
 
-**VERROUILLÉ - source de vérité pour le Bestiaire et la fiche Créature**
+**ACTIF - source de vérité fonctionnelle du Bestiaire et de la fiche Créature**
 
-Ce document complète `REFONTE-UI-UX-V6.md` et réutilise le design system de `UI-1-DESIGN-SYSTEM-V6.md` sans en recopier les tokens.
+Références obligatoires :
 
-Principe directeur :
+- `REFONTE-UI-UX-V6.md` ;
+- `UI-1-DESIGN-SYSTEM-V6.md` ;
+- maquette V3 ;
+- `WORKFLOW-IMAGES-REMBG-V6.md` pour les figurines détourées.
+
+Principe :
 
 > **Galerie pour explorer. Liste pour arbitrer. Fiche pour comprendre.**
 
 ---
 
-# 1. Objectifs
+# 1. Sous-lots
 
-UI-2 doit permettre de :
+## UI-2A - Collection
 
-- parcourir plusieurs centaines de créatures ;
-- explorer visuellement le bestiaire ;
-- retrouver rapidement une créature pendant une partie ;
-- comprendre immédiatement identité, menace, stats et mécanique principale ;
-- préserver recherche, filtres, tri, vue et scroll lors des allers-retours ;
-- fournir l'écran étalon du Codex pour UI-3.
-
----
-
-# 2. Décisions verrouillées
-
-1. Le Bestiaire propose **Galerie** et **Liste**.
-2. Vue initiale : Galerie sur desktop/tablette, Liste sur téléphone.
-3. Le dernier mode choisi est mémorisé localement.
-4. Desktop : collection visible lorsque la fiche est ouverte.
-5. Desktop sans sélection : la collection peut occuper tout l'espace de travail.
-6. Tablette, portrait comme paysage : `Bestiaire -> Fiche -> retour Bestiaire`, sans collection et fiche affichées côte à côte.
-7. Le retour tablette/téléphone restaure le contexte de collection sans perte de recherche, filtres, tri, vue ni scroll.
-8. Téléphone : `Bestiaire -> Fiche -> retour Bestiaire`.
-9. Identité, stats et Compétence restent directement visibles sur mobile.
-10. Comportement, Butin, Lore et Liés peuvent être repliables sur mobile.
-11. Les créatures liées privilégient le même donjon puis les relations explicites.
-12. Un rail Liés permanent n'est autorisé que sur très grand desktop.
-13. Les boss multi-phases utilisent une pile compacte desktop/tablette et des accordéons sur téléphone.
-14. Le cadrage principal privilégie la silhouette complète et `contain` pour les figurines.
-15. L'image principale s'ouvre en plein écran.
-16. Filtres : recherche, Donjon, Catégorie, Menace, Tags.
-17. Tris initiaux : Nom, Menace, Donjon.
-18. Retour depuis une fiche : restauration de la recherche, des filtres, du tri, de la vue et du scroll.
-19. L'accent du donjon reste narratif et ne remplace jamais les couleurs de gameplay.
-20. Une donnée absente réduit la fiche, elle ne crée pas un panneau vide.
-
----
-
-# 3. Bestiaire
-
-## 3.1 En-tête
-
-Le Bestiaire contient :
-
-- titre et nombre de résultats ;
-- recherche ;
-- filtres ;
-- tri ;
-- bascule Galerie/Liste ;
-- remise à zéro lorsque des filtres sont actifs.
-
-La recherche est locale-first et ne dépend pas du réseau.
-
-Les filtres actifs restent visibles et supprimables individuellement.
-
-## 3.2 Galerie
-
-La Galerie sert à reconnaître et explorer.
-
-Une carte affiche uniquement :
-
-- illustration ;
-- nom ;
-- donjon / contexte ;
-- catégorie ;
-- menace.
-
-Elle ne devient jamais une mini-fiche de statistiques.
-
-## 3.3 Liste
-
-La Liste sert à arbitrer rapidement pendant une partie.
-
-Une ligne affiche :
-
-- petite vignette ;
-- nom ;
-- catégorie et donjon ;
-- PV, ATK, DEF ;
-- menace.
-
-La ligne sélectionnée possède un état accessible clair, pas uniquement une couleur.
-
----
-
-# 4. Persistance du contexte
-
-Lors d'un retour au Bestiaire, restaurer :
-
-- recherche ;
-- filtres ;
-- tri ;
 - Galerie/Liste ;
-- scroll ;
-- sélection précédente si utile.
+- recherche ;
+- filtres ;
+- tri ;
+- restauration du contexte.
 
-Sur téléphone, le retour doit replacer l'utilisateur à l'endroit exact de sa collection, autant que l'architecture le permet.
+## UI-2B - Fiche
 
----
-
-# 5. Fiche Créature
-
-Hiérarchie verrouillée :
-
-```text
-1. Illustration / identité
-2. Donjon / contexte
-3. Catégorie / Menace / Socle
-4. Statistiques
-5. Compétence
-6. Comportement / IA
-7. Butin
-8. Lore
-9. Tags / métadonnées utiles
-10. Entités liées
-```
-
-La partie utile en jeu précède la narration.
-
-## 5.1 Identité
-
-L'en-tête contient :
-
-- nom ;
-- donjon ;
 - illustration ;
-- catégorie ;
-- menace ;
-- socle.
-
-Le donjon devient un lien vers son hub lorsqu'il existe.
-
-## 5.2 Statistiques
-
-Ordre stable :
-
-`PV | ATK | DEF | PORTÉE / ZONE | ACTIONS`
-
-La Menace reste dans l'identité et n'est pas dupliquée dans la bande de stats.
-
-## 5.3 Compétence
-
-La compétence principale vient immédiatement après les stats et reste visible sans interaction supplémentaire sur tous les appareils.
-
-Elle reçoit un pictogramme dédié `Icone_Gameplay_COMPETENCE.webp`. Tant que cet asset n'existe pas, aucun pictogramme existant n'est détourné pour simuler cette sémantique.
-
-## 5.4 Comportement / IA
-
-Bloc fonctionnel distinct :
-
+- identité ;
+- stats ;
+- compétence ;
 - comportement ;
-- priorité de cible ;
-- règles existantes utiles.
+- Butin ;
+- Lore.
 
-## 5.5 Butin
+## UI-2C - Relations et cas avancés
 
-Liste compacte ou mini-cartes selon le contenu.
+- médias ;
+- relations ;
+- boss/phases ;
+- états incomplets ;
+- retour/restauration.
 
-Le terme **Butin** désigne la section de la fiche Créature. **Loot** reste le nom de la famille correspondante dans le Codex UI-3.
-
-## 5.6 Lore
-
-Le Lore vient après le gameplay et reçoit le traitement éditorial défini par UI-1.
-
-Le panneau Lore utilise une matière de **papier / parchemin usé**, chaude mais lisible, avec de légères irrégularités et quelques taches discrètes. L'effet reste éditorial et contenu : pas de salissure forte, pas de contraste qui nuise au texte.
+Chaque sous-lot passe sa gate avant le suivant.
 
 ---
 
-# 6. Images et états média
+# 2. Collection Bestiaire
 
-UI-2 ne définit pas la stratégie de stockage des originaux. Elle applique UI-5 et la documentation technique.
+Vue initiale :
 
-Règles :
+- desktop : Galerie ;
+- tablette : Galerie ;
+- téléphone : Liste.
 
-- la Galerie/Liste utilise des miniatures ou dérivés d'affichage ;
-- la fiche utilise l'original local lorsqu'il est disponible, ou un dérivé adapté à l'affichage ;
-- aucune optimisation UI ne remplace ni ne modifie l'original ;
-- les conversions WebP/AVIF éventuelles concernent uniquement les **dérivés d'affichage**, jamais l'original sauvegardé ;
-- pour les figurines détourées, le moteur de référence validé par la maquette est **IS-Net / DIS** via `rembg` ; il génère uniquement un dérivé transparent d'affichage et ne modifie jamais l'original ;
-- lazy-loading hors premier viewport ;
-- dimensions explicites pour limiter les sauts de layout ;
-- aucun chargement massif des originaux.
+Le dernier mode choisi est mémorisé localement.
 
-États à distinguer :
+## Contrôles obligatoires
 
-- original local disponible ;
-- original sauvegardé distant mais non téléchargé (`remote_only`) ;
-- média réellement absent / indisponible.
+- recherche ;
+- filtre Donjon ;
+- filtre Catégorie ;
+- filtre Menace ;
+- filtre Tags ;
+- tri Nom ;
+- tri Menace ;
+- tri Donjon ;
+- Galerie/Liste ;
+- reset lorsque des filtres sont actifs.
 
-Un média `remote_only` ne doit pas être présenté comme « image inexistante ». L'interface affiche un aperçu/placeholder cohérent et une action de récupération lorsque UI-5 l'autorise.
+**Ces contrôles doivent réellement filtrer/trier les données. Ils ne peuvent pas rester décoratifs comme dans certaines parties de la maquette.**
 
----
+La recherche est locale et fonctionne offline.
 
-# 7. Boss et phases
+## Galerie
 
-## 7.1 Mini-boss
+Carte :
 
-La fiche standard reste la base, avec le traitement de catégorie prévu par UI-1.
+- figurine ;
+- nom ;
+- Donjon ;
+- catégorie ;
+- menace.
 
-## 7.2 Boss multi-phases
+Pas de mini-fiche complète.
 
-Le regroupement de plusieurs entrées en phases d'un même boss n'est automatique **que si les données existantes permettent une relation non ambiguë et validée**.
+## Liste
 
-Une convention de nom seule ne doit pas être devinée par l'UI si elle peut produire des faux regroupements.
+Ligne :
 
-Sans relation fiable :
-
-- les entrées restent consultables séparément ;
-- aucun changement de modèle n'est introduit par UI-2.
-
-Lorsqu'un regroupement fiable existe :
-
-- desktop/tablette : phases empilées verticalement ;
-- téléphone : accordéons ;
-- éviter des tabs qui masquent entièrement les autres phases.
-
----
-
-# 8. Relations
-
-Priorité :
-
-1. même donjon ;
-2. relations explicites ;
-3. contenu directement associé par le modèle.
-
-Le Bestiaire ne crée aucun système de recommandation opaque.
-
-Les liens contextuels suivent les règles générales de UI-3 et doivent conserver un chemin de retour compréhensible.
+- vignette ;
+- nom ;
+- catégorie ;
+- Donjon ;
+- PV ;
+- ATK ;
+- DEF ;
+- menace.
 
 ---
 
-# 9. Responsive
-
-Les seuils globaux appartiennent à UI-1/UI-6. Les proportions ci-dessous sont propres au Bestiaire et restent indicatives.
+# 3. Responsive
 
 ## Desktop
 
-Sans sélection : collection large.
+Collection et fiche peuvent coexister.
 
-Avec sélection :
+La fiche garde une largeur confortable.
 
-```text
-Sidebar | Collection | Illustration | Fiche
-```
+## Tablette portrait et paysage
 
-Repères :
+Toujours :
 
-- collection : environ 22 à 28 % de l'espace de travail ;
-- illustration : environ 35 à 40 % de la zone fiche lorsque la largeur le permet ;
-- fiche : reste de la zone de détail.
+`Bestiaire -> Fiche -> Retour Bestiaire`
 
-Sur très grand desktop seulement, un rail Liés peut s'ajouter s'il ne comprime pas la fiche.
-
-La collection et la fiche peuvent avoir des scrolls indépendants afin d'éviter les sauts lors d'un changement de sélection.
-
-## Tablette paysage
-
-Navigation séquentielle, comme sur téléphone : `Bestiaire -> Fiche -> retour Bestiaire`.
-
-Le Bestiaire utilise toute la largeur disponible pour la collection. Lorsqu'une créature est ouverte, la fiche prend à son tour toute la largeur utile. Le retour restaure la position et les filtres précédents.
-
-## Tablette portrait
-
-Même navigation séquentielle : `Bestiaire -> Fiche -> retour Bestiaire`.
-
-Aucune composition côte à côte collection + fiche n'est utilisée sur tablette.
+Jamais collection + fiche côte à côte.
 
 ## Téléphone
 
-Bestiaire et fiche sont deux écrans successifs.
+Même séquence.
 
-Toujours ouverts :
+Le retour restaure :
 
-- identité ;
-- stats ;
-- Compétence.
+- recherche ;
+- filtres ;
+- tri ;
+- mode ;
+- scroll ;
+- sélection utile.
 
-Repliables si utile :
-
-- comportement ;
-- Butin ;
-- Lore ;
-- Liés.
+La détection de layout doit reposer sur la composition responsive, pas sur `navigator.maxTouchPoints` seul.
 
 ---
 
-# 10. États incomplets
+# 4. Hiérarchie de fiche
 
-Gérer explicitement :
+Ordre :
+
+1. illustration / identité ;
+2. Donjon ;
+3. catégorie / Menace / Socle ;
+4. stats ;
+5. Compétence ;
+6. Comportement ;
+7. Butin ;
+8. Lore ;
+9. tags ;
+10. entités liées.
+
+Stats :
+
+`PV | ATK | DEF | PORTÉE / ZONE | ACTIONS`
+
+La Menace reste dans l'identité.
+
+---
+
+# 5. Illustration
+
+La figurine est un contenu majeur.
+
+Règles :
+
+- silhouette entière privilégiée ;
+- `object-fit: contain` pour une figurine détourée ;
+- plein écran disponible ;
+- dimensions réservées ;
+- lazy-loading hors premier viewport ;
+- pas de chargement massif d'originaux.
+
+Pour les fonds transparents :
+
+- utiliser le workflow rembg documenté ;
+- l'original reste intact ;
+- le PNG transparent est un dérivé ;
+- un CSS `background:#fff` ne doit jamais recréer un faux fond blanc autour d'une figurine détourée.
+
+---
+
+# 6. Données et compatibilité IndexedDB
+
+La nouvelle UI doit lire les enregistrements existants sans migration obligatoire.
+
+Champs absents :
+
+- ne pas casser la fiche ;
+- masquer/réduire la section concernée ;
+- afficher `—` uniquement si le contexte exige une valeur.
+
+Une fiche UI ne doit pas réécrire un enregistrement simplement parce qu'elle l'a lu.
+
+Aucun identifiant existant ne change.
+
+---
+
+# 7. Compétence
+
+La Compétence suit immédiatement les stats.
+
+Emblème :
+
+`Icone_Gameplay_COMPETENCE.webp`
+
+Le texte complet reste lisible.
+
+Les effets narratifs peuvent utiliser une matière plus chaude, sans réduire le contraste.
+
+---
+
+# 8. Comportement
+
+Bloc fonctionnel :
+
+- IA/comportement ;
+- priorité de cible ;
+- règles utiles.
+
+Ne pas interpréter ou inventer une IA absente.
+
+---
+
+# 9. Butin
+
+La section de fiche s'appelle **Butin**.
+
+La famille du Codex s'appelle **Loot**.
+
+Chaque élément peut ouvrir la famille Loot lorsqu'une relation existe.
+
+---
+
+# 10. Lore
+
+Traitement éditorial léger :
+
+- papier clair usé ;
+- texte brun sombre ;
+- pas de texture forte ;
+- pas de duplication de titre ou de phrase d'ambiance inutile.
+
+---
+
+# 11. Catégories
+
+Toujours :
+
+- sigil premium ;
+- texte ;
+- couleur d'accent.
+
+Couleur :
+
+- liseré de carte ;
+- badge ;
+- micro-accent de fiche ;
+- halo contenu.
+
+Jamais une fiche entièrement recolorée.
+
+---
+
+# 12. Relations
+
+Priorité :
+
+1. même Donjon ;
+2. relations explicites ;
+3. contenu directement associé par les données.
+
+Les relations ne sont jamais inventées pour remplir un rail.
+
+`Voir tout` ouvre une collection réellement préfiltrée et conserve un chemin de retour.
+
+---
+
+# 13. Boss et phases
+
+Une phase n'est regroupée que si la relation est fiable.
+
+Une simple ressemblance de nom n'est pas suffisante.
+
+Avec relation fiable :
+
+- desktop : pile compacte ;
+- tablette : pile verticale sur fiche dédiée ;
+- téléphone : accordéons.
+
+Sans relation fiable : entrées séparées.
+
+---
+
+# 14. États média
+
+Dans la phase actuelle local-first :
+
+- original local présent ;
+- dérivé disponible ;
+- image absente/illisible.
+
+Les états distants de type `remote_only` ne deviennent obligatoires que lorsqu'un futur chantier de synchronisation les réintroduit.
+
+---
+
+# 15. États incomplets
+
+Gérer :
 
 - aucune créature ;
-- aucune correspondance de recherche ;
-- filtres sans résultat ;
-- média local absent mais distant disponible ;
-- média indisponible ;
+- aucun résultat ;
+- image absente ;
 - Compétence absente ;
 - Butin absent ;
 - Lore absent ;
-- relation manquante ;
-- cloud indisponible avec données locales disponibles.
+- tags absents ;
+- relation cassée ;
+- nom long ;
+- données anciennes.
 
 Règle :
 
@@ -320,34 +326,17 @@ Règle :
 
 ---
 
-# 11. Accessibilité et performance
+# 16. Gate UI-2
 
-Les règles chiffrées et tokens restent dans UI-1 et UI-6.
+Validation obligatoire :
 
-UI-2 ajoute seulement les obligations métier suivantes :
-
-- carte/ligne entièrement activable avec focus visible ;
-- catégorie compréhensible sans couleur seule ;
-- visionneuse fermable au clavier ;
-- drawer accessible ;
-- accordéons avec état ouvert/fermé exposé ;
-- aucun hover indispensable ;
-- gros volumes testés sans charger tous les originaux.
-
----
-
-# 12. Gate UI-2
-
-UI-2 est validée lorsque :
-
-1. une créature se retrouve rapidement dans un gros bestiaire ;
-2. Galerie et Liste ont deux usages clairement distincts ;
-3. la fiche hiérarchise correctement gameplay puis narration ;
-4. le retour restaure le contexte de collection ;
-5. le téléphone n'empile jamais collection complète puis fiche ;
-6. la tablette utilise la navigation séquentielle `Bestiaire -> Fiche -> retour Bestiaire` sans collection et fiche côte à côte ;
-7. les états média local / distant / absent sont compréhensibles ;
-8. les boss multi-phases ne sont jamais regroupés sur une heuristique ambiguë ;
-9. aucune règle de stockage média ou token visuel n'est dupliquée ici.
-
-**UI-2 devient la source de vérité du Bestiaire et de la fiche Créature.**
+1. recherche/filtres/tri fonctionnels ;
+2. Galerie et Liste distinctes ;
+3. contexte restauré ;
+4. tablette séquentielle ;
+5. téléphone séquentiel ;
+6. fiche conforme V3 ;
+7. figurines détourées sans altération des originaux ;
+8. données IndexedDB anciennes lisibles ;
+9. boss regroupés uniquement avec relation fiable ;
+10. aucune perte de données ni réécriture massive.

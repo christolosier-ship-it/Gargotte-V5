@@ -1,395 +1,407 @@
-# Gargottex V6 - UI-5 Administration, Médias & Synchronisation
+# Gargottex V6 - UI-5 Administration, Médias & Persistance locale
 
 ## Statut
 
-**VERROUILLÉ - source de vérité pour l'Atelier, l'Auth visible, les Médias, les Imports/Exports, la synchronisation et les diagnostics**
+**ACTIF - source de vérité de l'Atelier, des Médias, des imports/exports et de la persistance visible**
 
-Ce document décrit les comportements visibles par l'utilisateur. Les détails de stockage, de transport et de sécurité appartiennent à `REFACTORISATION-V6-LOCAL-FIRST-NEON.md` et ne sont pas recopiés ici.
+Le nom historique du fichier contient « SYNC », mais la **synchronisation distante est différée** avec la refactorisation technique.
 
-Principe directeur :
+Le chantier actuel protège et utilise la PWA + IndexedDB existants.
 
-> **Toute action d'administration doit être compréhensible, volontaire et impossible à confondre avec une simple consultation.**
+Principe :
 
----
-
-# 1. Décisions verrouillées
-
-1. L'Atelier utilise un bouton **Enregistrer** explicite.
-2. Il n'existe pas d'auto-save à chaque frappe.
-3. Quitter une fiche modifiée sans enregistrer déclenche un avertissement.
-4. Sur téléphone, Enregistrer reste accessible dans une barre sticky.
-5. La suppression n'est jamais déclenchée directement depuis une carte de collection.
-6. Les actions destructives vivent dans une zone Danger.
-7. Médias propose au minimum `Tous | Liés | Orphelins`.
-8. Les états média distinguent présence locale et sauvegarde distante.
-9. Tout import massif passe par une preview avant écriture.
-10. Preview : lignes valides, avertissements, erreurs et effet prévu.
-11. JSON, XLSX et originaux médias restent des mécanismes distincts.
-12. Un statut de synchronisation discret reste accessible dans la topbar.
-13. `Enregistré localement` et `Synchronisé avec Neon` ne sont jamais confondus.
-14. Une erreur Neon ne bloque pas le travail local.
-15. `Réessayer` est disponible lorsque la synchronisation échoue.
-16. Journal/diagnostic reste secondaire, en drawer ou panneau dédié.
-17. Le diagnostic synthétique précède les logs bruts.
-18. Copier/Exporter le diagnostic est disponible.
-19. Vider le journal demande confirmation et ne touche jamais au Codex.
-20. Aucun second backend média n'est introduit par l'UI.
-21. L'original média n'est jamais recompressé, redimensionné ou converti par l'interface.
-22. Pour les figurines qui nécessitent un fond transparent, **IS-Net / DIS** est le moteur de détourage de référence validé par la maquette. Le résultat est un dérivé d'affichage ; l'original reste intact.
+> **Créer et modifier sans jamais mettre en danger les données déjà présentes sur l'appareil.**
 
 ---
 
-# 2. Atelier
+# 1. Découpage
 
-## 2.1 Rôle
+## UI-5A - Atelier
 
-Le Codex consulte. L'Atelier crée, modifie et supprime.
+- familles ;
+- liste ;
+- formulaire ;
+- dirty state ;
+- Enregistrer ;
+- création ;
+- suppression.
 
-Familles éditables : Donjons, Créatures, Héros, PNJ, Quêtes, Loot, Objets interactifs, Brouhaha.
+## UI-5B - Médias
 
-## 2.2 Desktop / tablette paysage
+- originaux ;
+- dérivés ;
+- rattachements ;
+- détourage rembg ;
+- suppression locale volontaire.
 
-Composition : collection/recherche à gauche, formulaire à droite.
+## UI-5C - Import/Export & diagnostic local
 
-## 2.3 Tablette portrait
-
-Formulaire prioritaire, collection dans un drawer si nécessaire.
-
-## 2.4 Téléphone
-
-`Liste -> Fiche d'édition plein écran -> barre Enregistrer`.
-
----
-
-# 3. Enregistrement et dirty state
-
-Une fiche distingue :
-
-- non modifiée ;
-- modifiée non enregistrée ;
-- enregistrement local en cours ;
-- enregistrée localement ;
-- synchronisation distante en attente ;
-- synchronisation en cours ;
-- synchronisée ;
-- erreur de synchronisation.
-
-Après clic sur `Enregistrer` :
-
-1. validation ;
-2. écriture locale immédiate ;
-3. mise à jour de l'interface ;
-4. synchronisation distante ensuite.
-
-L'interface n'affiche jamais `Synchronisé` avant confirmation distante.
-
-Si l'utilisateur quitte avec des changements non enregistrés :
-
-`Rester | Quitter sans enregistrer | Enregistrer`.
+- preview ;
+- import ;
+- export ;
+- PWA ;
+- IndexedDB ;
+- diagnostic ;
+- offline.
 
 ---
 
-# 4. Formulaires
+# 2. Sécurité IndexedDB
 
-Les sections suivent la hiérarchie métier de la fiche Codex correspondante.
+Ce lot est celui qui présente le plus de risque de perte.
+
+Règles absolues :
+
+1. ne jamais supprimer la base pour appliquer la nouvelle UI ;
+2. ne jamais supprimer un object store existant dans ce chantier sans migration séparée ;
+3. préserver IDs et clés ;
+4. lors d'une édition, conserver les propriétés non présentes dans le formulaire ;
+5. nouveaux champs optionnels par défaut ;
+6. une migration d'index/store est versionnée et testée sur copie ;
+7. les données binaires existantes sont préservées ;
+8. le Service Worker ne réinitialise pas IndexedDB ;
+9. un échec de mise à jour n'efface aucune donnée locale saine ;
+10. les tests de fixtures ne prouvent pas à eux seuls la compatibilité avec les IndexedDB réels de production.
+
+Avant déploiement d'une migration locale :
+
+- tester un upgrade depuis une version précédente ;
+- exporter/sauvegarder sur un appareil de validation ;
+- vérifier lecture/écriture après upgrade ;
+- tester réouverture offline.
+
+---
+
+# 3. Atelier
+
+Le Codex consulte.
+
+L'Atelier crée, modifie et supprime.
+
+Familles :
+
+- Créatures ;
+- Donjons ;
+- Héros ;
+- PNJ ;
+- Quêtes ;
+- Loot ;
+- Objets interactifs ;
+- Brouhaha.
+
+La V3 « menu classique à cases puis fiche » est la référence.
+
+---
+
+# 4. Responsive Atelier
+
+Desktop :
+
+- liste/collection à gauche ;
+- fiche à droite.
+
+Tablette paysage :
+
+- liste + formulaire possible si confortable.
+
+Tablette portrait :
+
+- formulaire prioritaire ;
+- liste en drawer/panneau secondaire si nécessaire.
+
+Téléphone :
+
+`Liste -> Fiche d'édition -> Retour`
+
+Barre `Enregistrer` sticky.
+
+Cette exception ne doit pas être confondue avec le comportement séquentiel du Codex tablette.
+
+---
+
+# 5. Enregistrement
+
+Pas d'auto-save à chaque frappe.
+
+États :
+
+- propre ;
+- modifié non enregistré ;
+- validation ;
+- enregistrement local ;
+- enregistré localement ;
+- erreur locale.
+
+Après clic `Enregistrer` :
+
+1. valider ;
+2. écrire dans IndexedDB ;
+3. confirmer localement ;
+4. mettre à jour l'UI.
+
+Aucun libellé « Synchronisé avec Neon » dans le chantier actuel.
+
+---
+
+# 6. Quitter avec modifications
+
+Modal :
+
+`Rester | Quitter sans enregistrer | Enregistrer`
+
+Aucune modification ne se perd silencieusement.
+
+---
+
+# 7. Création
+
+`+ Nouveau` ouvre une fiche complète.
+
+Avant Enregistrer :
+
+- brouillon UI ;
+- pas d'enregistrement métier caché.
+
+Les valeurs par défaut ne doivent pas inventer une donnée métier significative.
+
+---
+
+# 8. Suppression
+
+Suppression uniquement depuis la fiche.
+
+Zone Danger.
+
+Confirmation forte.
+
+La suppression doit préciser :
+
+- entité ;
+- relations connues ;
+- média éventuellement lié.
+
+Aucune cascade inventée.
+
+---
+
+# 9. Formulaires
+
+La structure suit la fiche Codex correspondante.
 
 Exemple Créature :
 
-```text
-Identité
-Gameplay
-Compétence
-IA / comportement
-Loot
-Lore
-Médias liés
-Métadonnées
-```
+- Identité ;
+- Gameplay ;
+- Compétence ;
+- Comportement ;
+- Butin ;
+- Lore ;
+- Médias ;
+- Tags.
 
-L'objectif est d'éviter un formulaire monolithique tout en gardant les champs essentiels rapidement accessibles.
+Un formulaire n'efface jamais un champ existant simplement parce qu'il n'est pas visible dans la nouvelle UI.
 
----
+Technique recommandée :
 
-# 5. Création et suppression
-
-## Création
-
-`+ Nouvelle ...` ouvre une vraie fiche d'édition, pas une petite modal.
-
-Avant Enregistrer, la nouvelle entrée reste un brouillon UI.
-
-## Suppression métier
-
-La suppression se trouve dans la zone Danger de la fiche.
-
-La confirmation rappelle l'entité ciblée et les impacts connus calculables depuis les relations existantes.
-
-Aucune cascade métier n'est inventée par l'UI.
+- lire l'objet complet ;
+- modifier les champs édités ;
+- réécrire l'objet enrichi, sans reconstruire depuis zéro un sous-ensemble destructif.
 
 ---
 
-# 6. Auth visible
+# 10. Médias : principes
 
-UI-5 définit seulement les états visibles, pas l'implémentation Auth.
+L'original est sacré.
 
-États minimum :
+Distinguer :
 
-- session en vérification ;
-- connecté ;
-- hors ligne avec travail local disponible ;
-- session expirée / reconnexion nécessaire ;
-- erreur Auth distante.
+- original ;
+- thumbnail ;
+- dérivé transparent ;
+- aperçu.
 
-Règles :
+Un dérivé n'est jamais enregistré à la place de l'original.
 
-- l'accès distant et la synchronisation nécessitent une session valide ;
-- une session expirée met la synchronisation en pause et propose `Se reconnecter` ;
-- les données déjà disponibles localement restent utilisables selon les règles techniques V6 ;
-- l'interface ne donne jamais l'impression que l'expiration Auth a supprimé les données locales ;
-- aucune inscription publique n'est présentée comme parcours normal de Gargottex.
-
-Le statut compte/Auth reste secondaire dans la topbar ou le panneau de synchronisation.
+Si le modèle actuel stocke des Blobs en IndexedDB, conserver ces Blobs.
 
 ---
 
-# 7. Médias : principes UX
+# 11. Workflow de détourage
 
-La vue Médias doit permettre de comprendre :
+Pour une figurine :
 
-1. à quelle entité le média est lié ;
-2. si l'original existe sur cet appareil ;
-3. si l'original est sauvegardé et vérifié à distance ;
-4. si une action de téléchargement ou de retry est nécessaire.
+- utiliser `WORKFLOW-IMAGES-REMBG-V6.md` ;
+- IS-Net / DIS via `rembg` ;
+- résultat transparent séparé ;
+- audit alpha ;
+- contrôle visuel.
 
-L'original et la miniature sont toujours distingués.
+Sur échec de détourage :
 
-Les détails techniques de stockage restent dans la documentation V6 technique.
-
----
-
-# 8. États média
-
-Libellés UX minimum :
-
-- **Sur cet appareil uniquement** ;
-- **Sauvegarde en cours** ;
-- **Local + sauvegardé et vérifié** ;
-- **Sauvegardé dans Neon, non téléchargé ici** ;
-- **Téléchargement en cours** ;
-- **Erreur de sauvegarde** ;
-- **Original indisponible**.
-
-`Original sauvegardé et vérifié` n'est affiché qu'après validation d'intégrité selon la règle technique V6.
+- conserver l'original ;
+- marquer le dérivé à corriger ;
+- ne jamais remplacer automatiquement l'original.
 
 ---
 
-# 9. Bibliothèque Médias
+# 12. Bibliothèque Médias
 
-En-tête : Ajouter + recherche.
+En-tête :
 
-Filtres minimum :
+- Ajouter ;
+- recherche ;
+- Tous ;
+- Liés ;
+- Orphelins.
 
-`Tous | Liés | Orphelins`
-
-Filtres complémentaires possibles selon besoin réel : type d'entité, entité liée, type de fichier, état local/distant, erreurs.
-
-Une carte affiche :
+Carte :
 
 - aperçu ;
-- label / fichier ;
+- label ;
 - entité liée ;
-- statut lié/orphelin ;
-- statut local/distant.
-
-Le détail Média affiche les métadonnées utiles, le rattachement, la présence locale et l'état de sauvegarde.
-
----
-
-# 10. Actions média
-
-Les actions destructives sont volontairement séparées.
-
-## 10.1 Retirer de cet appareil
-
-Cette action supprime **uniquement la copie locale de l'original** et conserve la sauvegarde distante ainsi que le rattachement métier.
-
-Elle n'est proposée que si une copie distante saine et vérifiée existe.
-
-Après l'action, le média devient `remote_only` et peut être téléchargé à nouveau.
-
-## 10.2 Supprimer définitivement
-
-Cette action supprime le média comme ressource métier selon les règles techniques V6 et demande une confirmation forte.
-
-La confirmation indique clairement :
-
-- entité liée ;
-- présence locale ;
-- présence distante ;
-- caractère définitif de l'action.
-
-Si le média est `local_only`, l'interface avertit explicitement qu'aucune sauvegarde distante saine n'existe.
-
-## 10.3 Télécharger l'original
-
-Disponible pour un média distant non local.
-
-Le média n'est déclaré sain localement qu'après validation d'intégrité.
-
-## 10.4 Réessayer
-
-Relance un transfert ou une vérification ayant échoué, sans dupliquer les opérations déjà confirmées.
-
----
-
-# 11. Synchronisation globale
-
-États UX :
-
-- Synchronisé ;
-- Synchronisation en cours ;
-- modifications locales en attente ;
-- hors ligne ;
-- erreur de synchronisation.
-
-Le panneau de détail sépare toujours :
-
 - état local ;
-- état Neon ;
-- opérations structurées en attente ;
-- médias en attente ou en erreur ;
-- dernière synchronisation réussie.
+- type de ressource.
 
-Message de référence en cas d'erreur distante :
+Détail :
 
-> Vos modifications sont enregistrées sur cet appareil. La sauvegarde distante n'a pas encore abouti.
-
-Une erreur média distante ne supprime jamais l'original local sain.
+- original ;
+- dérivé(s) ;
+- rattachement ;
+- taille/type utiles ;
+- actions.
 
 ---
 
-# 12. Import / Export
+# 13. Actions média
 
-La page distingue clairement :
+## Retirer un dérivé
 
-1. JSON structuré ;
-2. XLSX ;
-3. Imports ;
-4. état de sauvegarde des médias.
+Peut supprimer un dérivé régénérable.
 
-Le JSON et le XLSX ne prétendent pas contenir les originaux binaires.
+Ne touche pas l'original.
 
-## 12.1 Preview obligatoire
+## Retirer l'original local
 
-Avant toute écriture :
+Dans le chantier actuel, cette action n'est autorisée **que si l'application dispose déjà d'un mécanisme de sauvegarde externe sain et explicitement validé**.
 
-- total de lignes ;
+Sinon elle n'est pas proposée.
+
+## Supprimer définitivement
+
+Confirmation forte.
+
+La suppression d'un original ne doit jamais être confondue avec la suppression d'une miniature.
+
+---
+
+# 14. Synchronisation distante différée
+
+Les éléments visuels `Neon`, `remote_only`, Auth distante ou retry cloud présents dans la maquette sont **hors Gate actuelle**.
+
+Ne pas :
+
+- implémenter Neon comme dépendance UI ;
+- créer un faux état « synchronisé » ;
+- afficher une sauvegarde distante inexistante.
+
+Lorsqu'un futur chantier remote reprendra, UI-5 sera enrichi.
+
+---
+
+# 15. Import / Export
+
+JSON, XLSX et médias restent distincts.
+
+## Preview obligatoire avant import massif
+
+Afficher :
+
+- total ;
 - valides ;
 - avertissements ;
 - erreurs ;
-- aperçu ;
-- relations non résolues détectables ;
-- création/mise à jour si déterminable de façon fiable.
+- effet prévu ;
+- création/mise à jour lorsque déterminable.
 
-## 12.2 Politique d'import verrouillée
+Règles :
 
-- une ligne avec **erreur bloquante** est exclue de l'import ;
-- une ligne avec **avertissement** reste importable ;
-- si aucune ligne valide/importable ne reste, l'action Importer est désactivée ;
-- la confirmation annonce explicitement combien de lignes seront réellement écrites ;
-- après import, un résumé final indique importées, ignorées et erreurs restantes.
-
-Aucune écriture locale ou distante n'a lieu avant confirmation utilisateur.
+- erreur bloquante exclue ;
+- warning importable ;
+- confirmation du nombre réellement écrit ;
+- aucun write avant confirmation.
 
 ---
 
-# 13. Journal et diagnostic
+# 16. Export de sécurité
 
-Le Journal reste secondaire.
+Avant une évolution IndexedDB significative, vérifier qu'un export exploitable des données structurées est possible.
 
-Résumé avant logs :
+Un export JSON/XLSX ne doit pas prétendre contenir les médias binaires s'il ne les contient pas.
 
-- version / état PWA ;
-- IndexedDB ;
-- état Auth ;
-- état sync ;
-- files d'attente ;
-- compteurs média utiles ;
-- dernière erreur.
+La sauvegarde média doit être traitée séparément.
 
-Les logs peuvent être filtrés par niveau.
+---
 
-Actions :
+# 17. Diagnostic local
+
+Résumé utile :
+
+- version PWA ;
+- version schéma IndexedDB ;
+- stores accessibles ;
+- compteurs ;
+- état Service Worker ;
+- espace/erreurs lorsque disponible ;
+- dernière erreur locale.
+
+Aucun secret.
+
+Actions possibles :
 
 - Copier diagnostic ;
 - Exporter diagnostic ;
-- Vider journal.
+- Vider journal local.
 
-Aucun secret, token ou contenu binaire n'est exposé dans le diagnostic.
-
-`Vider le journal` supprime uniquement les logs techniques locaux.
+Vider le journal ne touche jamais les données métier.
 
 ---
 
-# 14. Offline
+# 18. PWA / Service Worker
 
-Offline :
+La nouvelle UI doit continuer à :
 
-- l'Atelier continue de travailler sur le local ;
-- Enregistrer écrit localement ;
-- un nouveau média peut être ajouté localement ;
-- JSON/XLSX local reste disponible ;
-- les opérations distantes passent en attente ;
-- un média `remote_only` ne peut évidemment pas être récupéré avant le retour réseau.
+- s'installer ;
+- démarrer offline ;
+- reprendre avec les données locales ;
+- mettre à jour les assets sans supprimer IndexedDB ;
+- éviter les caches fantômes après déploiement.
 
----
-
-# 15. Responsive
-
-UI-1/UI-6 portent les règles communes.
-
-UI-5 impose :
-
-- desktop : collection + formulaire, galerie média + détail ;
-- tablette portrait : contenu principal prioritaire, éléments secondaires en drawer ;
-- téléphone : flux séquentiel, formulaire plein écran, Enregistrer sticky, détail Média plein écran/sheet ;
-- Import/Export et diagnostics restent des pages verticales lisibles plutôt qu'un master-detail artificiel.
+Les nouveaux assets UI doivent être intégrés au cache de production selon le mécanisme actuel.
 
 ---
 
-# 16. Accessibilité
+# 19. Gate UI-5A
 
-Obligations spécifiques :
+- toutes les familles éditables ;
+- listes/fiches ;
+- Enregistrer explicite ;
+- dirty state ;
+- aucune perte de propriété non affichée ;
+- suppression volontaire.
 
-- labels de formulaire permanents ;
-- erreurs associées aux champs ;
-- confirmations destructives explicites ;
-- statuts compréhensibles sans couleur ;
-- progression média annoncée textuellement ;
-- focus géré dans modales/drawers ;
-- toutes les actions critiques accessibles au clavier sur desktop.
+# 20. Gate UI-5B
 
-Les objectifs mesurables et tests sont définis dans UI-6.
+- originaux intacts ;
+- dérivés séparés ;
+- rembg intégré proprement ;
+- galerie/détail médias ;
+- aucun fond blanc artificiel sur PNG transparent.
 
----
+# 21. Gate UI-5C
 
-# 17. Gate UI-5
-
-UI-5 est validée lorsque :
-
-1. lecture et édition ne peuvent pas être confondues ;
-2. une modification non enregistrée ne se perd pas silencieusement ;
-3. local et distant sont toujours distingués ;
-4. une panne Neon n'empêche pas le travail local ;
-5. Auth expirée met la sync en pause sans faire croire à une perte locale ;
-6. suppression métier et suppression média sont volontaires ;
-7. `Retirer de cet appareil` est distinct de `Supprimer définitivement` ;
-8. un média distant non local peut être identifié et récupéré ;
-9. aucun original n'est dégradé ;
-10. l'import ne peut pas écrire avant preview et confirmation ;
-11. les lignes en erreur sont exclues, les warnings restent importables ;
-12. le diagnostic ne révèle aucun secret ;
-13. JSON/XLSX restent indépendants du cloud ;
-14. aucun détail technique de stockage n'est dupliqué dans ce document.
-
-**UI-5 devient la source de vérité pour l'administration, l'Auth visible, les Médias et la synchronisation côté utilisateur.**
+- import avec preview ;
+- export vérifié ;
+- diagnostic local ;
+- PWA/offline ;
+- upgrade IndexedDB testé ;
+- aucune dépendance backend distante ajoutée.
