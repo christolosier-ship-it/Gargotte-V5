@@ -73,13 +73,21 @@ Pour le détourage :
 - dérivé transparent séparé ;
 - contrôle alpha + contrôle visuel.
 
-## Clôture d'une tâche
+## Workflow léger par tâche
 
-Une tâche UI n'est terminée que lorsque :
+Ne pas produire de compte rendu de Gate intermédiaire sauf si un risque réel doit être signalé.
 
-- comportement conforme au lot ;
-- visuel comparé à V3 ;
-- compatibilité IndexedDB vérifiée ;
-- responsive vérifié ;
-- aucune régression PWA/offline ;
-- documentation mise à jour si la réalisation a fait évoluer une décision.
+Pour chaque tâche :
+
+1. **Pré-check compact** : périmètre, impact données, IndexedDB, référence V3, risque principal.
+2. **Construction continue** : UI + données si nécessaires + responsive, sans cérémonie séparée.
+3. **Validation/clôture compacte** : tests, comparaison V3, non-régression données si pertinente, documentation mise à jour.
+
+Deux seuls points d'arrêt obligatoires :
+
+- **STOP sécurité données** : risque de perte, migration destructive, original média menacé ou compatibilité IndexedDB non démontrée ;
+- **STOP validation** : anomalie bloquante/majeure ou comportement obligatoire non fonctionnel.
+
+Une étape non applicable est notée `N/A`. Ne jamais créer du travail artificiel uniquement pour « passer une Gate ».
+
+Les `Gate UI-X` des documents de lot restent des checklists d'acceptation de fin de lot, pas des cérémonies supplémentaires.
