@@ -1,9 +1,20 @@
 import { test, expect } from "@playwright/test";
 
 async function attachShot(locator, name, testInfo) {
-  await expect(locator).toBeVisible();
-  const buffer = await locator.screenshot({ animations: "disabled" });
-  await testInfo.attach(name, { body: buffer, contentType: "image/png" });
+  let lastError = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await expect(locator).toBeVisible();
+    try {
+      const buffer = await locator.screenshot({ animations: "disabled" });
+      await testInfo.attach(name, { body: buffer, contentType: "image/png" });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!String(error?.message || error).includes("not attached")) throw error;
+      await locator.page().waitForTimeout(120);
+    }
+  }
+  throw lastError;
 }
 
 async function ready(page) {
