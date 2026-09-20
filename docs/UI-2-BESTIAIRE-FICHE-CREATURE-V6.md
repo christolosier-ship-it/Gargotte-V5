@@ -2,7 +2,7 @@
 
 ## Statut
 
-**ACTIF - source de vérité fonctionnelle du Bestiaire et de la fiche Créature**
+**LIVRÉ / FERMÉ — UI-2A + UI-2B + UI-2C validés le 20 septembre 2026**
 
 Références obligatoires :
 
@@ -433,3 +433,73 @@ Validation :
 - données manquantes : les sections Compétence, Comportement, Butin, Lore et Tags se réduisent proprement ;
 - comparaison V3 : même hiérarchie et même mise en scène, sans recopier les handlers fictifs de la maquette ;
 - UI-2C non démarré.
+
+---
+
+# 19. Implémentation UI-2C sur V5.3
+
+Statut : **LIVRÉ — 20 septembre 2026**
+
+Pré-check :
+
+- périmètre : relations fiables, navigation liée, Boss/phases explicites, cas incomplets et restauration complète du contexte ;
+- IndexedDB : aucune migration, aucun store modifié, aucune écriture métier déclenchée par la lecture du Bestiaire ;
+- données de phase : aucun champ de phase n’existe dans le template Créatures V5.3 ; aucune phase n’est donc déduite depuis un nom ;
+- hébergement : Vercel reste hors du projet et hors validation.
+
+Relations :
+
+- priorité visuelle : créatures du même Donjon, puis relations explicites, puis médias directement associés ;
+- le même Donjon est résolu par `dungeon_id` valide, ou par nom exact uniquement lorsqu’il identifie un Donjon unique ;
+- relations explicites acceptées uniquement lorsqu’un type d’entité et un ID sont fournis ;
+- les relations cassées sont signalées sans tentative de rapprochement automatique ;
+- le Butin lié et le Donjon lié ouvrent leur vraie fiche Codex ;
+- les médias sont considérés directement associés seulement si `entity_type` désigne une Créature et `entity_id` correspond exactement ;
+- aucune relation n’est construite depuis une ressemblance de nom.
+
+Navigation et retour :
+
+- pile de retour Codex locale et persistée dans `meta.ui_state` ;
+- navigation Créature -> Donjon/Loot/Média/autre Créature avec retour vers la fiche d’origine ;
+- retour au Bestiaire préserve recherche, filtres, tri, sens, mode, sélection et scroll UI-2A ;
+- `Voir tout` sur le même Donjon ouvre une vraie collection préfiltrée ;
+- le contexte précédent peut ensuite être restauré intégralement.
+
+Mini-boss et Boss :
+
+- les Mini-boss restent des entrées indépendantes avec leur catégorie premium ;
+- aucune logique de regroupement de phases n’est appliquée aux Mini-boss ;
+- un Boss multi-phases est regroupé uniquement par relation explicite fiable : listes d’IDs de phases, ID de groupe, parent de phase ou relation explicitement typée phase ;
+- une référence de phase cassée invalide le regroupement concerné ;
+- aucune ressemblance de nom ne participe à cette détection ;
+- desktop et tablette : pile de phases compacte ;
+- téléphone : phases en accordéons.
+
+États avancés :
+
+- image absente : fallback V6 existant ;
+- image renseignée mais illisible : fallback visuel côté UI, sans modifier le média ;
+- textes et noms longs : retour à la ligne contrôlé ;
+- catégorie ancienne/inconnue : affichée sans casser la fiche, avec traitement visuel de secours ;
+- sections et relations absentes : aucun bloc décoratif vide.
+
+---
+
+# 20. Clôture Gate UI-2
+
+Statut : **FERMÉ**
+
+Validation finale UI-2A + UI-2B + UI-2C :
+
+1. recherche, filtres et tris réellement appliqués ;
+2. Galerie et Liste distinctes avec dernier mode mémorisé ;
+3. contexte Bestiaire restauré après fiche, y compris scroll ;
+4. tablette séquentielle Collection -> Fiche -> Retour ;
+5. téléphone séquentiel Collection -> Fiche -> Retour ;
+6. fiche Créature alignée sur la composition V3 et ses ressources premium ;
+7. aucun original média modifié et aucun détourage déclenché par UI-2 ;
+8. anciens enregistrements lus sans migration obligatoire ;
+9. Boss regroupés uniquement sur relation explicite fiable, jamais par nom ;
+10. aucune suppression, migration ou réécriture massive IndexedDB.
+
+UI-2 est clos. Le prochain lot UI ne doit pas réouvrir UI-2 sauf correction de régression.

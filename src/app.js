@@ -230,7 +230,8 @@ const state = {
     codexType: "creatures",
     codexSelectedId: "",
     codexDetailOpen: false,
-    bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "" },
+    codexReturnStack: [],
+    bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     workshopType: "creatures",
     workshopSelectedId: "",
     codexCreatureDungeonId: "",
@@ -259,7 +260,8 @@ function defaultBlankUi() {
     codexType: "creatures",
     codexSelectedId: "",
     codexDetailOpen: false,
-    bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "" },
+    codexReturnStack: [],
+    bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     workshopType: "creatures",
     workshopSelectedId: "",
     codexCreatureDungeonId: "",
@@ -296,15 +298,42 @@ const CREATURE_CATEGORY_META = {
 };
 
 function defaultBestiaryUi() {
-  return { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "" };
+  return { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null };
 }
 
 function ensureBestiaryUi() {
   state.ui.bestiary = { ...defaultBestiaryUi(), ...(state.ui.bestiary || {}) };
   state.ui.bestiary.tags = Array.isArray(state.ui.bestiary.tags) ? state.ui.bestiary.tags.filter(Boolean) : [];
+  state.ui.bestiary.contextReturn = state.ui.bestiary.contextReturn && typeof state.ui.bestiary.contextReturn === "object"
+    ? state.ui.bestiary.contextReturn
+    : null;
   if (!["gallery", "list", ""].includes(state.ui.bestiary.mode)) state.ui.bestiary.mode = "";
   if (!["name", "menace", "dungeon"].includes(state.ui.bestiary.sort)) state.ui.bestiary.sort = "name";
   if (!["asc", "desc"].includes(state.ui.bestiary.direction)) state.ui.bestiary.direction = "asc";
+}
+
+function snapshotBestiaryContext() {
+  ensureBestiaryUi();
+  const b = state.ui.bestiary;
+  return {
+    mode: b.mode,
+    search: b.search,
+    dungeonId: b.dungeonId,
+    category: b.category,
+    menace: b.menace,
+    tags: [...b.tags],
+    sort: b.sort,
+    direction: b.direction,
+    scrollTop: Math.max(0, Number(b.scrollTop || 0)),
+    selectedId: b.selectedId
+  };
+}
+
+function ensureCodexReturnStack() {
+  state.ui.codexReturnStack = Array.isArray(state.ui.codexReturnStack)
+    ? state.ui.codexReturnStack.filter(entry => entry && typeof entry === "object").slice(-12)
+    : [];
+  return state.ui.codexReturnStack;
 }
 
 function creatureTags(item) {
@@ -312,8 +341,22 @@ function creatureTags(item) {
 }
 
 function creatureCategoryMeta(value) {
-  const key = normalizeCreatureCategory(value || "basique");
-  return { key, ...(CREATURE_CATEGORY_META[key] || CREATURE_CATEGORY_META.basique) };
+  const raw = String(value ?? "").trim();
+  const cleaned = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  const aliases = { special: "speciale", mini_bosses: "mini_boss", miniboss: "mini_boss" };
+  const key = aliases[cleaned] || cleaned;
+  if (CREATURE_CATEGORY_META[key]) return { key, ...CREATURE_CATEGORY_META[key], known: true };
+  return {
+    key: "unknown",
+    label: raw || "Catégorie non renseignée",
+    sigil: "Sigil_Basique.webp",
+    known: false
+  };
 }
 
 function normalizeBestiaryText(value) {
@@ -412,6 +455,7 @@ function findByName(type, name) {
 
 function ensureUiDefaults() {
   ensureBestiaryUi();
+  ensureCodexReturnStack();
   if (!state.ui.bestiary.mode) {
     state.ui.bestiary.mode = typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches ? "list" : "gallery";
   }
@@ -1475,6 +1519,373 @@ function renderBestiaryTagFilter() {
     </details>`;
 }
 
+const RELATION_STORE_ALIASES = {
+  creature: "creatures", creatures: "creatures",
+  dungeon: "dungeons", dungeons: "dungeons", donjon: "dungeons", donjons: "dungeons",
+  hero: "heroes", heroes: "heroes", heros: "heroes",
+  npc: "npcs", npcs: "npcs", pnj: "npcs",
+  quest: "quests", quests: "quests", quete: "quests", quetes: "quests",
+  loot: "loot_items", loot_item: "loot_items", loot_items: "loot_items",
+  interactable: "interactables", interactables: "interactables", objet: "interactables", objets: "interactables",
+  media: "media_assets", medias: "media_assets", media_asset: "media_assets", media_assets: "media_assets"
+};
+
+function relationStore(value) {
+  return RELATION_STORE_ALIASES[normalizeBestiaryText(value).replace(/[^a-z0-9]+/g, "_")] || "";
+}
+
+function relationIds(value) {
+  if (Array.isArray(value)) return value.flatMap(relationIds);
+  if (value === null || value === undefined || value === "") return [];
+  if (typeof value === "string") return value.split(/[;,\n]+/).map(v => v.trim()).filter(Boolean);
+  if (typeof value === "number") return [String(value)];
+  return [];
+}
+
+function explicitRelationRefs(item) {
+  const refs = [];
+  const push = (type, id, source = "explicit") => {
+    const store = relationStore(type);
+    const cleanId = String(id ?? "").trim();
+    if (!store || !cleanId) return;
+    refs.push({ type: store, id: cleanId, source });
+  };
+
+  const mapping = item?.related_entity_ids;
+  if (mapping && typeof mapping === "object" && !Array.isArray(mapping)) {
+    for (const [type, ids] of Object.entries(mapping)) {
+      for (const id of relationIds(ids)) push(type, id, "related_entity_ids");
+    }
+  }
+
+  const keyed = {
+    related_creature_ids: "creatures",
+    related_dungeon_ids: "dungeons",
+    related_hero_ids: "heroes",
+    related_npc_ids: "npcs",
+    related_quest_ids: "quests",
+    related_loot_ids: "loot_items",
+    related_interactable_ids: "interactables",
+    related_media_ids: "media_assets"
+  };
+  for (const [field, type] of Object.entries(keyed)) {
+    for (const id of relationIds(item?.[field])) push(type, id, field);
+  }
+
+  for (const field of ["related_entities", "relations", "links"]) {
+    const list = Array.isArray(item?.[field]) ? item[field] : [];
+    for (const rel of list) {
+      if (!rel || typeof rel !== "object") continue;
+      const rawType = rel.entity_type || rel.target_type || rel.entityType || rel.targetType || rel.type;
+      const rawId = rel.target_id || rel.entity_id || rel.targetId || rel.entityId ||
+        (relationStore(rawType) ? rel.id : "");
+      push(rawType, rawId, field);
+    }
+  }
+
+  const seen = new Set();
+  return refs.filter(ref => {
+    const key = `${ref.type}:${ref.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function resolveCreatureDungeon(item) {
+  if (!item) return null;
+  const direct = item.dungeon_id ? findById("dungeons", item.dungeon_id) : null;
+  if (direct) return direct;
+  const target = normalizeBestiaryText(item.dungeon_name);
+  if (!target) return null;
+  const matches = (state.data.dungeons || []).filter(d => normalizeBestiaryText(d.name) === target);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function creatureSameDungeon(item) {
+  const dungeon = resolveCreatureDungeon(item);
+  if (!dungeon) return [];
+  return (state.data.creatures || [])
+    .filter(other => String(other.id || "") !== String(item.id || ""))
+    .filter(other => String(resolveCreatureDungeon(other)?.id || "") === String(dungeon.id))
+    .sort((a, b) => {
+      const order = { basique: 1, tactique: 2, speciale: 3, brute: 4, mini_boss: 5, boss: 6, unknown: 9 };
+      const ca = order[creatureCategoryMeta(a.category).key] ?? 9;
+      const cb = order[creatureCategoryMeta(b.category).key] ?? 9;
+      if (ca !== cb) return ca - cb;
+      return String(a.name || "").localeCompare(String(b.name || ""), "fr", { sensitivity: "base" });
+    });
+}
+
+function phaseOrderValue(item, fallback) {
+  for (const field of ["phase_index", "phase_number", "phase_order", "phase"]) {
+    const n = Number(item?.[field]);
+    if (Number.isFinite(n) && String(item?.[field] ?? "").trim() !== "") return n;
+  }
+  return fallback;
+}
+
+function phaseExplicitLabel(item) {
+  for (const field of ["phase_number", "phase_index", "phase_order", "phase"]) {
+    const raw = item?.[field];
+    if (raw !== null && raw !== undefined && String(raw).trim() !== "") return `Phase ${escapeHtml(String(raw))}`;
+  }
+  return "Phase liée";
+}
+
+function validBossPhaseGroup(ids) {
+  const unique = [...new Set(ids.map(id => String(id || "").trim()).filter(Boolean))];
+  if (unique.length < 2) return [];
+  const rows = unique.map(id => findById("creatures", id));
+  if (rows.some(row => !row || creatureCategoryMeta(row.category).key !== "boss")) return [];
+  const index = new Map((state.data.creatures || []).map((row, i) => [String(row.id || ""), i]));
+  return rows.sort((a, b) => phaseOrderValue(a, index.get(String(a.id)) ?? 9999) - phaseOrderValue(b, index.get(String(b.id)) ?? 9999));
+}
+
+function getBossPhaseGroup(item) {
+  if (!item || creatureCategoryMeta(item.category).key !== "boss") return [];
+  const creatures = state.data.creatures || [];
+  const itemId = String(item.id || "");
+  if (!itemId) return [];
+
+  const listFields = ["phase_ids", "boss_phase_ids"];
+  const owners = creatures.filter(candidate =>
+    creatureCategoryMeta(candidate.category).key === "boss" &&
+    listFields.some(field => {
+      const ids = relationIds(candidate?.[field]).map(String);
+      return ids.length > 0 && (String(candidate.id || "") === itemId || ids.includes(itemId));
+    })
+  );
+  if (owners.length === 1) {
+    const owner = owners[0];
+    const ids = [owner.id, ...listFields.flatMap(field => relationIds(owner?.[field]))];
+    const group = validBossPhaseGroup(ids);
+    if (group.length >= 2) return group;
+  } else if (owners.length > 1) {
+    return [];
+  }
+
+  for (const field of ["phase_group_id", "boss_phase_group_id", "boss_group_id"]) {
+    const value = String(item?.[field] ?? "").trim();
+    if (!value) continue;
+    const ids = creatures
+      .filter(candidate =>
+        creatureCategoryMeta(candidate.category).key === "boss" &&
+        String(candidate?.[field] ?? "").trim() === value
+      )
+      .map(candidate => candidate.id);
+    const group = validBossPhaseGroup(ids);
+    if (group.length >= 2) return group;
+  }
+
+  for (const field of ["phase_of_id", "parent_boss_id", "boss_parent_id"]) {
+    const directRoot = String(item?.[field] ?? "").trim();
+    const roots = directRoot
+      ? [directRoot]
+      : creatures
+          .filter(candidate => String(candidate?.[field] ?? "").trim() === itemId)
+          .map(() => itemId);
+    const uniqueRoots = [...new Set(roots.filter(Boolean))];
+    if (uniqueRoots.length !== 1) continue;
+    const root = uniqueRoots[0];
+    const ids = creatures
+      .filter(candidate => String(candidate.id || "") === root || String(candidate?.[field] ?? "").trim() === root)
+      .map(candidate => candidate.id);
+    const group = validBossPhaseGroup(ids);
+    if (group.length >= 2) return group;
+  }
+
+  const readPhaseRefs = candidate => {
+    const refs = [];
+    for (const field of ["relations", "related_entities", "links"]) {
+      for (const rel of Array.isArray(candidate?.[field]) ? candidate[field] : []) {
+        if (!rel || typeof rel !== "object") continue;
+        const rawEntityType = rel.entity_type || rel.target_type || rel.entityType || rel.targetType || "";
+        const kind = normalizeBestiaryText(rel.relation_type || rel.kind || rel.role || rel.relationship || (!relationStore(rel.type) ? rel.type : ""));
+        if (!kind.includes("phase")) continue;
+        const type = relationStore(rawEntityType || "creatures");
+        const id = rel.target_id || rel.entity_id || rel.targetId || rel.entityId || rel.id;
+        if (type === "creatures" && id) refs.push(String(id));
+      }
+    }
+    return [...new Set(refs)];
+  };
+
+  const phaseRefs = readPhaseRefs(item);
+  if (phaseRefs.length) {
+    const group = validBossPhaseGroup([itemId, ...phaseRefs]);
+    if (group.length >= 2) return group;
+  }
+
+  const reverseOwners = creatures.filter(candidate =>
+    String(candidate.id || "") !== itemId &&
+    creatureCategoryMeta(candidate.category).key === "boss" &&
+    readPhaseRefs(candidate).includes(itemId)
+  );
+  if (reverseOwners.length === 1) {
+    const owner = reverseOwners[0];
+    const group = validBossPhaseGroup([owner.id, ...readPhaseRefs(owner)]);
+    if (group.length >= 2) return group;
+  } else if (reverseOwners.length > 1) {
+    return [];
+  }
+
+  return [];
+}
+
+function getCreatureRelations(item) {
+  const sameDungeon = creatureSameDungeon(item);
+  const explicitRefs = explicitRelationRefs(item).filter(ref => !(ref.type === "creatures" && String(ref.id) === String(item.id || "")));
+  const resolved = [];
+  const broken = [];
+  for (const ref of explicitRefs) {
+    const target = findById(ref.type, ref.id);
+    if (target) resolved.push({ ...ref, target });
+    else broken.push(ref);
+  }
+
+  const media = (state.data.media_assets || []).filter(asset => {
+    const type = relationStore(asset.entity_type);
+    return type === "creatures" && String(asset.entity_id || "") === String(item.id || "");
+  });
+
+  const phaseGroup = getBossPhaseGroup(item);
+  const phaseIds = new Set(phaseGroup.map(row => String(row.id || "")));
+  return {
+    dungeon: resolveCreatureDungeon(item),
+    sameDungeon: sameDungeon.filter(row => !phaseIds.has(String(row.id || ""))),
+    explicit: resolved.filter(ref => !(ref.type === "creatures" && phaseIds.has(String(ref.id)))),
+    broken,
+    media,
+    phaseGroup
+  };
+}
+
+function codexEntityTitle(type, item) {
+  if (!item) return getLabel(type);
+  return String(item.name || item.title || item.hero_base_name || item.label || item.file_name || item.id || getLabel(type));
+}
+
+function renderCodexReturnBar() {
+  const stack = ensureCodexReturnStack();
+  const previous = stack[stack.length - 1];
+  if (!previous) return "";
+  return `<div class="codex-return-bar"><button class="ghost" type="button" data-action="codex-related-back">${shellIcon("back")}<span>Retour à ${escapeHtml(previous.label || getLabel(previous.type))}</span></button></div>`;
+}
+
+function renderSafeRelationMedia(image, alt, fallbackText = "Visuel indisponible") {
+  if (!image) return `<span class="relation-media-fallback">${escapeHtml(fallbackText)}</span>`;
+  return `<img src="${escapeHtml(image)}" alt="${escapeHtml(alt || "")}" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>${escapeHtml(fallbackText)}</span>`;
+}
+
+function renderCreatureRelationCard(type, target, extra = "") {
+  const title = codexEntityTitle(type, target);
+  const image = codexImageFor(type, target);
+  let meta = getLabel(type);
+  if (type === "creatures") {
+    const cat = creatureCategoryMeta(target.category);
+    meta = `${cat.label} · Menace ${target.menace ?? "—"}`;
+  } else if (type === "loot_items") {
+    meta = target.type || "Loot";
+  } else if (type === "media_assets") {
+    meta = target.mime_type || "Média";
+  }
+  return `
+    <button class="creature-related-card" type="button" data-action="open-related" data-type="${escapeHtml(type)}" data-id="${escapeHtml(String(target.id || ""))}">
+      <span class="creature-related-thumb">${renderSafeRelationMedia(image, title)}</span>
+      <span class="creature-related-copy">
+        <strong>${escapeHtml(title)}</strong>
+        <small>${escapeHtml(meta)}</small>
+        ${extra ? `<em>${escapeHtml(extra)}</em>` : ""}
+      </span>
+    </button>`;
+}
+
+function renderBossPhaseStack(item, phaseGroup) {
+  if (!Array.isArray(phaseGroup) || phaseGroup.length < 2) return "";
+  const phone = typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches;
+  return `
+    <section class="creature-phase-stack" aria-label="Phases du Boss">
+      <div class="creature-related-heading">
+        <div><span class="eyebrow">Relation explicite</span><h2>Phases du Boss</h2></div>
+        <span>${phaseGroup.length} phases liées</span>
+      </div>
+      <div class="creature-phase-list">
+        ${phaseGroup.map(phase => {
+          const current = String(phase.id || "") === String(item.id || "");
+          const image = imageUrlForEntity(phase);
+          return `
+            <details class="creature-phase-card ${current ? "current" : ""}" ${phone ? "" : "open"}>
+              <summary>
+                <span class="creature-phase-thumb">${renderSafeRelationMedia(image, phase.name || "Phase", "Image absente")}</span>
+                <span class="creature-phase-title"><strong>${escapeHtml(phase.name || "Boss sans nom")}</strong><small>${phaseExplicitLabel(phase)} · Menace ${escapeHtml(String(phase.menace ?? "—"))}</small></span>
+                <span class="creature-phase-state">${current ? "Actuelle" : "Ouvrir"}</span>
+              </summary>
+              <div class="creature-phase-body">
+                <div><b>${escapeHtml(String(phase.pv ?? "—"))}</b><span>PV</span></div>
+                <div><b>${escapeHtml(String(phase.atk ?? "—"))}</b><span>ATK</span></div>
+                <div><b>${escapeHtml(String(phase.def ?? "—"))}</b><span>DEF</span></div>
+                <div><b>${escapeHtml(String(phase.zone ?? "—"))}</b><span>Zone</span></div>
+                <div><b>${escapeHtml(String(phase.actions ?? "—"))}</b><span>Actions</span></div>
+                ${current ? `<span class="muted small">Fiche actuelle</span>` : `<button class="ghost" type="button" data-action="open-related" data-type="creatures" data-id="${escapeHtml(String(phase.id || ""))}">Voir la phase</button>`}
+              </div>
+            </details>`;
+        }).join("")}
+      </div>
+    </section>`;
+}
+
+function renderCreatureRelations(item, relations) {
+  const same = relations.sameDungeon.slice(0, 6);
+  const sameMore = relations.sameDungeon.length > same.length;
+  const explicit = relations.explicit.slice(0, 8);
+  const mediaRefs = relations.media
+    .filter(asset => !explicit.some(ref => ref.type === "media_assets" && String(ref.id) === String(asset.id)))
+    .slice(0, 4);
+  const hasContent = same.length || explicit.length || mediaRefs.length || relations.broken.length || relations.phaseGroup.length >= 2;
+  if (!hasContent) return "";
+
+  return `
+    <section class="creature-relations-v6">
+      <div class="creature-related-heading">
+        <div><span class="eyebrow">Données fiables</span><h2>Entités liées</h2></div>
+      </div>
+
+      ${same.length ? `
+        <div class="creature-related-group">
+          <div class="creature-related-subhead">
+            <strong>Même Donjon</strong>
+            ${relations.dungeon ? `<button class="ghost" type="button" data-action="bestiary-see-dungeon" data-id="${escapeHtml(String(relations.dungeon.id || ""))}">Voir tout</button>` : ""}
+          </div>
+          <div class="creature-related-grid">${same.map(target => renderCreatureRelationCard("creatures", target, target.dungeon_name || "")).join("")}</div>
+          ${sameMore ? `<div class="muted small">+${relations.sameDungeon.length - same.length} autre(s) créature(s) dans ce Donjon.</div>` : ""}
+        </div>
+      ` : ""}
+
+      ${explicit.length ? `
+        <div class="creature-related-group">
+          <div class="creature-related-subhead"><strong>Relations explicites</strong></div>
+          <div class="creature-related-grid">${explicit.map(ref => renderCreatureRelationCard(ref.type, ref.target)).join("")}</div>
+        </div>
+      ` : ""}
+
+      ${mediaRefs.length ? `
+        <div class="creature-related-group">
+          <div class="creature-related-subhead"><strong>Médias associés</strong></div>
+          <div class="creature-related-grid">${mediaRefs.map(target => renderCreatureRelationCard("media_assets", target)).join("")}</div>
+        </div>
+      ` : ""}
+
+      ${relations.broken.length ? `
+        <div class="creature-broken-relations" role="status">
+          ${relations.broken.length} relation${relations.broken.length > 1 ? "s" : ""} explicite${relations.broken.length > 1 ? "s" : ""} indisponible${relations.broken.length > 1 ? "s" : ""}. Aucun rapprochement automatique n’a été tenté.
+        </div>
+      ` : ""}
+
+      ${renderBossPhaseStack(item, relations.phaseGroup)}
+    </section>`;
+}
+
 function renderBestiaryMasterRailItem(item) {
   const meta = creatureCategoryMeta(item.category);
   const image = imageUrlForEntity(item);
@@ -1503,6 +1914,7 @@ function renderBestiaryCollection() {
   if (state.ui.codexDetailOpen) {
     return renderShell(`
       <section class="bestiary-v6 bestiary-detail-page">
+        ${renderCodexReturnBar()}
         <div class="bestiary-detail-top">
           <button class="ghost codex-back creature-detail-back" data-action="codex-back" type="button">${shellIcon("back")}<span>Retour au Bestiaire</span></button>
           ${renderCodexTabs("creatures")}
@@ -1537,6 +1949,13 @@ function renderBestiaryCollection() {
         </div>
 
         ${renderCodexTabs("creatures")}
+
+        ${b.contextReturn ? `
+          <div class="bestiary-context-return">
+            <span>Collection ouverte depuis une relation.</span>
+            <button class="ghost" type="button" data-action="bestiary-restore-context">${shellIcon("back")}<span>Restaurer le contexte précédent</span></button>
+          </div>
+        ` : ""}
 
         <div class="bestiary-toolbar">
           <label class="bestiary-search-field">
@@ -1593,10 +2012,11 @@ function renderCodex() {
   if (type === "creatures") return renderBestiaryCollection();
 
   const items = getFilteredList(type, "codex");
-  const selected = items.find(item => item.id === state.ui.codexSelectedId) || items[0] || null;
+  const selected = findById(type, state.ui.codexSelectedId) || items[0] || null;
 
   return renderShell(`
     <section class="panel">
+      ${renderCodexReturnBar()}
       <div class="panel-title">
         <h2>Codex</h2>
         ${renderCodexTabs(type)}
@@ -1801,6 +2221,8 @@ function renderCreatureDetail(item) {
   const socle = formatCreatureSocle(item.socle);
   const menacePresent = item.menace !== null && item.menace !== undefined && item.menace !== "";
   const name = String(item.name || "").trim() || "Créature sans nom";
+  const relations = getCreatureRelations(item);
+  const dungeonTarget = relations.dungeon;
 
   return `
     <article class="creature-sheet-v6 ${category?.key || "uncategorized"}" style="--creature-cat:${creatureCategoryCssColor(category?.key)};--dungeon-accent:${accent}">
@@ -1809,7 +2231,10 @@ function renderCreatureDetail(item) {
         <div class="creature-plinth" aria-hidden="true"></div>
         ${image ? `
           <button class="ghost creature-fullscreen" type="button" data-action="open-image" data-src="${escapeHtml(image)}" data-alt="${escapeHtml(name)}" aria-label="Ouvrir l’image de ${escapeHtml(name)} en plein écran">${shellIcon("image")}<span>Plein écran</span></button>
-          <div class="creature-figure"><img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(name)}"></div>
+          <div class="creature-figure">
+            <img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(name)}" data-safe-media>
+            <div class="creature-media-error" hidden>${category ? `<img src="${V6_ICON_PATH}${category.sigil}" alt="" aria-hidden="true">` : ""}<span>Image illisible ou absente</span></div>
+          </div>
         ` : `
           <div class="creature-figure creature-figure-missing">
             ${category ? `<img src="${V6_ICON_PATH}${category.sigil}" alt="" aria-hidden="true">` : ""}
@@ -1821,15 +2246,17 @@ function renderCreatureDetail(item) {
       <section class="creature-detail-v6">
         <header class="creature-identity-v6">
           <div class="creature-identity-copy">
-            ${dungeonName ? `<div class="creature-dungeon-v6"><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="" aria-hidden="true"><span>${escapeHtml(dungeonName)}</span></div>` : ""}
+            ${dungeonName ? (dungeonTarget
+              ? `<button class="creature-dungeon-v6 creature-dungeon-link" type="button" data-action="open-related" data-type="dungeons" data-id="${escapeHtml(String(dungeonTarget.id || ""))}"><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="" aria-hidden="true"><span>${escapeHtml(dungeonName)}</span></button>`
+              : `<div class="creature-dungeon-v6"><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="" aria-hidden="true"><span>${escapeHtml(dungeonName)}</span></div>`) : ""}
             <h1>${escapeHtml(name)}</h1>
             <div class="creature-identity-chips">
-              ${category ? `<span class="creature-category-v6"><img src="${V6_ICON_PATH}${category.sigil}" alt="" aria-hidden="true">${escapeHtml(category.label)}</span>` : ""}
+              ${category ? `<span class="creature-category-v6 ${category.known ? "" : "unknown"}"><img src="${V6_ICON_PATH}${category.sigil}" alt="" aria-hidden="true">${escapeHtml(category.label)}</span>` : ""}
               ${menacePresent ? `<span class="creature-meta-chip"><img src="${V6_ICON_PATH}Icone_Gameplay_MENACE.webp" alt="" aria-hidden="true">Menace ${escapeHtml(String(item.menace))}</span>` : ""}
               ${socle ? `<span class="creature-meta-chip"><img src="${V6_ICON_PATH}Icone_Gameplay_SOCLE.webp" alt="" aria-hidden="true">Socle ${escapeHtml(socle)}</span>` : ""}
             </div>
           </div>
-          ${category ? `<div class="creature-sigil-v6"><img src="${V6_ICON_PATH}${category.sigil}" alt="Sigil ${escapeHtml(category.label)}"></div>` : ""}
+          ${category ? `<div class="creature-sigil-v6 ${category.known ? "" : "unknown"}"><img src="${V6_ICON_PATH}${category.sigil}" alt="${category.known ? `Sigil ${escapeHtml(category.label)}` : "Sigil de secours"}"></div>` : ""}
         </header>
 
         <div class="creature-stats-v6" aria-label="Statistiques">
@@ -1860,14 +2287,18 @@ function renderCreatureDetail(item) {
           <section class="creature-functional-section creature-loot-v6">
             <h2><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt="" aria-hidden="true">Butin</h2>
             <div class="creature-loot-list">
-              ${lootItems.map(loot => `
-                <article class="creature-loot-item">
+              ${lootItems.map(loot => {
+                const linked = loot?.id ? findById("loot_items", loot.id) : null;
+                const body = `
                   <strong>${escapeHtml(loot?.name || "Butin")}</strong>
                   ${loot?.type ? `<span>${escapeHtml(loot.type)}</span>` : ""}
                   ${loot?.effect ? `<p>${escapeHtml(loot.effect)}</p>` : ""}
                   ${loot?.gold_value !== null && loot?.gold_value !== undefined && loot?.gold_value !== "" ? `<small>${escapeHtml(String(loot.gold_value))} or</small>` : ""}
-                </article>
-              `).join("")}
+                `;
+                return linked
+                  ? `<button class="creature-loot-item linked" type="button" data-action="open-related" data-type="loot_items" data-id="${escapeHtml(String(linked.id || ""))}">${body}</button>`
+                  : `<article class="creature-loot-item">${body}</article>`;
+              }).join("")}
             </div>
           </section>
         ` : ""}
@@ -1885,7 +2316,7 @@ function renderCreatureDetail(item) {
           </section>
         ` : ""}
 
-        <div class="creature-relations-slot" data-ui2c-slot aria-hidden="true"></div>
+        ${renderCreatureRelations(item, relations)}
       </section>
     </article>
   `;
@@ -2595,6 +3026,24 @@ function wireBestiaryScrollTracking() {
   }, { passive: true });
 }
 
+function wireCreatureMediaFallbacks() {
+  app.addEventListener("error", ev => {
+    const img = ev.target;
+    if (!(img instanceof HTMLImageElement) || !img.matches("[data-safe-media]")) return;
+    img.hidden = true;
+    const fallback = img.nextElementSibling;
+    if (fallback instanceof HTMLElement && fallback.classList.contains("relation-media-fallback")) {
+      fallback.hidden = false;
+    }
+    const art = img.closest(".creature-art-v6");
+    if (art) {
+      art.classList.add("media-error");
+      const error = art.querySelector(".creature-media-error");
+      if (error instanceof HTMLElement) error.hidden = false;
+    }
+  }, true);
+}
+
 function render() {
   app.innerHTML = renderPage();
   restoreBestiaryScrollAfterRender();
@@ -3205,6 +3654,7 @@ function bindEvents() {
         case "set-view": {
           const nextView = btn.dataset.view || "home";
           state.ui.view = nextView;
+          state.ui.codexReturnStack = [];
           if (nextView === "codex") state.ui.codexDetailOpen = false;
           await saveUiState(state.ui);
           render();
@@ -3224,6 +3674,7 @@ function bindEvents() {
           }
           return;
         case "set-codex-type":
+          state.ui.codexReturnStack = [];
           state.ui.codexType = btn.dataset.type;
           ensureBestiaryUi();
           state.ui.codexSelectedId = state.ui.codexType === "creatures"
@@ -3235,6 +3686,7 @@ function bindEvents() {
           return;
         case "select-codex": {
           const wasDetailOpen = state.ui.codexDetailOpen;
+          state.ui.codexReturnStack = [];
           state.ui.codexType = btn.dataset.type;
           state.ui.codexSelectedId = btn.dataset.id;
           if (btn.dataset.type === "creatures") {
@@ -3252,10 +3704,91 @@ function bindEvents() {
           return;
         }
         case "codex-back":
+          state.ui.codexReturnStack = [];
           state.ui.codexDetailOpen = false;
           await saveUiState(state.ui);
           render();
           return;
+        case "codex-related-back": {
+          const stack = ensureCodexReturnStack();
+          const previous = stack.pop();
+          if (!previous) return;
+          state.ui.codexType = previous.type;
+          state.ui.codexSelectedId = previous.id;
+          state.ui.codexDetailOpen = previous.detailOpen !== false;
+          if (previous.type === "creatures") {
+            ensureBestiaryUi();
+            state.ui.bestiary.selectedId = previous.id;
+          }
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
+        case "open-related": {
+          const targetType = relationStore(btn.dataset.type);
+          const targetId = String(btn.dataset.id || "");
+          const target = targetType ? findById(targetType, targetId) : null;
+          if (!target) {
+            toast("Relation indisponible.", "warn");
+            return;
+          }
+          const currentType = state.ui.codexType;
+          const currentId = state.ui.codexSelectedId;
+          const current = findById(currentType, currentId);
+          const stack = ensureCodexReturnStack();
+          stack.push({
+            type: currentType,
+            id: currentId,
+            detailOpen: state.ui.codexDetailOpen,
+            label: codexEntityTitle(currentType, current)
+          });
+          state.ui.codexReturnStack = stack.slice(-12);
+          state.ui.codexType = targetType;
+          state.ui.codexSelectedId = targetId;
+          state.ui.codexDetailOpen = true;
+          if (targetType === "creatures") {
+            ensureBestiaryUi();
+            state.ui.bestiary.selectedId = targetId;
+          }
+          await saveUiState(state.ui);
+          render();
+          requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+          return;
+        }
+        case "bestiary-see-dungeon": {
+          const dungeonId = String(btn.dataset.id || "");
+          if (!findById("dungeons", dungeonId)) {
+            toast("Donjon lié indisponible.", "warn");
+            return;
+          }
+          ensureBestiaryUi();
+          if (!state.ui.bestiary.contextReturn) state.ui.bestiary.contextReturn = snapshotBestiaryContext();
+          state.ui.bestiary.search = "";
+          state.ui.bestiary.dungeonId = dungeonId;
+          state.ui.bestiary.category = "";
+          state.ui.bestiary.menace = "";
+          state.ui.bestiary.tags = [];
+          state.ui.bestiary.scrollTop = 0;
+          state.ui.codexCreatureDungeonId = dungeonId;
+          state.ui.codexReturnStack = [];
+          state.ui.codexDetailOpen = false;
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
+        case "bestiary-restore-context": {
+          ensureBestiaryUi();
+          const previous = state.ui.bestiary.contextReturn;
+          if (!previous) return;
+          state.ui.bestiary = { ...defaultBestiaryUi(), ...previous, tags: Array.isArray(previous.tags) ? [...previous.tags] : [], contextReturn: null };
+          state.ui.codexCreatureDungeonId = state.ui.bestiary.dungeonId || "";
+          state.ui.codexSelectedId = state.ui.bestiary.selectedId || state.ui.codexSelectedId;
+          state.ui.codexDetailOpen = false;
+          state.ui.codexReturnStack = [];
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
         case "bestiary-mode":
           ensureBestiaryUi();
           state.ui.bestiary.mode = btn.dataset.mode === "list" ? "list" : "gallery";
@@ -3272,6 +3805,7 @@ function bindEvents() {
           return;
         case "bestiary-reset":
           ensureBestiaryUi();
+          state.ui.bestiary.contextReturn = null;
           state.ui.bestiary.search = "";
           state.ui.bestiary.dungeonId = "";
           state.ui.bestiary.category = "";
@@ -3283,6 +3817,7 @@ function bindEvents() {
           render();
           return;
         case "jump-codex":
+          state.ui.codexReturnStack = [];
           state.ui.view = "codex";
           state.ui.codexType = btn.dataset.type;
           state.ui.codexSelectedId = btn.dataset.id;
@@ -3707,6 +4242,7 @@ async function bootstrap() {
   wireGlobalErrors();
   bindEvents();
   wireBestiaryScrollTracking();
+  wireCreatureMediaFallbacks();
   render();
 
 if ("serviceWorker" in navigator) {
