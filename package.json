@@ -1,0 +1,14 @@
+{
+  "name": "gargottex-v6-validation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:ui6": "playwright test",
+    "test:ui6:chromium": "playwright test --project=chromium",
+    "test:ui6:webkit": "playwright test --project=webkit-smoke"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "^1.55.0"
+  }
+}
