@@ -565,3 +565,297 @@
   .atelier-panel-head{align-items:flex-start;flex-direction:column}
   #importexport .import-grid{grid-template-columns:1fr}
 }
+
+
+/* ========================================================================== */
+/* Gargottex V6 Premium V3 · 4 axes d'ambiance                               */
+/* ========================================================================== */
+
+/* === Ambiance matérielle · Axe 1 === */
+.panel,.family-card,.result-card,.more-card,.session-board{
+  background-image:
+    linear-gradient(rgba(24,17,13,.90),rgba(14,10,8,.95)),
+    url('./textures/grain-dark.svg');
+  background-blend-mode:normal,soft-light;
+}
+.hero-home,.dungeon-sheet,.hero-sheet-proposal,.npc-sheet-proposal{
+  box-shadow:0 24px 64px rgba(0,0,0,.42),inset 0 1px rgba(240,207,147,.08);
+}
+.material-board{
+  background-image:
+    linear-gradient(rgba(30,20,13,.86),rgba(17,12,9,.94)),
+    url('./textures/wood-dark.svg');
+  background-size:auto,520px auto;
+  box-shadow:inset 0 1px rgba(240,207,147,.08),inset 0 -18px 42px rgba(0,0,0,.20);
+}
+.section.lore,.npc-lore,.quest-contract{
+  background-image:
+    linear-gradient(rgba(42,29,18,.52),rgba(28,19,13,.70)),
+    url('./textures/paper-warm.svg');
+}
+.hero-playbook{
+  background-image:
+    linear-gradient(rgba(16,11,8,.92),rgba(15,10,8,.98)),
+    url('./textures/paper-warm.svg');
+  background-blend-mode:normal,multiply;
+}
+.hero-portrait{background:#e7ddcf url('./textures/paper-warm.svg') center/cover}
+.hero-portrait img{object-fit:contain!important;filter:contrast(1.02) saturate(1.04)}
+.family-card{box-shadow:0 9px 20px rgba(0,0,0,.17)}
+.family-card:hover{box-shadow:0 15px 34px rgba(0,0,0,.28)}
+
+/* === Fonds propres à chaque donjon · Axe 2 === */
+.dungeon-card{
+  border-color:color-mix(in srgb,var(--dungeon-accent) 28%,var(--b0));
+}
+.dungeon-card:before{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--dungeon-accent) 12%,transparent),transparent 46%);
+}
+.dungeon-card .family-card-media.placeholder{
+  background:
+    radial-gradient(circle at 65% 28%,color-mix(in srgb,var(--dungeon-glow) 28%,transparent),transparent 30%),
+    linear-gradient(135deg,color-mix(in srgb,var(--dungeon-accent) 25%,#17110d),#0d0907 72%),
+    url('./textures/grain-dark.svg');
+}
+.dungeon-cover{
+  position:relative;
+  min-height:520px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 68% 25%,color-mix(in srgb,var(--dungeon-glow) 20%,transparent),transparent 32%),
+    linear-gradient(145deg,color-mix(in srgb,var(--dungeon-accent) 28%,#17110d),#0b0806 76%);
+}
+.dungeon-cover-media{
+  position:absolute!important;
+  inset:0;
+  height:100%!important;
+  width:100%;
+  margin:0!important;
+  border:0!important;
+}
+.dungeon-cover-media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  filter:saturate(.96) contrast(1.04);
+}
+.dungeon-cover:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  background:
+    linear-gradient(180deg,rgba(8,5,4,.08),rgba(8,5,4,.10) 38%,rgba(8,5,4,.88) 92%),
+    radial-gradient(circle at 50% 50%,transparent 34%,rgba(0,0,0,.48) 100%);
+}
+.dungeon-cover-copy,.dungeon-cover-seal{z-index:3}
+.dungeon-cover-copy{
+  position:absolute;
+  left:28px;
+  right:28px;
+  bottom:24px;
+  max-width:760px;
+  text-shadow:0 3px 18px #000;
+}
+.dungeon-cover-copy h2{font-size:clamp(44px,6vw,74px);max-width:900px}
+.dungeon-cover-copy p{max-width:720px;font-size:12px;color:#e3d1b8}
+.dungeon-cover-seal{
+  position:absolute;
+  left:20px;
+  top:18px;
+  background:rgba(15,10,8,.74);
+  backdrop-filter:blur(8px);
+  border:1px solid color-mix(in srgb,var(--dungeon-accent) 50%,var(--b1));
+}
+.has-dungeon-bg .art:before{background-position:center!important;background-size:cover!important}
+.has-dungeon-bg .art:after{backdrop-filter:saturate(.82) brightness(.70)}
+
+/* === Boss comme moment de scène · Axe 3 === */
+.dungeon-brief{
+  display:grid;
+  grid-template-columns:minmax(0,1.25fr) minmax(270px,.75fr);
+  gap:14px;
+  padding:16px;
+}
+.dungeon-boss-showcase{
+  min-height:210px;
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:42% 1fr;
+  align-items:stretch;
+  padding:0;
+  border:1px solid color-mix(in srgb,var(--dungeon-accent) 60%,#8a5e31);
+  border-radius:18px;
+  color:var(--text);
+  background:
+    linear-gradient(135deg,#29180f,#100b08 68%),
+    url('./textures/brass-aged.svg');
+  text-align:left;
+  box-shadow:0 16px 38px rgba(0,0,0,.36),inset 0 1px rgba(240,207,147,.14);
+  transition:transform .18s ease,border-color .18s ease;
+}
+.dungeon-boss-showcase:hover{transform:translateY(-2px) rotate(.15deg);border-color:var(--dungeon-glow)}
+.boss-media{
+  position:relative;
+  display:grid;
+  place-items:center;
+  min-height:210px;
+  background:
+    radial-gradient(circle at 52% 38%,color-mix(in srgb,var(--dungeon-glow) 22%,transparent),transparent 44%),
+    #0d0907;
+  overflow:hidden;
+}
+.boss-media:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(90deg,transparent 70%,#100b08),
+    linear-gradient(180deg,transparent 60%,rgba(0,0,0,.66));
+}
+.boss-media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 24%;
+  filter:saturate(1.04) contrast(1.05);
+}
+.boss-sigil-fallback{
+  width:94px;
+  height:94px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:#25170f;
+  border:1px solid var(--dungeon-accent);
+}
+.boss-fallback-logo{width:72px;height:72px;object-fit:contain}
+.boss-copy{
+  padding:24px 20px 20px 12px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  position:relative;
+  z-index:2;
+}
+.boss-overline{
+  font-size:8px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--dungeon-glow);
+}
+.boss-copy strong{font:800 30px/.96 Alegreya,serif;margin:7px 0 9px;color:#f4e8d8}
+.boss-copy small{font-size:8px;line-height:1.4;color:var(--muted)}
+.boss-copy em{margin-top:15px;font:700 11px Alegreya,serif;color:var(--goldSoft);font-style:normal}
+.dungeon-boss-showcase:after{
+  content:"";
+  position:absolute;
+  inset:-40% -20%;
+  pointer-events:none;
+  background:linear-gradient(100deg,transparent 42%,rgba(240,207,147,.13) 50%,transparent 58%);
+  transform:translateX(-38%);
+  transition:transform .5s ease;
+}
+.dungeon-boss-showcase:hover:after{transform:translateX(34%)}
+
+/* === Découverte / victoire · Axe 4 === */
+.gargotte-cinematic{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:grid;
+  place-items:center;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .18s ease;
+}
+.gargotte-cinematic.show{opacity:1;pointer-events:auto}
+.cinematic-backdrop{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(180deg,rgba(8,5,4,.32),rgba(8,5,4,.84)),
+    var(--cinematic-bg,none) center/cover,
+    #0b0806;
+  filter:saturate(.92);
+  transform:scale(1.06);
+  transition:transform 2.5s cubic-bezier(.2,.7,.2,1);
+}
+.gargotte-cinematic.show .cinematic-backdrop{transform:scale(1)}
+.cinematic-curtain{
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:51%;
+  background:
+    linear-gradient(90deg,#130c08,#30190f),
+    url('./textures/leather-dark.svg');
+  box-shadow:0 0 60px #000;
+  transition:transform .75s cubic-bezier(.7,0,.2,1);
+}
+.cinematic-curtain.left{left:0}
+.cinematic-curtain.right{right:0;transform:scaleX(-1)}
+.gargotte-cinematic.show .cinematic-curtain.left{transform:translateX(-96%)}
+.gargotte-cinematic.show .cinematic-curtain.right{transform:translateX(96%) scaleX(-1)}
+.cinematic-card{
+  position:relative;
+  z-index:3;
+  width:min(680px,88vw);
+  padding:34px 28px 28px;
+  text-align:center;
+  border:1px solid var(--cinematic-accent);
+  border-radius:24px;
+  background:rgba(18,13,9,.84);
+  backdrop-filter:blur(14px);
+  box-shadow:0 28px 80px #000b;
+  transform:translateY(20px) scale(.96);
+  opacity:0;
+  transition:transform .42s .35s ease,opacity .42s .35s ease;
+}
+.gargotte-cinematic.show .cinematic-card{transform:none;opacity:1}
+.cinematic-emblem{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 8px 16px #0009)}
+.cinematic-eyebrow{margin-top:8px;font-size:9px;letter-spacing:.24em;color:var(--cinematic-accent);font-weight:800}
+.cinematic-card h2{font:800 clamp(42px,7vw,72px)/.9 Alegreya,serif;margin:8px 0 12px}
+.cinematic-card p{max-width:520px;margin:0 auto 18px;color:#d6c2a7;line-height:1.55}
+.cinematic-sparks{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:24px}
+.cinematic-sparks i{
+  position:absolute;
+  left:calc(8% + var(--i)*10%);
+  bottom:-12px;
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:var(--cinematic-accent);
+  box-shadow:0 0 12px var(--cinematic-accent);
+  animation:cinematic-spark 1.8s calc(var(--i)*-.13s) infinite ease-out;
+}
+.gargotte-cinematic[data-kind="victory"] .cinematic-card{
+  background:
+    linear-gradient(rgba(37,24,13,.90),rgba(18,12,8,.94)),
+    url('./textures/brass-aged.svg');
+}
+@keyframes cinematic-spark{
+  0%{transform:translateY(0) scale(.7);opacity:0}
+  18%{opacity:.9}
+  100%{transform:translateY(-220px) translateX(18px) scale(0);opacity:0}
+}
+@media(max-width:900px){
+  .dungeon-cover{min-height:430px}
+  .dungeon-brief{grid-template-columns:1fr}
+  .dungeon-boss-showcase{min-height:190px}
+  .hero-portrait{height:390px}
+}
+@media(max-width:620px){
+  .dungeon-cover{min-height:390px}
+  .dungeon-cover-copy{left:18px;right:18px;bottom:18px}
+  .dungeon-cover-copy h2{font-size:42px}
+  .dungeon-boss-showcase{grid-template-columns:38% 1fr}
+  .boss-copy{padding:18px 14px 18px 8px}
+  .boss-copy strong{font-size:24px}
+  .cinematic-card{padding:28px 18px 22px}
+}
+@media(prefers-reduced-motion:reduce){
+  .gargotte-cinematic,.cinematic-backdrop,.cinematic-curtain,.cinematic-card,.dungeon-boss-showcase{transition:none!important}
+  .cinematic-sparks{display:none}
+}
