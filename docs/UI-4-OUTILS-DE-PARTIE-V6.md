@@ -2,7 +2,7 @@
 
 ## Statut
 
-**ACTIF - source de vérité des outils de session**
+**LIVRÉ — UI-4 COMPLET — 20 septembre 2026**
 
 Principe :
 
@@ -312,3 +312,147 @@ Quêtes :
 9. quête de session distincte du Codex ;
 10. Terminer la partie ne touche jamais aux données métier ;
 11. fonctionnement offline.
+
+---
+
+# 15. Implémentation UI-4 sur V5.3
+
+Statut : **LIVRÉ — 20 septembre 2026**
+
+## SessionContext réel
+
+UI-4 introduit un `state.ui.session` unique, persisté uniquement dans `meta.ui_state`.
+
+Il contient :
+
+- état actif/inactif ;
+- Donjon actif ;
+- étage ;
+- mode `normal | mini_boss | boss` ;
+- rencontre de session ;
+- occurrences Créatures ;
+- Objets interactifs référencés ;
+- Brouhaha niveau/courant/historique ;
+- ID de la Quête temporaire.
+
+Aucun nouveau store IndexedDB n'est créé et aucune action de session n'appelle une écriture sur un store métier.
+
+Une migration de compatibilité transforme à la lecture un ancien état temporaire `generator / brouhaha / questsResult` en SessionContext si une ancienne partie était réellement engagée.
+
+## Accueil
+
+Deux états distincts :
+
+- aucune partie : identité Gargottex, accès Codex et démarrage explicite par Donjon ;
+- partie active : comptoir de session avec Donjon, étage, rencontre, Brouhaha, quête et action `Terminer la partie`.
+
+`Terminer la partie` demande confirmation puis nettoie uniquement l'état temporaire de session et ses anciens champs UI de compatibilité.
+
+## Donjon et étage
+
+Le Donjon actif est partagé entre Générateur, Brouhaha et Quête.
+
+Changement de Donjon :
+
+- immédiat sans état temporaire ;
+- confirmation lorsqu'une rencontre, un Brouhaha ou une quête existe ;
+- remise à zéro de ces trois états après confirmation ;
+- aucune donnée Codex modifiée.
+
+Changement d'étage :
+
+- immédiat sans rencontre ;
+- confirmation avec rencontre ;
+- seule la rencontre est invalidée ;
+- Brouhaha et quête restent intacts.
+
+## Générateur
+
+Ordre fonctionnel :
+
+1. Donjon ;
+2. étage ;
+3. mode exclusif ;
+4. budget réel du Donjon ;
+5. génération.
+
+Les modes sont `Normal | Mini-boss | Boss`.
+
+Les pools utilisent uniquement les relations Donjon fiables déjà définies par le Codex. Les Créatures de Menace non positive sont exclues de la composition budgétaire afin d'éviter les boucles de génération.
+
+Une rencontre stocke des occurrences locales de Créature par ID. Elle ne stocke aucun PV individuel et ne modifie jamais la fiche Créature.
+
+Pour chaque groupe :
+
+- catégorie ;
+- image ;
+- PV / ATK / DEF / ACTION / MENACE ;
+- compétence si présente ;
+- quantité restante ;
+- accès Fiche ;
+- `Éliminer`.
+
+`Éliminer` consomme exactement une occurrence non éliminée. Le Loot est tiré une seule fois pour cette occurrence et enregistré uniquement dans la rencontre de session. La ligne disparaît lorsque sa quantité restante atteint zéro.
+
+Les Objets interactifs générés restent des références vers le Codex et affichent nom, type, PV si présent, actions autorisées, effet et accès Fiche.
+
+## Brouhaha de session
+
+La mise en scène V3 est conservée dans une composition asymétrique à pression croissante :
+
+- niveau très dominant ;
+- commandes -1 / +1 latérales ;
+- fissures et traces visuelles ;
+- intensité croissante ;
+- bouton de tirage séparé.
+
+Fonctionnellement :
+
+- niveau clampé 0-12 ;
+- changer le niveau ne tire aucun effet ;
+- tirage parmi les effets universels ou reliés de façon fiable au Donjon actif ;
+- niveau 10+ conserve le comportement historique de deux effets lorsque disponibles ;
+- effet courant séparé ;
+- historique limité aux 20 derniers tirages ;
+- reset Brouhaha indépendant de la session globale.
+
+## Quête de session
+
+Vue courte uniquement :
+
+- titre ;
+- difficulté ;
+- commanditaire ;
+- description ;
+- objectif ;
+- récompense.
+
+`Tirer à nouveau` remplace immédiatement la quête temporaire sans confirmation. Lorsqu'il existe plusieurs candidats, le reroll évite la quête courante.
+
+`Ouvrir dans le Codex` ouvre la vraie fiche Quête sans modifier la session.
+
+## Offline et données
+
+- aucune dépendance réseau ;
+- aucun backend ;
+- `src/storage/idb.js` inchangé ;
+- Service Worker inchangé ;
+- ressources visuelles déjà précachées par UI-1 ;
+- les actions SessionContext écrivent uniquement `meta.ui_state` ;
+- une relation Créature devenue indisponible pendant la session reste signalée comme telle et ne reçoit aucune catégorie de remplacement inventée.
+
+## Gate UI-4
+
+1. contexte partagé réel : validé ;
+2. aucune sélection répétée inutile : validé ;
+3. changements Donjon/étage sûrs : validés ;
+4. résultat généré prioritaire : validé ;
+5. Objets interactifs inclus : validé ;
+6. élimination occurrence par occurrence : validée ;
+7. aucun tracker de combat : validé ;
+8. Brouhaha fonctionnel + émotion V3 : validé ;
+9. quête de session distincte du Codex : validée ;
+10. fin de partie sans mutation métier : validée ;
+11. fonctionnement offline : validé.
+
+**UI-4 est clos.**

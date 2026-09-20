@@ -255,6 +255,7 @@ const state = {
       brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
+    session: { active: false, dungeonId: "", floorIndex: 0, mode: "normal", encounter: null, brouhaha: { level: 0, current: null, history: [] }, questId: "", startedAt: "", updatedAt: "" },
     workshopType: "creatures",
     workshopSelectedId: "",
     codexCreatureDungeonId: "",
@@ -295,6 +296,7 @@ function defaultBlankUi() {
       brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
+    session: { active: false, dungeonId: "", floorIndex: 0, mode: "normal", encounter: null, brouhaha: { level: 0, current: null, history: [] }, questId: "", startedAt: "", updatedAt: "" },
     workshopType: "creatures",
     workshopSelectedId: "",
     codexCreatureDungeonId: "",
@@ -311,6 +313,439 @@ function defaultBlankUi() {
     journalOpen: false,
     globalSearch: ""
   };
+}
+
+function defaultSessionContext(dungeonId = "") {
+  return {
+    active: false,
+    dungeonId: String(dungeonId || ""),
+    floorIndex: 0,
+    mode: "normal",
+    encounter: null,
+    brouhaha: { level: 0, current: null, history: [] },
+    questId: "",
+    startedAt: "",
+    updatedAt: ""
+  };
+}
+
+function legacyEncounterToSession(result) {
+  if (!result || result.error) return null;
+  const occurrences = (result.creatures || []).map((creature, index) => ({
+    id: `legacy_${String(creature?.id || "creature")}_${index}`,
+    creatureId: String(creature?.id || ""),
+    name: String(creature?.name || "Créature"),
+    eliminated: false,
+    lootRolled: false,
+    loot: null
+  }));
+  const killed = result.local?.killedCreatures || {};
+  const lastLoot = result.local?.lastLoot || {};
+  for (const creatureId of Object.keys(killed)) {
+    if (!killed[creatureId]) continue;
+    const occurrence = occurrences.find(row => row.creatureId === creatureId && !row.eliminated);
+    if (!occurrence) continue;
+    occurrence.eliminated = true;
+    occurrence.lootRolled = true;
+    occurrence.loot = lastLoot[creatureId] || { type: "none", text: "Tirage antérieur non détaillé." };
+  }
+  return {
+    id: `legacy_${String(result.dungeon_id || "session")}_${Number(result.floor || 0)}`,
+    dungeonId: String(result.dungeon_id || ""),
+    floorIndex: Math.max(0, Number(result.floor || 0)),
+    budget: Number(result.budget || 0),
+    used: Number(result.used || 0),
+    mode: result.boss ? "boss" : result.miniBoss ? "mini_boss" : "normal",
+    creatureOccurrences: occurrences,
+    interactableRefs: (result.interactables || []).map(item => ({
+      interactableId: String(item?.id || ""),
+      name: String(item?.name || "Objet interactif")
+    })),
+    generatedAt: nowISO()
+  };
+}
+
+function migrateLegacySession(savedUi) {
+  const result = savedUi?.generator?.result && !savedUi.generator.result.error ? savedUi.generator.result : null;
+  const bhHistory = Array.isArray(savedUi?.brouhaha?.history) ? savedUi.brouhaha.history : [];
+  const bhDrawn = Array.isArray(savedUi?.brouhaha?.drawn) ? savedUi.brouhaha.drawn : [];
+  const quest = savedUi?.questsResult && typeof savedUi.questsResult === "object" ? savedUi.questsResult : null;
+  const active = Boolean(result || bhHistory.length || bhDrawn.length || quest);
+  const firstDungeonId = state.data.dungeons?.[0]?.id || "";
+  const dungeonId = String(
+    result?.dungeon_id ||
+    quest?.dungeon_id ||
+    savedUi?.questDungeonId ||
+    savedUi?.brouhaha?.dungeonId ||
+    savedUi?.generator?.dungeonId ||
+    firstDungeonId
+  );
+  const context = defaultSessionContext(dungeonId);
+  context.active = active;
+  context.floorIndex = Math.max(0, Number(result?.floor ?? savedUi?.generator?.floorIndex ?? 0));
+  context.mode = result?.boss || savedUi?.generator?.boss ? "boss" : result?.miniBoss || savedUi?.generator?.miniBoss ? "mini_boss" : "normal";
+  context.encounter = legacyEncounterToSession(result);
+  context.brouhaha.level = clamp(Number(savedUi?.brouhaha?.level || 0), 0, 12);
+  context.brouhaha.history = bhHistory.slice(0, 20).map(row => ({
+    level: clamp(Number(row?.level || 0), 0, 12),
+    text: String(row?.text || ""),
+    at: row?.at || nowISO(),
+    effectIds: []
+  }));
+  const currentLegacy = bhDrawn[0] || context.brouhaha.history[0] || null;
+  context.brouhaha.current = currentLegacy ? {
+    level: clamp(Number(currentLegacy.level || 0), 0, 12),
+    text: String(currentLegacy.text || ""),
+    at: currentLegacy.at || nowISO(),
+    effectIds: []
+  } : null;
+  context.questId = String(quest?.id || "");
+  context.startedAt = active ? nowISO() : "";
+  context.updatedAt = active ? nowISO() : "";
+  return context;
+}
+
+function sessionFromSavedUi(savedUi) {
+  if (!savedUi?.session || typeof savedUi.session !== "object") return migrateLegacySession(savedUi || {});
+  const defaults = defaultSessionContext(savedUi.session.dungeonId || "");
+  return {
+    ...defaults,
+    ...savedUi.session,
+    brouhaha: {
+      ...defaults.brouhaha,
+      ...(savedUi.session.brouhaha || {}),
+      history: Array.isArray(savedUi.session.brouhaha?.history) ? savedUi.session.brouhaha.history : []
+    }
+  };
+}
+
+function ensureSessionContext() {
+  const current = state.ui.session && typeof state.ui.session === "object" ? state.ui.session : defaultSessionContext();
+  const defaults = defaultSessionContext(current.dungeonId || "");
+  const session = {
+    ...defaults,
+    ...current,
+    brouhaha: {
+      ...defaults.brouhaha,
+      ...(current.brouhaha || {}),
+      history: Array.isArray(current.brouhaha?.history) ? current.brouhaha.history.slice(0, 20) : []
+    }
+  };
+  session.active = session.active === true;
+  session.dungeonId = String(session.dungeonId || "");
+  session.mode = ["normal", "mini_boss", "boss"].includes(session.mode) ? session.mode : "normal";
+  session.floorIndex = Math.max(0, Number(session.floorIndex || 0));
+  session.brouhaha.level = clamp(Number(session.brouhaha.level || 0), 0, 12);
+  session.brouhaha.current = session.brouhaha.current && typeof session.brouhaha.current === "object" ? session.brouhaha.current : null;
+  session.questId = String(session.questId || "");
+  session.encounter = session.encounter && typeof session.encounter === "object" ? session.encounter : null;
+
+  const firstDungeonId = state.data.dungeons?.[0]?.id || "";
+  if (!findById("dungeons", session.dungeonId)) {
+    if (session.active) {
+      const reset = defaultSessionContext(firstDungeonId);
+      state.ui.session = reset;
+      return reset;
+    }
+    session.dungeonId = firstDungeonId;
+  }
+
+  const floors = sessionFloorBudgets(session);
+  session.floorIndex = floors.length ? clamp(session.floorIndex, 0, floors.length - 1) : 0;
+  state.ui.session = session;
+  return session;
+}
+
+function sessionDungeon(session = ensureSessionContext()) {
+  return findById("dungeons", session?.dungeonId) || null;
+}
+
+function sessionFloorBudgets(session = ensureSessionContext()) {
+  const dungeon = findById("dungeons", session?.dungeonId);
+  return dungeon ? dungeonFloorBudgets(dungeon) : [];
+}
+
+function sessionBudget(session = ensureSessionContext()) {
+  const budgets = sessionFloorBudgets(session);
+  const raw = budgets[session.floorIndex];
+  if (raw === null || raw === undefined || raw === "") return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+function sessionModeLabel(mode) {
+  return mode === "boss" ? "Boss" : mode === "mini_boss" ? "Mini-boss" : "Normal";
+}
+
+function sessionHasTemporaryData(session = ensureSessionContext()) {
+  return Boolean(
+    session.encounter ||
+    session.questId ||
+    session.brouhaha.current ||
+    session.brouhaha.history.length ||
+    Number(session.brouhaha.level || 0) > 0
+  );
+}
+
+function clearLegacySessionUi() {
+  state.ui.generator.result = null;
+  state.ui.brouhaha.level = 0;
+  state.ui.brouhaha.history = [];
+  state.ui.brouhaha.drawn = [];
+  state.ui.questsResult = null;
+}
+
+function startSession(dungeonId = "") {
+  const selected = findById("dungeons", dungeonId) || state.data.dungeons?.[0] || null;
+  if (!selected) return false;
+  const session = defaultSessionContext(selected.id);
+  session.active = true;
+  session.startedAt = nowISO();
+  session.updatedAt = session.startedAt;
+  state.ui.session = session;
+  clearLegacySessionUi();
+  return true;
+}
+
+function endSessionWithConfirmation() {
+  const session = ensureSessionContext();
+  if (!session.active) return true;
+  if (!confirm("Terminer la partie ? La rencontre, le Brouhaha de session, son historique et la quête tirée seront effacés. Le Codex et les médias resteront intacts.")) return false;
+  state.ui.session = defaultSessionContext();
+  clearLegacySessionUi();
+  return true;
+}
+
+function changeSessionDungeon(nextDungeonId) {
+  const session = ensureSessionContext();
+  const next = findById("dungeons", nextDungeonId);
+  if (!next || String(next.id) === String(session.dungeonId)) return Boolean(next);
+  if (session.active && sessionHasTemporaryData(session)) {
+    const ok = confirm("Changer de Donjon ? La rencontre, le Brouhaha de session et la quête tirée seront réinitialisés. Les données du Codex ne seront pas modifiées.");
+    if (!ok) return false;
+  }
+  if (!session.active) {
+    session.dungeonId = String(next.id);
+    session.floorIndex = 0;
+    session.updatedAt = nowISO();
+    return true;
+  }
+  const startedAt = session.startedAt || nowISO();
+  const fresh = defaultSessionContext(next.id);
+  fresh.active = true;
+  fresh.startedAt = startedAt;
+  fresh.updatedAt = nowISO();
+  state.ui.session = fresh;
+  clearLegacySessionUi();
+  return true;
+}
+
+function changeSessionFloor(nextFloorIndex) {
+  const session = ensureSessionContext();
+  const budgets = sessionFloorBudgets(session);
+  const next = budgets.length ? clamp(Number(nextFloorIndex || 0), 0, budgets.length - 1) : 0;
+  if (next === session.floorIndex) return true;
+  if (session.encounter) {
+    const ok = confirm("Changer d'étage ? La rencontre actuelle sera supprimée. Le Brouhaha et la quête de session seront conservés.");
+    if (!ok) return false;
+    session.encounter = null;
+  }
+  session.floorIndex = next;
+  session.updatedAt = nowISO();
+  return true;
+}
+
+function sessionEncounterCreatureGroups(encounter) {
+  const groups = new Map();
+  for (const occurrence of encounter?.creatureOccurrences || []) {
+    const key = String(occurrence.creatureId || "");
+    if (!groups.has(key)) groups.set(key, {
+      creatureId: key,
+      name: occurrence.name || "Créature",
+      creature: findById("creatures", key),
+      total: 0,
+      remaining: 0,
+      occurrences: []
+    });
+    const group = groups.get(key);
+    group.total += 1;
+    if (!occurrence.eliminated) group.remaining += 1;
+    group.occurrences.push(occurrence);
+  }
+  return [...groups.values()];
+}
+
+function sessionEncounterLootRows(encounter) {
+  return (encounter?.creatureOccurrences || [])
+    .filter(row => row.eliminated && row.lootRolled)
+    .map(row => ({ ...row, creature: findById("creatures", row.creatureId) }));
+}
+
+function buildEncounterInteractables(dungeon, budget) {
+  const pool = (state.data.interactables || []).filter(item => entityBelongsToDungeon(item, dungeon));
+  if (!pool.length) return [];
+  const target = clamp(Math.floor(Number(budget || 0) / 3), 1, 6);
+  return shuffle(pool).slice(0, Math.min(pool.length, target));
+}
+
+function generateSessionEncounter(session = ensureSessionContext()) {
+  if (!session.active) return { error: "Aucune partie active." };
+  const dungeon = sessionDungeon(session);
+  if (!dungeon) return { error: "Donjon actif indisponible." };
+  const budget = sessionBudget(session);
+  if (budget === null || budget <= 0) return { error: "Budget absent ou invalide pour cet étage." };
+
+  const pool = (state.data.creatures || []).filter(item => entityBelongsToDungeon(item, dungeon));
+  const normalPool = pool.filter(item => {
+    const key = creatureCategoryMeta(item.category).key;
+    return key !== "boss" && key !== "mini_boss" && Number(item.menace) > 0;
+  });
+  const bossPool = pool.filter(item => creatureCategoryMeta(item.category).key === "boss" && Number(item.menace) > 0);
+  const miniPool = pool.filter(item => creatureCategoryMeta(item.category).key === "mini_boss" && Number(item.menace) > 0);
+
+  const selected = [];
+  let remaining = budget;
+  if (session.mode === "boss" || session.mode === "mini_boss") {
+    const specialPool = session.mode === "boss" ? bossPool : miniPool;
+    if (!specialPool.length) return { error: session.mode === "boss" ? "Aucun Boss fiable dans ce Donjon." : "Aucun Mini-boss fiable dans ce Donjon." };
+    const fits = specialPool.filter(item => Number(item.menace) <= remaining);
+    if (!fits.length) return { error: `Aucun ${sessionModeLabel(session.mode)} ne rentre dans le budget de cet étage.` };
+    const special = shuffle(fits)[0];
+    selected.push(special);
+    remaining -= Number(special.menace);
+  }
+
+  if (remaining > 0) {
+    const combo = exactBudgetCombo(normalPool, remaining);
+    if (!combo) return { error: "Impossible de composer une rencontre exacte avec le budget et les Créatures disponibles." };
+    selected.push(...combo);
+  }
+  if (!selected.length) return { error: "Aucune Créature candidate pour cette configuration." };
+
+  const occurrences = selected.map(creature => ({
+    id: uid("occ"),
+    creatureId: String(creature.id || ""),
+    name: String(creature.name || "Créature"),
+    eliminated: false,
+    lootRolled: false,
+    loot: null
+  }));
+  const interactables = buildEncounterInteractables(dungeon, budget);
+  return {
+    id: uid("encounter"),
+    dungeonId: String(dungeon.id || ""),
+    floorIndex: session.floorIndex,
+    budget,
+    used: selected.reduce((sum, creature) => sum + Number(creature.menace || 0), 0),
+    mode: session.mode,
+    creatureOccurrences: occurrences,
+    interactableRefs: interactables.map(item => ({
+      interactableId: String(item.id || ""),
+      name: String(item.name || "Objet interactif")
+    })),
+    generatedAt: nowISO()
+  };
+}
+
+function eliminateSessionOccurrence(creatureId) {
+  const session = ensureSessionContext();
+  const encounter = session.encounter;
+  if (!encounter) return false;
+  const occurrence = (encounter.creatureOccurrences || []).find(row => String(row.creatureId) === String(creatureId) && !row.eliminated);
+  if (!occurrence) return false;
+  const creature = findById("creatures", creatureId);
+  occurrence.eliminated = true;
+  if (!occurrence.lootRolled) {
+    occurrence.loot = rollCreatureLoot(creature);
+    occurrence.lootRolled = true;
+  }
+  session.updatedAt = nowISO();
+  return true;
+}
+
+function drawSessionBrouhaha() {
+  const session = ensureSessionContext();
+  if (!session.active) return null;
+  const dungeon = sessionDungeon(session);
+  const level = clamp(Number(session.brouhaha.level || 0), 0, 12);
+  const pool = (state.data.brouhaha_effects || []).filter(effect => {
+    if (Number(effect.level) !== level) return false;
+    const universal = !String(effect.dungeon_id || "").trim() && !String(effect.dungeon_name || "").trim();
+    return universal || (dungeon && entityBelongsToDungeon(effect, dungeon));
+  });
+  if (!pool.length) return null;
+  const count = level >= 10 ? 2 : 1;
+  const picks = shuffle(pool).slice(0, count);
+  const current = {
+    level,
+    text: picks.map(effect => String(effect.effect_text || "").trim()).filter(Boolean).join(" / "),
+    effectIds: picks.map(effect => String(effect.id || "")).filter(Boolean),
+    at: nowISO()
+  };
+  session.brouhaha.current = current;
+  session.brouhaha.history.unshift({ ...current });
+  session.brouhaha.history = session.brouhaha.history.slice(0, 20);
+  session.updatedAt = nowISO();
+  return current;
+}
+
+function sessionQuestCandidates(session = ensureSessionContext()) {
+  const dungeon = sessionDungeon(session);
+  if (!dungeon) return [];
+  return (state.data.quests || []).filter(quest => entityBelongsToDungeon(quest, dungeon));
+}
+
+function drawSessionQuest() {
+  const session = ensureSessionContext();
+  const candidates = sessionQuestCandidates(session);
+  if (!candidates.length) return null;
+  const alternatives = candidates.length > 1 ? candidates.filter(quest => String(quest.id) !== String(session.questId)) : candidates;
+  const picked = shuffle(alternatives.length ? alternatives : candidates)[0];
+  session.questId = String(picked.id || "");
+  session.updatedAt = nowISO();
+  return picked;
+}
+
+function renderSessionStartCard(contextLabel = "Partie") {
+  const session = ensureSessionContext();
+  const dungeons = state.data.dungeons || [];
+  return `<section class="session-start-card panel">
+    <div>
+      <span class="eyebrow">Session locale</span>
+      <h2>${escapeHtml(contextLabel)} · aucune partie active</h2>
+      <p>Choisis un Donjon pour créer un contexte de partie partagé par le Générateur, le Brouhaha et les Quêtes.</p>
+    </div>
+    <div class="session-start-actions">
+      <label><span>Donjon</span><select data-action="session-start-dungeon" ${dungeons.length ? "" : "disabled"}>
+        ${dungeons.map(dungeon => `<option value="${escapeHtml(String(dungeon.id || ""))}" ${String(dungeon.id) === String(session.dungeonId) ? "selected" : ""}>${escapeHtml(dungeon.name || "Donjon")}</option>`).join("")}
+      </select></label>
+      <button class="primary" type="button" data-action="session-start" ${dungeons.length ? "" : "disabled"}>Démarrer la partie</button>
+      ${dungeons.length ? "" : `<span class="empty small">Aucun Donjon disponible dans le Codex.</span>`}
+    </div>
+  </section>`;
+}
+
+function renderSessionToolHeader(activeTool) {
+  const session = ensureSessionContext();
+  if (!session.active) return "";
+  const dungeon = sessionDungeon(session);
+  const budget = sessionBudget(session);
+  return `<section class="session-tool-header">
+    <div class="session-tool-identity">
+      <span>Partie en cours</span>
+      <strong>${escapeHtml(dungeon?.name || "Donjon indisponible")}</strong>
+      <small>Étage ${session.floorIndex + 1}${budget === null ? "" : ` · budget ${escapeHtml(String(budget))}`}</small>
+    </div>
+    <nav aria-label="Outils de partie">
+      <button class="${activeTool === "generator" ? "active" : ""}" type="button" data-action="set-view" data-view="generator">Générateur</button>
+      <button class="${activeTool === "brouhaha" ? "active" : ""}" type="button" data-action="set-view" data-view="brouhaha">Brouhaha</button>
+      <button class="${activeTool === "quests" ? "active" : ""}" type="button" data-action="set-view" data-view="quests">Quête</button>
+    </nav>
+    <div class="session-tool-actions">
+      ${dungeon ? `<button class="ghost" type="button" data-action="jump-codex" data-type="dungeons" data-id="${escapeHtml(String(dungeon.id || ""))}">Donjon dans le Codex</button>` : ""}
+      <button class="danger" type="button" data-action="session-end">Terminer la partie</button>
+    </div>
+  </section>`;
 }
 
 function storeList() {
@@ -1038,6 +1473,7 @@ function ensureUiDefaults() {
   ensureCodexFamilyUi();
   ensureCodexReturnStack();
   ensureCodexContext();
+  ensureSessionContext();
   if (!state.ui.bestiary.mode) {
     state.ui.bestiary.mode = typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches ? "list" : "gallery";
   }
@@ -2094,74 +2530,71 @@ function renderSearchResults() {
 }
 
 function renderHome() {
-  const counts = Object.fromEntries(ENTITY_ORDER.map(type => [type, (state.data[type] || []).length]));
-  const currentDungeon = findById("dungeons", state.ui.generator.dungeonId) || state.data.dungeons?.[0] || null;
-  const gallery = (state.data.media_assets || []).slice(0, 8);
+  const session = ensureSessionContext();
+  const dungeon = sessionDungeon(session);
+  const budgets = sessionFloorBudgets(session);
+  const budget = sessionBudget(session);
+  const encounter = session.encounter;
+  const groups = sessionEncounterCreatureGroups(encounter);
+  const totalOccurrences = groups.reduce((sum, group) => sum + group.total, 0);
+  const remainingOccurrences = groups.reduce((sum, group) => sum + group.remaining, 0);
+  const quest = findById("quests", session.questId);
+  const currentBrouhaha = session.brouhaha.current;
+
+  if (!session.active) {
+    return renderShell(`
+      <section class="session-home-v6 no-session">
+        <div class="session-home-brand">
+          <img src="assets/images/logo-512.png" alt="Gargottex">
+          <div><span class="eyebrow">Gargottex</span><h1>Codex & outils de partie</h1><p>Le Codex reste disponible sans lancer de partie. Le contexte de session est local, temporaire et utilisable hors ligne.</p></div>
+        </div>
+        ${renderSessionStartCard("Accueil")}
+        <div class="session-home-shortcuts">
+          <button type="button" data-action="set-view" data-view="codex"><img src="${V6_ICON_PATH}Sigil_Basique.webp" alt=""><span><b>Ouvrir le Codex</b><small>Consulter toutes les familles</small></span></button>
+          <button type="button" data-action="set-view" data-view="generator"><img src="${V6_ICON_PATH}Icone_Gameplay_ACTION.webp" alt=""><span><b>Générateur</b><small>Démarrer depuis l'outil</small></span></button>
+          <button type="button" data-action="set-view" data-view="brouhaha"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt=""><span><b>Brouhaha</b><small>0 à 12, pendant la partie</small></span></button>
+        </div>
+      </section>
+    `);
+  }
 
   return renderShell(`
-    <section class="hero-card">
-      <div class="hero-text">
-        <span class="eyebrow">Fantasy cartoon absurde</span>
-        <h1>Le codex tavernier de Gargottex</h1>
-        <p>Un registre local, rapide et sans cloud, pour gérer donjons, créatures, loot, héros, PNJ, quêtes, Brouhaha et médias.</p>
-        <div class="hero-actions">
-          <button class="primary" data-action="set-view" data-view="generator">🎲 Générer</button>
-          <button class="secondary" data-action="set-view" data-view="brouhaha">🔥 Brouhaha</button>
-          <button class="secondary" data-action="set-view" data-view="atelier">🛠️ Atelier</button>
+    <section class="session-home-v6 active-session">
+      <div class="session-counter-v6">
+        <div>
+          <span class="eyebrow">Partie en cours</span>
+          <h1>${escapeHtml(dungeon?.name || "Donjon indisponible")}</h1>
+          <p>Étage ${session.floorIndex + 1}${budget === null ? "" : ` · budget ${escapeHtml(String(budget))}`} · mode ${escapeHtml(sessionModeLabel(session.mode))}</p>
         </div>
+        <button class="danger" type="button" data-action="session-end">Terminer la partie</button>
       </div>
-      <div class="hero-visual">
-        <img class="logo-glow" src="assets/images/logo-512.png" alt="Logo Gargottex">
-        <div class="hero-quote">
-          <strong>Berthold dit :</strong>
-          <p>« Si ça déborde, c'est que le chaudron a encore gagné. »</p>
-        </div>
-      </div>
-    </section>
 
-    <section class="stats-row">
-      ${statCard("Donjons", counts.dungeons, "🏰")}
-      ${statCard("Créatures", counts.creatures, "👹")}
-      ${statCard("Héros", counts.heroes, "🛡️")}
-      ${statCard("PNJ", counts.npcs, "🍺")}
-      ${statCard("Quêtes", counts.quests, "📜")}
-      ${statCard("Images", counts.media_assets, "🖼️")}
-    </section>
-
-    <section class="quick-grid">
-      <button class="big-card" data-action="set-view" data-view="codex">
-        <span>📚</span><strong>Codex</strong><small>Lecture seule et fiches du bestiaire</small>
-      </button>
-      <button class="big-card" data-action="set-view" data-view="quests">
-        <span>📜</span><strong>Quêtes</strong><small>Bibliothèque et tirage</small>
-      </button>
-      <button class="big-card" data-action="set-view" data-view="media">
-        <span>🖼️</span><strong>Médias</strong><small>Images locales et uploads</small>
-      </button>
-      <button class="big-card" data-action="set-view" data-view="import">
-        <span>⬇️</span><strong>Import / Export</strong><small>XLSX et CSV basés sur tes templates</small>
-      </button>
-    </section>
-
-    <section class="panel">
-      <div class="panel-title">
-        <h2>Donjon actif</h2>
-        <button class="ghost" data-action="set-view" data-view="generator">Ouvrir</button>
+      <div class="session-safe-controls panel">
+        <label><span>Donjon actif</span><select data-action="session-set-dungeon">
+          ${(state.data.dungeons || []).map(item => `<option value="${escapeHtml(String(item.id || ""))}" ${String(item.id) === String(session.dungeonId) ? "selected" : ""}>${escapeHtml(item.name || "Donjon")}</option>`).join("")}
+        </select></label>
+        <label><span>Étage</span><select data-action="session-set-floor" ${budgets.length ? "" : "disabled"}>
+          ${budgets.map((value,index)=>`<option value="${index}" ${index===session.floorIndex?"selected":""}>Étage ${index+1}${value === null ? "" : ` · budget ${escapeHtml(String(value))}`}</option>`).join("")}
+        </select></label>
       </div>
-      <div class="session-summary">
-        <div><strong>${escapeHtml(currentDungeon?.name || "Aucun")}</strong><br><span class="muted">${escapeHtml(currentDungeon?.description || "")}</span></div>
-        <div><strong>Budget étage 1</strong><br>${escapeHtml(String(currentDungeon?.floor_budgets?.[0] ?? "3"))}</div>
-        <div><strong>Créatures liées</strong><br>${(state.data.creatures || []).filter(c => c.dungeon_id === currentDungeon?.id).length}</div>
-      </div>
-    </section>
 
-    <section class="panel">
-      <div class="panel-title">
-        <h2>Galerie</h2>
-        <button class="ghost" data-action="set-view" data-view="media">Tout voir</button>
+      <div class="session-dashboard-v6">
+        <button class="session-dashboard-card encounter" type="button" data-action="set-view" data-view="generator">
+          <span>Rencontre</span><b>${encounter ? `${remainingOccurrences}/${totalOccurrences}` : "—"}</b><small>${encounter ? (remainingOccurrences ? "occurrence(s) restante(s)" : "terminée") : "aucune rencontre"}</small>
+        </button>
+        <button class="session-dashboard-card noise" type="button" data-action="set-view" data-view="brouhaha">
+          <span>Brouhaha</span><b>${session.brouhaha.level}</b><small>${currentBrouhaha ? escapeHtml(currentBrouhaha.text) : "aucun effet courant"}</small>
+        </button>
+        <button class="session-dashboard-card quest" type="button" data-action="set-view" data-view="quests">
+          <span>Quête</span><b>${quest ? "Active" : "—"}</b><small>${escapeHtml(quest?.name || "aucune quête tirée")}</small>
+        </button>
       </div>
-      <div class="gallery">
-        ${gallery.map(asset => renderMediaAssetCard(asset, false)).join("") || `<div class="empty">Aucune image.</div>`}
+
+      <div class="session-home-shortcuts">
+        <button type="button" data-action="set-view" data-view="generator"><img src="${V6_ICON_PATH}Icone_Gameplay_ACTION.webp" alt=""><span><b>Générateur</b><small>Composer la prochaine salle</small></span></button>
+        <button type="button" data-action="set-view" data-view="brouhaha"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt=""><span><b>Brouhaha</b><small>Niveau et effets de session</small></span></button>
+        <button type="button" data-action="set-view" data-view="quests"><img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt=""><span><b>Quête</b><small>Tirage rapide du Donjon</small></span></button>
+        <button type="button" data-action="set-view" data-view="codex"><img src="${V6_ICON_PATH}Sigil_Basique.webp" alt=""><span><b>Codex</b><small>Lecture des données métier</small></span></button>
       </div>
     </section>
   `);
@@ -3775,223 +4208,187 @@ function renderMediaAssetDetail(asset) {
 }
 
 function renderGenerator() {
-  const dungeon = findById("dungeons", state.ui.generator.dungeonId) || state.data.dungeons?.[0] || null;
-  const floorBudgets = dungeon?.floor_budgets || [3, 5, 7, 9, 11];
-  const floorIndex = clamp(state.ui.generator.floorIndex || 0, 0, Math.max(0, floorBudgets.length - 1));
-  const budget = floorBudgets[floorIndex] || 0;
-  const result = state.ui.generator.result;
+  const session = ensureSessionContext();
+  if (!session.active) return renderShell(`<section class="session-tool-page">${renderSessionStartCard("Générateur")}</section>`);
 
+  const dungeon = sessionDungeon(session);
+  const budgets = sessionFloorBudgets(session);
+  const budget = sessionBudget(session);
+  const result = session.encounter;
   return renderShell(`
-    <section class="panel">
-      <div class="panel-title">
-        <h2>Générateur</h2>
-        <div class="muted">Boss / mini-boss uniquement si cochés. Budget strictement respecté.</div>
-      </div>
-
-      <div class="generator-controls">
-        <label>
-          <span>Donjon</span>
-          <select data-action="generator-set-dungeon">
-            ${state.data.dungeons.map(d => `<option value="${d.id}" ${d.id === dungeon?.id ? "selected" : ""}>${escapeHtml(d.name)}</option>`).join("")}
-          </select>
-        </label>
-        <label>
-          <span>Étage</span>
-          <select data-action="generator-set-floor">
-            ${floorBudgets.map((b, idx) => `<option value="${idx}" ${idx === floorIndex ? "selected" : ""}>Étage ${idx + 1} · budget ${b}</option>`).join("")}
-          </select>
-        </label>
-        <label class="toggle">
-          <input type="checkbox" data-action="generator-set-boss" ${state.ui.generator.boss ? "checked" : ""}>
-          <span>Boss</span>
-        </label>
-        <label class="toggle">
-          <input type="checkbox" data-action="generator-set-miniboss" ${state.ui.generator.miniBoss ? "checked" : ""}>
-          <span>Mini-boss</span>
-        </label>
-      </div>
-
-      <button class="primary giant" data-action="generate-encounter">🎲 GÉNÉRER</button>
-
-      <div class="generator-compact">Budget ${budget} | Mode ${state.ui.generator.boss ? "Boss" : state.ui.generator.miniBoss ? "Mini-boss" : "Normal"}</div>
-
-      <div class="panel">
-        <h3>Résultat</h3>
-        ${result ? renderEncounterResult(result) : `<div class="empty">Lance un tirage.</div>`}
-      </div>
+    <section class="session-tool-page generator-v6 ${result ? "has-result" : ""}">
+      ${renderSessionToolHeader("generator")}
+      <section class="generator-config-v6 panel">
+        <div class="generator-config-title"><div><span class="eyebrow">Configuration</span><h2>Générateur de rencontre</h2></div>${result ? `<span>Configuration compacte · rencontre active</span>` : ""}</div>
+        <div class="generator-order-v6">
+          <label><span>1 · Donjon</span><select data-action="session-set-dungeon">
+            ${(state.data.dungeons || []).map(item => `<option value="${escapeHtml(String(item.id || ""))}" ${String(item.id) === String(session.dungeonId) ? "selected" : ""}>${escapeHtml(item.name || "Donjon")}</option>`).join("")}
+          </select></label>
+          <label><span>2 · Étage</span><select data-action="session-set-floor" ${budgets.length ? "" : "disabled"}>
+            ${budgets.map((value,index)=>`<option value="${index}" ${index===session.floorIndex?"selected":""}>Étage ${index+1}${value === null ? "" : ` · budget ${escapeHtml(String(value))}`}</option>`).join("")}
+          </select></label>
+          <div class="generator-mode-v6"><span>3 · Mode</span><div class="segmented" role="group" aria-label="Mode de rencontre">
+            ${[
+              ["normal","Normal"],["mini_boss","Mini-boss"],["boss","Boss"]
+            ].map(([value,label])=>`<button type="button" data-action="session-set-mode" data-mode="${value}" class="${session.mode===value?"active":""}" aria-pressed="${session.mode===value?"true":"false"}">${label}</button>`).join("")}
+          </div></div>
+          <div class="generator-budget-v6"><span>4 · Budget</span><b>${budget === null ? "Non renseigné" : escapeHtml(String(budget))}</b><small>${budget === null ? "Ajoute un budget à cet étage dans le Codex." : "issu du Donjon actif"}</small></div>
+          <button class="primary generator-roll-v6" type="button" data-action="generate-session-encounter" ${budget === null || budget <= 0 ? "disabled" : ""}>5 · ${result ? "Régénérer" : "Générer"}</button>
+        </div>
+      </section>
+      <section class="generator-result-v6">
+        ${result ? renderEncounterResult(result) : `<div class="panel empty">Configure la salle puis génère une rencontre.</div>`}
+      </section>
     </section>
   `);
 }
 
-function renderEncounterResult(result) {
-  if (result.error) return `<div class="empty">${escapeHtml(result.error)}</div>`;
-  const counts = new Map();
-  for (const creature of result.creatures) {
-    const entry = counts.get(creature.id) || { creature, count: 0 };
-    entry.count++;
-    counts.set(creature.id, entry);
-  }
+function renderEncounterResult(encounter) {
+  if (!encounter) return `<div class="panel empty">Aucune rencontre.</div>`;
+  const groups = sessionEncounterCreatureGroups(encounter);
+  const activeGroups = groups.filter(group => group.remaining > 0);
+  const lootRows = sessionEncounterLootRows(encounter);
+  const interactables = (encounter.interactableRefs || []).map(ref => ({
+    ref,
+    item: findById("interactables", ref.interactableId)
+  }));
+  const total = groups.reduce((sum,group)=>sum+group.total,0);
+  const remaining = groups.reduce((sum,group)=>sum+group.remaining,0);
   return `
-    <div class="result-card">
-      <div class="result-head">
-        <div>
-          <span class="badge">Budget ${result.used}/${result.budget}</span>
-          <h3>${escapeHtml(result.dungeon_name)} · Étage ${Number(result.floor) + 1}</h3>
-        </div>
-      </div>
-      <div class="two-col encounter-columns">
-        <div class="mini-list encounter-list">
-        <h4>Créatures</h4>
-        ${Array.from(counts.values()).map(entry => {
-          const img = imageUrlForEntity(entry.creature);
-          const isKilled = !!result.local?.killedCreatures?.[entry.creature.id];
-          return `<div class="encounter-row">
-            <div class="encounter-thumb">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(entry.creature.name)}" loading="lazy">` : `<div class="placeholder">👹</div>`}</div>
-            <div class="encounter-body ${isKilled ? "is-killed" : ""}">
-              <strong>${entry.count}× ${escapeHtml(entry.creature.name)}</strong>
-              <span>${entry.creature.menace || 0} menace</span>
-              <button class="ghost tiny" data-action="encounter-open-creature" data-id="${entry.creature.id}">Détails</button>
+    <article class="session-encounter-v6 panel">
+      <header class="session-encounter-head">
+        <div><span class="eyebrow">${escapeHtml(sessionModeLabel(encounter.mode))}</span><h2>Rencontre · étage ${Number(encounter.floorIndex)+1}</h2><p>Budget ${escapeHtml(String(encounter.used))}/${escapeHtml(String(encounter.budget))}</p></div>
+        <div class="encounter-remaining-v6"><b>${remaining}</b><span>sur ${total}<br>à éliminer</span></div>
+      </header>
+
+      <section class="encounter-creatures-v6">
+        <div class="session-section-title"><h3>Créatures</h3><span>${remaining ? "Élimination occurrence par occurrence" : "Rencontre terminée"}</span></div>
+        ${activeGroups.length ? activeGroups.map(group => {
+          const creature = group.creature;
+          const hasCategory = Boolean(creature && String(creature.category || "").trim());
+          const category = hasCategory ? creatureCategoryMeta(creature.category) : null;
+          const image = creature ? imageUrlForEntity(creature) : "";
+          const sigil = category?.sigil || "Icone_Gameplay_ACTION.webp";
+          const categoryLabel = category?.label || (creature ? "Catégorie non renseignée" : "Relation Codex indisponible");
+          return `<div class="encounter-creature-v6 ${category?.key || "unknown"}">
+            <div class="encounter-creature-media">${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy">` : `<img src="${V6_ICON_PATH}${sigil}" alt="">`}</div>
+            <div class="encounter-creature-main">
+              <div class="encounter-creature-name"><span><img src="${V6_ICON_PATH}${sigil}" alt="">${escapeHtml(categoryLabel)}</span><h4>${escapeHtml(creature?.name || group.name || "Créature indisponible")}</h4></div>
+              ${creature ? `<div class="encounter-stat-strip">
+                <span><img src="${V6_ICON_PATH}Icone_Gameplay_PV.webp" alt=""><b>${escapeHtml(String(creature.pv ?? "—"))}</b><small>PV</small></span>
+                <span><img src="${V6_ICON_PATH}Icone_Gameplay_ATK.webp" alt=""><b>${escapeHtml(String(creature.atk ?? "—"))}</b><small>ATK</small></span>
+                <span><img src="${V6_ICON_PATH}Icone_Gameplay_DEF.webp" alt=""><b>${escapeHtml(String(creature.def ?? "—"))}</b><small>DEF</small></span>
+                <span><img src="${V6_ICON_PATH}Icone_Gameplay_ACTION.webp" alt=""><b>${escapeHtml(String(creature.actions ?? "—"))}</b><small>Action</small></span>
+                <span><img src="${V6_ICON_PATH}Icone_Gameplay_MENACE.webp" alt=""><b>${escapeHtml(String(creature.menace ?? "—"))}</b><small>Menace</small></span>
+              </div>` : `<div class="muted small">La fiche Codex liée n'est plus disponible.</div>`}
+              ${creature?.special_attack_name ? `<div class="encounter-ability-v6"><img src="${V6_ICON_PATH}Icone_Gameplay_COMPETENCE.webp" alt=""><span>${escapeHtml(creature.special_attack_name)}</span></div>` : ""}
+            </div>
+            <div class="encounter-creature-actions">
+              <div class="encounter-quantity-v6"><b>${group.remaining}</b><span>restante${group.remaining>1?"s":""}</span></div>
+              ${creature ? `<button class="ghost" type="button" data-action="jump-codex" data-type="creatures" data-id="${escapeHtml(String(creature.id || ""))}">Fiche</button>` : ""}
+              <button class="danger" type="button" data-action="session-eliminate-creature" data-id="${escapeHtml(group.creatureId)}">Éliminer</button>
             </div>
           </div>`;
-        }).join("")}
+        }).join("") : `<div class="encounter-complete-v6"><b>Rencontre terminée</b><span>Toutes les occurrences ont été éliminées. Aucun suivi de PV individuel n'est conservé.</span></div>`}
+      </section>
+
+      <section class="encounter-objects-v6">
+        <div class="session-section-title"><h3>Objets interactifs</h3><span>${interactables.length}</span></div>
+        <div class="encounter-object-grid">
+          ${interactables.length ? interactables.map(({ref,item})=>`<article class="encounter-object-v6">
+            <div><img src="${V6_ICON_PATH}Icone_Entite_OBJET_INTERACTIF.webp" alt=""><span>${escapeHtml(item?.type || "Objet interactif")}</span></div>
+            <h4>${escapeHtml(item?.name || ref.name || "Objet indisponible")}</h4>
+            ${item?.hp !== null && item?.hp !== undefined && String(item.hp).trim() !== "" ? `<p><b>PV ${escapeHtml(String(item.hp))}</b></p>` : ""}
+            ${item?.actions_allowed ? `<p><span>Actions</span> ${escapeHtml(String(item.actions_allowed))}</p>` : ""}
+            ${item?.effect ? `<p><span>Effet</span> ${escapeHtml(String(item.effect))}</p>` : ""}
+            ${item ? `<button class="ghost" type="button" data-action="jump-codex" data-type="interactables" data-id="${escapeHtml(String(item.id || ""))}">Fiche</button>` : ""}
+          </article>`).join("") : `<div class="empty small">Aucun Objet interactif lié à cette génération.</div>`}
         </div>
-        <div class="mini-list encounter-list">
-          <h4>Objets interactifs</h4>
-          ${(result.interactables || []).map(obj => {
-            const img = imageUrlForEntity(obj);
-            return `<div class="encounter-row">
-              <div class="encounter-thumb">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(obj.name)}" loading="lazy">` : `<div class="placeholder">🧱</div>`}</div>
-              <div class="encounter-body">
-                <strong>${escapeHtml(obj.name || "Objet")}</strong>
-                <button class="ghost tiny" data-action="encounter-open-object" data-id="${obj.id}">Détails</button>
-              </div>
-            </div>`;
-          }).join("") || `<div class="empty small">Aucun objet interactif.</div>`}
-        </div>
-      </div>
-      ${(result.local?.panelType && result.local?.panelId) ? renderEncounterMiniPanel(result) : ""}
-    </div>
+      </section>
+
+      ${lootRows.length ? `<section class="session-loot-v6">
+        <div class="session-section-title"><h3>Loot des occurrences éliminées</h3><span>${lootRows.length}</span></div>
+        <div>${lootRows.map((row,index)=>`<div class="session-loot-row"><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt=""><span><b>${escapeHtml(row.creature?.name || row.name || "Créature")}</b><small>Occurrence ${index+1}</small></span><strong>${escapeHtml(row.loot?.text || "Aucun Loot")}</strong></div>`).join("")}</div>
+      </section>` : ""}
+    </article>
   `;
 }
 
-function renderEncounterMiniPanel(result) {
-  if (result.local.panelType === "creature") {
-    const creature = (result.creatures || []).find(c => c.id === result.local.panelId);
-    if (!creature) return "";
-    const img = imageUrlForEntity(creature);
-    const lootResult = result.local.lastLoot?.[creature.id];
-    const lootText = lootResult ? (lootResult.type === "none" ? lootResult.text : `Loot: ${lootResult.text}`) : "Aucun tirage.";
-    return `<div class="subpanel">
-      <h4>Mini fiche créature</h4>
-      <div class="encounter-row">
-        <div class="encounter-thumb">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(creature.name)}">` : `<div class="placeholder">👹</div>`}</div>
-        <div class="encounter-body">
-          <strong>${escapeHtml(creature.name)}</strong>
-          <span>PV ${Number(creature.pv || 0)} · ATK ${Number(creature.atk || 0)} · DEF ${Number(creature.def || 0)}</span>
-          <span>${escapeHtml((creature.actions || creature.ai_behavior || "—"))}</span>
-          <button class="danger tiny" data-action="encounter-kill-creature" data-id="${creature.id}">Kill</button>
-          <span>${escapeHtml(lootText)}</span>
-        </div>
-      </div>
-    </div>`;
-  }
-  const obj = (result.interactables || []).find(x => x.id === result.local.panelId);
-  if (!obj) return "";
-  const img = imageUrlForEntity(obj);
-  const effectLine = result.local.lastEffect?.[obj.id] || "Aucun effet tiré.";
-  const hasEffect = String(obj.effect || "").trim().length > 0;
-  return `<div class="subpanel">
-    <h4>Mini fiche objet</h4>
-    <div class="encounter-row">
-      <div class="encounter-thumb">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(obj.name)}">` : `<div class="placeholder">🧱</div>`}</div>
-      <div class="encounter-body">
-        <strong>${escapeHtml(obj.name || "Objet")}</strong>
-        <span>Type ${escapeHtml(obj.type || "—")} · PV ${Number(obj.hp || 0)}</span>
-        <span>${escapeHtml(obj.actions_allowed || "—")}</span>
-        ${hasEffect ? `<button class="primary tiny" data-action="encounter-roll-effect" data-id="${obj.id}">Effet</button>` : ""}
-        <span>${escapeHtml(effectLine)}</span>
-      </div>
-    </div>
-  </div>`;
+function renderEncounterMiniPanel() {
+  return "";
 }
 
 function renderBrouhaha() {
-  const dungeon = findById("dungeons", state.ui.brouhaha.dungeonId) || state.data.dungeons?.[0] || null;
-  const level = clamp(state.ui.brouhaha.level || 0, 0, 12);
-  const history = state.ui.brouhaha.history || [];
-
+  const session = ensureSessionContext();
+  if (!session.active) return renderShell(`<section class="session-tool-page">${renderSessionStartCard("Brouhaha")}</section>`);
+  const level = clamp(Number(session.brouhaha.level || 0), 0, 12);
+  const current = session.brouhaha.current;
+  const history = session.brouhaha.history || [];
+  const intensity = level >= 10 ? "critical" : level >= 7 ? "hot" : level >= 4 ? "rising" : "calm";
   return renderShell(`
-    <section class="panel">
-      <div class="panel-title">
-        <h2>Brouhaha</h2>
-        <div class="muted">Niveaux exacts. 10+ = 2 effets.</div>
-      </div>
-
-      <div class="generator-controls">
-        <label>
-          <span>Donjon</span>
-          <select data-action="brouhaha-set-dungeon">
-            ${state.data.dungeons.map(d => `<option value="${d.id}" ${d.id === dungeon?.id ? "selected" : ""}>${escapeHtml(d.name)}</option>`).join("")}
-          </select>
-        </label>
-      </div>
-
-      <div class="brouhaha-stage ${level >= 10 ? "hot" : ""}">
-        <button class="brouhaha-step" data-action="brouhaha-minus">−1</button>
-        <div class="brouhaha-core">
-          <div class="brouhaha-label">Brouhaha actuel</div>
-          <div class="brouhaha-level">${level}</div>
-          <div class="brouhaha-scale">0 → 12</div>
+    <section class="session-tool-page brouhaha-session-v6">
+      ${renderSessionToolHeader("brouhaha")}
+      <section class="brouhaha-session-stage ${intensity}">
+        <div class="brouhaha-fractures" aria-hidden="true"></div>
+        <div class="brouhaha-session-side left">
+          <button type="button" data-action="session-brouhaha-minus" aria-label="Baisser le Brouhaha de 1">−1</button>
         </div>
-        <button class="brouhaha-step" data-action="brouhaha-plus">+1</button>
-      </div>
-
-      <button class="primary giant" data-action="brouhaha-draw">🎲 Tirer un effet</button>
-
-      <div class="panel">
-        <div class="panel-title compact"><h3>Historique</h3></div>
-        <div class="effect-stack">
-          ${history.slice(0, 8).map(h => `<div class="effect-card ${h.level >= 10 ? "double" : ""}"><strong>Niv ${h.level}</strong><span>${escapeHtml(h.text)}</span></div>`).join("") || `<div class="empty">Aucun effet.</div>`}
+        <div class="brouhaha-session-core">
+          <span>Brouhaha</span>
+          <strong>${level}</strong>
+          <small>0 — 12</small>
+          <div class="brouhaha-pressure" aria-hidden="true">${Array.from({length:12},(_,i)=>`<i class="${i<level?"on":""}"></i>`).join("")}</div>
         </div>
-      </div>
+        <div class="brouhaha-session-side right">
+          <button type="button" data-action="session-brouhaha-plus" aria-label="Augmenter le Brouhaha de 1">+1</button>
+        </div>
+        <button class="brouhaha-draw-v6" type="button" data-action="session-brouhaha-draw">Tirer un effet</button>
+      </section>
+
+      <section class="brouhaha-current-v6 panel">
+        <div class="session-section-title"><h2>Effet courant</h2><span>${current ? `Niveau ${current.level}` : "Aucun tirage"}</span></div>
+        ${current ? `<div class="brouhaha-current-ticket"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt=""><p>${escapeHtml(current.text || "Effet sans texte.")}</p></div>` : `<div class="empty">Changer le niveau ne tire aucun effet. Utilise « Tirer un effet » quand tu le souhaites.</div>`}
+      </section>
+
+      <section class="brouhaha-history-v6 panel">
+        <div class="session-section-title"><h2>Historique</h2><button class="ghost" type="button" data-action="session-brouhaha-reset" ${history.length || current || level ? "" : "disabled"}>Réinitialiser</button></div>
+        <div class="brouhaha-history-list">
+          ${history.length ? history.map((entry,index)=>`<div class="brouhaha-history-row"><b>${entry.level}</b><span>${escapeHtml(entry.text || "Effet sans texte.")}</span><small>${index===0?"courant":""}</small></div>`).join("") : `<div class="empty small">Aucun effet tiré pendant cette partie.</div>`}
+        </div>
+      </section>
     </section>
   `);
 }
 
 function renderQuests() {
-  const dungeon = findById("dungeons", state.ui.questDungeonId) || state.data.dungeons?.[0] || null;
-  const quests = (state.data.quests || []).filter(q => q.dungeon_id === dungeon?.id);
-  const drawn = state.ui.import.preview?.drawnQuest || null;
-
+  const session = ensureSessionContext();
+  if (!session.active) return renderShell(`<section class="session-tool-page">${renderSessionStartCard("Quêtes")}</section>`);
+  const candidates = sessionQuestCandidates(session);
+  const quest = findById("quests", session.questId);
+  const npc = quest ? resolveQuestNpc(quest) : null;
+  const difficulty = quest ? questDifficultyMeta(quest.difficulty) : null;
   return renderShell(`
-    <section class="panel">
-      <div class="panel-title">
-        <h2>Quêtes</h2>
-        <div class="muted">Bibliothèque de quêtes, tirage et édition uniquement dans l'atelier.</div>
-      </div>
-
-      <div class="generator-controls">
-        <label>
-          <span>Donjon</span>
-          <select data-action="quests-set-dungeon">
-            ${state.data.dungeons.map(d => `<option value="${d.id}" ${d.id === dungeon?.id ? "selected" : ""}>${escapeHtml(d.name)}</option>`).join("")}
-          </select>
-        </label>
-        <button class="primary" data-action="quests-draw">🎲 Tirage</button>
-      </div>
-
-      <div class="panel split">
-        <div>
-          <h3>Résultat</h3>
-          ${state.ui.questsResult ? renderQuestDetail(state.ui.questsResult) : `<div class="empty">Aucune quête tirée.</div>`}
-        </div>
-        <div>
-          <div class="panel-title compact"><h3>Quêtes enregistrées</h3></div>
-          <div class="card-list">
-            ${quests.map(q => renderCodexCard("quests", q, false)).join("") || `<div class="empty">Aucune quête pour ce donjon.</div>`}
+    <section class="session-tool-page session-quest-v6">
+      ${renderSessionToolHeader("quests")}
+      <section class="session-quest-card panel">
+        <div class="session-section-title"><div><span class="eyebrow">Quête de session</span><h2>${quest ? escapeHtml(quest.name || "Quête sans nom") : "Aucune quête tirée"}</h2></div><span>${candidates.length} disponible${candidates.length>1?"s":""}</span></div>
+        ${quest ? `
+          <div class="session-quest-meta">
+            ${difficulty ? `<span class="semantic-tier ${escapeHtml(difficulty.key)}">${escapeHtml(difficulty.label)}</span>` : ""}
+            <span><b>Commanditaire</b> ${escapeHtml(npc?.name || quest.npc_name || "Non renseigné")}</span>
           </div>
-        </div>
-      </div>
+          ${quest.description ? `<p class="session-quest-description">${escapeHtml(quest.description)}</p>` : ""}
+          <div class="session-quest-objective"><span>Objectif</span><strong>${escapeHtml(quest.objective || "Non renseigné")}</strong></div>
+          <div class="session-quest-reward"><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt=""><div><span>Récompense</span><strong>${escapeHtml(quest.reward || "Non renseignée")}</strong></div></div>
+          <div class="session-quest-actions">
+            <button class="primary" type="button" data-action="session-quest-reroll" ${candidates.length ? "" : "disabled"}>Tirer à nouveau</button>
+            <button class="ghost" type="button" data-action="jump-codex" data-type="quests" data-id="${escapeHtml(String(quest.id || ""))}">Ouvrir dans le Codex</button>
+          </div>
+        ` : `
+          <div class="empty">${candidates.length ? "Aucune quête temporaire. Le tirage n'altère pas la Quête du Codex." : "Aucune Quête fiable n'est liée au Donjon actif."}</div>
+          <div class="session-quest-actions"><button class="primary" type="button" data-action="session-quest-reroll" ${candidates.length ? "" : "disabled"}>Tirer une quête</button></div>
+        `}
+      </section>
     </section>
   `);
 }
@@ -4637,44 +5034,11 @@ async function deleteEntityWithConfirm(type, id) {
 }
 
 function generateEncounter(dungeonId, floorIndex, bossChecked, miniBossChecked) {
-  const dungeon = findById("dungeons", dungeonId);
-  if (!dungeon) return { error: "Aucun donjon sélectionné." };
-
-  const budget = Number(dungeon.floor_budgets?.[floorIndex] ?? dungeon.floor_budgets?.[0] ?? 3);
-  const pool = (state.data.creatures || []).filter(c => c.dungeon_id === dungeon.id);
-  const normalPool = pool.filter(c => c.category !== "boss" && c.category !== "mini_boss");
-  const bossPool = pool.filter(c => c.category === "boss");
-  const miniPool = pool.filter(c => c.category === "mini_boss");
-
-  const selected = [];
-  let remaining = budget;
-
-  if (bossChecked || miniBossChecked) {
-    const categoryPool = bossChecked ? bossPool : miniPool;
-    if (!categoryPool.length) return { error: bossChecked ? "Aucun boss disponible pour ce donjon." : "Aucun mini-boss disponible pour ce donjon." };
-    const fits = categoryPool.filter(c => c.menace <= remaining);
-    if (!fits.length) return { error: "Le boss sélectionné ne rentre pas dans le budget de l'étage." };
-    const pick = shuffle(fits)[0];
-    selected.push(pick);
-    remaining -= pick.menace;
-  }
-
-  const combo = exactBudgetCombo(normalPool, remaining);
-  if (!combo) return { error: "Impossible de composer un groupe exact avec le budget disponible." };
-  selected.push(...combo);
-
-  return {
-    dungeon_id: dungeon.id,
-    dungeon_name: dungeon.name,
-    floor: floorIndex,
-    budget,
-    used: selected.reduce((sum, c) => sum + Number(c.menace || 0), 0),
-    creatures: selected,
-    interactables: buildEncounterInteractables(dungeon.id, budget),
-    local: { panelType: "", panelId: "", killedCreatures: {}, lastLoot: {}, lastEffect: {} },
-    boss: !!bossChecked,
-    miniBoss: !!miniBossChecked
-  };
+  const session = ensureSessionContext();
+  session.dungeonId = String(dungeonId || session.dungeonId || "");
+  session.floorIndex = Math.max(0, Number(floorIndex || 0));
+  session.mode = bossChecked ? "boss" : miniBossChecked ? "mini_boss" : "normal";
+  return generateSessionEncounter(session);
 }
 
 function rollCreatureLoot(creature) {
@@ -4703,12 +5067,6 @@ function rollInteractableEffect(obj, dungeonId) {
   return pool[Math.floor(Math.random() * pool.length)] || raw;
 }
 
-function buildEncounterInteractables(dungeonId, budget) {
-  const pool = (state.data.interactables || []).filter(i => i.dungeon_id === dungeonId);
-  const target = clamp(Math.floor(Number(budget || 0) / 3), 1, 6);
-  return shuffle(pool).slice(0, Math.min(pool.length, target));
-}
-
 function exactBudgetCombo(pool, remaining) {
   if (remaining === 0) return [];
   const memo = new Map();
@@ -4734,12 +5092,14 @@ function exactBudgetCombo(pool, remaining) {
 }
 
 function drawBrouhaha(level, dungeonId) {
-  const count = level >= 10 ? 2 : 1;
-  const pool = (state.data.brouhaha_effects || []).filter(e => Number(e.level) === Number(level) && (!e.dungeon_id || e.dungeon_id === dungeonId));
-  if (!pool.length) return [];
-
-  const choices = shuffle(pool);
-  return choices.slice(0, count).map(e => e.effect_text);
+  const dungeon = findById("dungeons", dungeonId);
+  const pool = (state.data.brouhaha_effects || []).filter(effect => {
+    if (Number(effect.level) !== Number(level)) return false;
+    const universal = !String(effect.dungeon_id || "").trim() && !String(effect.dungeon_name || "").trim();
+    return universal || (dungeon && entityBelongsToDungeon(effect, dungeon));
+  });
+  const count = Number(level) >= 10 ? 2 : 1;
+  return shuffle(pool).slice(0, count).map(effect => effect.effect_text).filter(Boolean);
 }
 
 function shuffle(arr) {
@@ -5301,96 +5661,104 @@ function bindEvents() {
         case "delete-item":
           await deleteEntityWithConfirm(btn.dataset.type, btn.dataset.id);
           return;
+        case "session-start": {
+          const session = ensureSessionContext();
+          if (!startSession(session.dungeonId)) {
+            toast("Aucun Donjon disponible pour démarrer.", "warn");
+            return;
+          }
+          await saveUiState(state.ui);
+          render();
+          toast("Partie démarrée", "success");
+          return;
+        }
+        case "session-end":
+          if (!endSessionWithConfirmation()) return;
+          state.ui.view = "home";
+          await saveUiState(state.ui);
+          render();
+          toast("Partie terminée", "info");
+          return;
+        case "session-set-mode": {
+          const session = ensureSessionContext();
+          const mode = btn.dataset.mode;
+          if (!["normal", "mini_boss", "boss"].includes(mode)) return;
+          session.mode = mode;
+          session.updatedAt = nowISO();
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
+        case "generate-session-encounter":
         case "generate-encounter": {
-          const result = generateEncounter(state.ui.generator.dungeonId, state.ui.generator.floorIndex, state.ui.generator.boss, state.ui.generator.miniBoss);
-          state.ui.generator.result = result;
-          if (!result.error) {
-            const line = `${result.dungeon_name} étage ${Number(result.floor) + 1} : ${result.creatures.map(c => c.name).join(", ")}`;
-            state.ui.import.preview = state.ui.import.preview ? { ...state.ui.import.preview, lastGenerator: line } : state.ui.import.preview;
-          }
-          await saveUiState(state.ui);
-          render();
-          if (result.error) toast(result.error, "error");
-          else toast("🎲 Salle générée", "success");
-          return;
-        }
-        case "encounter-open-creature":
-          if (state.ui.generator.result && !state.ui.generator.result.error) {
-            state.ui.generator.result.local.panelType = "creature";
-            state.ui.generator.result.local.panelId = btn.dataset.id;
-            await saveUiState(state.ui);
-            render();
-          }
-          return;
-        case "encounter-open-object":
-          if (state.ui.generator.result && !state.ui.generator.result.error) {
-            state.ui.generator.result.local.panelType = "object";
-            state.ui.generator.result.local.panelId = btn.dataset.id;
-            await saveUiState(state.ui);
-            render();
-          }
-          return;
-        case "encounter-kill-creature":
-          if (state.ui.generator.result && !state.ui.generator.result.error) {
-            const id = btn.dataset.id;
-            const creature = (state.ui.generator.result.creatures || []).find(c => c.id === id);
-            if (creature) {
-              state.ui.generator.result.local.killedCreatures[id] = true;
-              state.ui.generator.result.local.lastLoot[id] = rollCreatureLoot(creature);
-            }
-            await saveUiState(state.ui);
-            render();
-          }
-          return;
-        case "encounter-roll-effect":
-          if (state.ui.generator.result && !state.ui.generator.result.error) {
-            const id = btn.dataset.id;
-            const obj = (state.ui.generator.result.interactables || []).find(x => x.id === id);
-            if (obj) {
-              state.ui.generator.result.local.lastEffect[id] = rollInteractableEffect(obj, state.ui.generator.result.dungeon_id);
-            }
-            await saveUiState(state.ui);
-            render();
-          }
-          return;
-        case "brouhaha-plus":
-          state.ui.brouhaha.level = clamp((state.ui.brouhaha.level || 0) + 1, 0, 12);
-          await saveUiState(state.ui);
-          render();
-          return;
-        case "brouhaha-minus":
-          state.ui.brouhaha.level = clamp((state.ui.brouhaha.level || 0) - 1, 0, 12);
-          await saveUiState(state.ui);
-          render();
-          return;
-        case "brouhaha-draw": {
-          const level = clamp(state.ui.brouhaha.level || 0, 0, 12);
-          const drew = drawBrouhaha(level, state.ui.brouhaha.dungeonId);
-          if (!drew.length) {
-            toast("Aucun effet pour ce niveau.", "warn");
+          const session = ensureSessionContext();
+          const result = generateSessionEncounter(session);
+          if (result.error) {
+            toast(result.error, "error");
             return;
           }
-          const text = drew.join(" / ");
-          state.ui.brouhaha.drawn.unshift({ level, text, at: nowISO() });
-          state.ui.brouhaha.history.unshift({ level, text, at: nowISO() });
-          state.ui.brouhaha.history = state.ui.brouhaha.history.slice(0, 20);
+          session.encounter = result;
+          session.updatedAt = nowISO();
           await saveUiState(state.ui);
-          toast("🔥 Brouhaha tiré", "success");
+          render();
+          toast("Rencontre générée", "success");
+          return;
+        }
+        case "session-eliminate-creature": {
+          const id = String(btn.dataset.id || "");
+          if (!eliminateSessionOccurrence(id)) {
+            toast("Aucune occurrence restante pour cette Créature.", "warn");
+            return;
+          }
+          await saveUiState(state.ui);
           render();
           return;
         }
+        case "session-brouhaha-plus": {
+          const session = ensureSessionContext();
+          session.brouhaha.level = clamp(Number(session.brouhaha.level || 0) + 1, 0, 12);
+          session.updatedAt = nowISO();
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
+        case "session-brouhaha-minus": {
+          const session = ensureSessionContext();
+          session.brouhaha.level = clamp(Number(session.brouhaha.level || 0) - 1, 0, 12);
+          session.updatedAt = nowISO();
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
+        case "session-brouhaha-draw": {
+          const current = drawSessionBrouhaha();
+          if (!current) {
+            toast("Aucun effet de référence pour ce niveau et ce Donjon.", "warn");
+            return;
+          }
+          await saveUiState(state.ui);
+          render();
+          toast("Effet Brouhaha tiré", "success");
+          return;
+        }
+        case "session-brouhaha-reset": {
+          const session = ensureSessionContext();
+          session.brouhaha = { level: 0, current: null, history: [] };
+          session.updatedAt = nowISO();
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
+        case "session-quest-reroll":
         case "quests-draw": {
-          const dungeon = findById("dungeons", state.ui.questDungeonId) || state.data.dungeons?.[0] || null;
-          const quests = (state.data.quests || []).filter(q => q.dungeon_id === dungeon?.id);
-          if (!quests.length) {
-            toast("Aucune quête pour ce donjon.", "warn");
+          const quest = drawSessionQuest();
+          if (!quest) {
+            toast("Aucune Quête fiable pour le Donjon actif.", "warn");
             return;
           }
-          const pick = shuffle(quests)[0];
-          state.ui.questsResult = pick;
           await saveUiState(state.ui);
-          toast(`📜 ${pick.name}`, "success");
           render();
+          toast(`Quête : ${quest.name || "tirée"}`, "success");
           return;
         }
         case "media-refresh":
@@ -5428,9 +5796,22 @@ function bindEvents() {
     const action = el.dataset.action;
     try {
       switch (action) {
+        case "session-start-dungeon": {
+          const session = ensureSessionContext();
+          if (session.active) return;
+          session.dungeonId = String(el.value || "");
+          session.floorIndex = 0;
+          await saveUiState(state.ui);
+          return;
+        }
+        case "session-set-dungeon":
         case "generator-set-dungeon":
-          state.ui.generator.dungeonId = el.value;
-          state.ui.generator.result = null;
+        case "brouhaha-set-dungeon":
+        case "quests-set-dungeon":
+          if (!changeSessionDungeon(el.value)) {
+            render();
+            return;
+          }
           await saveUiState(state.ui);
           render();
           return;
@@ -5504,35 +5885,31 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           return;
+        case "session-set-floor":
         case "generator-set-floor":
-          state.ui.generator.floorIndex = clamp(Number(el.value), 0, 99);
-          state.ui.generator.result = null;
+          if (!changeSessionFloor(el.value)) {
+            render();
+            return;
+          }
           await saveUiState(state.ui);
           render();
           return;
-        case "generator-set-boss":
-          state.ui.generator.boss = el.checked;
-          if (el.checked) state.ui.generator.miniBoss = false;
+        case "generator-set-boss": {
+          const session = ensureSessionContext();
+          session.mode = el.checked ? "boss" : "normal";
+          session.updatedAt = nowISO();
           await saveUiState(state.ui);
           render();
           return;
-        case "generator-set-miniboss":
-          state.ui.generator.miniBoss = el.checked;
-          if (el.checked) state.ui.generator.boss = false;
+        }
+        case "generator-set-miniboss": {
+          const session = ensureSessionContext();
+          session.mode = el.checked ? "mini_boss" : "normal";
+          session.updatedAt = nowISO();
           await saveUiState(state.ui);
           render();
           return;
-        case "brouhaha-set-dungeon":
-          state.ui.brouhaha.dungeonId = el.value;
-          await saveUiState(state.ui);
-          render();
-          return;
-        case "quests-set-dungeon":
-          state.ui.questDungeonId = el.value;
-          state.ui.questsResult = null;
-          await saveUiState(state.ui);
-          render();
-          return;
+        }
         case "import-type":
           state.ui.import.type = el.value;
           await saveUiState(state.ui);
@@ -5698,6 +6075,7 @@ async function bootstrap() {
     state.ui = {
       ...defaultBlankUi(),
       ...savedUi,
+      session: sessionFromSavedUi(savedUi),
       generator: { ...defaultBlankUi().generator, ...(savedUi.generator || {}) },
       brouhaha: { ...defaultBlankUi().brouhaha, ...(savedUi.brouhaha || {}) },
       import: { ...defaultBlankUi().import, ...(savedUi.import || {}) },
