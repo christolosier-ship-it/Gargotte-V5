@@ -6,7 +6,7 @@
 
 Ce document pilote la construction de la future UI Gargottex V6.
 
-Il remplace l'ancienne logique où la documentation UI attendait une refactorisation technique préalable. Le chantier `REFACTORISATION-V6-LOCAL-FIRST-NEON.md` est **reporté** et n'appartient plus au processus UI actuel.
+Il remplace l'ancienne logique où la documentation UI attendait une refactorisation technique préalable. L'ancienne refactorisation distante/Neon est **retirée du chantier UI et reportée à un projet technique ultérieur**. Aucun document technique Neon n'est requis pour exécuter la présente refonte.
 
 Principe directeur :
 
