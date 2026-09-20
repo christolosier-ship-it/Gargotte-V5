@@ -2,7 +2,7 @@
 
 ## Statut
 
-**ACTIF - source de vérité fonctionnelle des autres familles du Codex**
+**LIVRÉ — UI-3 COMPLET (UI-3A + UI-3B + UI-3C + UI-3D) — 20 septembre 2026**
 
 Références :
 
@@ -736,3 +736,121 @@ Livré :
 - responsive séquentiel tablette/téléphone : validé.
 
 **UI-3C est clos. UI-3 global reste ACTIF pour UI-3D.**
+
+---
+
+# 20. Implémentation UI-3D sur V5.3
+
+Statut : **LIVRÉ — 20 septembre 2026**
+
+UI-3D ferme le lot transversal du Codex. **UI-3A + UI-3B + UI-3C + UI-3D sont désormais clos.**
+
+## Recherche globale locale/offline
+
+La recherche de la topbar est maintenant un moteur Codex réel sur les huit familles :
+
+- Créatures ;
+- Donjons ;
+- Héros ;
+- PNJ ;
+- Quêtes ;
+- Loot ;
+- Objets interactifs ;
+- Brouhaha référentiel.
+
+Les Médias ne sont pas injectés artificiellement dans la recherche Codex.
+
+Le moteur :
+
+- lit uniquement `state.data` déjà chargé depuis IndexedDB ;
+- ne dépend d'aucun réseau ;
+- normalise casse et accents ;
+- indexe les champs métier pertinents de chaque famille ;
+- affiche les résultats groupés et typés ;
+- ouvre directement la bonne fiche ;
+- regroupe les Héros par `hero_base_name` et ouvre le niveau qui a réellement produit le résultat ;
+- conserve le dernier niveau Héros consulté.
+
+La présentation reprend la densité et la hiérarchie de la recherche V3, mais aucune donnée fictive de la maquette n'est utilisée.
+
+## Voir tout depuis un Donjon
+
+Les quatre aperçus fiables du hub Donjon disposent d'un vrai `Voir tout` :
+
+- Créatures ;
+- Quêtes ;
+- Objets interactifs ;
+- Brouhaha.
+
+Le bouton :
+
+1. calcule les relations avec les mêmes règles fiables que le hub ;
+2. sauvegarde l'état complet de la collection cible ;
+3. ouvre la vraie collection ;
+4. applique le filtre Donjon réel ;
+5. conserve le mode d'affichage et le tri ;
+6. remet temporairement recherche/filtres secondaires/scroll à zéro pour montrer tout le contenu fiable du Donjon ;
+7. propose un retour explicite au Donjon source ;
+8. restaure à l'identique la recherche, les filtres, la sélection et le scroll précédents de la famille cible.
+
+Aucun filtre n'est construit depuis une simple ressemblance de nom.
+
+## Navigation croisée
+
+La navigation liée existante a été consolidée :
+
+- cible acceptée uniquement si `relationStore(type) + id` résout une entité réelle ;
+- pile de retour persistée dans `meta.ui_state` ;
+- position de scroll de la fiche source mémorisée dans la pile ;
+- retour vers la fiche source et sa position ;
+- niveau Héros restauré depuis l'ID du niveau réellement ouvert ;
+- contexte temporaire `Voir tout` conservé pendant les navigations liées internes.
+
+Une recherche globale ou un changement manuel de famille ferme proprement un éventuel contexte `Voir tout` et restaure d'abord la collection qu'il avait temporairement préfiltrée.
+
+## Rotation / responsive
+
+Tous les états transversaux restent dans `meta.ui_state` :
+
+- famille ;
+- fiche ouverte ;
+- recherche ;
+- filtres ;
+- mode ;
+- tri ;
+- scroll ;
+- niveau Héros ;
+- pile de retour ;
+- contexte Donjon temporaire.
+
+La rotation tablette ne reconstruit donc pas une collection vide et les media queries V6 continuent d'imposer le flux séquentiel `Collection -> Fiche -> Retour` lorsque la largeur ne permet pas le master-detail confortable.
+
+## Données
+
+- `src/storage/idb.js` inchangé ;
+- DB `gargottex-v5-offline`, version 2 inchangée ;
+- aucune migration ;
+- aucune réécriture d'entité métier ;
+- Service Worker inchangé ;
+- recherche et navigation entièrement locales/offline.
+
+## Gate UI-3D
+
+- recherche globale réelle : validée ;
+- résultats typés et ouverture de la bonne fiche : validés ;
+- relations fiables : validées ;
+- `Voir tout` réellement préfiltré : validé ;
+- retour Donjon + restauration du contexte cible : validés ;
+- niveau Héros conservé : validé ;
+- aucune relation fictive : validé.
+
+# 21. Clôture du lot UI-3
+
+Validation consolidée :
+
+- **UI-3A** : Donjons + Héros, progression scalable, regroupement des niveaux et compétences cumulées ;
+- **UI-3B** : PNJ narratifs, Quêtes Codex et Loot distincts de leurs outils/entités voisines ;
+- **UI-3C** : Objets interactifs + Brouhaha référentiel, séparation stricte du Brouhaha de session ;
+- **UI-3D** : recherche globale, navigation transversale, relations, préfiltrage et restauration de contexte.
+
+**UI-3 est clos.**

@@ -244,14 +244,15 @@ const state = {
     codexSelectedId: "",
     codexDetailOpen: false,
     codexReturnStack: [],
+    codexContext: null,
     codexFamilies: {
       dungeons: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
       heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} },
       npcs: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
-      quests: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
+      quests: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
       loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
-      interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
-      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "" }
+      interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
+      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     workshopType: "creatures",
@@ -283,14 +284,15 @@ function defaultBlankUi() {
     codexSelectedId: "",
     codexDetailOpen: false,
     codexReturnStack: [],
+    codexContext: null,
     codexFamilies: {
       dungeons: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
       heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} },
       npcs: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
-      quests: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
+      quests: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
       loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
-      interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
-      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "" }
+      interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
+      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     workshopType: "creatures",
@@ -333,10 +335,10 @@ function defaultCodexFamiliesUi() {
     dungeons: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
     heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} },
     npcs: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
-    quests: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
+    quests: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
     loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
-    interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "" },
-    brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "" }
+    interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
+    brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" }
   };
 }
 
@@ -367,6 +369,9 @@ function ensureCodexFamilyUi() {
     }
     state.ui.codexFamilies[type].search = String(state.ui.codexFamilies[type].search || "");
     state.ui.codexFamilies[type].scrollTop = Math.max(0, Number(state.ui.codexFamilies[type].scrollTop || 0));
+    if (Object.prototype.hasOwnProperty.call(defaults[type], "dungeonId")) {
+      state.ui.codexFamilies[type].dungeonId = String(state.ui.codexFamilies[type].dungeonId || "");
+    }
   }
   const levels = state.ui.codexFamilies.heroes.levelByBase;
   state.ui.codexFamilies.heroes.levelByBase = levels && typeof levels === "object" && !Array.isArray(levels) ? levels : {};
@@ -665,6 +670,10 @@ function getSimpleFamilyCollection(type) {
   const ui = state.ui.codexFamilies[type];
   const q = normalizeBestiaryText(ui.search);
   let items = [...(state.data[type] || [])];
+  if (ui.dungeonId && ["quests", "interactables", "brouhaha_effects"].includes(type)) {
+    const dungeon = findById("dungeons", ui.dungeonId);
+    items = dungeon ? items.filter(item => entityBelongsToDungeon(item, dungeon)) : [];
+  }
   if (q) {
     items = items.filter(item => {
       let parts = [];
@@ -794,6 +803,119 @@ function ensureCodexReturnStack() {
   return state.ui.codexReturnStack;
 }
 
+function cloneCodexUiValue(value) {
+  if (value === null || value === undefined) return value;
+  try { return JSON.parse(JSON.stringify(value)); } catch (_) { return value; }
+}
+
+function ensureCodexContext() {
+  const value = state.ui.codexContext;
+  if (!value || typeof value !== "object" || value.kind !== "dungeon-see-all") {
+    state.ui.codexContext = null;
+    return null;
+  }
+  if (!value.sourceId || !value.targetType || !value.previousTargetState) {
+    state.ui.codexContext = null;
+    return null;
+  }
+  return value;
+}
+
+function snapshotCodexTargetState(type) {
+  if (type === "creatures") {
+    ensureBestiaryUi();
+    return { kind: "bestiary", value: cloneCodexUiValue(state.ui.bestiary) };
+  }
+  ensureCodexFamilyUi();
+  return { kind: "family", value: cloneCodexUiValue(state.ui.codexFamilies[type] || {}) };
+}
+
+function restoreCodexContextTarget(context) {
+  if (!context?.previousTargetState) return;
+  const snapshot = context.previousTargetState;
+  if (context.targetType === "creatures" && snapshot.kind === "bestiary") {
+    const previous = snapshot.value || {};
+    state.ui.bestiary = {
+      ...defaultBestiaryUi(),
+      ...previous,
+      tags: Array.isArray(previous.tags) ? [...previous.tags] : [],
+      contextReturn: previous.contextReturn && typeof previous.contextReturn === "object"
+        ? cloneCodexUiValue(previous.contextReturn)
+        : null
+    };
+    state.ui.codexCreatureDungeonId = state.ui.bestiary.dungeonId || "";
+    return;
+  }
+  if (snapshot.kind === "family" && state.ui.codexFamilies?.[context.targetType]) {
+    const defaults = defaultCodexFamiliesUi()[context.targetType] || {};
+    state.ui.codexFamilies[context.targetType] = { ...defaults, ...(snapshot.value || {}) };
+  }
+}
+
+function clearCodexContext(restoreTarget = true) {
+  const context = ensureCodexContext();
+  if (!context) return null;
+  if (restoreTarget) restoreCodexContextTarget(context);
+  state.ui.codexContext = null;
+  return context;
+}
+
+function openDungeonCollectionContext(targetType, dungeon, sourceScrollTop = 0) {
+  const allowed = ["creatures", "quests", "interactables", "brouhaha_effects"];
+  if (!allowed.includes(targetType) || !dungeon) return false;
+  clearCodexContext(true);
+
+  const linked = dungeonLinkedEntities(dungeon)[targetType] || [];
+  const previousTargetState = snapshotCodexTargetState(targetType);
+  state.ui.codexContext = {
+    kind: "dungeon-see-all",
+    sourceType: "dungeons",
+    sourceId: String(dungeon.id || ""),
+    sourceLabel: String(dungeon.name || "Donjon"),
+    sourceScrollTop: Math.max(0, Number(sourceScrollTop || 0)),
+    targetType,
+    dungeonId: String(dungeon.id || ""),
+    previousTargetState
+  };
+
+  const firstId = String(linked[0]?.id || "");
+  if (targetType === "creatures") {
+    ensureBestiaryUi();
+    state.ui.bestiary.search = "";
+    state.ui.bestiary.dungeonId = String(dungeon.id || "");
+    state.ui.bestiary.category = "";
+    state.ui.bestiary.menace = "";
+    state.ui.bestiary.tags = [];
+    state.ui.bestiary.scrollTop = 0;
+    state.ui.bestiary.selectedId = firstId;
+    state.ui.bestiary.contextReturn = null;
+    state.ui.codexCreatureDungeonId = String(dungeon.id || "");
+  } else {
+    ensureCodexFamilyUi();
+    const ui = state.ui.codexFamilies[targetType];
+    ui.search = "";
+    ui.scrollTop = 0;
+    ui.selectedId = firstId;
+    ui.dungeonId = String(dungeon.id || "");
+  }
+
+  state.ui.codexType = targetType;
+  state.ui.codexSelectedId = firstId;
+  state.ui.codexDetailOpen = false;
+  state.ui.codexReturnStack = [];
+  state.ui.globalSearch = "";
+  return true;
+}
+
+function renderCodexContextReturn() {
+  const context = ensureCodexContext();
+  if (!context) return "";
+  return `<div class="codex-context-return" role="status">
+    <div><span>Collection préfiltrée</span><strong>${escapeHtml(getLabel(context.targetType))} · ${escapeHtml(context.sourceLabel || "Donjon")}</strong></div>
+    <button class="ghost" type="button" data-action="codex-context-back">${shellIcon("back")}<span>Retour à ${escapeHtml(context.sourceLabel || "Donjon")}</span></button>
+  </div>`;
+}
+
 function creatureTags(item) {
   return tagsToArray(item?.tags).filter(Boolean);
 }
@@ -915,6 +1037,7 @@ function ensureUiDefaults() {
   ensureBestiaryUi();
   ensureCodexFamilyUi();
   ensureCodexReturnStack();
+  ensureCodexContext();
   if (!state.ui.bestiary.mode) {
     state.ui.bestiary.mode = typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches ? "list" : "gallery";
   }
@@ -1094,29 +1217,7 @@ function hydrateState(rawData) {
 }
 
 function getSearchIndexText(type, item) {
-  const base = [
-    item.name,
-    item.title,
-    item.hero_base_name,
-    item.role,
-    item.race,
-    item.dungeon_name,
-    item.npc_name,
-    item.category,
-    item.tags?.join(", "),
-    item.lore,
-    item.description,
-    item.objective,
-    item.reward,
-    item.effect,
-    item.ai_behavior,
-    item.ai_target_priority,
-    item.special_attack_name,
-    item.brouhaha,
-    item.path,
-    item.label
-  ];
-  return base.filter(Boolean).join(" ").toLowerCase();
+  return globalSearchIndexText(type, item);
 }
 
 function getFilteredList(type, scope = "search") {
@@ -1818,7 +1919,7 @@ function renderShell(content){
       '</aside>',
       '<div class="shell"><header class="topbar">',
         '<button class="mobile-brand" data-action="go-home" data-view="home" aria-label="Accueil Gargottex"><img src="assets/images/logo-192.png" alt=""></button>',
-        '<div class="search-wrap"><span class="search-leading">'+shellIcon("search")+'</span><input class="search" data-action="search" aria-label="Recherche globale" placeholder="Rechercher dans Gargottex…" value="'+escapeHtml(state.ui.globalSearch)+'">'+(state.ui.globalSearch?renderSearchResults():"")+'</div>',
+        '<div class="search-wrap"><span class="search-leading">'+shellIcon("search")+'</span><input class="search" data-action="search" aria-label="Recherche globale" aria-expanded="'+(state.ui.globalSearch?"true":"false")+'" aria-controls="global-codex-search-results" autocomplete="off" placeholder="Rechercher dans le Codex…" value="'+escapeHtml(state.ui.globalSearch)+'">'+(state.ui.globalSearch?renderSearchResults():"")+'</div>',
         '<div class="topbar-right"><span class="offline-badge" title="Données locales disponibles">'+shellIcon("wifi")+'<span>Local</span></span><button class="ghost topbar-action" data-action="toggle-journal" aria-label="Ouvrir le journal">'+shellIcon("journal")+'<span>Journal</span></button></div>',
       '</header><main class="page v6-main" id="main-content">'+content+'</main>',
       '<aside class="toast-stack" aria-live="polite" aria-atomic="true">'+state.toasts.map(t=>'<div class="toast '+t.tone+'">'+escapeHtml(t.message)+'</div>').join("")+'</aside>',
@@ -1833,16 +1934,163 @@ function renderShell(content){
   ].join("");
 }
 
-function renderSearchResults() {
-  const q = state.ui.globalSearch.trim().toLowerCase();
-  if (!q) return "";
-  const chips = [];
-  for (const type of ENTITY_ORDER) {
-    for (const item of getFilteredList(type).slice(0, 5)) {
-      chips.push(`<button class="result-chip" data-action="jump-codex" data-type="${type}" data-id="${item.id}">${getLabel(type)} · ${escapeHtml(item.name || item.title || item.hero_base_name || item.label || "")}</button>`);
+const CODEX_GLOBAL_SEARCH_TYPES = [
+  "creatures",
+  "dungeons",
+  "heroes",
+  "npcs",
+  "quests",
+  "loot_items",
+  "interactables",
+  "brouhaha_effects"
+];
+
+function globalSearchIndexText(type, item) {
+  if (!item) return "";
+  let parts = [];
+  if (type === "creatures") {
+    const category = creatureCategoryMeta(item.category);
+    parts = [
+      item.name, item.dungeon_name, category.label, item.menace, item.pv, item.atk, item.def,
+      item.zone, item.actions, item.special_attack_name, item.ai_behavior, item.ai_target_priority,
+      item.lore, item.socle, ...tagsToArray(item.tags)
+    ];
+  } else if (type === "dungeons") {
+    parts = [item.name, item.description, item.boss_name, ...tagsToArray(item.tags)];
+  } else if (type === "heroes") {
+    parts = [
+      item.hero_base_name, item.name, item.level, `N${item.level ?? ""}`, item.role, item.title,
+      item.ability_text, item.effect_text, item.brouhaha, ...tagsToArray(item.tags)
+    ];
+  } else if (type === "npcs") {
+    parts = [item.name, item.race, item.role, item.tone, item.lore, ...tagsToArray(item.tags)];
+  } else if (type === "quests") {
+    parts = [
+      item.name, item.description, item.objective, item.reward, item.npc_name, item.dungeon_name,
+      questDifficultyMeta(item.difficulty)?.label, item.difficulty, ...tagsToArray(item.tags)
+    ];
+  } else if (type === "loot_items") {
+    parts = [
+      item.name, item.type, item.effect, item.gold_value, item.creature_name,
+      lootRarityMeta(item)?.label, ...tagsToArray(item.tags)
+    ];
+  } else if (type === "interactables") {
+    parts = [item.name, item.dungeon_name, item.type, item.hp, item.actions_allowed, item.effect, ...tagsToArray(item.tags)];
+  } else if (type === "brouhaha_effects") {
+    const scope = brouhahaScope(item);
+    parts = [brouhahaReferenceLabel(item), item.level, scope.label, item.effect_text];
+  } else {
+    parts = [
+      item.name, item.title, item.hero_base_name, item.label, item.file_name, item.path,
+      item.description, item.effect, item.effect_text, item.lore, ...tagsToArray(item.tags)
+    ];
+  }
+  return normalizeBestiaryText(parts.filter(value => value !== null && value !== undefined && value !== "").join(" "));
+}
+
+function globalSearchResultIcon(type, item) {
+  if (type === "creatures") return creatureCategoryMeta(item.category).sigil;
+  const icons = {
+    dungeons: "Icone_Gameplay_DONJON.webp",
+    heroes: "Icone_Entite_HEROS.webp",
+    npcs: "Icone_Entite_PNJ.webp",
+    quests: "Icone_Entite_QUETE.webp",
+    loot_items: "Icone_Gameplay_BUTIN.webp",
+    interactables: "Icone_Entite_OBJET_INTERACTIF.webp",
+    brouhaha_effects: "Icone_Entite_OBJET_BROUHAHA.webp"
+  };
+  return icons[type] || "Sigil_Basique.webp";
+}
+
+function globalSearchResultMeta(type, item) {
+  if (type === "creatures") {
+    const category = creatureCategoryMeta(item.category);
+    return [category.label, item.dungeon_name, item.menace !== null && item.menace !== undefined ? `Menace ${item.menace}` : ""].filter(Boolean).join(" · ");
+  }
+  if (type === "dungeons") return item.boss_name ? `Boss · ${item.boss_name}` : "Donjon";
+  if (type === "heroes") return [item.level !== null && item.level !== undefined ? `N${item.level}` : "", item.role, item.title].filter(Boolean).join(" · ");
+  if (type === "npcs") return [item.race, item.role].filter(Boolean).join(" · ");
+  if (type === "quests") return [questDifficultyMeta(item.difficulty)?.label, item.npc_name, item.dungeon_name].filter(Boolean).join(" · ");
+  if (type === "loot_items") return [lootRarityMeta(item)?.label, item.type, item.creature_name].filter(Boolean).join(" · ");
+  if (type === "interactables") return [item.type, item.dungeon_name].filter(Boolean).join(" · ");
+  if (type === "brouhaha_effects") {
+    const scope = brouhahaScope(item);
+    return [item.level !== null && item.level !== undefined ? `Niveau ${item.level}` : "Niveau non renseigné", scope.label].join(" · ");
+  }
+  return "";
+}
+
+function buildGlobalSearchResults(query) {
+  const q = normalizeBestiaryText(query);
+  if (!q) return [];
+  const results = [];
+
+  for (const type of CODEX_GLOBAL_SEARCH_TYPES) {
+    if (type === "heroes") {
+      for (const group of buildHeroGroups()) {
+        const matching = group.levels.filter(level =>
+          globalSearchIndexText("heroes", level).includes(q) ||
+          normalizeBestiaryText(group.baseName).includes(q)
+        );
+        if (!matching.length) continue;
+        const remembered = Number(state.ui.codexFamilies?.heroes?.levelByBase?.[group.key]);
+        const target = matching.find(level => Number(level.level) === remembered) || matching[0];
+        results.push({
+          type,
+          id: String(target.id || ""),
+          title: group.baseName,
+          meta: globalSearchResultMeta(type, target),
+          icon: globalSearchResultIcon(type, target)
+        });
+      }
+      continue;
+    }
+
+    for (const item of state.data[type] || []) {
+      if (!globalSearchIndexText(type, item).includes(q)) continue;
+      results.push({
+        type,
+        id: String(item.id || ""),
+        title: codexEntityTitle(type, item),
+        meta: globalSearchResultMeta(type, item),
+        icon: globalSearchResultIcon(type, item)
+      });
     }
   }
-  return `<div class="search-results">${chips.length ? chips.join("") : `<div class="muted">Aucun résultat.</div>`}</div>`;
+
+  return results.sort((a, b) => {
+    const typeOrder = CODEX_GLOBAL_SEARCH_TYPES.indexOf(a.type) - CODEX_GLOBAL_SEARCH_TYPES.indexOf(b.type);
+    if (typeOrder) return typeOrder;
+    return String(a.title || "").localeCompare(String(b.title || ""), "fr", { sensitivity: "base" });
+  });
+}
+
+function renderSearchResults() {
+  const results = buildGlobalSearchResults(state.ui.globalSearch);
+  if (!state.ui.globalSearch.trim()) return "";
+  if (!results.length) return `<div class="search-results global-codex-results" id="global-codex-search-results"><div class="global-search-empty">Aucun résultat dans le Codex local.</div></div>`;
+
+  const sections = CODEX_GLOBAL_SEARCH_TYPES.map(type => {
+    const rows = results.filter(result => result.type === type);
+    if (!rows.length) return "";
+    return `<section class="global-search-group">
+      <header><strong>${escapeHtml(getLabel(type))}</strong><span>${rows.length}</span></header>
+      <div>
+        ${rows.map(result => `
+          <button class="global-search-result" type="button" data-action="jump-codex" data-type="${escapeHtml(result.type)}" data-id="${escapeHtml(result.id)}">
+            <img src="${V6_ICON_PATH}${escapeHtml(result.icon)}" alt="" aria-hidden="true">
+            <span><b>${escapeHtml(result.title || getLabel(type))}</b><small>${escapeHtml(result.meta || getLabel(type))}</small></span>
+            <em>${escapeHtml(getLabel(type))}</em>
+          </button>
+        `).join("")}
+      </div>
+    </section>`;
+  }).join("");
+
+  return `<div class="search-results global-codex-results" id="global-codex-search-results" role="region" aria-label="Résultats de recherche Codex">
+    <div class="global-search-summary"><strong>${results.length}</strong><span>résultat${results.length > 1 ? "s" : ""} local${results.length > 1 ? "aux" : ""}</span></div>
+    ${sections}
+  </div>`;
 }
 
 function renderHome() {
@@ -2243,8 +2491,10 @@ function codexEntityTitle(type, item) {
 function renderCodexReturnBar() {
   const stack = ensureCodexReturnStack();
   const previous = stack[stack.length - 1];
-  if (!previous) return "";
-  return `<div class="codex-return-bar"><button class="ghost" type="button" data-action="codex-related-back">${shellIcon("back")}<span>Retour à ${escapeHtml(previous.label || getLabel(previous.type))}</span></button></div>`;
+  if (previous) {
+    return `<div class="codex-return-bar"><button class="ghost" type="button" data-action="codex-related-back">${shellIcon("back")}<span>Retour à ${escapeHtml(previous.label || getLabel(previous.type))}</span></button></div>`;
+  }
+  return renderCodexContextReturn();
 }
 
 function renderSafeRelationMedia(image, alt, fallbackText = "Visuel indisponible") {
@@ -2412,6 +2662,7 @@ function renderBestiaryCollection() {
 
   return renderShell(`
     <section class="bestiary-v6">
+      ${renderCodexReturnBar()}
       <div class="panel bestiary-collection-panel">
         <div class="bestiary-heading">
           <div>
@@ -2497,6 +2748,7 @@ function renderFamilyToolbar(type, count) {
       <div class="segmented" aria-label="Mode d’affichage">
         ${modes.map(mode => `<button class="${ui.mode === mode.value ? "active" : ""}" type="button" data-action="family-mode" data-type="${type}" data-mode="${mode.value}" aria-pressed="${ui.mode === mode.value}">${shellIcon(mode.icon)}<span>${mode.label}</span></button>`).join("")}
       </div>
+      ${ui.dungeonId ? `<span class="codex-family-filter">${shellIcon("filter")}<span>Donjon · ${escapeHtml(findById("dungeons", ui.dungeonId)?.name || "indisponible")}</span></span>` : ""}
       <span class="codex-family-count">${count} entrée${count > 1 ? "s" : ""}</span>
     </div>`;
 }
@@ -2542,11 +2794,14 @@ function dungeonPreviewTitle(type, item) {
   return String(item.name || item.title || item.label || "Entrée");
 }
 
-function renderDungeonPreview(type, items, label, icon) {
+function renderDungeonPreview(type, items, label, icon, dungeon) {
   const preview = items.slice(0, 3);
   return `
     <section class="dungeon-linked-preview">
-      <header><div><img src="${V6_ICON_PATH}${icon}" alt="" aria-hidden="true"><strong>${label}</strong></div><span>${items.length}</span></header>
+      <header>
+        <div><img src="${V6_ICON_PATH}${icon}" alt="" aria-hidden="true"><strong>${label}</strong></div>
+        <div class="dungeon-linked-meta"><span>${items.length}</span>${items.length && dungeon ? `<button class="ghost" type="button" data-action="dungeon-see-all" data-type="${type}" data-dungeon-id="${escapeHtml(String(dungeon.id || ""))}">Voir tout</button>` : ""}</div>
+      </header>
       <div class="dungeon-linked-items">
         ${preview.length ? preview.map(item => `
           <button type="button" data-action="open-related" data-type="${type}" data-id="${escapeHtml(String(item.id || ""))}">
@@ -2610,10 +2865,10 @@ function renderDungeonDetailV6(item) {
         <section class="dungeon-linked-v6">
           <div class="dungeon-section-head"><div><span class="eyebrow">Aperçus liés</span><h2>Dans ce Donjon</h2></div></div>
           <div class="dungeon-linked-grid">
-            ${renderDungeonPreview("creatures", linked.creatures, "Créatures", "Sigil_Basique.webp")}
-            ${renderDungeonPreview("quests", linked.quests, "Quêtes", "Icone_Entite_QUETE.webp")}
-            ${renderDungeonPreview("interactables", linked.interactables, "Objets interactifs", "Icone_Entite_OBJET_INTERACTIF.webp")}
-            ${renderDungeonPreview("brouhaha_effects", linked.brouhaha_effects, "Brouhaha", "Icone_Entite_OBJET_BROUHAHA.webp")}
+            ${renderDungeonPreview("creatures", linked.creatures, "Créatures", "Sigil_Basique.webp", item)}
+            ${renderDungeonPreview("quests", linked.quests, "Quêtes", "Icone_Entite_QUETE.webp", item)}
+            ${renderDungeonPreview("interactables", linked.interactables, "Objets interactifs", "Icone_Entite_OBJET_INTERACTIF.webp", item)}
+            ${renderDungeonPreview("brouhaha_effects", linked.brouhaha_effects, "Brouhaha", "Icone_Entite_OBJET_BROUHAHA.webp", item)}
           </div>
         </section>
 
@@ -2649,6 +2904,7 @@ function renderDungeonCodex() {
 
   return renderShell(`
     <section class="codex-family-v6 dungeon-codex-v6">
+      ${renderCodexReturnBar()}
       <div class="panel codex-family-collection-panel">
         <div class="codex-family-heading"><div><div class="eyebrow">Codex</div><h2>Donjons</h2></div></div>
         ${renderCodexTabs("dungeons")}
@@ -2777,6 +3033,7 @@ function renderHeroCodex() {
 
   return renderShell(`
     <section class="codex-family-v6 hero-codex-v6">
+      ${renderCodexReturnBar()}
       <div class="panel codex-family-collection-panel">
         <div class="codex-family-heading"><div><div class="eyebrow">Codex</div><h2>Héros</h2></div></div>
         ${renderCodexTabs("heroes")}
@@ -3156,6 +3413,7 @@ function renderSimpleFamilyCodex(type) {
 
   return renderShell(`
     <section class="codex-family-v6 ${type}-codex-v6">
+      ${renderCodexReturnBar()}
       <div class="panel codex-family-collection-panel">
         <div class="codex-family-heading"><div><div class="eyebrow">Codex</div><h2>${meta.label}</h2></div></div>
         ${renderCodexTabs(type)}
@@ -4696,6 +4954,7 @@ function bindEvents() {
         case "go-home":
         case "set-view": {
           const nextView = btn.dataset.view || "home";
+          clearCodexContext(true);
           state.ui.view = nextView;
           state.ui.codexReturnStack = [];
           if (nextView === "codex") state.ui.codexDetailOpen = false;
@@ -4717,6 +4976,7 @@ function bindEvents() {
           }
           return;
         case "set-codex-type":
+          clearCodexContext(true);
           state.ui.codexReturnStack = [];
           state.ui.codexType = btn.dataset.type;
           ensureBestiaryUi();
@@ -4844,6 +5104,39 @@ function bindEvents() {
           }
           await saveUiState(state.ui);
           render();
+          requestAnimationFrame(() => window.scrollTo({ top: Math.max(0, Number(previous.scrollTop || 0)), left: 0, behavior: "auto" }));
+          return;
+        }
+        case "dungeon-see-all": {
+          const dungeonId = String(btn.dataset.dungeonId || "");
+          const targetType = relationStore(btn.dataset.type);
+          const dungeon = findById("dungeons", dungeonId);
+          if (!dungeon || !["creatures", "quests", "interactables", "brouhaha_effects"].includes(targetType)) {
+            toast("Collection liée indisponible.", "warn");
+            return;
+          }
+          openDungeonCollectionContext(targetType, dungeon, window.scrollY || 0);
+          await saveUiState(state.ui);
+          render();
+          requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+          return;
+        }
+        case "codex-context-back": {
+          const context = ensureCodexContext();
+          if (!context) return;
+          const sourceScrollTop = Math.max(0, Number(context.sourceScrollTop || 0));
+          restoreCodexContextTarget(context);
+          state.ui.codexContext = null;
+          state.ui.codexType = "dungeons";
+          state.ui.codexSelectedId = context.sourceId;
+          state.ui.codexDetailOpen = true;
+          state.ui.codexReturnStack = [];
+          state.ui.globalSearch = "";
+          ensureCodexFamilyUi();
+          state.ui.codexFamilies.dungeons.selectedId = context.sourceId;
+          await saveUiState(state.ui);
+          render();
+          requestAnimationFrame(() => window.scrollTo({ top: sourceScrollTop, left: 0, behavior: "auto" }));
           return;
         }
         case "open-related": {
@@ -4862,7 +5155,8 @@ function bindEvents() {
             type: currentType,
             id: currentId,
             detailOpen: state.ui.codexDetailOpen,
-            label: codexEntityTitle(currentType, current)
+            label: codexEntityTitle(currentType, current),
+            scrollTop: Math.max(0, window.scrollY || 0)
           });
           state.ui.codexReturnStack = stack.slice(-12);
           state.ui.codexType = targetType;
@@ -4952,7 +5246,9 @@ function bindEvents() {
           render();
           return;
         case "jump-codex":
+          clearCodexContext(true);
           state.ui.codexReturnStack = [];
+          state.ui.globalSearch = "";
           state.ui.view = "codex";
           state.ui.codexType = btn.dataset.type;
           state.ui.codexSelectedId = btn.dataset.id;
@@ -4977,6 +5273,7 @@ function bindEvents() {
           state.ui.codexDetailOpen = true;
           await saveUiState(state.ui);
           render();
+          requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
           return;
         case "set-workshop-type":
           state.ui.workshopType = btn.dataset.type;
@@ -5295,6 +5592,14 @@ function bindEvents() {
       searchDebounceTimer = setTimeout(async () => {
         await saveUiState(state.ui);
         render();
+        requestAnimationFrame(() => {
+          const input = app.querySelector('[data-action="search"]');
+          if (input) {
+            input.focus({ preventScroll: true });
+            const end = input.value.length;
+            input.setSelectionRange?.(end, end);
+          }
+        });
       }, 160);
       return;
     }
@@ -5397,6 +5702,7 @@ async function bootstrap() {
       brouhaha: { ...defaultBlankUi().brouhaha, ...(savedUi.brouhaha || {}) },
       import: { ...defaultBlankUi().import, ...(savedUi.import || {}) },
       media: { ...defaultBlankUi().media, ...(savedUi.media || {}) },
+      codexContext: savedUi.codexContext && typeof savedUi.codexContext === "object" ? savedUi.codexContext : null,
       codexFamilies: {
         dungeons: { ...defaultBlankUi().codexFamilies.dungeons, ...(savedUi.codexFamilies?.dungeons || {}) },
         heroes: {
