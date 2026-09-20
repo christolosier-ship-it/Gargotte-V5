@@ -420,6 +420,7 @@ test("reflow proxy and critical interactions stay responsive", async ({ page }) 
   await assertNoHorizontalOverflow(page);
 
   await gotoView(page, "codex");
+  await expect(page.locator('[data-action="bestiary-search"]')).toBeVisible();
   const latency = await page.evaluate(async () => {
     const input = document.querySelector('[data-action="bestiary-search"]');
     const start = performance.now();
