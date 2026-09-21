@@ -272,8 +272,8 @@ const WORKSHOP_REQUIRED_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
-const APP_VERSION = "5.5.1";
-const PWA_CACHE_NAME = "gargottex-v6-polish-home-v1";
+const APP_VERSION = "5.5.2";
+const PWA_CACHE_NAME = "gargottex-v6-polish-home-v2";
 const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js"];
 
 const HOME_TAGLINE = "Ici, même les habitués ne savent plus pourquoi ils sont venus.";
@@ -847,7 +847,6 @@ function renderSessionStartCard(contextLabel = "Partie") {
     <div>
       <span class="eyebrow">Session locale</span>
       <h2>${escapeHtml(contextLabel)} · aucune partie active</h2>
-      <p>Choisis un Donjon pour créer un contexte de partie partagé par le Générateur, le Brouhaha et les Quêtes.</p>
     </div>
     <div class="session-start-actions">
       <label><span>Donjon</span><select data-action="session-start-dungeon" ${dungeons.length ? "" : "disabled"}>
@@ -2451,19 +2450,23 @@ function toTemplateRows(type, list) {
 const V6_ICON_PATH = "assets/ui-v6/icons/";
 
 function shellIcon(name, className = "") {
+  // Navigation shell: Lucide icons only.
   const icons = {
-    home: '<path d="M3 10.8 12 3l9 7.8"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9 21v-7h6v7"/>',
-    game: '<rect x="3" y="7" width="18" height="11" rx="4"/><path d="M8 10v5M5.5 12.5h5M16.5 11.5h.01M19 14h.01"/>',
-    tool: '<path d="M14.7 6.3a4 4 0 0 0-5-5L7 4l3 3-2.2 2.2"/><path d="m6.5 10.5-4.8 4.8a2.4 2.4 0 0 0 3.4 3.4l4.8-4.8"/><path d="m13.5 10.5 8 8-3 3-8-8"/>',
-    image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/>',
-    transfer: '<path d="M7 7h13"/><path d="m16 3 4 4-4 4"/><path d="M17 17H4"/><path d="m8 13-4 4 4 4"/>',
-    journal: '<path d="M5 3h12a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2V3Z"/><path d="M9 7h6M9 11h6M9 15h4"/>',
-    search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
-    grid: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
-    list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r=".8"/><circle cx="4.5" cy="12" r=".8"/><circle cx="4.5" cy="18" r=".8"/>',
-    more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+    home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    book: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3Z"/><path d="M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3v15a3 3 0 0 1 3-3Z"/>',
+    game: '<rect width="12" height="12" x="2" y="10" rx="2"/><path d="m14.92 14.92 4.5-4.5a2.12 2.12 0 0 0 0-3l-2.34-2.34a2.12 2.12 0 0 0-3 0L9.58 9.58"/><path d="m6 14 .01 0"/><path d="m10 18 .01 0"/><path d="m17 7 .01 0"/><path d="m14 10 .01 0"/>',
+    waveform: '<path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/>',
+    scroll: '<path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h8a3 3 0 0 0 3-3v-1H7v1a3 3 0 0 1-6 0V5a2 2 0 0 1 2-2h1"/>',
+    tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/>',
+    image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
+    transfer: '<path d="m8 3-4 4 4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
+    journal: '<path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9.5 8h5"/><path d="M9.5 12H16"/><path d="M9.5 16H14"/>',
+    search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+    grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+    list: '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
+    more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
     back: '<path d="m15 18-6-6 6-6"/>',
-    wifi: '<path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/>'
+    wifi: '<path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/>'
   };
   return '<svg class="ui-icon '+className+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'+(icons[name] || icons.more)+'</svg>';
 }
@@ -2487,10 +2490,10 @@ function renderShell(content){
         '<button class="brand v6-brand" data-action="go-home" data-view="home" title="Accueil Gargottex"><img src="assets/images/logo-512.png" alt=""><div class="brand-copy"><b>Gargottex</b><span>Codex & outils de partie</span></div></button>',
         '<div class="nav-title">Principal</div><nav class="v6-nav">',
           navButton("home","Accueil",shellIcon("home")),
-          navButton("codex","Codex",shellEmblem("Sigil_Basique.webp")),
+          navButton("codex","Codex",shellIcon("book")),
           navButton("generator","Générateur",shellIcon("game")),
-          navButton("brouhaha","Brouhaha",shellEmblem("Icone_Entite_OBJET_BROUHAHA.webp")),
-          navButton("quests","Quêtes",shellEmblem("Icone_Entite_QUETE.webp")),
+          navButton("brouhaha","Brouhaha",shellIcon("waveform")),
+          navButton("quests","Quêtes",shellIcon("scroll")),
         '</nav><div class="nav-title">Administration</div><nav class="v6-nav">',
           navButton("atelier","Atelier",shellIcon("tool")),
           navButton("media","Médias",shellIcon("image")),
@@ -2506,9 +2509,9 @@ function renderShell(content){
       renderImageViewer(), state.ui.journalOpen?renderJournalDrawer():"",
       '<nav class="mobile-bottom" aria-label="Navigation téléphone">',
         mobileNavButton("home","Accueil",shellIcon("home")),
-        mobileNavButton("codex","Codex",shellEmblem("Sigil_Basique.webp","mobile-emblem")),
-        '<details class="mobile-nav-group '+(gameActive?"active":"")+'"><summary>'+shellIcon("game")+'<span>Jeu</span></summary><div class="mobile-nav-popover" role="menu"><button data-action="set-view" data-view="generator" role="menuitem">'+shellIcon("game")+'<span>Générateur</span></button><button data-action="set-view" data-view="brouhaha" role="menuitem">'+shellEmblem("Icone_Entite_OBJET_BROUHAHA.webp","mobile-emblem")+'<span>Brouhaha</span></button></div></details>',
-        mobileNavButton("quests","Quêtes",shellEmblem("Icone_Entite_QUETE.webp","mobile-emblem")),
+        mobileNavButton("codex","Codex",shellIcon("book")),
+        '<details class="mobile-nav-group '+(gameActive?"active":"")+'"><summary>'+shellIcon("game")+'<span>Jeu</span></summary><div class="mobile-nav-popover" role="menu"><button data-action="set-view" data-view="generator" role="menuitem">'+shellIcon("game")+'<span>Générateur</span></button><button data-action="set-view" data-view="brouhaha" role="menuitem">'+shellIcon("waveform")+'<span>Brouhaha</span></button></div></details>',
+        mobileNavButton("quests","Quêtes",shellIcon("scroll")),
         '<details class="mobile-nav-group '+(moreActive?"active":"")+'"><summary>'+shellIcon("more")+'<span>Plus</span></summary><div class="mobile-nav-popover mobile-nav-popover-right" role="menu"><button data-action="set-view" data-view="atelier" role="menuitem">'+shellIcon("tool")+'<span>Atelier</span></button><button data-action="set-view" data-view="media" role="menuitem">'+shellIcon("image")+'<span>Médias</span></button><button data-action="set-view" data-view="import" role="menuitem">'+shellIcon("transfer")+'<span>Import / Export</span></button><button data-action="toggle-journal" role="menuitem">'+shellIcon("journal")+'<span>Journal</span></button></div></details>',
       '</nav></div></div>'
   ].join("");
@@ -2690,9 +2693,7 @@ function renderHome() {
 
   const editorialHead = `
     <header class="home-editorial-head">
-      <span class="eyebrow">Gargotte & Va-Nu-Pieds</span>
       <h1>Gargottex V6</h1>
-      <p>Une encyclopédie visuelle et un compagnon de partie local-first, avec l’identité d’une taverne qui a déjà vu passer trop d’aventuriers.</p>
     </header>
   `;
 
@@ -2715,7 +2716,6 @@ function renderHome() {
             <div class="home-hero-copy">
               <span class="eyebrow">Comptoir de départ</span>
               <h2>${escapeHtml(HOME_TAGLINE)}</h2>
-              <p>Ouvre le Codex, choisis ton Donjon ou lance une partie. Ici, les outils restent sérieux même quand le mobilier ne l’est plus.</p>
               <div class="home-hero-actions">
                 <button class="primary" type="button" data-action="set-view" data-view="codex">Ouvrir le Codex</button>
                 <button class="ghost" type="button" data-action="set-view" data-view="generator">Préparer la partie</button>
