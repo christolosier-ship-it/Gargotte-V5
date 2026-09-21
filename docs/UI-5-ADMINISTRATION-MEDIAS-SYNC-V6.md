@@ -677,3 +677,14 @@ Deux boutons de test sont disponibles sur la fiche Média :
 - `Silueta · Qualité · 44,2 Mo`
 
 Les résultats sont conservés simultanément en mémoire pour comparaison visuelle. Les inférences sont séquentielles afin de limiter la mémoire sur iPadOS. Aucune persistance IndexedDB n'est effectuée par ces boutons.
+
+
+### POC ISNet General Use
+
+La fiche Média propose désormais un troisième bouton de comparaison :
+
+- `ISNet General Use · Référence · 178,6 Mo`
+
+Il utilise le même modèle `isnet-general-use` que le workflow rembg historique validé, via ONNX Runtime Web. Le premier chargement est volumineux. L'inférence reste séquentielle et la session ONNX est libérée après chaque traitement afin de limiter la pression mémoire sur iPadOS.
+
+Le résultat reste temporaire : aucune persistance IndexedDB automatique.
