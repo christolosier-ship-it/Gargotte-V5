@@ -5882,20 +5882,37 @@ async function sha256Blob(blob) {
   return [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, "0")).join("");
 }
 
-function resetMediaRembgPoc() {
-  const current = state.mediaRembgPoc;
-  if (current?.url) URL.revokeObjectURL(current.url);
-  state.mediaRembgPoc = { assetId: "", busy: false, progress: 0, message: "", error: "", blob: null, url: "", audit: null, durationMs: 0, originalSha256: "" };
+function emptyMediaRembgPocState(assetId = "") {
+  return { assetId: String(assetId || ""), busyModel: "", progress: 0, message: "", error: "", errorModel: "", results: {} };
 }
 
-function updateMediaRembgPocProgress(assetId, progress = 0, message = "") {
+function resetMediaRembgPoc() {
   const current = state.mediaRembgPoc;
-  if (!current || String(current.assetId) !== String(assetId)) return;
+  for (const result of Object.values(current?.results || {})) {
+    if (result?.url) URL.revokeObjectURL(result.url);
+  }
+  state.mediaRembgPoc = emptyMediaRembgPocState();
+}
+
+function clearMediaRembgPocResult(modelKey) {
+  const current = state.mediaRembgPoc;
+  const result = current?.results?.[modelKey];
+  if (result?.url) URL.revokeObjectURL(result.url);
+  if (current?.results) delete current.results[modelKey];
+  if (current?.errorModel === modelKey) {
+    current.error = "";
+    current.errorModel = "";
+  }
+}
+
+function updateMediaRembgPocProgress(assetId, modelKey, progress = 0, message = "") {
+  const current = state.mediaRembgPoc;
+  if (!current || String(current.assetId) !== String(assetId) || current.busyModel !== modelKey) return;
   current.progress = Math.max(0, Math.min(100, Number(progress) || 0));
   current.message = String(message || "");
-  const box = app?.querySelector('.media-rembg-poc-status');
-  const bar = box?.querySelector('progress');
-  const label = box?.querySelector('[data-rembg-poc-message]');
+  const box = app?.querySelector(`.media-rembg-poc-status[data-model="${modelKey}"]`);
+  const bar = box?.querySelector("progress");
+  const label = box?.querySelector("[data-rembg-poc-message]");
   if (bar) bar.value = current.progress;
   if (label) label.textContent = current.message || "Préparation du détourage…";
 }
@@ -5921,10 +5938,12 @@ function loadExternalScriptOnce(src, readyCheck) {
   });
 }
 
-async function ensureMediaRembgPocEngine() {
-  if (globalThis.__GARGOTTEX_REMBG_POC__?.remove) return globalThis.__GARGOTTEX_REMBG_POC__;
-  if (rembgPocEnginePromise) return rembgPocEnginePromise;
-  rembgPocEnginePromise = (async () => {
+async function ensureMediaRembgPocEngine(modelKey = "u2netp") {
+  const config = REMBG_POC_MODELS[modelKey];
+  if (!config) throw new Error(`Modèle rembg inconnu : ${modelKey}`);
+  if (globalThis.__GARGOTTEX_REMBG_POC__?.remove) return { ...globalThis.__GARGOTTEX_REMBG_POC__, model: modelKey };
+  if (rembgPocEnginePromises.has(modelKey)) return rembgPocEnginePromises.get(modelKey);
+  const promise = (async () => {
     await loadExternalScriptOnce(REMBG_POC_RUNTIME_URL, () => Boolean(globalThis.ort?.InferenceSession));
     if (globalThis.ort?.env?.wasm) {
       globalThis.ort.env.wasm.wasmPaths = REMBG_POC_RUNTIME_BASE;
@@ -5932,20 +5951,20 @@ async function ensureMediaRembgPocEngine() {
     }
     await loadExternalScriptOnce(REMBG_POC_LIBRARY_URL, () => Boolean(globalThis.RembgWeb?.remove && globalThis.RembgWeb?.newSession));
     const api = globalThis.RembgWeb;
-    api.rembgConfig?.setCustomModelPath?.(REMBG_POC_MODEL, REMBG_POC_MODEL_URL);
+    api.rembgConfig?.setCustomModelPath?.(modelKey, config.url);
     api.rembgConfig?.enableWebNN?.(false);
     api.rembgConfig?.enableWebGPU?.(false);
-    const session = await api.newSession(REMBG_POC_MODEL);
+    const session = await api.newSession(modelKey);
     return {
-      model: REMBG_POC_MODEL,
+      model: modelKey,
       async remove(blob, onProgress) {
         return api.remove(blob, {
           session,
           postProcessMask: true,
           onProgress(info) {
             const labels = {
-              downloading: "Préparation du moteur et du modèle…",
-              processing: "Détourage IA en cours…",
+              downloading: `Préparation de ${config.shortLabel}…`,
+              processing: `Détourage ${config.shortLabel} en cours…`,
               postprocessing: "Création du PNG transparent…",
               complete: "Détourage terminé."
             };
@@ -5955,48 +5974,64 @@ async function ensureMediaRembgPocEngine() {
       }
     };
   })().catch(err => {
-    rembgPocEnginePromise = null;
+    rembgPocEnginePromises.delete(modelKey);
     throw err;
   });
-  return rembgPocEnginePromise;
+  rembgPocEnginePromises.set(modelKey, promise);
+  return promise;
 }
 
-async function runMediaRembgPoc(assetId) {
+async function runMediaRembgPoc(assetId, modelKey = "u2netp") {
+  const config = REMBG_POC_MODELS[modelKey];
+  if (!config) throw new Error(`Modèle rembg inconnu : ${modelKey}`);
   const existing = await getById("media_assets", assetId);
   if (!existing) throw new Error("Média introuvable.");
   if (!existing.blob) throw new Error("Original Blob local absent : impossible de lancer le détourage.");
-  resetMediaRembgPoc();
+
+  if (String(state.mediaRembgPoc?.assetId || "") !== String(assetId)) resetMediaRembgPoc();
+  if (!state.mediaRembgPoc?.assetId) state.mediaRembgPoc = emptyMediaRembgPocState(assetId);
+  if (state.mediaRembgPoc.busyModel) throw new Error("Un détourage est déjà en cours. Attends sa fin avant de lancer l'autre modèle.");
+
+  clearMediaRembgPocResult(modelKey);
   const beforeHash = await sha256Blob(existing.blob);
-  state.mediaRembgPoc = {
-    assetId: String(assetId), busy: true, progress: 1,
-    message: "Préparation du détourage local…", error: "", blob: null, url: "",
-    audit: null, durationMs: 0, originalSha256: beforeHash
-  };
+  state.mediaRembgPoc.assetId = String(assetId);
+  state.mediaRembgPoc.busyModel = modelKey;
+  state.mediaRembgPoc.progress = 1;
+  state.mediaRembgPoc.message = `Préparation de ${config.label}…`;
+  state.mediaRembgPoc.error = "";
+  state.mediaRembgPoc.errorModel = "";
   render();
+
   const started = performance.now();
   try {
-    const engine = await ensureMediaRembgPocEngine();
-    const output = await engine.remove(existing.blob, (progress, message) => updateMediaRembgPocProgress(assetId, progress, message));
+    const engine = await ensureMediaRembgPocEngine(modelKey);
+    const output = await engine.remove(existing.blob, (progress, message) => updateMediaRembgPocProgress(assetId, modelKey, progress, message));
     const persisted = await getById("media_assets", assetId);
     const afterHash = await sha256Blob(persisted?.blob);
     if (!afterHash || afterHash !== beforeHash) throw new Error("STOP sécurité : l'original a changé pendant le POC de détourage.");
     const audit = await auditTransparentPng(output);
     const url = URL.createObjectURL(output);
-    state.mediaRembgPoc = {
-      assetId: String(assetId), busy: false, progress: 100,
-      message: "Aperçu prêt. Rien n’a été enregistré.", error: "",
-      blob: output, url, audit,
-      durationMs: Math.round(performance.now() - started),
+    const durationMs = Math.round(performance.now() - started);
+    state.mediaRembgPoc.results[modelKey] = {
+      model: modelKey,
+      label: config.label,
+      blob: output,
+      url,
+      audit,
+      durationMs,
       originalSha256: beforeHash
     };
+    state.mediaRembgPoc.busyModel = "";
+    state.mediaRembgPoc.progress = 100;
+    state.mediaRembgPoc.message = "";
     render();
-    return { audit, durationMs: state.mediaRembgPoc.durationMs };
+    return { model: modelKey, label: config.label, audit, durationMs };
   } catch (err) {
-    state.mediaRembgPoc = {
-      assetId: String(assetId), busy: false, progress: 0, message: "",
-      error: err?.message || String(err), blob: null, url: "", audit: null,
-      durationMs: Math.round(performance.now() - started), originalSha256: beforeHash
-    };
+    state.mediaRembgPoc.busyModel = "";
+    state.mediaRembgPoc.progress = 0;
+    state.mediaRembgPoc.message = "";
+    state.mediaRembgPoc.error = err?.message || String(err);
+    state.mediaRembgPoc.errorModel = modelKey;
     render();
     throw err;
   }
