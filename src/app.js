@@ -5868,7 +5868,9 @@ async function fileToOptimizedBlob(file, maxSize = 1600, quality = 0.84) {
     const ctx = canvas.getContext("2d");
     ctx.drawImage(img, 0, 0, size.width, size.height);
     const blob = await canvasToBlob(canvas, "image/webp", quality) || await canvasToBlob(canvas, file.type || "image/png", quality);
-    return { blob: blob || file, width: size.width, height: size.height };
+    if (!blob) return { blob: file, width: size.width, height: size.height };
+    const materialized = new Blob([await blob.arrayBuffer()], { type: blob.type || file.type || "application/octet-stream" });
+    return { blob: materialized, width: size.width, height: size.height };
   } finally {
     try { URL.revokeObjectURL(fileUrl); } catch (_) {}
   }
