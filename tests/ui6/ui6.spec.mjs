@@ -296,6 +296,62 @@ test("detail polish reproduces V3 dungeon cinematic, linked media and compact cr
 
 
 
+test("creature detail uses the left dead space and hero portrait height stays stable across levels", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 1024 });
+  await ready(page);
+  await gotoView(page, "codex");
+
+  const balai = page.locator('[data-action="select-codex"][data-type="creatures"]').filter({ hasText: "Balai Hanté" }).first();
+  await expect(balai).toBeVisible();
+  await balai.click();
+  await expect(page.locator(".creature-sheet-v6")).toBeVisible();
+
+  const leftPanels = page.locator(".creature-left-panels-v6");
+  await expect(leftPanels).toBeVisible();
+  await expect(leftPanels.locator(":scope > .creature-functional-section")).toHaveCount(2);
+
+  const panelRects = await leftPanels.locator(":scope > .creature-functional-section").evaluateAll(nodes => nodes.map(el => {
+    const rect = el.getBoundingClientRect();
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  }));
+  expect(Math.abs(panelRects[0].y - panelRects[1].y)).toBeLessThanOrEqual(2);
+  expect(panelRects[1].x).toBeGreaterThan(panelRects[0].x + panelRects[0].width - 2);
+
+  const sheetAndRelations = await page.evaluate(() => {
+    const sheet = document.querySelector(".creature-sheet-v6")?.getBoundingClientRect();
+    const relations = document.querySelector(".creature-relations-v6")?.getBoundingClientRect();
+    const rail = document.querySelector(".creature-related-rail");
+    return {
+      sheetWidth: sheet?.width || 0,
+      relationsWidth: relations?.width || 0,
+      railOverflow: rail ? rail.scrollWidth > rail.clientWidth : false
+    };
+  });
+  expect(Math.abs(sheetAndRelations.sheetWidth - sheetAndRelations.relationsWidth)).toBeLessThanOrEqual(3);
+  expect(sheetAndRelations.railOverflow).toBeTruthy();
+  await expect(page.getByText("Médias associés", { exact: true })).toHaveCount(0);
+
+  await page.locator('[data-action="set-codex-type"][data-type="heroes"]').first().click();
+  const firstHero = page.locator('[data-action="select-family-codex"][data-type="heroes"]').first();
+  await expect(firstHero).toBeVisible();
+  await firstHero.click();
+  await expect(page.locator(".hero-sheet-v6")).toBeVisible();
+
+  const level1 = page.locator('[data-action="hero-level"][data-level="1"]');
+  if (await level1.isEnabled()) await level1.click();
+  const portraitHeight1 = await page.locator(".hero-portrait-v6").evaluate(el => el.getBoundingClientRect().height);
+
+  const level4 = page.locator('[data-action="hero-level"][data-level="4"]');
+  await expect(level4).toBeEnabled();
+  await level4.click();
+  const portraitHeight4 = await page.locator(".hero-portrait-v6").evaluate(el => el.getBoundingClientRect().height);
+
+  expect(Math.abs(portraitHeight4 - portraitHeight1)).toBeLessThanOrEqual(2);
+  expect(portraitHeight4).toBeLessThanOrEqual(595);
+  await assertNoHorizontalOverflow(page);
+});
+
+
 
 for (const [name, width, height] of viewports) {
   test(`responsive matrix ${name}`, async ({ page }) => {

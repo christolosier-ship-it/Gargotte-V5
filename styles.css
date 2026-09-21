@@ -1251,3 +1251,52 @@ body.cinematic-open{overflow:hidden}
   .bestiary-gallery-card{min-height:280px;grid-template-rows:155px minmax(0,1fr)}
   .bestiary-gallery-media{height:155px;min-height:155px}
 }
+
+
+/* ==========================================================================
+   Gargottex V6 · Polish fiche Créature / Héros · 21 septembre 2026
+   ========================================================================== */
+.creature-left-v6{
+  min-width:0;align-self:start;
+  border-right:1px solid color-mix(in srgb,var(--dungeon-accent) 28%,var(--color-border-subtle));
+  background:rgba(10,7,5,.36)
+}
+.creature-left-v6 .creature-art-v6{border-right:0}
+.creature-left-panels-v6{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px;
+  border-top:1px solid color-mix(in srgb,var(--dungeon-accent) 24%,var(--color-border-subtle));
+  background:linear-gradient(180deg,rgba(18,12,9,.88),rgba(12,8,6,.96))
+}
+.creature-left-panels-v6 .creature-functional-section{min-width:0;align-self:start;margin-top:0}
+.creature-left-panels-v6 .creature-loot-list{grid-template-columns:1fr}
+.creature-relations-v6{
+  grid-column:1/-1;width:100%;min-width:0;margin:0;padding:17px 22px 22px;
+  border-top:1px solid color-mix(in srgb,var(--dungeon-accent) 30%,var(--color-border-subtle))
+}
+.creature-related-rail{
+  display:flex;gap:8px;min-width:0;overflow-x:auto;overscroll-behavior-inline:contain;
+  scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:var(--color-accent-gold-dark) transparent;
+  padding:2px 2px 9px
+}
+.creature-related-rail .creature-related-card{flex:0 0 clamp(240px,28vw,350px);min-width:0;scroll-snap-align:start}
+.hero-identity-v6{align-self:start}
+.hero-portrait-v6{flex:0 0 auto;height:clamp(500px,60vh,590px);min-height:0}
+.hero-sheet-v6.hero-sheet-enter-v6{animation:hero-sheet-v6-enter var(--motion-editorial) ease-out both}
+.hero-sheet-v6.hero-sheet-enter-v6 .hero-portrait-v6>img{animation:hero-portrait-v6-enter 360ms cubic-bezier(.2,.7,.2,1) both}
+.hero-sheet-v6.hero-sheet-enter-v6 .hero-playbook-v6{animation:hero-playbook-v6-enter 300ms 45ms ease-out both}
+@keyframes hero-sheet-v6-enter{from{opacity:.65;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes hero-portrait-v6-enter{from{opacity:.55;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes hero-playbook-v6-enter{from{opacity:.55;transform:translateY(7px)}to{opacity:1;transform:none}}
+@media(max-width:1199px){.hero-portrait-v6{height:500px;min-height:0}}
+@media(max-width:899px){.hero-identity-v6{align-self:stretch}.hero-portrait-v6{height:min(52svh,520px);min-height:360px}}
+@media(max-width:767px){
+  .creature-left-v6{border-right:0}
+  .creature-relations-v6{padding:15px 13px 18px}
+  .creature-related-rail .creature-related-card{flex-basis:min(82vw,330px)}
+}
+@media(max-width:520px){.creature-left-panels-v6{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){
+  .hero-sheet-v6.hero-sheet-enter-v6,
+  .hero-sheet-v6.hero-sheet-enter-v6 .hero-portrait-v6>img,
+  .hero-sheet-v6.hero-sheet-enter-v6 .hero-playbook-v6{animation:none!important}
+}

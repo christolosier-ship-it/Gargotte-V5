@@ -503,3 +503,16 @@ Validation finale UI-2A + UI-2B + UI-2C :
 10. aucune suppression, migration ou réécriture massive IndexedDB.
 
 UI-2 est clos. Le prochain lot UI ne doit pas réouvrir UI-2 sauf correction de régression.
+
+
+---
+
+# Polish post-lot — 21 septembre 2026
+
+Ajustements validés sur la fiche Créature :
+
+- la scène d’illustration conserve une hauteur bornée et ne sert plus de colonne vide ;
+- **Comportement** et **Butin** sont placés sous l’illustration, en deux colonnes lorsque la largeur le permet, avec hauteur dictée uniquement par leur contenu ;
+- **Entités liées** occupe toute la largeur de la fiche et utilise des rails horizontaux défilants ;
+- la sous-zone **Médias associés** est retirée de la fiche Créature ; les médias restent gérés dans la bibliothèque dédiée et continuent d’alimenter les images des entités lorsqu’ils sont liés ;
+- aucune donnée, relation ou Blob n’est modifié par ce changement de composition.
