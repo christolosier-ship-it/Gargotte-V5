@@ -1035,3 +1035,182 @@ html{scroll-padding-top:calc(var(--topbar-height) + 12px);background:var(--color
 @media(min-width:900px) and (max-width:1199px){
   .bestiary-gallery-grid{grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
 }
+
+
+/* Gargottex V6 · Polish détails Donjon/Créature · cinématique V3 */
+body.cinematic-open{overflow:hidden}
+
+.gargotte-cinematic{
+  position:fixed;inset:0;z-index:9999;display:grid;place-items:center;
+  pointer-events:none;opacity:0;transition:opacity .18s ease
+}
+.gargotte-cinematic.show{opacity:1;pointer-events:auto}
+.cinematic-backdrop{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(180deg,rgba(8,5,4,.32),rgba(8,5,4,.84)),
+    var(--cinematic-bg,none) center/cover,
+    #0b0806;
+  filter:saturate(.92);transform:scale(1.06);
+  transition:transform 2.5s cubic-bezier(.2,.7,.2,1)
+}
+.gargotte-cinematic.show .cinematic-backdrop{transform:scale(1)}
+.cinematic-curtain{
+  position:absolute;top:0;bottom:0;width:51%;
+  background:
+    linear-gradient(90deg,#130c08,#30190f),
+    url("assets/ui-v6/textures/leather-dark.svg") center/cover;
+  box-shadow:0 0 60px #000;
+  transition:transform .75s cubic-bezier(.7,0,.2,1)
+}
+.cinematic-curtain.left{left:0}
+.cinematic-curtain.right{right:0;transform:scaleX(-1)}
+.gargotte-cinematic.show .cinematic-curtain.left{transform:translateX(-96%)}
+.gargotte-cinematic.show .cinematic-curtain.right{transform:translateX(96%) scaleX(-1)}
+.cinematic-card{
+  position:relative;z-index:3;width:min(680px,88vw);padding:34px 28px 28px;
+  text-align:center;border:1px solid var(--cinematic-accent);border-radius:24px;
+  background:rgba(18,13,9,.84);backdrop-filter:blur(14px);
+  box-shadow:0 28px 80px #000b,0 0 48px color-mix(in srgb,var(--cinematic-accent) 16%,transparent);
+  transform:translateY(20px) scale(.96);opacity:0;
+  transition:transform .42s .35s ease,opacity .42s .35s ease
+}
+.gargotte-cinematic.show .cinematic-card{transform:none;opacity:1}
+.cinematic-emblem{width:86px;height:86px;object-fit:contain;margin:0 auto;filter:drop-shadow(0 8px 16px #0009)}
+.cinematic-eyebrow{margin-top:8px;font-size:9px;letter-spacing:.24em;color:var(--cinematic-accent);font-weight:800}
+.cinematic-card h2{font:800 clamp(42px,7vw,72px)/.9 Alegreya,Georgia,serif;margin:8px 0 12px;color:#fff0df}
+.cinematic-card p{max-width:520px;margin:0 auto 18px;color:#d6c2a7;line-height:1.55}
+.cinematic-sparks{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:24px}
+.cinematic-sparks i{
+  position:absolute;left:calc(8% + var(--i)*10%);bottom:-12px;width:5px;height:5px;border-radius:50%;
+  background:var(--cinematic-accent);box-shadow:0 0 12px var(--cinematic-accent);
+  animation:cinematic-spark 1.8s calc(var(--i)*-.13s) infinite ease-out
+}
+.cinematic-skip{position:relative;z-index:4;min-width:130px}
+@keyframes cinematic-spark{
+  0%{transform:translateY(0) scale(.7);opacity:0}
+  18%{opacity:.9}
+  100%{transform:translateY(-220px) translateX(18px) scale(0);opacity:0}
+}
+
+/* Accent Donjon plus vivant, mais toujours local. */
+.dungeon-sheet-v6{
+  box-shadow:
+    0 18px 48px #0006,
+    0 0 34px color-mix(in srgb,var(--dungeon-accent) 12%,transparent),
+    inset 0 1px 0 color-mix(in srgb,var(--dungeon-accent) 28%,transparent)
+}
+.dungeon-cover-v6{
+  box-shadow:inset 0 -3px 0 color-mix(in srgb,var(--dungeon-accent) 46%,transparent)
+}
+.dungeon-cover-v6:before{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(circle at 72% 20%,color-mix(in srgb,var(--dungeon-accent) 28%,transparent),transparent 34%),
+    linear-gradient(115deg,color-mix(in srgb,var(--dungeon-accent) 12%,transparent),transparent 46%)
+}
+.dungeon-cover-v6:after{z-index:2}
+.dungeon-cover-v6>img{z-index:0}
+.dungeon-cover-copy-v6,.dungeon-cover-fullscreen{z-index:4}
+.dungeon-cover-copy-v6 h1{text-shadow:0 4px 18px #000,0 0 24px color-mix(in srgb,var(--dungeon-accent) 22%,transparent)}
+
+.dungeon-hub-v6{
+  background:
+    radial-gradient(circle at 92% 4%,color-mix(in srgb,var(--dungeon-accent) 7%,transparent),transparent 28%),
+    #100b08
+}
+.dungeon-description-v6,.dungeon-progression-v6,.dungeon-boss-v6,.dungeon-linked-v6{
+  position:relative;overflow:hidden;
+  border-color:color-mix(in srgb,var(--dungeon-accent) 30%,var(--color-border-subtle));
+  background:
+    linear-gradient(115deg,color-mix(in srgb,var(--dungeon-accent) 6%,rgba(24,17,13,.72)),rgba(24,17,13,.72) 46%)
+}
+.dungeon-description-v6:before,.dungeon-progression-v6:before,.dungeon-boss-v6:before,.dungeon-linked-v6:before{
+  content:"";position:absolute;left:0;top:14px;bottom:14px;width:2px;
+  background:color-mix(in srgb,var(--dungeon-accent) 72%,var(--color-accent-gold-dark));
+  opacity:.76
+}
+.dungeon-description-v6 .dungeon-section-head{margin-bottom:10px}
+.dungeon-description-v6 p{margin:0;color:#d3c0a8;font-size:12px;line-height:1.58}
+.dungeon-section-head h2{color:#f3dfc4}
+.dungeon-floor-stop{
+  border-color:color-mix(in srgb,var(--dungeon-accent) 44%,#684a31);
+  background:
+    radial-gradient(circle at 70% 16%,color-mix(in srgb,var(--dungeon-accent) 14%,transparent),transparent 30%),
+    linear-gradient(150deg,rgba(49,32,20,.96),rgba(22,15,10,.98));
+  box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 30%,transparent)
+}
+.dungeon-linked-preview{
+  border-color:color-mix(in srgb,var(--dungeon-accent) 30%,var(--color-border-subtle));
+  background:linear-gradient(145deg,color-mix(in srgb,var(--dungeon-accent) 5%,#100b08),#0d0907)
+}
+.dungeon-linked-items button{
+  display:grid;grid-template-columns:minmax(0,1fr);align-items:center;gap:8px;
+  min-height:42px;border-color:color-mix(in srgb,var(--dungeon-accent) 20%,var(--color-border-subtle))
+}
+.dungeon-linked-items button.has-media{grid-template-columns:52px minmax(0,1fr);padding:5px 7px}
+.dungeon-linked-thumb{
+  width:52px;height:46px;display:grid;place-items:center;overflow:hidden;border-radius:6px;
+  border:1px solid color-mix(in srgb,var(--dungeon-accent) 34%,var(--color-border-subtle));
+  background:#0a0705
+}
+.dungeon-linked-thumb>img{width:100%;height:100%;object-fit:contain}
+.dungeon-linked-thumb>.relation-media-fallback{height:100%;display:grid;place-items:center;padding:4px;font-size:7px;text-align:center}
+.dungeon-linked-items button b{min-width:0}
+
+/* Fiche Créature : accent Donjon + scène illustration moins haute. */
+.creature-sheet-v6{
+  align-items:start;
+  border-color:color-mix(in srgb,var(--dungeon-accent) 52%,var(--color-border));
+  background:
+    radial-gradient(circle at 14% 12%,color-mix(in srgb,var(--dungeon-accent) 9%,transparent),transparent 28%),
+    #100b08;
+  box-shadow:
+    0 18px 48px #0006,
+    0 0 34px color-mix(in srgb,var(--dungeon-accent) 10%,transparent),
+    inset 0 2px 0 color-mix(in srgb,var(--creature-cat) 34%,transparent)
+}
+.creature-art-v6{
+  align-self:start;height:clamp(560px,70vh,700px);min-height:0;
+  border-right-color:color-mix(in srgb,var(--dungeon-accent) 28%,var(--color-border-subtle));
+  background:
+    radial-gradient(circle at 68% 20%,color-mix(in srgb,var(--dungeon-accent) 22%,transparent),transparent 35%),
+    radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--creature-cat) 14%,transparent),transparent 38%),
+    linear-gradient(180deg,rgba(10,6,4,.18),rgba(10,6,4,.88)),
+    url("assets/ui-v6/textures/grain-dark.svg") repeat
+}
+.creature-art-frame{
+  border-color:color-mix(in srgb,var(--dungeon-accent) 54%,rgba(240,207,147,.42));
+  box-shadow:inset 0 0 28px color-mix(in srgb,var(--dungeon-accent) 8%,transparent)
+}
+.creature-plinth{background:radial-gradient(ellipse,color-mix(in srgb,var(--dungeon-accent) 24%,rgba(212,164,95,.25)),rgba(0,0,0,.72) 66%,transparent 72%)}
+.creature-detail-v6{
+  background:
+    radial-gradient(circle at 100% 0,color-mix(in srgb,var(--dungeon-accent) 8%,transparent),transparent 30%),
+    linear-gradient(rgba(15,10,8,.90),rgba(15,10,8,.96)),
+    url("assets/ui-v6/textures/grain-dark.svg") repeat
+}
+.creature-identity-v6{border-bottom-color:color-mix(in srgb,var(--dungeon-accent) 52%,var(--color-border-subtle))}
+.creature-stat-v6{
+  border-bottom-color:color-mix(in srgb,var(--dungeon-accent) 28%,var(--color-border-subtle));
+  box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 16%,transparent)
+}
+.creature-ability-v6{border-color:color-mix(in srgb,var(--dungeon-accent) 38%,rgba(212,164,95,.48))}
+.creature-functional-section{border-color:color-mix(in srgb,var(--dungeon-accent) 24%,var(--color-border-subtle))}
+.creature-functional-section h2{color:color-mix(in srgb,var(--dungeon-accent) 22%,#f3dfc4)}
+
+@media(max-width:1199px){
+  .creature-art-v6{height:clamp(430px,62vh,560px);min-height:0}
+}
+@media(max-width:767px){
+  .creature-sheet-v6{display:block}
+  .creature-art-v6{height:min(56svh,480px);min-height:340px}
+}
+@media(max-width:620px){
+  .gargotte-cinematic{padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom)}
+  .cinematic-card{max-height:calc(100svh - 32px);overflow:auto;padding:28px 18px 22px}
+}
+@media(prefers-reduced-motion:reduce){
+  .gargotte-cinematic,.cinematic-backdrop,.cinematic-curtain,.cinematic-card{transition:none!important}
+  .cinematic-sparks{display:none}
+}
