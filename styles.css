@@ -1262,13 +1262,27 @@ body.cinematic-open{overflow:hidden}
   background:rgba(10,7,5,.36)
 }
 .creature-left-v6 .creature-art-v6{border-right:0}
-.creature-left-panels-v6{
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px;
+/* Les blocs fonctionnels commencent sous la zone haute et prennent toute la largeur. */
+.creature-wide-sections-v6{
+  grid-column:1/-1;
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:10px;
+  padding:16px 18px 4px;
   border-top:1px solid color-mix(in srgb,var(--dungeon-accent) 24%,var(--color-border-subtle));
-  background:linear-gradient(180deg,rgba(18,12,9,.88),rgba(12,8,6,.96))
+  background:linear-gradient(180deg,rgba(18,12,9,.72),rgba(12,8,6,.88))
 }
-.creature-left-panels-v6 .creature-functional-section{min-width:0;align-self:start;margin-top:0}
-.creature-left-panels-v6 .creature-loot-list{grid-template-columns:1fr}
+.creature-wide-sections-v6>.creature-functional-section,
+.creature-wide-sections-v6>.creature-lore-v6,
+.creature-wide-sections-v6>.creature-tags-v6{
+  width:100%;
+  min-width:0;
+  margin-top:0
+}
+.creature-wide-sections-v6 .creature-loot-list{
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr))
+}
 .creature-relations-v6{
   grid-column:1/-1;width:100%;min-width:0;margin:0;padding:17px 22px 22px;
   border-top:1px solid color-mix(in srgb,var(--dungeon-accent) 30%,var(--color-border-subtle))
@@ -1294,7 +1308,10 @@ body.cinematic-open{overflow:hidden}
   .creature-relations-v6{padding:15px 13px 18px}
   .creature-related-rail .creature-related-card{flex-basis:min(82vw,330px)}
 }
-@media(max-width:520px){.creature-left-panels-v6{grid-template-columns:1fr}}
+@media(max-width:520px){
+  .creature-wide-sections-v6{padding:12px 12px 3px}
+  .creature-wide-sections-v6 .creature-loot-list{grid-template-columns:1fr}
+}
 @media(prefers-reduced-motion:reduce){
   .hero-sheet-v6.hero-sheet-enter-v6,
   .hero-sheet-v6.hero-sheet-enter-v6 .hero-portrait-v6>img,
