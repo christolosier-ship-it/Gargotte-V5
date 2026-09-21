@@ -296,7 +296,7 @@ test("detail polish reproduces V3 dungeon cinematic, linked media and compact cr
 
 
 
-test("creature detail uses the left dead space and hero portrait height stays stable across levels", async ({ page }) => {
+test("creature detail stacks behavior, loot and lore full width below the image while hero portrait stays stable", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 1024 });
   await ready(page);
   await gotoView(page, "codex");
@@ -306,29 +306,51 @@ test("creature detail uses the left dead space and hero portrait height stays st
   await balai.click();
   await expect(page.locator(".creature-sheet-v6")).toBeVisible();
 
-  const leftPanels = page.locator(".creature-left-panels-v6");
-  await expect(leftPanels).toBeVisible();
-  await expect(leftPanels.locator(":scope > .creature-functional-section")).toHaveCount(2);
+  await expect(page.locator(".creature-left-panels-v6")).toHaveCount(0);
+  const wide = page.locator(".creature-wide-sections-v6");
+  await expect(wide).toBeVisible();
 
-  const panelRects = await leftPanels.locator(":scope > .creature-functional-section").evaluateAll(nodes => nodes.map(el => {
-    const rect = el.getBoundingClientRect();
-    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
-  }));
-  expect(Math.abs(panelRects[0].y - panelRects[1].y)).toBeLessThanOrEqual(2);
-  expect(panelRects[1].x).toBeGreaterThan(panelRects[0].x + panelRects[0].width - 2);
+  const behavior = wide.locator(":scope > .creature-functional-section").filter({ hasText: "Comportement" }).first();
+  const loot = wide.locator(":scope > .creature-loot-v6").first();
+  const lore = wide.locator(":scope > .creature-lore-v6").first();
+  await expect(behavior).toBeVisible();
+  await expect(loot).toBeVisible();
+  await expect(lore).toBeVisible();
 
-  const sheetAndRelations = await page.evaluate(() => {
+  const layout = await page.evaluate(() => {
     const sheet = document.querySelector(".creature-sheet-v6")?.getBoundingClientRect();
+    const art = document.querySelector(".creature-art-v6")?.getBoundingClientRect();
+    const wide = document.querySelector(".creature-wide-sections-v6")?.getBoundingClientRect();
+    const behavior = [...document.querySelectorAll(".creature-wide-sections-v6 > .creature-functional-section")]
+      .find(el => el.textContent?.includes("Comportement"))?.getBoundingClientRect();
+    const loot = document.querySelector(".creature-wide-sections-v6 > .creature-loot-v6")?.getBoundingClientRect();
+    const lore = document.querySelector(".creature-wide-sections-v6 > .creature-lore-v6")?.getBoundingClientRect();
     const relations = document.querySelector(".creature-relations-v6")?.getBoundingClientRect();
     const rail = document.querySelector(".creature-related-rail");
     return {
       sheetWidth: sheet?.width || 0,
+      artBottom: art?.bottom || 0,
+      wideTop: wide?.top || 0,
+      wideWidth: wide?.width || 0,
+      behavior: behavior ? { top:behavior.top,bottom:behavior.bottom,width:behavior.width } : null,
+      loot: loot ? { top:loot.top,bottom:loot.bottom,width:loot.width } : null,
+      lore: lore ? { top:lore.top,bottom:lore.bottom,width:lore.width } : null,
       relationsWidth: relations?.width || 0,
       railOverflow: rail ? rail.scrollWidth > rail.clientWidth : false
     };
   });
-  expect(Math.abs(sheetAndRelations.sheetWidth - sheetAndRelations.relationsWidth)).toBeLessThanOrEqual(3);
-  expect(sheetAndRelations.railOverflow).toBeTruthy();
+
+  expect(layout.behavior).not.toBeNull();
+  expect(layout.loot).not.toBeNull();
+  expect(layout.lore).not.toBeNull();
+  expect(layout.wideTop).toBeGreaterThanOrEqual(layout.artBottom - 2);
+  expect(layout.behavior.bottom).toBeLessThanOrEqual(layout.loot.top + 1);
+  expect(layout.loot.bottom).toBeLessThanOrEqual(layout.lore.top + 1);
+  expect(Math.abs(layout.behavior.width - layout.loot.width)).toBeLessThanOrEqual(2);
+  expect(Math.abs(layout.loot.width - layout.lore.width)).toBeLessThanOrEqual(2);
+  expect(layout.wideWidth).toBeGreaterThan(layout.sheetWidth * 0.9);
+  expect(Math.abs(layout.sheetWidth - layout.relationsWidth)).toBeLessThanOrEqual(3);
+  expect(layout.railOverflow).toBeTruthy();
   await expect(page.getByText("Médias associés", { exact: true })).toHaveCount(0);
 
   await page.locator('[data-action="set-codex-type"][data-type="heroes"]').first().click();
@@ -350,7 +372,6 @@ test("creature detail uses the left dead space and hero portrait height stays st
   expect(portraitHeight4).toBeLessThanOrEqual(595);
   await assertNoHorizontalOverflow(page);
 });
-
 
 
 for (const [name, width, height] of viewports) {

@@ -4377,6 +4377,18 @@ function renderCreatureDetail(item) {
             </div>
           </section>
         ` : "";
+  const lorePanel = lore ? `
+    <section class="creature-lore-v6">
+      <h2><img src="${V6_ICON_PATH}Icone_Gameplay_LORE.webp" alt="" aria-hidden="true">Lore</h2>
+      <p>${escapeHtml(lore)}</p>
+    </section>
+  ` : "";
+  const tagsPanel = tags.length ? `
+    <section class="creature-tags-v6" aria-label="Tags">
+      ${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}
+    </section>
+  ` : "";
+
 
   return `
     <article class="creature-sheet-v6 ${category?.key || "uncategorized"}" style="--creature-cat:${creatureCategoryCssColor(category?.key)};--dungeon-accent:${accent}">
@@ -4397,7 +4409,6 @@ function renderCreatureDetail(item) {
           </div>
         `}
         </section>
-        ${behaviorPanel || lootPanel ? `<div class="creature-left-panels-v6">${behaviorPanel}${lootPanel}</div>` : ""}
       </div>
 
       <section class="creature-detail-v6">
@@ -4432,20 +4443,16 @@ function renderCreatureDetail(item) {
           </section>
         ` : ""}
 
-        ${lore ? `
-          <section class="creature-lore-v6">
-            <h2><img src="${V6_ICON_PATH}Icone_Gameplay_LORE.webp" alt="" aria-hidden="true">Lore</h2>
-            <p>${escapeHtml(lore)}</p>
-          </section>
-        ` : ""}
-
-        ${tags.length ? `
-          <section class="creature-tags-v6" aria-label="Tags">
-            ${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}
-          </section>
-        ` : ""}
-
       </section>
+
+      ${behaviorPanel || lootPanel || lorePanel || tagsPanel ? `
+        <div class="creature-wide-sections-v6">
+          ${behaviorPanel}
+          ${lootPanel}
+          ${lorePanel}
+          ${tagsPanel}
+        </div>
+      ` : ""}
 
       ${renderCreatureRelations(item, relations)}
     </article>

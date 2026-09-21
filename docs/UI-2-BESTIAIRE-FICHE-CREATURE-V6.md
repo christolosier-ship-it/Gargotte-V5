@@ -511,8 +511,10 @@ UI-2 est clos. Le prochain lot UI ne doit pas réouvrir UI-2 sauf correction de 
 
 Ajustements validés sur la fiche Créature :
 
-- la scène d’illustration conserve une hauteur bornée et ne sert plus de colonne vide ;
-- **Comportement** et **Butin** sont placés sous l’illustration, en deux colonnes lorsque la largeur le permet, avec hauteur dictée uniquement par leur contenu ;
-- **Entités liées** occupe toute la largeur de la fiche et utilise des rails horizontaux défilants ;
+- la scène d’illustration conserve une hauteur bornée ;
+- après la zone haute image + identité/statistiques/compétence, les blocs fonctionnels passent sur **toute la largeur de la fiche** ;
+- leur ordre est fixe : **Comportement → Butin → Lore**, chacun avec une hauteur dictée uniquement par son contenu ;
+- les tags suivent le Lore sans créer de panneau vide ;
+- **Entités liées** occupe ensuite toute la largeur de la fiche et utilise des rails horizontaux défilants ;
 - la sous-zone **Médias associés** est retirée de la fiche Créature ; les médias restent gérés dans la bibliothèque dédiée et continuent d’alimenter les images des entités lorsqu’ils sont liés ;
 - aucune donnée, relation ou Blob n’est modifié par ce changement de composition.
