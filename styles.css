@@ -962,11 +962,10 @@ html{scroll-padding-top:calc(var(--topbar-height) + 12px);background:var(--color
 
 /* Accent Donjon local : ambiance visible, sans remplacer les couleurs gameplay. */
 .dungeon-collection-card{
-  background:
-    linear-gradient(145deg,
-      color-mix(in srgb,var(--dungeon-accent) 16%,#120d09) 0%,
-      #120d09 48%,
-      color-mix(in srgb,var(--dungeon-accent) 9%,#120d09) 100%);
+  background-color:#120d09;
+  background-image:
+    linear-gradient(145deg,color-mix(in srgb,var(--dungeon-accent) 16%,transparent),transparent 46%),
+    linear-gradient(315deg,color-mix(in srgb,var(--dungeon-accent) 9%,transparent),transparent 40%);
   box-shadow:
     inset 0 1px 0 color-mix(in srgb,var(--dungeon-accent) 18%,transparent),
     inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 42%,transparent)
@@ -990,12 +989,12 @@ html{scroll-padding-top:calc(var(--topbar-height) + 12px);background:var(--color
 /* Créatures : catégorie = signal gameplay principal, Donjon = ambiance secondaire. */
 .bestiary-gallery-card,.bestiary-list-row{
   --dungeon-accent:#8A5E31;
+  min-width:0;
   border-bottom-color:color-mix(in srgb,var(--dungeon-accent) 52%,var(--color-border-subtle));
-  background:
-    linear-gradient(155deg,
-      color-mix(in srgb,var(--dungeon-accent) 9%,rgba(16,11,8,.84)) 0%,
-      rgba(16,11,8,.84) 46%,
-      color-mix(in srgb,var(--dungeon-accent) 6%,rgba(16,11,8,.84)) 100%);
+  background-color:rgba(16,11,8,.84);
+  background-image:
+    linear-gradient(155deg,color-mix(in srgb,var(--dungeon-accent) 9%,transparent),transparent 48%),
+    linear-gradient(335deg,color-mix(in srgb,var(--dungeon-accent) 6%,transparent),transparent 38%);
   box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 38%,transparent)
 }
 .bestiary-gallery-card:hover,.bestiary-list-row:hover{
@@ -1020,6 +1019,13 @@ html{scroll-padding-top:calc(var(--topbar-height) + 12px);background:var(--color
 .bestiary-list-thumb{
   box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 36%,transparent)
 }
+
+/* Le wrapper porte le nom de mode "gallery" mais ne doit pas devenir lui-même
+   une grille générique. La grille réelle est .bestiary-gallery-grid. */
+.bestiary-results.gallery{display:block}
+.bestiary-gallery-grid{width:100%}
+.bestiary-gallery-card{width:100%}
+.bestiary-gallery-copy{min-width:0}
 
 /* La tablette doit réellement exploiter sa largeur : 2 colonnes en portrait étroit,
    3 colonnes dès 900px, au lieu d'une carte isolée avec un grand vide. */
