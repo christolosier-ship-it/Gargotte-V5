@@ -1136,6 +1136,17 @@ function queueDungeonCinematic(dungeon) {
   setTimeout(() => showDungeonCinematic(dungeon), 90);
 }
 
+function queueHeroDetailReveal() {
+  requestAnimationFrame(() => {
+    const sheet = document.querySelector(".hero-sheet-v6");
+    if (!sheet || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    sheet.classList.remove("hero-sheet-enter-v6");
+    void sheet.offsetWidth;
+    sheet.classList.add("hero-sheet-enter-v6");
+    sheet.addEventListener("animationend", () => sheet.classList.remove("hero-sheet-enter-v6"), { once: true });
+  });
+}
+
 function showDungeonCinematic(dungeon) {
   if (!dungeon) return;
   const layer = ensureDungeonCinematicLayer();
@@ -3294,13 +3305,9 @@ function renderBossPhaseStack(item, phaseGroup) {
 }
 
 function renderCreatureRelations(item, relations) {
-  const same = relations.sameDungeon.slice(0, 6);
-  const sameMore = relations.sameDungeon.length > same.length;
-  const explicit = relations.explicit.slice(0, 8);
-  const mediaRefs = relations.media
-    .filter(asset => !explicit.some(ref => ref.type === "media_assets" && String(ref.id) === String(asset.id)))
-    .slice(0, 4);
-  const hasContent = same.length || explicit.length || mediaRefs.length || relations.broken.length || relations.phaseGroup.length >= 2;
+  const same = relations.sameDungeon;
+  const explicit = relations.explicit.filter(ref => ref.type !== "media_assets");
+  const hasContent = same.length || explicit.length || relations.broken.length || relations.phaseGroup.length >= 2;
   if (!hasContent) return "";
 
   return `
@@ -3315,22 +3322,14 @@ function renderCreatureRelations(item, relations) {
             <strong>Même Donjon</strong>
             ${relations.dungeon ? `<button class="ghost" type="button" data-action="bestiary-see-dungeon" data-id="${escapeHtml(String(relations.dungeon.id || ""))}">Voir tout</button>` : ""}
           </div>
-          <div class="creature-related-grid">${same.map(target => renderCreatureRelationCard("creatures", target, target.dungeon_name || "")).join("")}</div>
-          ${sameMore ? `<div class="muted small">+${relations.sameDungeon.length - same.length} autre(s) créature(s) dans ce Donjon.</div>` : ""}
+          <div class="creature-related-rail">${same.map(target => renderCreatureRelationCard("creatures", target, target.dungeon_name || "")).join("")}</div>
         </div>
       ` : ""}
 
       ${explicit.length ? `
         <div class="creature-related-group">
           <div class="creature-related-subhead"><strong>Relations explicites</strong></div>
-          <div class="creature-related-grid">${explicit.map(ref => renderCreatureRelationCard(ref.type, ref.target)).join("")}</div>
-        </div>
-      ` : ""}
-
-      ${mediaRefs.length ? `
-        <div class="creature-related-group">
-          <div class="creature-related-subhead"><strong>Médias associés</strong></div>
-          <div class="creature-related-grid">${mediaRefs.map(target => renderCreatureRelationCard("media_assets", target)).join("")}</div>
+          <div class="creature-related-rail">${explicit.map(ref => renderCreatureRelationCard(ref.type, ref.target)).join("")}</div>
         </div>
       ` : ""}
 
@@ -4352,10 +4351,37 @@ function renderCreatureDetail(item) {
   const name = String(item.name || "").trim() || "Créature sans nom";
   const relations = getCreatureRelations(item);
   const dungeonTarget = relations.dungeon;
+  const behaviorPanel = behavior || target ? `
+          <section class="creature-functional-section">
+            <h2><img src="${V6_ICON_PATH}Icone_Gameplay_COMPORTEMENT.webp" alt="" aria-hidden="true">Comportement</h2>
+            ${behavior ? `<p>${escapeHtml(behavior)}</p>` : ""}
+            ${target ? `<dl><dt>Priorité de cible</dt><dd>${escapeHtml(target)}</dd></dl>` : ""}
+          </section>
+        ` : "";
+  const lootPanel = lootItems.length ? `
+          <section class="creature-functional-section creature-loot-v6">
+            <h2><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt="" aria-hidden="true">Butin</h2>
+            <div class="creature-loot-list">
+              ${lootItems.map(loot => {
+                const linked = loot?.id ? findById("loot_items", loot.id) : null;
+                const body = `
+                  <strong>${escapeHtml(loot?.name || "Butin")}</strong>
+                  ${loot?.type ? `<span>${escapeHtml(loot.type)}</span>` : ""}
+                  ${loot?.effect ? `<p>${escapeHtml(loot.effect)}</p>` : ""}
+                  ${loot?.gold_value !== null && loot?.gold_value !== undefined && loot?.gold_value !== "" ? `<small>${escapeHtml(String(loot.gold_value))} or</small>` : ""}
+                `;
+                return linked
+                  ? `<button class="creature-loot-item linked" type="button" data-action="open-related" data-type="loot_items" data-id="${escapeHtml(String(linked.id || ""))}">${body}</button>`
+                  : `<article class="creature-loot-item">${body}</article>`;
+              }).join("")}
+            </div>
+          </section>
+        ` : "";
 
   return `
     <article class="creature-sheet-v6 ${category?.key || "uncategorized"}" style="--creature-cat:${creatureCategoryCssColor(category?.key)};--dungeon-accent:${accent}">
-      <section class="creature-art-v6" aria-label="Illustration">
+      <div class="creature-left-v6">
+        <section class="creature-art-v6" aria-label="Illustration">
         <div class="creature-art-frame" aria-hidden="true"></div>
         <div class="creature-plinth" aria-hidden="true"></div>
         ${image ? `
@@ -4370,7 +4396,9 @@ function renderCreatureDetail(item) {
             <span>Image indisponible</span>
           </div>
         `}
-      </section>
+        </section>
+        ${behaviorPanel || lootPanel ? `<div class="creature-left-panels-v6">${behaviorPanel}${lootPanel}</div>` : ""}
+      </div>
 
       <section class="creature-detail-v6">
         <header class="creature-identity-v6">
@@ -4404,34 +4432,6 @@ function renderCreatureDetail(item) {
           </section>
         ` : ""}
 
-        ${behavior || target ? `
-          <section class="creature-functional-section">
-            <h2><img src="${V6_ICON_PATH}Icone_Gameplay_COMPORTEMENT.webp" alt="" aria-hidden="true">Comportement</h2>
-            ${behavior ? `<p>${escapeHtml(behavior)}</p>` : ""}
-            ${target ? `<dl><dt>Priorité de cible</dt><dd>${escapeHtml(target)}</dd></dl>` : ""}
-          </section>
-        ` : ""}
-
-        ${lootItems.length ? `
-          <section class="creature-functional-section creature-loot-v6">
-            <h2><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt="" aria-hidden="true">Butin</h2>
-            <div class="creature-loot-list">
-              ${lootItems.map(loot => {
-                const linked = loot?.id ? findById("loot_items", loot.id) : null;
-                const body = `
-                  <strong>${escapeHtml(loot?.name || "Butin")}</strong>
-                  ${loot?.type ? `<span>${escapeHtml(loot.type)}</span>` : ""}
-                  ${loot?.effect ? `<p>${escapeHtml(loot.effect)}</p>` : ""}
-                  ${loot?.gold_value !== null && loot?.gold_value !== undefined && loot?.gold_value !== "" ? `<small>${escapeHtml(String(loot.gold_value))} or</small>` : ""}
-                `;
-                return linked
-                  ? `<button class="creature-loot-item linked" type="button" data-action="open-related" data-type="loot_items" data-id="${escapeHtml(String(linked.id || ""))}">${body}</button>`
-                  : `<article class="creature-loot-item">${body}</article>`;
-              }).join("")}
-            </div>
-          </section>
-        ` : ""}
-
         ${lore ? `
           <section class="creature-lore-v6">
             <h2><img src="${V6_ICON_PATH}Icone_Gameplay_LORE.webp" alt="" aria-hidden="true">Lore</h2>
@@ -4445,8 +4445,9 @@ function renderCreatureDetail(item) {
           </section>
         ` : ""}
 
-        ${renderCreatureRelations(item, relations)}
       </section>
+
+      ${renderCreatureRelations(item, relations)}
     </article>
   `;
 }
@@ -6240,8 +6241,9 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           const comfortable = window.matchMedia?.("(min-width: 1480px)").matches;
-          if (!comfortable) requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+          if (!comfortable) requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: type === "heroes" ? "smooth" : "auto" }));
           queueDungeonCinematic(dungeonForCinematic);
+          if (type === "heroes") queueHeroDetailReveal();
           return;
         }
         case "codex-family-back": {
@@ -6395,8 +6397,9 @@ function bindEvents() {
           }
           await saveUiState(state.ui);
           render();
-          requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+          requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: targetType === "heroes" ? "smooth" : "auto" }));
           if (targetType === "dungeons") queueDungeonCinematic(target);
+          if (targetType === "heroes") queueHeroDetailReveal();
           return;
         }
         case "bestiary-see-dungeon": {
@@ -6488,8 +6491,9 @@ function bindEvents() {
           state.ui.codexDetailOpen = true;
           await saveUiState(state.ui);
           render();
-          requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+          requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: btn.dataset.type === "heroes" ? "smooth" : "auto" }));
           if (btn.dataset.type === "dungeons") queueDungeonCinematic(findById("dungeons", btn.dataset.id));
+          if (btn.dataset.type === "heroes") queueHeroDetailReveal();
           return;
         case "set-workshop-type": {
           const type = btn.dataset.type;

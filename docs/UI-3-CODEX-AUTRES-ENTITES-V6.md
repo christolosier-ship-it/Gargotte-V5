@@ -854,3 +854,17 @@ Validation consolidée :
 - **UI-3D** : recherche globale, navigation transversale, relations, préfiltrage et restauration de contexte.
 
 **UI-3 est clos.**
+
+
+---
+
+# Polish post-lot — 21 septembre 2026
+
+Ajustements validés sur la fiche Héros :
+
+- la hauteur du portrait est bornée et **ne dépend plus du nombre de compétences cumulées** du niveau affiché ;
+- la colonne d’identité reste calée en haut de fiche et ne s’étire plus avec le playbook ;
+- l’ouverture d’une fiche Héros reprend le mouvement court de la maquette V3 : révélation éditoriale de la fiche et du portrait, avec défilement doux sur les vues séquentielles ;
+- un changement N1/N2/N3/N4 ne rejoue pas cette animation d’ouverture ;
+- prefers-reduced-motion neutralise la révélation ;
+- aucune donnée Héros ni structure IndexedDB n’est modifiée.
