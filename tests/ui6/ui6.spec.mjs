@@ -873,7 +873,7 @@ test("ISNet production flow waits for human approval before writing the transpar
   expect(afterHumanApproval.auditPass).toBe(true);
 });
 
-test("ISNet human approval flow smoke @webkit", async ({ page }) => {
+test("ISNet media smoke and human gate when Blob IndexedDB is available @webkit", async ({ page }, testInfo) => {
   const sourcePngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAALklEQVR4nGP8////fwYKABMlmgeHASzoAmkuSng1zNpzj7ouGDVgMBjAOJoXGAAbGwsZJ9QthAAAAABJRU5ErkJggg==";
   const cutoutPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAJ0lEQVR4nGNgGAWM6AKpzor/8WmYvfc+ih4mSl0wasBgMGAUMDAAAMMxBBBZrUDTAAAAAElFTkSuQmCC";
 
@@ -893,6 +893,45 @@ test("ISNet human approval flow smoke @webkit", async ({ page }) => {
 
   await ready(page);
   await gotoView(page, "media");
+
+  const blobIndexedDbSupported = await page.evaluate(async () => {
+    const name = "gargottex-webkit-blob-probe";
+    try {
+      const db = await new Promise((resolve, reject) => {
+        const req = indexedDB.open(name, 1);
+        req.onupgradeneeded = () => req.result.createObjectStore("probe", { keyPath: "id" });
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error || new Error("probe open failed"));
+      });
+      const tx = db.transaction("probe", "readwrite");
+      tx.objectStore("probe").put({ id: "blob", blob: new Blob([new Uint8Array([1,2,3])], { type: "application/octet-stream" }) });
+      await new Promise((resolve, reject) => {
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error || new Error("probe transaction failed"));
+        tx.onabort = () => reject(tx.error || new Error("probe transaction aborted"));
+      });
+      db.close();
+      indexedDB.deleteDatabase(name);
+      return true;
+    } catch (_) {
+      try { indexedDB.deleteDatabase(name); } catch (_) {}
+      return false;
+    }
+  });
+
+  if (!blobIndexedDbSupported) {
+    testInfo.annotations.push({
+      type: "webkit-capability",
+      description: "Playwright WebKit/Linux cannot persist Blob/File values in IndexedDB; full media write gate is covered by Chromium and validated on real iPad."
+    });
+    const card = page.locator('[data-action="media-select"]').first();
+    await expect(card).toBeVisible();
+    await card.click();
+    await expect(page.locator(".rembg-box")).toContainText("ISNet General Use");
+    await expect(page.locator('[data-action="media-rembg-run"]')).toBeDisabled();
+    await expect(page.locator(".media-warning")).toContainText("Blob original local");
+    return;
+  }
 
   await page.locator('input[data-action="media-upload"]').setInputFiles({
     name: "webkit-isnet-source.png",
