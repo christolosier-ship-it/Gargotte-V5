@@ -272,8 +272,8 @@ const WORKSHOP_REQUIRED_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
-const APP_VERSION = "5.5.2";
-const PWA_CACHE_NAME = "gargottex-v6-polish-home-v2";
+const APP_VERSION = "5.5.3";
+const PWA_CACHE_NAME = "gargottex-v6-polish-codex-v1";
 const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js"];
 
 const HOME_TAGLINE = "Ici, même les habitués ne savent plus pourquoi ils sont venus.";
@@ -2714,7 +2714,6 @@ function renderHome() {
             <img class="home-hero-backdrop" src="assets/images/logo-source.jpeg" alt="" aria-hidden="true">
             <div class="home-hero-shade" aria-hidden="true"></div>
             <div class="home-hero-copy">
-              <span class="eyebrow">Comptoir de départ</span>
               <h2>${escapeHtml(HOME_TAGLINE)}</h2>
               <div class="home-hero-actions">
                 <button class="primary" type="button" data-action="set-view" data-view="codex">Ouvrir le Codex</button>
@@ -2833,7 +2832,7 @@ function renderBestiaryGalleryCard(item) {
   const image = imageUrlForEntity(item);
   const selected = String(state.ui.bestiary.selectedId || "") === String(item.id || "");
   return `
-    <button class="bestiary-gallery-card ${meta.key} ${selected ? "selected" : ""}" data-action="select-codex" data-type="creatures" data-id="${escapeHtml(String(item.id || ""))}" aria-label="Ouvrir ${escapeHtml(item.name || "Créature")}">
+    <button class="bestiary-gallery-card ${meta.key} ${selected ? "selected" : ""}" data-action="select-codex" data-type="creatures" data-id="${escapeHtml(String(item.id || ""))}" aria-label="Ouvrir ${escapeHtml(item.name || "Créature")}" style="--dungeon-accent:${safeCreatureAccent(item)}">
       <div class="bestiary-gallery-media">
         ${image ? `<img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(item.name || "la créature")}" loading="lazy">` : `<div class="bestiary-media-fallback"><img src="${V6_ICON_PATH}${meta.sigil}" alt=""><span>Visuel indisponible</span></div>`}
         <img class="bestiary-card-sigil" src="${V6_ICON_PATH}${meta.sigil}" alt="" aria-hidden="true">
@@ -2855,7 +2854,7 @@ function renderBestiaryListRow(item) {
   const selected = String(state.ui.bestiary.selectedId || "") === String(item.id || "");
   const stat = (icon, value, label) => `<span class="bestiary-mini-stat"><img src="${V6_ICON_PATH}${icon}" alt="" aria-hidden="true"><b>${escapeHtml(String(value ?? "—"))}</b><small>${label}</small></span>`;
   return `
-    <button class="bestiary-list-row ${meta.key} ${selected ? "selected" : ""}" data-action="select-codex" data-type="creatures" data-id="${escapeHtml(String(item.id || ""))}">
+    <button class="bestiary-list-row ${meta.key} ${selected ? "selected" : ""}" data-action="select-codex" data-type="creatures" data-id="${escapeHtml(String(item.id || ""))}" style="--dungeon-accent:${safeCreatureAccent(item)}">
       <div class="bestiary-list-thumb">
         ${image ? `<img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(item.name || "la créature")}" loading="lazy">` : `<div class="bestiary-media-fallback compact"><img src="${V6_ICON_PATH}${meta.sigil}" alt=""></div>`}
       </div>
@@ -3312,9 +3311,7 @@ function renderBestiaryCollection() {
       <div class="panel bestiary-collection-panel">
         <div class="bestiary-heading">
           <div>
-            <div class="eyebrow">Codex · Créatures</div>
             <h2>Bestiaire</h2>
-            <p>Galerie pour explorer. Liste pour arbitrer.</p>
           </div>
           <div class="bestiary-counter" aria-live="polite"><strong>${items.length}</strong><span>sur ${total}</span></div>
         </div>
@@ -3330,9 +3327,8 @@ function renderBestiaryCollection() {
 
         <div class="bestiary-toolbar">
           <label class="bestiary-search-field">
-            <span class="sr-only">Rechercher une créature</span>
             ${shellIcon("search")}
-            <input class="field" data-action="bestiary-search" value="${escapeHtml(b.search)}" placeholder="Rechercher une créature…">
+            <input class="field" data-action="bestiary-search" aria-label="Rechercher une créature" value="${escapeHtml(b.search)}" placeholder="Rechercher une créature…">
           </label>
 
           <div class="bestiary-filter-grid">
@@ -3387,9 +3383,8 @@ function renderFamilyToolbar(type, count) {
   return `
     <div class="codex-family-toolbar">
       <label class="codex-family-search">
-        <span class="sr-only">Rechercher dans ${label}</span>
         ${shellIcon("search")}
-        <input class="field" data-action="family-search" data-type="${type}" value="${escapeHtml(ui.search)}" placeholder="Rechercher dans ${label}…">
+        <input class="field" data-action="family-search" data-type="${type}" aria-label="Rechercher dans ${label}" value="${escapeHtml(ui.search)}" placeholder="Rechercher dans ${label}…">
       </label>
       <div class="segmented" aria-label="Mode d’affichage">
         ${modes.map(mode => `<button class="${ui.mode === mode.value ? "active" : ""}" type="button" data-action="family-mode" data-type="${type}" data-mode="${mode.value}" aria-pressed="${ui.mode === mode.value}">${shellIcon(mode.icon)}<span>${mode.label}</span></button>`).join("")}
@@ -3552,7 +3547,7 @@ function renderDungeonCodex() {
     <section class="codex-family-v6 dungeon-codex-v6">
       ${renderCodexReturnBar()}
       <div class="panel codex-family-collection-panel">
-        <div class="codex-family-heading"><div><div class="eyebrow">Codex</div><h2>Donjons</h2></div></div>
+        <div class="codex-family-heading"><div><h2>Donjons</h2></div></div>
         ${renderCodexTabs("dungeons")}
         ${renderFamilyToolbar("dungeons", items.length)}
         <div class="codex-family-results ${ui.mode}">
@@ -3681,7 +3676,7 @@ function renderHeroCodex() {
     <section class="codex-family-v6 hero-codex-v6">
       ${renderCodexReturnBar()}
       <div class="panel codex-family-collection-panel">
-        <div class="codex-family-heading"><div><div class="eyebrow">Codex</div><h2>Héros</h2></div></div>
+        <div class="codex-family-heading"><div><h2>Héros</h2></div></div>
         ${renderCodexTabs("heroes")}
         ${renderFamilyToolbar("heroes", groups.length)}
         <div class="codex-family-results ${ui.mode}">
@@ -4061,7 +4056,7 @@ function renderSimpleFamilyCodex(type) {
     <section class="codex-family-v6 ${type}-codex-v6">
       ${renderCodexReturnBar()}
       <div class="panel codex-family-collection-panel">
-        <div class="codex-family-heading"><div><div class="eyebrow">Codex</div><h2>${meta.label}</h2></div></div>
+        <div class="codex-family-heading"><div><h2>${meta.label}</h2></div></div>
         ${renderCodexTabs(type)}
         ${renderFamilyToolbar(type,items.length)}
         <div class="codex-family-results ${ui.mode} ${type}">
