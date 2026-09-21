@@ -4508,6 +4508,8 @@ function renderMediaAssetDetail(asset) {
   const derivative = mediaDerivativeState(asset);
   const audit = asset.transparent_audit || null;
   const poc = String(state.mediaRembgPoc?.assetId || "") === String(asset.id || "") ? state.mediaRembgPoc : null;
+  const pocResults = poc?.results || {};
+  const pocBusyModel = poc?.busyModel || "";
   const ui = state.ui.media || {};
   const linkType = ui.selectedId === asset.id ? (ui.linkType || asset.entity_type || "gallery") : (asset.entity_type || "gallery");
   const linkEntityId = ui.selectedId === asset.id ? (ui.linkEntityId || asset.entity_id || "") : (asset.entity_id || "");
@@ -4540,42 +4542,55 @@ function renderMediaAssetDetail(asset) {
         <button class="secondary" type="button" data-action="media-attach" data-id="${escapeHtml(String(asset.id || ""))}">Enregistrer le rattachement</button>
       </section>
       <section class="media-detail-box rembg-box">
-        <span class="eyebrow">Détourage figurine</span><h3>rembg local · POC iPad</h3>
-        <p>Le workflow validé reste <code>isnet-general-use</code>. Ce POC utilise <code>u2netp</code>, beaucoup plus léger, directement dans le navigateur. <strong>Aucune écriture IndexedDB n'est effectuée par le bouton bêta.</strong></p>
+        <span class="eyebrow">Détourage figurine</span><h3>Comparatif rembg local · POC iPad</h3>
+        <p>Deux moteurs peuvent être testés sur le même original : <strong>U2NetP</strong> privilégie la légèreté, <strong>Silueta</strong> la qualité. Les résultats restent temporaires et <strong>aucune écriture IndexedDB</strong> n'est effectuée.</p>
+        <div class="media-rembg-model-actions">
+          <button class="primary" type="button" data-action="media-rembg-poc-run" data-model="u2netp" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob && !pocBusyModel ? "" : "disabled"}>${pocBusyModel === "u2netp" ? "U2NetP en cours…" : "U2NetP · Rapide · 4,7 Mo"}</button>
+          <button class="secondary" type="button" data-action="media-rembg-poc-run" data-model="silueta" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob && !pocBusyModel ? "" : "disabled"}>${pocBusyModel === "silueta" ? "Silueta en cours…" : "Silueta · Qualité · 44,2 Mo"}</button>
+        </div>
+        <small class="media-rembg-poc-proof">Le premier essai Silueta télécharge environ 44 Mo. Les modèles sont lancés séparément pour limiter la pression mémoire sur Safari/iPadOS.</small>
         <div class="media-rembg-actions">
-          <button class="primary" type="button" data-action="media-rembg-poc-run" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob && !poc?.busy ? "" : "disabled"}>${poc?.busy ? "Détourage…" : "Détourer · bêta"}</button>
           <button class="ghost" type="button" data-action="media-download-original" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob ? "" : "disabled"}>Télécharger l'original</button>
           <label class="secondary ${asset.blob ? "" : "disabled"}">Importer un PNG rembg<input type="file" accept="image/png,.png" data-action="media-derivative-upload" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob ? "" : "disabled"} hidden></label>
         </div>
-        ${poc?.busy ? `
-          <div class="media-rembg-poc-status" aria-live="polite">
-            <progress max="100" value="${Math.max(0, Math.min(100, Number(poc.progress || 0)))}"></progress>
-            <strong data-rembg-poc-message>${escapeHtml(poc.message || "Préparation du détourage…")}</strong>
-            <small>Premier essai : chargement réseau du moteur et du modèle léger. Les essais suivants réutilisent les caches disponibles.</small>
+        ${pocBusyModel ? `
+          <div class="media-rembg-poc-status" data-model="${escapeHtml(pocBusyModel)}" aria-live="polite">
+            <progress max="100" value="${Math.max(0, Math.min(100, Number(poc?.progress || 0)))}"></progress>
+            <strong data-rembg-poc-message>${escapeHtml(poc?.message || "Préparation du détourage…")}</strong>
+            <small>${escapeHtml(REMBG_POC_MODELS[pocBusyModel]?.label || pocBusyModel)} · un seul modèle à la fois.</small>
           </div>
         ` : ""}
         ${poc?.error ? `
           <div class="media-rembg-poc-error" role="alert">
-            <strong>POC non terminé</strong><span>${escapeHtml(poc.error)}</span>
-            <button class="ghost" type="button" data-action="media-rembg-poc-clear">Fermer</button>
+            <strong>${escapeHtml(REMBG_POC_MODELS[poc.errorModel]?.label || "POC")} non terminé</strong><span>${escapeHtml(poc.error)}</span>
+            <button class="ghost" type="button" data-action="media-rembg-poc-clear" data-model="${escapeHtml(poc.errorModel || "")}">Fermer</button>
           </div>
         ` : ""}
-        ${poc?.url && poc?.blob ? `
-          <div class="media-rembg-poc-result">
-            <header><div><span class="eyebrow">Aperçu temporaire</span><strong>Fond supprimé en ${Math.max(0, Number(poc.durationMs || 0) / 1000).toFixed(1)} s</strong></div><span class="${poc.audit?.pass ? "ok" : "warn"}">${poc.audit?.pass ? "Audit alpha OK" : "À contrôler"}</span></header>
-            <div class="media-rembg-poc-preview checker"><img src="${escapeHtml(poc.url)}" alt="Aperçu temporaire détouré de ${escapeHtml(asset.label || asset.file_name || "ce média")}"></div>
-            <div class="media-alpha-audit ${poc.audit?.pass ? "pass" : "fail"}">
-              <div><span>Alpha réel</span><b>${poc.audit?.has_alpha_channel ? "Oui" : "Non"}</b></div>
-              <div><span>Transparent</span><b>${Number(poc.audit?.transparent_ratio || 0).toFixed(3)}</b></div>
-              <div><span>Bords doux</span><b>${Number(poc.audit?.soft_edge_ratio || 0).toFixed(3)}</b></div>
-              <div><span>Dimensions</span><b>${poc.audit?.width || "?"}×${poc.audit?.height || "?"}</b></div>
-            </div>
-            <div class="media-rembg-poc-actions">
-              <button class="secondary" type="button" data-action="media-rembg-poc-download">Télécharger le PNG test</button>
-              <button class="ghost" type="button" data-action="media-rembg-poc-clear">Effacer l'aperçu</button>
-            </div>
-            <small class="media-rembg-poc-proof">POC : le résultat reste uniquement en mémoire. Le Blob original IndexedDB est relu et son SHA-256 doit rester identique avant/après.</small>
+        ${Object.keys(pocResults).length ? `
+          <div class="media-rembg-comparison">
+            ${["u2netp","silueta"].map(modelKey => {
+              const result = pocResults[modelKey];
+              if (!result?.url || !result?.blob) return "";
+              const config = REMBG_POC_MODELS[modelKey];
+              return `
+                <article class="media-rembg-poc-result" data-model="${modelKey}">
+                  <header><div><span class="eyebrow">${escapeHtml(config?.label || modelKey)}</span><strong>${Math.max(0, Number(result.durationMs || 0) / 1000).toFixed(1)} s</strong></div><span class="${result.audit?.pass ? "ok" : "warn"}">${result.audit?.pass ? "Audit alpha OK" : "À contrôler"}</span></header>
+                  <div class="media-rembg-poc-preview checker"><img src="${escapeHtml(result.url)}" alt="Aperçu ${escapeHtml(config?.shortLabel || modelKey)} de ${escapeHtml(asset.label || asset.file_name || "ce média")}"></div>
+                  <div class="media-alpha-audit ${result.audit?.pass ? "pass" : "fail"}">
+                    <div><span>Alpha réel</span><b>${result.audit?.has_alpha_channel ? "Oui" : "Non"}</b></div>
+                    <div><span>Transparent</span><b>${Number(result.audit?.transparent_ratio || 0).toFixed(3)}</b></div>
+                    <div><span>Bords doux</span><b>${Number(result.audit?.soft_edge_ratio || 0).toFixed(3)}</b></div>
+                    <div><span>Dimensions</span><b>${result.audit?.width || "?"}×${result.audit?.height || "?"}</b></div>
+                  </div>
+                  <div class="media-rembg-poc-actions">
+                    <button class="secondary" type="button" data-action="media-rembg-poc-download" data-model="${modelKey}">Télécharger ce PNG</button>
+                    <button class="ghost" type="button" data-action="media-rembg-poc-clear" data-model="${modelKey}">Effacer ce résultat</button>
+                  </div>
+                </article>
+              `;
+            }).join("")}
           </div>
+          <small class="media-rembg-poc-proof">Comparatif temporaire : les deux résultats restent uniquement en mémoire. Le Blob original IndexedDB est vérifié par SHA-256 avant/après chaque traitement.</small>
         ` : ""}
         ${asset.blob ? "" : `<small class="media-warning">Ce média historique ne possède pas de Blob original local. Aucun dérivé ne peut être validé ici sans source vérifiable.</small>`}
         ${audit ? `<div class="media-alpha-audit ${audit.pass ? "pass" : "fail"}">
@@ -6875,17 +6890,21 @@ function bindEvents() {
         case "media-attach":
           await attachMediaAsset(btn.dataset.id,state.ui.media.linkType||"gallery",state.ui.media.linkEntityId||""); toast("Rattachement média enregistré.","success"); return;
         case "media-rembg-poc-run": {
-          const result=await runMediaRembgPoc(btn.dataset.id);
-          toast(result.audit?.pass ? `POC terminé en ${(result.durationMs/1000).toFixed(1)} s. Vérifie visuellement l'aperçu.` : "POC terminé, mais l’audit alpha demande un contrôle.", result.audit?.pass ? "success" : "warn");
+          const result=await runMediaRembgPoc(btn.dataset.id,btn.dataset.model||"u2netp");
+          toast(result.audit?.pass ? `${result.label} terminé en ${(result.durationMs/1000).toFixed(1)} s. Compare visuellement les contours.` : `${result.label} terminé, mais l’audit alpha demande un contrôle.`, result.audit?.pass ? "success" : "warn");
           return;
         }
         case "media-rembg-poc-download": {
-          const poc=state.mediaRembgPoc;
-          if(!poc?.blob){toast("Aucun aperçu temporaire à télécharger.","warn");return;}
-          downloadBlob(poc.blob,`gargottex_rembg_poc_${poc.assetId || "media"}.png`); return;
+          const modelKey=btn.dataset.model||"u2netp";
+          const result=state.mediaRembgPoc?.results?.[modelKey];
+          if(!result?.blob){toast("Aucun aperçu temporaire à télécharger pour ce modèle.","warn");return;}
+          downloadBlob(result.blob,`gargottex_rembg_poc_${modelKey}_${state.mediaRembgPoc.assetId || "media"}.png`); return;
         }
-        case "media-rembg-poc-clear":
-          resetMediaRembgPoc(); render(); return;
+        case "media-rembg-poc-clear": {
+          const modelKey=btn.dataset.model||"";
+          if(modelKey) clearMediaRembgPocResult(modelKey); else resetMediaRembgPoc();
+          render(); return;
+        }
         case "media-download-original": {
           const asset=await getById("media_assets",btn.dataset.id); if(!asset?.blob){toast("Original local indisponible.","warn");return;}
           downloadBlob(asset.blob,asset.file_name||"original"); return;
