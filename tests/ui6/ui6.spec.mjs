@@ -359,18 +359,23 @@ test("creature detail stacks behavior, loot and lore full width below the image 
   await firstHero.click();
   await expect(page.locator(".hero-sheet-v6")).toBeVisible();
 
+  const heroSheet = page.locator(".hero-sheet-v6");
+  await expect(heroSheet).not.toHaveClass(/hero-sheet-enter-v6/);
+
   const level1 = page.locator('[data-action="hero-level"][data-level="1"]');
-  if (await level1.isEnabled()) await level1.click();
+  if (await level1.isEnabled()) {
+    await level1.click();
+    await expect(heroSheet).not.toHaveClass(/hero-sheet-enter-v6/);
+  }
   const portraitHeight1 = await page.locator(".hero-portrait-v6").evaluate(el => el.getBoundingClientRect().height);
 
   const level4 = page.locator('[data-action="hero-level"][data-level="4"]');
   await expect(level4).toBeEnabled();
   await level4.click();
+  await expect(heroSheet).not.toHaveClass(/hero-sheet-enter-v6/);
   const portraitHeight4 = await page.locator(".hero-portrait-v6").evaluate(el => el.getBoundingClientRect().height);
 
-  const portraitDelta = Math.abs(portraitHeight4 - portraitHeight1);
-  const portraitTolerance = Math.max(12, portraitHeight1 * 0.025);
-  expect(portraitDelta, `portrait delta ${portraitDelta.toFixed(2)}px / tolerance ${portraitTolerance.toFixed(2)}px`).toBeLessThanOrEqual(portraitTolerance);
+  expect(Math.abs(portraitHeight4 - portraitHeight1)).toBeLessThanOrEqual(2);
   expect(portraitHeight4).toBeLessThanOrEqual(595);
   await assertNoHorizontalOverflow(page);
 });
