@@ -232,3 +232,50 @@ python scripts/media/process_transparent_derivative.py original.jpg derive-trans
 Il refuse l'écrasement de la source, utilise `rembg` + `isnet-general-use`, écrit un PNG RGBA séparé, compare le SHA-256 de la source avant/après et produit un `.audit.json`.
 
 La PWA importe ensuite le PNG comme `transparent_blob`, refait son audit alpha localement puis exige un contrôle visuel explicite avant utilisation par le Codex.
+
+
+---
+
+# 15. POC navigateur iPad — 21 septembre 2026
+
+Statut : **EXPÉRIMENTAL — validation réelle iPad requise avant écriture automatique du dérivé**.
+
+Objectif : permettre depuis la fiche Média de tester un détourage directement depuis le Blob original IndexedDB, sans export ZIP ni passage par l'app Fichiers.
+
+## Périmètre du POC
+
+- bouton `Détourer · bêta` sur un média possédant un `blob` original ;
+- traitement entièrement côté navigateur ;
+- modèle POC : `u2netp` (~4,7 Mo), choisi pour limiter mémoire et temps CPU sur iPad ;
+- sortie PNG RGBA ;
+- audit alpha via le code Gargottex existant ;
+- aperçu sur damier + durée ;
+- téléchargement facultatif du PNG de test ;
+- **aucune écriture `transparent_*` et aucune modification IndexedDB par le bouton bêta** ;
+- SHA-256 du Blob original vérifié avant/après le traitement.
+
+Le workflow de production validé reste `rembg + isnet-general-use`. Le modèle léger du POC n'est pas déclaré équivalent en qualité tant que les figurines Gargotte réelles n'ont pas été comparées sur iPad.
+
+## Chargement
+
+Le POC épingle ses dépendances de test navigateur :
+
+- `onnxruntime-web@1.23.0` ;
+- `@bunnio/rembg-web@1.0.2` (MIT) ;
+- modèle `u2netp.onnx` provenant de la release `base-models` du projet rembg-web.
+
+Le premier essai nécessite donc le réseau. Le moteur rembg-web possède son propre cache modèle navigateur ; Gargottex ne modifie pas le schéma de `gargottex-v5-offline`.
+
+## Gate avant phase production
+
+Tester sur l'iPad réel :
+
+1. premier chargement ;
+2. temps de détourage ;
+3. plusieurs traitements successifs ;
+4. absence de crash/rechargement Safari ;
+5. cheveux, ailes, armes fines, cornes et socles ;
+6. halo blanc ;
+7. qualité comparée au dérivé `isnet-general-use` historique.
+
+Si le POC est satisfaisant, phase suivante : brancher explicitement le Blob produit sur `saveTransparentDerivative()`, puis conserver l'audit + validation visuelle existants.

@@ -768,6 +768,66 @@ test("Media library opens detail without altering originals", async ({ page }) =
   expect(after).toEqual(before);
 });
 
+test("browser rembg POC creates a temporary transparent preview without writing IndexedDB", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__GARGOTTEX_REMBG_POC__ = {
+      model: "test-stub",
+      async remove(_blob, onProgress) {
+        onProgress?.(35, "Détourage IA en cours…");
+        const canvas = document.createElement("canvas");
+        canvas.width = 64; canvas.height = 64;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0,0,64,64);
+        ctx.fillStyle = "#8b5a2b";
+        ctx.fillRect(16,8,32,48);
+        onProgress?.(90, "Création du PNG transparent…");
+        return await new Promise((resolve,reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("PNG test indisponible")), "image/png"));
+      }
+    };
+  });
+  await ready(page);
+
+  await page.evaluate(async () => {
+    const canvas=document.createElement("canvas");canvas.width=64;canvas.height=64;
+    const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,64,64);ctx.fillStyle="#8b5a2b";ctx.fillRect(16,8,32,48);
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("blob")),"image/png"));
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction("media_assets","readwrite");
+    tx.objectStore("media_assets").put({id:"media-rembg-poc-test",label:"POC rembg",file_name:"poc-rembg.png",path:"local-media/gallery/poc-rembg.png",mime_type:"image/png",entity_type:"gallery",entity_id:"",blob,original_size:blob.size,created_at:new Date().toISOString(),updated_at:new Date().toISOString()});
+    await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});db.close();
+  });
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".v6-app")).toBeVisible();
+  await gotoView(page, "media");
+  await page.locator('[data-action="media-select"][data-id="media-rembg-poc-test"]').click();
+  await expect(page.locator(".media-detail-v6")).toBeVisible();
+  await expect(page.locator('[data-action="media-rembg-poc-run"]')).toBeEnabled();
+
+  const before = await page.evaluate(async () => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-rembg-poc-test");
+    const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});db.close();
+    const bytes=await row.blob.arrayBuffer(),hash=await crypto.subtle.digest("SHA-256",bytes);
+    return {size:row.blob.size,hash:Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,"0")).join(""),transparent:Boolean(row.transparent_blob)};
+  });
+
+  await page.locator('[data-action="media-rembg-poc-run"]').click();
+  await expect(page.locator(".media-rembg-poc-result")).toBeVisible();
+  await expect(page.locator(".media-rembg-poc-preview img")).toBeVisible();
+  await expect(page.locator(".media-rembg-poc-result")).toContainText("Audit alpha OK");
+
+  const after = await page.evaluate(async () => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-rembg-poc-test");
+    const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});db.close();
+    const bytes=await row.blob.arrayBuffer(),hash=await crypto.subtle.digest("SHA-256",bytes);
+    return {size:row.blob.size,hash:Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,"0")).join(""),transparent:Boolean(row.transparent_blob)};
+  });
+  expect(after).toEqual(before);
+  expect(after.transparent).toBe(false);
+});
+
 test("mobile WebKit critical navigation smoke @webkit", async ({ page }) => {
   await ready(page);
   await expect(page.locator(".mobile-bottom")).toBeVisible();
