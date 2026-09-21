@@ -189,6 +189,95 @@ test("Codex polish removes helper copy, applies dungeon accents and keeps creatu
   await assertNoHorizontalOverflow(page);
 });
 
+test("detail polish reproduces V3 dungeon cinematic, linked media and compact creature art", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await ready(page);
+  await gotoView(page, "codex");
+
+  await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
+  const firstDungeon = page.locator('.dungeon-collection-card[data-action="select-family-codex"]').first();
+  await expect(firstDungeon).toBeVisible();
+  await firstDungeon.click();
+
+  const cinematic = page.locator("#gargotte-cinematic");
+  await expect(cinematic).toHaveClass(/show/);
+  await expect(cinematic.getByText("NOUVEAU LIEU", { exact: true })).toBeVisible();
+  const dungeonTitle = (await page.locator(".dungeon-cover-copy-v6 h1").innerText()).trim();
+  await expect(cinematic.locator(".cinematic-title")).toHaveText(dungeonTitle);
+  await expect(cinematic.locator(".cinematic-curtain")).toHaveCount(2);
+  await expect(cinematic.locator(".cinematic-sparks i")).toHaveCount(9);
+  await cinematic.getByRole("button", { name: "Continuer" }).click();
+  await expect(cinematic).not.toHaveClass(/show/);
+
+  await expect(page.locator(".dungeon-cover-copy-v6 .eyebrow")).toHaveCount(0);
+  await expect(page.locator(".dungeon-cover-copy-v6 > span")).toHaveCount(0);
+  await expect(page.locator(".dungeon-progression-v6 .eyebrow")).toHaveCount(0);
+  await expect(page.locator(".dungeon-boss-v6 .eyebrow")).toHaveCount(0);
+  await expect(page.locator(".dungeon-linked-v6 .eyebrow")).toHaveCount(0);
+
+  const description = page.locator(".dungeon-description-v6");
+  if (await description.count()) {
+    await expect(description.locator(".dungeon-section-head h2")).toHaveText("Description");
+    const typography = await page.evaluate(() => {
+      const a = document.querySelector(".dungeon-description-v6 .dungeon-section-head h2");
+      const b = document.querySelector(".dungeon-progression-v6 .dungeon-section-head h2");
+      const sa = a ? getComputedStyle(a) : null;
+      const sb = b ? getComputedStyle(b) : null;
+      return sa && sb ? {
+        a: [sa.fontFamily, sa.fontSize, sa.fontWeight, sa.lineHeight],
+        b: [sb.fontFamily, sb.fontSize, sb.fontWeight, sb.lineHeight]
+      } : null;
+    });
+    expect(typography).not.toBeNull();
+    expect(typography.a).toEqual(typography.b);
+  }
+
+  const dungeonAccent = await page.locator(".dungeon-sheet-v6").evaluate(el => getComputedStyle(el).getPropertyValue("--dungeon-accent").trim());
+  expect(dungeonAccent).toMatch(/^#/);
+
+  const linkedMediaButtons = page.locator(".dungeon-linked-items button.has-media");
+  const linkedMediaCount = await linkedMediaButtons.count();
+  for (let index = 0; index < linkedMediaCount; index += 1) {
+    const button = linkedMediaButtons.nth(index);
+    await expect(button.locator(".dungeon-linked-thumb img")).toBeVisible();
+  }
+
+  // La découverte V3 ne se rejoue pas quand le même Donjon est rouvert.
+  await page.locator('[data-action="codex-family-back"][data-type="dungeons"]').click();
+  await expect(page.locator(".dungeon-collection-card").first()).toBeVisible();
+  await page.locator('.dungeon-collection-card[data-action="select-family-codex"]').first().click();
+  await page.waitForTimeout(180);
+  await expect(page.locator("#gargotte-cinematic.show")).toHaveCount(0);
+
+  // La fiche Créature est testée indépendamment de la richesse média du Donjon de fixture.
+  await page.locator('[data-action="set-codex-type"][data-type="creatures"]').first().click();
+  const firstCreature = page.locator('[data-action="select-codex"][data-type="creatures"]').first();
+  await expect(firstCreature).toBeVisible();
+  await firstCreature.click();
+  await expect(page.locator(".creature-sheet-v6")).toBeVisible();
+
+  const creatureAccent = await page.locator(".creature-sheet-v6").evaluate(el => getComputedStyle(el).getPropertyValue("--dungeon-accent").trim());
+  expect(creatureAccent).toMatch(/^#/);
+
+  const artHeight = await page.locator(".creature-art-v6").evaluate(el => el.getBoundingClientRect().height);
+  expect(artHeight).toBeLessThanOrEqual(570);
+  expect(artHeight).toBeGreaterThanOrEqual(400);
+
+  const dungeonLink = page.locator(".creature-dungeon-link").first();
+  await expect(dungeonLink).toBeVisible();
+  await dungeonLink.click();
+  const relatedCinematic = page.locator("#gargotte-cinematic.show");
+  if (await relatedCinematic.count()) {
+    await page.locator("#gargotte-cinematic .cinematic-skip").click();
+  }
+  await expect(page.locator(".dungeon-sheet-v6")).toBeVisible();
+  const creatureDungeonAccent = await page.locator(".dungeon-sheet-v6").evaluate(el => getComputedStyle(el).getPropertyValue("--dungeon-accent").trim());
+  expect(creatureDungeonAccent).toBe(creatureAccent);
+
+  await assertNoHorizontalOverflow(page);
+});
+
+
 
 
 for (const [name, width, height] of viewports) {
@@ -625,7 +714,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
 
   const cacheState = await page.evaluate(async () => {
     const names = await caches.keys();
-    const cacheName = names.find(name => name === "gargottex-v6-polish-codex-v1");
+    const cacheName = names.find(name => name === "gargottex-v6-polish-details-v1");
     if (!cacheName) return { cacheName: null, missing: ["cache"] };
     const cache = await caches.open(cacheName);
     const core = ["./index.html","./styles.css","./manifest.webmanifest","./src/app.js","./src/storage/idb.js","./assets/fonts/Inter-Variable.ttf","./assets/fonts/Alegreya-Variable.ttf"];
@@ -633,7 +722,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
     for (const path of core) if (!(await cache.match(path,{ignoreSearch:true}))) missing.push(path);
     return { cacheName, missing };
   });
-  expect(cacheState.cacheName).toBe("gargottex-v6-polish-codex-v1");
+  expect(cacheState.cacheName).toBe("gargottex-v6-polish-details-v1");
   expect(cacheState.missing).toEqual([]);
 
   await gotoView(page, "import");
