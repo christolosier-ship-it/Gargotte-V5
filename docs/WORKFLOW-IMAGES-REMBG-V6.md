@@ -383,4 +383,6 @@ Le workflow intégré est considéré valide si :
 7. le Codex ne préfère que les dérivés `approved` avec audit valide ;
 8. le rejet d'un candidat ne modifie pas IndexedDB ;
 9. la session ONNX est libérée après traitement ;
-10. les tests Chromium et WebKit couvrent la barrière d'écriture.
+10. Chromium couvre intégralement la barrière d'écriture IndexedDB avant/après validation humaine ;
+11. WebKit exécute le flux complet lorsque le moteur de test sait persister les Blob/File dans IndexedDB ; le port Playwright WebKit/Linux actuellement utilisé en CI ne fournit pas toujours cette capacité et bascule alors sur un smoke UI explicite ;
+12. la validation réelle iPad reste requise pour la compatibilité Safari/iPadOS du stockage Blob et du moteur lourd ISNet.
