@@ -235,31 +235,45 @@ test("detail polish reproduces V3 dungeon cinematic, linked media and compact cr
   const dungeonAccent = await page.locator(".dungeon-sheet-v6").evaluate(el => getComputedStyle(el).getPropertyValue("--dungeon-accent").trim());
   expect(dungeonAccent).toMatch(/^#/);
 
-  const linkedMedia = page.locator(".dungeon-linked-thumb img");
-  expect(await linkedMedia.count()).toBeGreaterThan(0);
-  await expect(linkedMedia.first()).toBeVisible();
+  const linkedMediaButtons = page.locator(".dungeon-linked-items button.has-media");
+  const linkedMediaCount = await linkedMediaButtons.count();
+  for (let index = 0; index < linkedMediaCount; index += 1) {
+    const button = linkedMediaButtons.nth(index);
+    await expect(button.locator(".dungeon-linked-thumb img")).toBeVisible();
+  }
 
-  const linkedCreature = page.locator('.dungeon-linked-items button.has-media[data-type="creatures"]').first();
-  const anyCreature = page.locator('.dungeon-linked-items button[data-type="creatures"]').first();
-  const targetCreature = (await linkedCreature.count()) ? linkedCreature : anyCreature;
-  await expect(targetCreature).toBeVisible();
-  await targetCreature.click();
-
-  await expect(page.locator(".creature-sheet-v6")).toBeVisible();
-  const creatureAccent = await page.locator(".creature-sheet-v6").evaluate(el => getComputedStyle(el).getPropertyValue("--dungeon-accent").trim());
-  expect(creatureAccent).toBe(dungeonAccent);
-
-  const artHeight = await page.locator(".creature-art-v6").evaluate(el => el.getBoundingClientRect().height);
-  expect(artHeight).toBeLessThanOrEqual(570);
-  expect(artHeight).toBeGreaterThanOrEqual(400);
-
-  await page.locator('[data-action="codex-related-back"]').first().click();
-  await expect(page.locator(".dungeon-sheet-v6")).toBeVisible();
+  // La découverte V3 ne se rejoue pas quand le même Donjon est rouvert.
   await page.locator('[data-action="codex-family-back"][data-type="dungeons"]').click();
   await expect(page.locator(".dungeon-collection-card")).toBeVisible();
   await page.locator('.dungeon-collection-card[data-action="select-family-codex"]').first().click();
   await page.waitForTimeout(180);
   await expect(page.locator("#gargotte-cinematic.show")).toHaveCount(0);
+
+  // La fiche Créature est testée indépendamment de la richesse média du Donjon de fixture.
+  await page.locator('[data-action="set-codex-type"][data-type="creatures"]').first().click();
+  const firstCreature = page.locator('[data-action="select-codex"][data-type="creatures"]').first();
+  await expect(firstCreature).toBeVisible();
+  await firstCreature.click();
+  await expect(page.locator(".creature-sheet-v6")).toBeVisible();
+
+  const creatureAccent = await page.locator(".creature-sheet-v6").evaluate(el => getComputedStyle(el).getPropertyValue("--dungeon-accent").trim());
+  expect(creatureAccent).toMatch(/^#/);
+
+  const artHeight = await page.locator(".creature-art-v6").evaluate(el => el.getBoundingClientRect().height);
+  expect(artHeight).toBeLessThanOrEqual(570);
+  expect(artHeight).toBeGreaterThanOrEqual(400);
+
+  const dungeonLink = page.locator(".creature-dungeon-link").first();
+  await expect(dungeonLink).toBeVisible();
+  await dungeonLink.click();
+  const relatedCinematic = page.locator("#gargotte-cinematic.show");
+  if (await relatedCinematic.count()) {
+    await page.locator("#gargotte-cinematic .cinematic-skip").click();
+  }
+  await expect(page.locator(".dungeon-sheet-v6")).toBeVisible();
+  const creatureDungeonAccent = await page.locator(".dungeon-sheet-v6").evaluate(el => getComputedStyle(el).getPropertyValue("--dungeon-accent").trim());
+  expect(creatureDungeonAccent).toBe(creatureAccent);
+
   await assertNoHorizontalOverflow(page);
 });
 
