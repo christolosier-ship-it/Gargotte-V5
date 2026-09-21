@@ -137,19 +137,29 @@ test("Codex polish removes helper copy, applies dungeon accents and keeps creatu
 
   const galleryLayout = await page.locator(".bestiary-gallery-grid").evaluate(el => {
     const style = getComputedStyle(el);
-    const first = el.querySelector(".bestiary-gallery-card");
-    const firstStyle = first ? getComputedStyle(first) : null;
+    const cards = Array.from(el.querySelectorAll(".bestiary-gallery-card")).slice(0, 3);
+    const rects = cards.map(card => {
+      const rect = card.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width };
+    });
+    const firstStyle = cards[0] ? getComputedStyle(cards[0]) : null;
     return {
       columns: style.gridTemplateColumns.split(" ").filter(Boolean).length,
       accent: firstStyle?.getPropertyValue("--dungeon-accent").trim() || "",
       cat: firstStyle?.getPropertyValue("--cat").trim() || "",
-      background: firstStyle?.backgroundImage || ""
+      background: firstStyle?.backgroundImage || "",
+      rects
     };
   });
   expect(galleryLayout.columns).toBeGreaterThanOrEqual(3);
   expect(galleryLayout.accent).not.toBe("");
   expect(galleryLayout.cat).not.toBe("");
   expect(galleryLayout.background).not.toBe("none");
+  expect(galleryLayout.rects).toHaveLength(3);
+  expect(Math.abs(galleryLayout.rects[0].top - galleryLayout.rects[1].top)).toBeLessThanOrEqual(2);
+  expect(Math.abs(galleryLayout.rects[1].top - galleryLayout.rects[2].top)).toBeLessThanOrEqual(2);
+  expect(galleryLayout.rects[1].left).toBeGreaterThanOrEqual(galleryLayout.rects[0].right - 1);
+  expect(galleryLayout.rects[2].left).toBeGreaterThanOrEqual(galleryLayout.rects[1].right - 1);
 
   await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
   await expect(page.getByRole("heading", { name: "Donjons" })).toBeVisible();
@@ -157,15 +167,17 @@ test("Codex polish removes helper copy, applies dungeon accents and keeps creatu
   await expect(page.locator('[data-action="family-search"][data-type="dungeons"]')).toHaveAttribute("aria-label", "Rechercher dans donjons");
   const dungeonAccent = await page.locator(".dungeon-collection-card").first().evaluate(el => {
     const style = getComputedStyle(el);
+    const media = el.querySelector(".dungeon-collection-media");
+    const mediaStyle = media ? getComputedStyle(media) : null;
     return {
       accent: style.getPropertyValue("--dungeon-accent").trim(),
-      background: style.backgroundImage,
-      shadow: style.boxShadow
+      shadow: style.boxShadow,
+      mediaBackground: mediaStyle?.backgroundImage || ""
     };
   });
   expect(dungeonAccent.accent).not.toBe("");
-  expect(dungeonAccent.background).not.toBe("none");
   expect(dungeonAccent.shadow).not.toBe("none");
+  expect(dungeonAccent.mediaBackground).not.toBe("none");
 
   for (const type of ["heroes","npcs","quests","loot_items","interactables","brouhaha_effects"]) {
     await page.locator(`[data-action="set-codex-type"][data-type="${type}"]`).first().click();
