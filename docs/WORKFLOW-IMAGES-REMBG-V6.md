@@ -262,7 +262,7 @@ Le POC épingle ses dépendances de test navigateur :
 
 - `onnxruntime-web@1.23.0` ;
 - `@bunnio/rembg-web@1.0.2` (MIT) ;
-- modèle `u2netp.onnx` provenant de la release `base-models` du projet rembg-web.
+- modèle `u2netp.onnx` chargé depuis le miroir navigateur `edgetools/u2netp` sur Hugging Face ; ce miroir annonce un fichier byte-for-byte identique à l'asset rembg, SHA-256 `309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8`.
 
 Le premier essai nécessite donc le réseau. Le moteur rembg-web possède son propre cache modèle navigateur ; Gargottex ne modifie pas le schéma de `gargottex-v5-offline`.
 
@@ -279,3 +279,12 @@ Tester sur l'iPad réel :
 7. qualité comparée au dérivé `isnet-general-use` historique.
 
 Si le POC est satisfaisant, phase suivante : brancher explicitement le Blob produit sur `saveTransparentDerivative()`, puis conserver l'audit + validation visuelle existants.
+
+
+### Correctif disponibilité modèle — 21 septembre 2026
+
+Le premier test iPad a retourné `HTTP 503` lors du téléchargement direct depuis l'asset GitHub Release `bunn-io/rembg-web/base-models`.
+
+Le POC ne dépend plus de ce endpoint. Le chemin du modèle `u2netp` pointe désormais explicitement vers le miroir Hugging Face `edgetools/u2netp`, prévu pour un chargement navigateur et documenté comme copie byte-for-byte du modèle rembg attendu (4 574 861 octets, SHA-256 `309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8`).
+
+Aucun changement IndexedDB, moteur, modèle ou format de sortie n'accompagne ce correctif.
