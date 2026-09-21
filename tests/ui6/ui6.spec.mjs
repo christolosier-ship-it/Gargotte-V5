@@ -123,6 +123,61 @@ test("home cleanup removes crossed copy and sidebar navigation is Lucide-only", 
   }
 });
 
+test("Codex polish removes helper copy, applies dungeon accents and keeps creature gallery dense on iPad", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await ready(page);
+
+  await expect(page.getByText("Comptoir de départ", { exact: true })).toHaveCount(0);
+
+  await gotoView(page, "codex");
+  await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+  await expect(page.getByText("Codex · Créatures", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Galerie pour explorer. Liste pour arbitrer.", { exact: true })).toHaveCount(0);
+  await expect(page.locator('[data-action="bestiary-search"]')).toHaveAttribute("aria-label", "Rechercher une créature");
+
+  const galleryLayout = await page.locator(".bestiary-gallery-grid").evaluate(el => {
+    const style = getComputedStyle(el);
+    const first = el.querySelector(".bestiary-gallery-card");
+    const firstStyle = first ? getComputedStyle(first) : null;
+    return {
+      columns: style.gridTemplateColumns.split(" ").filter(Boolean).length,
+      accent: firstStyle?.getPropertyValue("--dungeon-accent").trim() || "",
+      cat: firstStyle?.getPropertyValue("--cat").trim() || "",
+      background: firstStyle?.backgroundImage || ""
+    };
+  });
+  expect(galleryLayout.columns).toBeGreaterThanOrEqual(3);
+  expect(galleryLayout.accent).not.toBe("");
+  expect(galleryLayout.cat).not.toBe("");
+  expect(galleryLayout.background).not.toBe("none");
+
+  await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
+  await expect(page.getByRole("heading", { name: "Donjons" })).toBeVisible();
+  await expect(page.locator(".codex-family-heading .eyebrow")).toHaveCount(0);
+  await expect(page.locator('[data-action="family-search"][data-type="dungeons"]')).toHaveAttribute("aria-label", "Rechercher dans donjons");
+  const dungeonAccent = await page.locator(".dungeon-collection-card").first().evaluate(el => {
+    const style = getComputedStyle(el);
+    return {
+      accent: style.getPropertyValue("--dungeon-accent").trim(),
+      background: style.backgroundImage,
+      shadow: style.boxShadow
+    };
+  });
+  expect(dungeonAccent.accent).not.toBe("");
+  expect(dungeonAccent.background).not.toBe("none");
+  expect(dungeonAccent.shadow).not.toBe("none");
+
+  for (const type of ["heroes","npcs","quests","loot_items","interactables","brouhaha_effects"]) {
+    await page.locator(`[data-action="set-codex-type"][data-type="${type}"]`).first().click();
+    await expect(page.locator(".codex-family-heading .eyebrow")).toHaveCount(0);
+    const search = page.locator(`[data-action="family-search"][data-type="${type}"]`);
+    if (await search.count()) await expect(search).toHaveAttribute("aria-label", /Rechercher dans /);
+  }
+
+  await assertNoHorizontalOverflow(page);
+});
+
+
 
 for (const [name, width, height] of viewports) {
   test(`responsive matrix ${name}`, async ({ page }) => {
@@ -558,7 +613,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
 
   const cacheState = await page.evaluate(async () => {
     const names = await caches.keys();
-    const cacheName = names.find(name => name === "gargottex-v6-polish-home-v2");
+    const cacheName = names.find(name => name === "gargottex-v6-polish-codex-v1");
     if (!cacheName) return { cacheName: null, missing: ["cache"] };
     const cache = await caches.open(cacheName);
     const core = ["./index.html","./styles.css","./manifest.webmanifest","./src/app.js","./src/storage/idb.js","./assets/fonts/Inter-Variable.ttf","./assets/fonts/Alegreya-Variable.ttf"];
@@ -566,7 +621,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
     for (const path of core) if (!(await cache.match(path,{ignoreSearch:true}))) missing.push(path);
     return { cacheName, missing };
   });
-  expect(cacheState.cacheName).toBe("gargottex-v6-polish-home-v2");
+  expect(cacheState.cacheName).toBe("gargottex-v6-polish-codex-v1");
   expect(cacheState.missing).toEqual([]);
 
   await gotoView(page, "import");
