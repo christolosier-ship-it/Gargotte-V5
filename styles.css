@@ -1214,3 +1214,40 @@ body.cinematic-open{overflow:hidden}
   .gargotte-cinematic,.cinematic-backdrop,.cinematic-curtain,.cinematic-card{transition:none!important}
   .cinematic-sparks{display:none}
 }
+
+
+/* Gargottex V6 · Polish taille cartes Créatures */
+.bestiary-gallery-grid{
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:10px
+}
+.bestiary-gallery-card{
+  min-height:310px;
+  aspect-ratio:auto;
+  display:grid;
+  grid-template-rows:200px minmax(0,1fr)
+}
+.bestiary-gallery-media{
+  height:200px;
+  min-height:200px
+}
+.bestiary-gallery-copy{
+  gap:5px;
+  padding:10px 11px 11px
+}
+.bestiary-card-meta{gap:5px}
+.bestiary-category-chip,.bestiary-menace-chip{
+  min-height:26px;
+  padding-top:1px;
+  padding-bottom:1px
+}
+.bestiary-category-chip img,.bestiary-menace-chip img{
+  width:19px;
+  height:19px
+}
+
+@media(max-width:767px){
+  .bestiary-gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .bestiary-gallery-card{min-height:280px;grid-template-rows:155px minmax(0,1fr)}
+  .bestiary-gallery-media{height:155px;min-height:155px}
+}
