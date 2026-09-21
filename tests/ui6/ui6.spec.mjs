@@ -768,7 +768,7 @@ test("Media library opens detail without altering originals", async ({ page }) =
   expect(after).toEqual(before);
 });
 
-test("browser rembg POC compares U2NetP and Silueta without writing IndexedDB", async ({ page }) => {
+test("browser rembg POC compares U2NetP, Silueta and ISNet without writing IndexedDB", async ({ page }) => {
   await page.addInitScript(() => {
     window.__GARGOTTEX_REMBG_POC__ = {
       async remove(_blob, onProgress) {
@@ -804,8 +804,10 @@ test("browser rembg POC compares U2NetP and Silueta without writing IndexedDB", 
 
   const rapid = page.locator('[data-action="media-rembg-poc-run"][data-model="u2netp"]');
   const quality = page.locator('[data-action="media-rembg-poc-run"][data-model="silueta"]');
+  const reference = page.locator('[data-action="media-rembg-poc-run"][data-model="isnet-general-use"]');
   await expect(rapid).toBeEnabled();
   await expect(quality).toBeEnabled();
+  await expect(reference).toBeEnabled();
 
   const before = await page.evaluate(async () => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
@@ -821,8 +823,12 @@ test("browser rembg POC compares U2NetP and Silueta without writing IndexedDB", 
 
   await quality.click();
   await expect(page.locator('.media-rembg-poc-result[data-model="silueta"]')).toBeVisible();
-  await expect(page.locator(".media-rembg-poc-result")).toHaveCount(2);
   await expect(page.locator('.media-rembg-poc-result[data-model="silueta"]')).toContainText("Audit alpha OK");
+
+  await reference.click();
+  await expect(page.locator('.media-rembg-poc-result[data-model="isnet-general-use"]')).toBeVisible();
+  await expect(page.locator(".media-rembg-poc-result")).toHaveCount(3);
+  await expect(page.locator('.media-rembg-poc-result[data-model="isnet-general-use"]')).toContainText("Audit alpha OK");
 
   const after = await page.evaluate(async () => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
