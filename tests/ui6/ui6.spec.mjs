@@ -253,7 +253,7 @@ test("detail polish reproduces V3 dungeon cinematic, linked media and compact cr
   expect(artHeight).toBeLessThanOrEqual(570);
   expect(artHeight).toBeGreaterThanOrEqual(400);
 
-  await page.locator('[data-action="codex-return"]').first().click();
+  await page.locator('[data-action="codex-related-back"]').first().click();
   await expect(page.locator(".dungeon-sheet-v6")).toBeVisible();
   await page.locator('[data-action="codex-family-back"][data-type="dungeons"]').click();
   await expect(page.locator(".dungeon-collection-card")).toBeVisible();
