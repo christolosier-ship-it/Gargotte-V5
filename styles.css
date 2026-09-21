@@ -941,3 +941,91 @@ html{scroll-padding-top:calc(var(--topbar-height) + 12px);background:var(--color
   .home-hero-backdrop,.home-session-object,.home-session-object>img,.home-quick-links>button,.home-quick-links>button:before,.home-quick-links>button img{transition:none!important}
   .home-local-card i{animation:none!important;box-shadow:none!important}
 }
+
+
+/* ==========================================================================
+   Gargottex V6 · Polish Codex · textes, densité tablette et accents Donjon
+   ========================================================================== */
+.sr-only{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  padding:0!important;
+  margin:-1px!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;
+  border:0!important
+}
+
+.codex-family-heading h2,.bestiary-heading h2{margin-top:0}
+
+/* Accent Donjon local : ambiance visible, sans remplacer les couleurs gameplay. */
+.dungeon-collection-card{
+  background:
+    linear-gradient(145deg,
+      color-mix(in srgb,var(--dungeon-accent) 16%,#120d09) 0%,
+      #120d09 48%,
+      color-mix(in srgb,var(--dungeon-accent) 9%,#120d09) 100%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb,var(--dungeon-accent) 18%,transparent),
+    inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 42%,transparent)
+}
+.dungeon-collection-card:hover,.dungeon-collection-card.active{
+  box-shadow:
+    0 10px 28px color-mix(in srgb,var(--dungeon-accent) 12%,transparent),
+    inset 0 1px 0 color-mix(in srgb,var(--dungeon-accent) 24%,transparent),
+    inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 58%,transparent)
+}
+.dungeon-collection-media{
+  background:
+    radial-gradient(circle at 78% 18%,color-mix(in srgb,var(--dungeon-accent) 30%,transparent),transparent 34%),
+    radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--dungeon-accent) 18%,transparent),transparent 48%),
+    #0e0907
+}
+.dungeon-collection-copy{
+  border-top:1px solid color-mix(in srgb,var(--dungeon-accent) 28%,transparent)
+}
+
+/* Créatures : catégorie = signal gameplay principal, Donjon = ambiance secondaire. */
+.bestiary-gallery-card,.bestiary-list-row{
+  --dungeon-accent:#8A5E31;
+  border-bottom-color:color-mix(in srgb,var(--dungeon-accent) 52%,var(--color-border-subtle));
+  background:
+    linear-gradient(155deg,
+      color-mix(in srgb,var(--dungeon-accent) 9%,rgba(16,11,8,.84)) 0%,
+      rgba(16,11,8,.84) 46%,
+      color-mix(in srgb,var(--dungeon-accent) 6%,rgba(16,11,8,.84)) 100%);
+  box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 38%,transparent)
+}
+.bestiary-gallery-card:hover,.bestiary-list-row:hover{
+  box-shadow:
+    0 8px 24px color-mix(in srgb,var(--dungeon-accent) 10%,transparent),
+    inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 52%,transparent)
+}
+.bestiary-gallery-card.selected,.bestiary-list-row.selected{
+  box-shadow:
+    inset 3px 0 0 var(--cat),
+    inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 62%,transparent)
+}
+.bestiary-gallery-media{
+  background:
+    radial-gradient(circle at 82% 14%,color-mix(in srgb,var(--dungeon-accent) 22%,transparent),transparent 34%),
+    radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--cat) 12%,transparent),transparent 48%),
+    #0d0907
+}
+.bestiary-gallery-copy{
+  border-top:1px solid color-mix(in srgb,var(--dungeon-accent) 28%,transparent)
+}
+.bestiary-list-thumb{
+  box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 36%,transparent)
+}
+
+/* La tablette doit réellement exploiter sa largeur : 2 colonnes en portrait étroit,
+   3 colonnes dès 900px, au lieu d'une carte isolée avec un grand vide. */
+@media(min-width:768px) and (max-width:899px){
+  .bestiary-gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+}
+@media(min-width:900px) and (max-width:1199px){
+  .bestiary-gallery-grid{grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+}
