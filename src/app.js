@@ -272,8 +272,8 @@ const WORKSHOP_REQUIRED_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
-const APP_VERSION = "5.5.3";
-const PWA_CACHE_NAME = "gargottex-v6-polish-codex-v1";
+const APP_VERSION = "5.5.4";
+const PWA_CACHE_NAME = "gargottex-v6-polish-details-v1";
 const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js"];
 
 const HOME_TAGLINE = "Ici, même les habitués ne savent plus pourquoi ils sont venus.";
@@ -1080,14 +1080,94 @@ function transparentDerivativeUrlForEntity(entity, type = "heroes") {
   return legacy ? mediaUrlForAsset(legacy, false) : imageUrlForEntity(entity);
 }
 
+const DUNGEON_ACCENT_PALETTE = ["#76907E","#657F9A","#A56E45","#9B5D73","#B8893F","#7F667E","#6F7F54","#8B7051"];
+
 function dungeonAccent(item) {
   for (const value of [item?.accent, item?.accent_color, item?.color]) {
     const candidate = String(value || "").trim();
     if (/^#[0-9a-f]{6}$/i.test(candidate) || /^#[0-9a-f]{3}$/i.test(candidate)) return candidate;
   }
-  return "#8A5E31";
+  const identity = String(item?.name || item?.id || "").toLocaleLowerCase("fr");
+  const themed = [
+    [/sobri/, "#657F9A"],
+    [/forêt|foret/, "#76907E"],
+    [/ruche/, "#B8893F"],
+    [/céleste|celeste/, "#A78D56"],
+    [/cabaret/, "#9B5D73"],
+    [/bastion|gueulard/, "#9A654A"],
+    [/bastognac/, "#A56E45"],
+    [/zombi/, "#7F667E"],
+    [/marécage|marecage/, "#6F7F54"]
+  ].find(([pattern]) => pattern.test(identity));
+  if (themed) return themed[1];
+  let hash = 0;
+  for (let index = 0; index < identity.length; index += 1) hash = ((hash << 5) - hash + identity.charCodeAt(index)) | 0;
+  return DUNGEON_ACCENT_PALETTE[Math.abs(hash) % DUNGEON_ACCENT_PALETTE.length] || "#8A5E31";
 }
 
+const dungeonCinematicSeen = new Set();
+
+function ensureDungeonCinematicLayer() {
+  let layer = document.getElementById("gargotte-cinematic");
+  if (layer) return layer;
+  layer = document.createElement("div");
+  layer.id = "gargotte-cinematic";
+  layer.className = "gargotte-cinematic";
+  layer.setAttribute("role", "dialog");
+  layer.setAttribute("aria-modal", "true");
+  layer.setAttribute("aria-live", "polite");
+  document.body.append(layer);
+  return layer;
+}
+
+function hideDungeonCinematic() {
+  const layer = document.getElementById("gargotte-cinematic");
+  if (!layer) return;
+  layer.classList.remove("show");
+  document.body.classList.remove("cinematic-open");
+  clearTimeout(showDungeonCinematic.timer);
+}
+
+function showDungeonCinematic(dungeon) {
+  if (!dungeon) return;
+  const layer = ensureDungeonCinematicLayer();
+  const image = imageUrlForEntity(dungeon);
+  const accent = dungeonAccent(dungeon);
+  const title = String(dungeon.name || "Découverte");
+  const copy = String(dungeon.atmosphere || dungeon.description || "");
+  const safeImage = String(image || "").replace(/"/g, "%22");
+  clearTimeout(showDungeonCinematic.timer);
+  layer.dataset.kind = "discovery";
+  layer.style.setProperty("--cinematic-bg", image ? `url("${safeImage}")` : "none");
+  layer.style.setProperty("--cinematic-accent", accent);
+  layer.innerHTML = `
+    <div class="cinematic-backdrop"></div>
+    <div class="cinematic-curtain left"></div>
+    <div class="cinematic-curtain right"></div>
+    <div class="cinematic-card">
+      <img class="cinematic-emblem" src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="">
+      <div class="cinematic-eyebrow">NOUVEAU LIEU</div>
+      <h2>${escapeHtml(title)}</h2>
+      ${copy ? `<p>${escapeHtml(copy)}</p>` : ""}
+      <div class="cinematic-sparks" aria-hidden="true">${Array.from({ length: 9 }, (_, index) => `<i style="--i:${index}"></i>`).join("")}</div>
+      <button class="primary cinematic-skip" type="button">Continuer</button>
+    </div>`;
+  layer.onclick = event => {
+    if (event.target === layer || event.target.closest(".cinematic-skip")) hideDungeonCinematic();
+  };
+  layer.onkeydown = event => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      hideDungeonCinematic();
+    }
+  };
+  document.body.classList.add("cinematic-open");
+  requestAnimationFrame(() => {
+    layer.classList.add("show");
+    requestAnimationFrame(() => layer.querySelector(".cinematic-skip")?.focus({ preventScroll: true }));
+  });
+  showDungeonCinematic.timer = setTimeout(hideDungeonCinematic, 2500);
+}
 function dungeonFloorBudgets(item) {
   const raw = item?.floor_budgets;
   let budgets = [];
@@ -3444,15 +3524,18 @@ function renderDungeonPreview(type, items, label, icon, dungeon) {
         <div class="dungeon-linked-meta"><span>${items.length}</span>${items.length && dungeon ? `<button class="ghost" type="button" data-action="dungeon-see-all" data-type="${type}" data-dungeon-id="${escapeHtml(String(dungeon.id || ""))}">Voir tout</button>` : ""}</div>
       </header>
       <div class="dungeon-linked-items">
-        ${preview.length ? preview.map(item => `
-          <button type="button" data-action="open-related" data-type="${type}" data-id="${escapeHtml(String(item.id || ""))}">
-            <b>${escapeHtml(dungeonPreviewTitle(type, item))}</b>
-          </button>
-        `).join("") : `<span class="muted small">Aucune entrée liée.</span>`}
+        ${preview.length ? preview.map(item => {
+          const image = imageUrlForEntity(item);
+          const title = dungeonPreviewTitle(type, item);
+          return `
+            <button class="${image ? "has-media" : ""}" type="button" data-action="open-related" data-type="${type}" data-id="${escapeHtml(String(item.id || ""))}">
+              ${image ? `<span class="dungeon-linked-thumb">${renderSafeRelationMedia(image, title, "Visuel indisponible")}</span>` : ""}
+              <b>${escapeHtml(title)}</b>
+            </button>`;
+        }).join("") : `<span class="muted small">Aucune entrée liée.</span>`}
       </div>
     </section>`;
 }
-
 function renderDungeonDetailV6(item) {
   if (!item) return `<div class="panel empty">Donjon indisponible.</div>`;
   const image = imageUrlForEntity(item);
@@ -3473,27 +3556,25 @@ function renderDungeonDetailV6(item) {
           <div class="dungeon-cover-fallback large"><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt=""><span>Couverture non renseignée</span></div>
         `}
         <div class="dungeon-cover-copy-v6">
-          <div class="eyebrow">Donjon</div>
           <h1>${escapeHtml(name)}</h1>
-          ${floors.length ? `<span>${floors.length} étage${floors.length > 1 ? "s" : ""}</span>` : ""}
         </div>
       </section>
 
       <div class="dungeon-hub-v6">
         ${item.description ? `
           <section class="dungeon-description-v6">
-            <div class="eyebrow">Description</div>
+            <div class="dungeon-section-head"><div><h2>Description</h2></div></div>
             <p>${escapeHtml(item.description)}</p>
           </section>
         ` : ""}
 
         <section class="dungeon-progression-v6">
-          <div class="dungeon-section-head"><div><span class="eyebrow">Progression</span><h2>Étages & budgets</h2></div><span>${floors.length || "—"}</span></div>
+          <div class="dungeon-section-head"><div><h2>Étages & budgets</h2></div><span>${floors.length || "—"}</span></div>
           ${renderDungeonFloors(item)}
         </section>
 
         <section class="dungeon-boss-v6">
-          <div class="dungeon-section-head"><div><span class="eyebrow">Boss final</span><h2>${escapeHtml(boss.name || "Non renseigné")}</h2></div><img src="${V6_ICON_PATH}Sigil_Boss.webp" alt="" aria-hidden="true"></div>
+          <div class="dungeon-section-head"><div><h2>${escapeHtml(boss.name || "Non renseigné")}</h2></div><img src="${V6_ICON_PATH}Sigil_Boss.webp" alt="" aria-hidden="true"></div>
           ${boss.entity ? `
             <button class="dungeon-boss-card" type="button" data-action="open-related" data-type="creatures" data-id="${escapeHtml(String(boss.entity.id || ""))}">
               <span>${renderSafeRelationMedia(imageUrlForEntity(boss.entity), boss.entity.name || boss.name, "Illustration absente")}</span>
@@ -3504,7 +3585,7 @@ function renderDungeonDetailV6(item) {
         </section>
 
         <section class="dungeon-linked-v6">
-          <div class="dungeon-section-head"><div><span class="eyebrow">Aperçus liés</span><h2>Dans ce Donjon</h2></div></div>
+          <div class="dungeon-section-head"><div><h2>Dans ce Donjon</h2></div></div>
           <div class="dungeon-linked-grid">
             ${renderDungeonPreview("creatures", linked.creatures, "Créatures", "Sigil_Basique.webp", item)}
             ${renderDungeonPreview("quests", linked.quests, "Quêtes", "Icone_Entite_QUETE.webp", item)}
@@ -3517,7 +3598,6 @@ function renderDungeonDetailV6(item) {
       </div>
     </article>`;
 }
-
 function renderDungeonCodex() {
   ensureCodexFamilyUi();
   const ui = state.ui.codexFamilies.dungeons;
@@ -4225,10 +4305,8 @@ function creatureCategoryCssColor(key) {
 
 function safeCreatureAccent(item) {
   const dungeon = findById("dungeons", item?.dungeon_id) || findByName("dungeons", item?.dungeon_name || "");
-  const candidate = String(dungeon?.accent || dungeon?.accent_color || dungeon?.color || "").trim();
-  return /^#[0-9a-f]{6}$/i.test(candidate) || /^#[0-9a-f]{3}$/i.test(candidate) ? candidate : "#8A5E31";
+  return dungeonAccent(dungeon || { id: item?.dungeon_id, name: item?.dungeon_name });
 }
-
 function formatCreatureSocle(value) {
   const text = String(value ?? "").trim();
   if (!text) return "";
@@ -6129,9 +6207,12 @@ function bindEvents() {
           state.ui.codexReturnStack = [];
           state.ui.codexType = type;
           state.ui.codexFamilies[type].scrollTop = Math.max(0, window.scrollY || 0);
+          let dungeonForCinematic = null;
           if (type === "dungeons") {
             const id = String(btn.dataset.id || "");
-            if (!findById("dungeons", id)) return;
+            const dungeon = findById("dungeons", id);
+            if (!dungeon) return;
+            dungeonForCinematic = dungeon;
             state.ui.codexFamilies.dungeons.selectedId = id;
             state.ui.codexSelectedId = id;
           } else if (type === "heroes") {
@@ -6151,6 +6232,13 @@ function bindEvents() {
           render();
           const comfortable = window.matchMedia?.("(min-width: 1480px)").matches;
           if (!comfortable) requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+          if (dungeonForCinematic) {
+            const cinematicKey = String(dungeonForCinematic.id || dungeonForCinematic.name || "");
+            if (!dungeonCinematicSeen.has(cinematicKey)) {
+              dungeonCinematicSeen.add(cinematicKey);
+              setTimeout(() => showDungeonCinematic(dungeonForCinematic), 90);
+            }
+          }
           return;
         }
         case "codex-family-back": {
