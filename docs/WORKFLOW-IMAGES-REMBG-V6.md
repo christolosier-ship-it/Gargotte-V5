@@ -288,3 +288,19 @@ Le premier test iPad a retourné `HTTP 503` lors du téléchargement direct depu
 Le POC ne dépend plus de ce endpoint. Le chemin du modèle `u2netp` pointe désormais explicitement vers le miroir Hugging Face `edgetools/u2netp`, prévu pour un chargement navigateur et documenté comme copie byte-for-byte du modèle rembg attendu (4 574 861 octets, SHA-256 `309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8`).
 
 Aucun changement IndexedDB, moteur, modèle ou format de sortie n'accompagne ce correctif.
+
+
+---
+
+## 16. Comparatif navigateur U2NetP / Silueta — 21 septembre 2026
+
+Le POC iPad propose désormais deux traitements indépendants sur le même Blob original :
+
+- **U2NetP · Rapide** : environ 4,7 Mo, destiné au traitement courant ;
+- **Silueta · Qualité** : environ 44,2 Mo, destiné aux cas difficiles comme les éléments blancs, la fumée et les détails fins.
+
+Le modèle Silueta est chargé depuis `tomjackson2023/rembg` sur Hugging Face. Le fichier annoncé fait 44,2 Mo et son SHA-256 est `75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb`, identique au modèle Silueta de la release `base-models` de rembg-web.
+
+Les traitements sont séquentiels sur iPad afin de limiter la pression mémoire. Les deux résultats peuvent néanmoins rester affichés en parallèle pour comparer la durée, l'audit alpha et le rendu visuel.
+
+Cette phase reste non destructive : aucun `transparent_blob` n'est écrit automatiquement.

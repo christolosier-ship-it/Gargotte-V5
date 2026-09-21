@@ -768,10 +768,9 @@ test("Media library opens detail without altering originals", async ({ page }) =
   expect(after).toEqual(before);
 });
 
-test("browser rembg POC creates a temporary transparent preview without writing IndexedDB", async ({ page }) => {
+test("browser rembg POC compares U2NetP and Silueta without writing IndexedDB", async ({ page }) => {
   await page.addInitScript(() => {
     window.__GARGOTTEX_REMBG_POC__ = {
-      model: "test-stub",
       async remove(_blob, onProgress) {
         onProgress?.(35, "Détourage IA en cours…");
         const canvas = document.createElement("canvas");
@@ -802,7 +801,11 @@ test("browser rembg POC creates a temporary transparent preview without writing 
   await gotoView(page, "media");
   await page.locator('[data-action="media-select"][data-id="media-rembg-poc-test"]').click();
   await expect(page.locator(".media-detail-v6")).toBeVisible();
-  await expect(page.locator('[data-action="media-rembg-poc-run"]')).toBeEnabled();
+
+  const rapid = page.locator('[data-action="media-rembg-poc-run"][data-model="u2netp"]');
+  const quality = page.locator('[data-action="media-rembg-poc-run"][data-model="silueta"]');
+  await expect(rapid).toBeEnabled();
+  await expect(quality).toBeEnabled();
 
   const before = await page.evaluate(async () => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
@@ -812,10 +815,14 @@ test("browser rembg POC creates a temporary transparent preview without writing 
     return {size:row.blob.size,hash:Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,"0")).join(""),transparent:Boolean(row.transparent_blob)};
   });
 
-  await page.locator('[data-action="media-rembg-poc-run"]').click();
-  await expect(page.locator(".media-rembg-poc-result")).toBeVisible();
-  await expect(page.locator(".media-rembg-poc-preview img")).toBeVisible();
-  await expect(page.locator(".media-rembg-poc-result")).toContainText("Audit alpha OK");
+  await rapid.click();
+  await expect(page.locator('.media-rembg-poc-result[data-model="u2netp"]')).toBeVisible();
+  await expect(page.locator('.media-rembg-poc-result[data-model="u2netp"]')).toContainText("Audit alpha OK");
+
+  await quality.click();
+  await expect(page.locator('.media-rembg-poc-result[data-model="silueta"]')).toBeVisible();
+  await expect(page.locator(".media-rembg-poc-result")).toHaveCount(2);
+  await expect(page.locator('.media-rembg-poc-result[data-model="silueta"]')).toContainText("Audit alpha OK");
 
   const after = await page.evaluate(async () => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});

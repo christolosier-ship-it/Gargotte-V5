@@ -1328,3 +1328,18 @@ body.cinematic-open{overflow:hidden}
 .media-rembg-poc-preview{height:260px;display:grid;place-items:center;overflow:hidden;border:1px solid #3c3329;border-radius:9px}.media-rembg-poc-preview.checker{background-color:#171717;background-image:linear-gradient(45deg,#252525 25%,transparent 25%),linear-gradient(-45deg,#252525 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#252525 75%),linear-gradient(-45deg,transparent 75%,#252525 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0}.media-rembg-poc-preview img{width:100%;height:100%;object-fit:contain;background:transparent}
 .media-rembg-poc-actions{display:flex;gap:6px;flex-wrap:wrap}
 @media(max-width:767px){.media-rembg-poc-preview{height:320px}.media-rembg-poc-actions{display:grid;grid-template-columns:1fr}.media-rembg-poc-actions button{width:100%}}
+
+
+/* POC rembg comparatif U2NetP / Silueta */
+.media-rembg-model-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.media-rembg-model-actions button{min-height:42px}
+.media-rembg-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
+.media-rembg-comparison .media-rembg-poc-result{min-width:0}
+.media-rembg-comparison .media-rembg-poc-preview{height:300px}
+@media(max-width:900px){
+  .media-rembg-comparison{grid-template-columns:1fr}
+  .media-rembg-comparison .media-rembg-poc-preview{height:360px}
+}
+@media(max-width:560px){
+  .media-rembg-model-actions{grid-template-columns:1fr}
+}

@@ -667,3 +667,13 @@ Ce POC n'altère pas le Gate UI-5B validé : le moteur de référence documenté
 ### Correctif POC rembg — disponibilité du modèle
 
 Le chargement direct du modèle POC depuis GitHub Releases a produit un HTTP 503 sur l'iPad réel. Le modèle `u2netp` est désormais adressé via le miroir navigateur Hugging Face `edgetools/u2netp`, avec le même SHA-256 attendu. Aucun changement de schéma ou de persistance.
+
+
+### POC comparatif U2NetP / Silueta
+
+Deux boutons de test sont disponibles sur la fiche Média :
+
+- `U2NetP · Rapide · 4,7 Mo`
+- `Silueta · Qualité · 44,2 Mo`
+
+Les résultats sont conservés simultanément en mémoire pour comparaison visuelle. Les inférences sont séquentielles afin de limiter la mémoire sur iPadOS. Aucune persistance IndexedDB n'est effectuée par ces boutons.
