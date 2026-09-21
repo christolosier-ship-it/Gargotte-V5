@@ -3322,14 +3322,14 @@ function renderCreatureRelations(item, relations) {
             <strong>Même Donjon</strong>
             ${relations.dungeon ? `<button class="ghost" type="button" data-action="bestiary-see-dungeon" data-id="${escapeHtml(String(relations.dungeon.id || ""))}">Voir tout</button>` : ""}
           </div>
-          <div class="creature-related-rail" role="list">${same.map(target => renderCreatureRelationCard("creatures", target, target.dungeon_name || "")).join("")}</div>
+          <div class="creature-related-rail">${same.map(target => renderCreatureRelationCard("creatures", target, target.dungeon_name || "")).join("")}</div>
         </div>
       ` : ""}
 
       ${explicit.length ? `
         <div class="creature-related-group">
           <div class="creature-related-subhead"><strong>Relations explicites</strong></div>
-          <div class="creature-related-rail" role="list">${explicit.map(ref => renderCreatureRelationCard(ref.type, ref.target)).join("")}</div>
+          <div class="creature-related-rail">${explicit.map(ref => renderCreatureRelationCard(ref.type, ref.target)).join("")}</div>
         </div>
       ` : ""}
 
