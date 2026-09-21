@@ -203,7 +203,7 @@ test("detail polish reproduces V3 dungeon cinematic, linked media and compact cr
   await expect(cinematic).toHaveClass(/show/);
   await expect(cinematic.getByText("NOUVEAU LIEU", { exact: true })).toBeVisible();
   const dungeonTitle = (await page.locator(".dungeon-cover-copy-v6 h1").innerText()).trim();
-  await expect(cinematic.getByRole("heading", { name: dungeonTitle })).toBeVisible();
+  await expect(cinematic.locator(".cinematic-title")).toHaveText(dungeonTitle);
   await expect(cinematic.locator(".cinematic-curtain")).toHaveCount(2);
   await expect(cinematic.locator(".cinematic-sparks i")).toHaveCount(9);
   await cinematic.getByRole("button", { name: "Continuer" }).click();
@@ -244,7 +244,7 @@ test("detail polish reproduces V3 dungeon cinematic, linked media and compact cr
 
   // La découverte V3 ne se rejoue pas quand le même Donjon est rouvert.
   await page.locator('[data-action="codex-family-back"][data-type="dungeons"]').click();
-  await expect(page.locator(".dungeon-collection-card")).toBeVisible();
+  await expect(page.locator(".dungeon-collection-card").first()).toBeVisible();
   await page.locator('.dungeon-collection-card[data-action="select-family-codex"]').first().click();
   await page.waitForTimeout(180);
   await expect(page.locator("#gargotte-cinematic.show")).toHaveCount(0);
