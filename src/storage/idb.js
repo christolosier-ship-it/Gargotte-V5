@@ -62,10 +62,17 @@ function openDatabase() {
 async function withTx(storeNames, mode, fn) {
   const db = await openDatabase();
   const tx = db.transaction(storeNames, mode);
+  const done = txDone(tx);
   const stores = Object.fromEntries(storeNames.map(name => [name, tx.objectStore(name)]));
-  const result = await fn(stores, tx);
-  await txDone(tx);
-  return result;
+  try {
+    const result = await fn(stores, tx);
+    await done;
+    return result;
+  } catch (error) {
+    try { tx.abort(); } catch (_) {}
+    try { await done; } catch (_) {}
+    throw error;
+  }
 }
 
 export async function initDatabase(seed) {
@@ -101,25 +108,30 @@ export async function getById(storeName, id) {
 }
 
 export async function putOne(storeName, item) {
-  const clone = structuredClone(item);
-  await withTx([storeName], "readwrite", async ({ [storeName]: store }) => { store.put(clone); });
-  return clone;
+  await withTx([storeName], "readwrite", async ({ [storeName]: store }) => {
+    await reqToPromise(store.put(item));
+  });
+  return item;
 }
 
 export async function putMany(storeName, items) {
-  const clones = items.map(v => structuredClone(v));
   await withTx([storeName], "readwrite", async ({ [storeName]: store }) => {
-    for (const item of clones) store.put(item);
+    const requests = items.map(item => reqToPromise(store.put(item)));
+    await Promise.all(requests);
   });
-  return clones;
+  return items;
 }
 
 export async function deleteOne(storeName, id) {
-  await withTx([storeName], "readwrite", async ({ [storeName]: store }) => { store.delete(id); });
+  await withTx([storeName], "readwrite", async ({ [storeName]: store }) => {
+    await reqToPromise(store.delete(id));
+  });
 }
 
 export async function clearStore(storeName) {
-  await withTx([storeName], "readwrite", async ({ [storeName]: store }) => { store.clear(); });
+  await withTx([storeName], "readwrite", async ({ [storeName]: store }) => {
+    await reqToPromise(store.clear());
+  });
 }
 
 export async function deleteWhere(storeName, predicate) {
