@@ -337,7 +337,8 @@ const REMBG_POC_RUNTIME_BASE = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.2
 const REMBG_POC_LIBRARY_URL = "https://cdn.jsdelivr.net/npm/@bunnio/rembg-web@1.0.2/dist/index.umd.min.js";
 const REMBG_POC_MODELS = {
   u2netp: { label: "U2NetP · Rapide", shortLabel: "U2NetP", sizeLabel: "4,7 Mo", url: "https://huggingface.co/edgetools/u2netp/resolve/main/u2netp.onnx" },
-  silueta: { label: "Silueta · Qualité", shortLabel: "Silueta", sizeLabel: "44,2 Mo", url: "https://huggingface.co/tomjackson2023/rembg/resolve/main/silueta.onnx" }
+  silueta: { label: "Silueta · Qualité", shortLabel: "Silueta", sizeLabel: "44,2 Mo", url: "https://huggingface.co/tomjackson2023/rembg/resolve/main/silueta.onnx" },
+  "isnet-general-use": { label: "ISNet General Use · Référence", shortLabel: "ISNet", sizeLabel: "178,6 Mo", url: "https://huggingface.co/tomjackson2023/rembg/resolve/main/isnet-general-use.onnx" }
 };
 let searchDebounceTimer = null;
 let bestiaryScrollSaveTimer = null;
@@ -4543,12 +4544,13 @@ function renderMediaAssetDetail(asset) {
       </section>
       <section class="media-detail-box rembg-box">
         <span class="eyebrow">Détourage figurine</span><h3>Comparatif rembg local · POC iPad</h3>
-        <p>Deux moteurs peuvent être testés sur le même original : <strong>U2NetP</strong> privilégie la légèreté, <strong>Silueta</strong> la qualité. Les résultats restent temporaires et <strong>aucune écriture IndexedDB</strong> n'est effectuée.</p>
+        <p>Trois moteurs peuvent être testés sur le même original : <strong>U2NetP</strong> privilégie la légèreté, <strong>Silueta</strong> le compromis qualité, et <strong>ISNet General Use</strong> reproduit le modèle de référence du workflow rembg validé. Les résultats restent temporaires et <strong>aucune écriture IndexedDB</strong> n'est effectuée.</p>
         <div class="media-rembg-model-actions">
           <button class="primary" type="button" data-action="media-rembg-poc-run" data-model="u2netp" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob && !pocBusyModel ? "" : "disabled"}>${pocBusyModel === "u2netp" ? "U2NetP en cours…" : "U2NetP · Rapide · 4,7 Mo"}</button>
           <button class="secondary" type="button" data-action="media-rembg-poc-run" data-model="silueta" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob && !pocBusyModel ? "" : "disabled"}>${pocBusyModel === "silueta" ? "Silueta en cours…" : "Silueta · Qualité · 44,2 Mo"}</button>
+          <button class="secondary" type="button" data-action="media-rembg-poc-run" data-model="isnet-general-use" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob && !pocBusyModel ? "" : "disabled"}>${pocBusyModel === "isnet-general-use" ? "ISNet en cours…" : "ISNet General Use · Référence · 178,6 Mo"}</button>
         </div>
-        <small class="media-rembg-poc-proof">Le premier essai Silueta télécharge environ 44 Mo. Les modèles sont lancés séparément pour limiter la pression mémoire sur Safari/iPadOS.</small>
+        <small class="media-rembg-poc-proof">Premier chargement : U2NetP ≈ 4,7 Mo, Silueta ≈ 44,2 Mo, ISNet ≈ 178,6 Mo. Les modèles sont lancés séparément et leur session ONNX est libérée après chaque traitement pour limiter la pression mémoire sur Safari/iPadOS.</small>
         <div class="media-rembg-actions">
           <button class="ghost" type="button" data-action="media-download-original" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob ? "" : "disabled"}>Télécharger l'original</button>
           <label class="secondary ${asset.blob ? "" : "disabled"}">Importer un PNG rembg<input type="file" accept="image/png,.png" data-action="media-derivative-upload" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob ? "" : "disabled"} hidden></label>
@@ -4568,7 +4570,7 @@ function renderMediaAssetDetail(asset) {
         ` : ""}
         ${Object.keys(pocResults).length ? `
           <div class="media-rembg-comparison">
-            ${["u2netp","silueta"].map(modelKey => {
+            ${["u2netp","silueta","isnet-general-use"].map(modelKey => {
               const result = pocResults[modelKey];
               if (!result?.url || !result?.blob) return "";
               const config = REMBG_POC_MODELS[modelKey];
@@ -4590,7 +4592,7 @@ function renderMediaAssetDetail(asset) {
               `;
             }).join("")}
           </div>
-          <small class="media-rembg-poc-proof">Comparatif temporaire : les deux résultats restent uniquement en mémoire. Le Blob original IndexedDB est vérifié par SHA-256 avant/après chaque traitement.</small>
+          <small class="media-rembg-poc-proof">Comparatif temporaire : les résultats restent uniquement en mémoire. Le Blob original IndexedDB est vérifié par SHA-256 avant/après chaque traitement.</small>
         ` : ""}
         ${asset.blob ? "" : `<small class="media-warning">Ce média historique ne possède pas de Blob original local. Aucun dérivé ne peut être validé ici sans source vérifiable.</small>`}
         ${audit ? `<div class="media-alpha-audit ${audit.pass ? "pass" : "fail"}">
@@ -5986,6 +5988,9 @@ async function ensureMediaRembgPocEngine(modelKey = "u2netp") {
             onProgress?.(Number(info?.progress || 0), labels[info?.step] || String(info?.message || ""));
           }
         });
+      },
+      async release() {
+        try { await session?.release?.(); } finally { rembgPocEnginePromises.delete(modelKey); }
       }
     };
   })().catch(err => {
@@ -6018,8 +6023,9 @@ async function runMediaRembgPoc(assetId, modelKey = "u2netp") {
   render();
 
   const started = performance.now();
+  let engine = null;
   try {
-    const engine = await ensureMediaRembgPocEngine(modelKey);
+    engine = await ensureMediaRembgPocEngine(modelKey);
     const output = await engine.remove(existing.blob, (progress, message) => updateMediaRembgPocProgress(assetId, modelKey, progress, message));
     const persisted = await getById("media_assets", assetId);
     const afterHash = await sha256Blob(persisted?.blob);
@@ -6049,6 +6055,8 @@ async function runMediaRembgPoc(assetId, modelKey = "u2netp") {
     state.mediaRembgPoc.errorModel = modelKey;
     render();
     throw err;
+  } finally {
+    try { await engine?.release?.(); } catch (_) {}
   }
 }
 
