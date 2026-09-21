@@ -589,13 +589,15 @@ Le retrait disponible dans UI-5B concerne uniquement le dérivé régénérable.
 
 ## Offline
 
-Aucun Neon, aucun cloud, aucune Auth distante, aucun CDN. IndexedDB reste en version 2 et le Service Worker n'a pas besoin de migration.
+Aucun Neon, aucune Auth distante et aucun backend applicatif ne sont introduits. IndexedDB Gargottex reste en version 2 et le Service Worker ne nécessite aucune migration.
+
+Le détourage intégré charge au premier usage le runtime navigateur et le modèle `isnet-general-use`. `rembg-web` conserve le modèle dans une base IndexedDB séparée `rembg-models`. Après un premier chargement réussi, le moteur peut fonctionner hors ligne tant que le navigateur conserve ce cache local.
 
 ## Gate UI-5B
 
 - originaux intacts : validé par construction et empreinte ;
 - dérivés séparés : validé ;
-- rembg / isnet-general-use : validé via pipeline local générique ;
+- rembg / isnet-general-use : validé via pipeline local historique **et** moteur navigateur intégré ;
 - PNG RGBA + audit alpha : validés ;
 - contrôle visuel explicite : validé ;
 - bibliothèque + détail : validés ;
@@ -648,43 +650,53 @@ UI-5C : **VALIDÉ**
 
 ---
 
-## POC rembg navigateur iPad — 21 septembre 2026
+## Détourage ISNet intégré — phase production — 21 septembre 2026
 
-Un POC non destructif est ajouté à la fiche Média pour tester le détourage direct sur iPad.
+Le POC iPad est remplacé par un workflow de production à moteur unique.
 
-- source : `media_assets.blob` existant ;
-- modèle POC léger : `u2netp` ;
-- sortie : PNG RGBA temporaire en mémoire ;
-- contrôle : audit alpha local + SHA-256 original avant/après ;
-- persistance : **aucune** pour ce POC ;
-- l'import manuel du PNG rembg historique reste disponible ;
-- aucun changement de `DB_VERSION`, aucun store ajouté à la base Gargottex ;
-- validation sur appareil réel obligatoire avant de raccorder le résultat à `transparent_blob`.
+### Moteur
 
-Ce POC n'altère pas le Gate UI-5B validé : le moteur de référence documenté reste `isnet-general-use` tant que la qualité et la stabilité iPad du mode navigateur ne sont pas confirmées.
+- outil : `rembg-web` ;
+- famille : IS-Net / DIS ;
+- modèle : `isnet-general-use` ;
+- taille modèle : environ 178,6 Mo ;
+- le modèle est mis en cache par `rembg-web` dans l'IndexedDB séparé `rembg-models`.
 
+### UX Média
 
-### Correctif POC rembg — disponibilité du modèle
+La fiche Média expose :
 
-Le chargement direct du modèle POC depuis GitHub Releases a produit un HTTP 503 sur l'iPad réel. Le modèle `u2netp` est désormais adressé via le miroir navigateur Hugging Face `edgetools/u2netp`, avec le même SHA-256 attendu. Aucun changement de schéma ou de persistance.
+- `Détourer avec ISNet` ;
+- progression chargement / inférence ;
+- erreurs explicites ;
+- aperçu temporaire sur damier ;
+- audit alpha ;
+- `Valider et enregistrer` ;
+- `Rejeter / recommencer` ;
+- téléchargement facultatif du candidat ;
+- import PNG externe conservé en secours.
 
+### Barrière humaine
 
-### POC comparatif U2NetP / Silueta
+Le traitement ISNet ne persiste rien dans `media_assets`.
 
-Deux boutons de test sont disponibles sur la fiche Média :
+Avant validation humaine :
+- le PNG existe uniquement en mémoire ;
+- aucun `transparent_blob` ;
+- aucun `transparent_*` ;
+- l'ancien dérivé approuvé éventuel reste intact.
 
-- `U2NetP · Rapide · 4,7 Mo`
-- `Silueta · Qualité · 44,2 Mo`
+Au clic `Valider et enregistrer` :
+- l'audit doit être valide ;
+- le SHA-256 de l'original doit être identique à celui capturé avant l'inférence ;
+- `saveTransparentDerivative()` écrit le PNG uniquement dans les propriétés `transparent_*` ;
+- le statut est directement `approved` car le clic constitue l'approbation visuelle humaine ;
+- le Codex peut alors utiliser le dérivé.
 
-Les résultats sont conservés simultanément en mémoire pour comparaison visuelle. Les inférences sont séquentielles afin de limiter la mémoire sur iPadOS. Aucune persistance IndexedDB n'est effectuée par ces boutons.
+Le rejet du candidat ne provoque aucune écriture IndexedDB.
 
+### Mémoire iPad
 
-### POC ISNet General Use
+Après chaque inférence, les sessions ONNX sont explicitement libérées avec `disposeAllSessions()`. Le cache modèle `rembg-models` n'est pas supprimé.
 
-La fiche Média propose désormais un troisième bouton de comparaison :
-
-- `ISNet General Use · Référence · 178,6 Mo`
-
-Il utilise le même modèle `isnet-general-use` que le workflow rembg historique validé, via ONNX Runtime Web. Le premier chargement est volumineux. L'inférence reste séquentielle et la session ONNX est libérée après chaque traitement afin de limiter la pression mémoire sur iPadOS.
-
-Le résultat reste temporaire : aucune persistance IndexedDB automatique.
+Aucune migration de `gargottex-v5-offline`, aucun nouveau store Gargottex et aucune modification des originaux existants.

@@ -223,7 +223,9 @@ Une ressource détourée est validée si :
 
 # 14. Intégration production UI-5B
 
-Utilitaire local générique :
+Deux chemins restent supportés.
+
+## 14.1 Utilitaire local historique
 
 ```bash
 python scripts/media/process_transparent_derivative.py original.jpg derive-transparent.png
@@ -231,97 +233,156 @@ python scripts/media/process_transparent_derivative.py original.jpg derive-trans
 
 Il refuse l'écrasement de la source, utilise `rembg` + `isnet-general-use`, écrit un PNG RGBA séparé, compare le SHA-256 de la source avant/après et produit un `.audit.json`.
 
-La PWA importe ensuite le PNG comme `transparent_blob`, refait son audit alpha localement puis exige un contrôle visuel explicite avant utilisation par le Codex.
+L'import manuel du PNG reste disponible comme solution de secours.
 
+## 14.2 Détourage intégré dans la PWA
 
----
+Statut : **PRODUCTION — validé sur iPad — 21 septembre 2026**
 
-# 15. POC navigateur iPad — 21 septembre 2026
+La fiche Média dispose d'un seul moteur intégré :
 
-Statut : **EXPÉRIMENTAL — validation réelle iPad requise avant écriture automatique du dérivé**.
+- outil : `rembg-web` ;
+- famille : **IS-Net / DIS** ;
+- modèle : **`isnet-general-use`** ;
+- runtime : `onnxruntime-web@1.23.0` ;
+- bibliothèque : `@bunnio/rembg-web@1.0.2` ;
+- modèle navigateur : `isnet-general-use.onnx`, environ 178,6 Mo ;
+- SHA-256 attendu : `60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a`.
 
-Objectif : permettre depuis la fiche Média de tester un détourage directement depuis le Blob original IndexedDB, sans export ZIP ni passage par l'app Fichiers.
-
-## Périmètre du POC
-
-- bouton `Détourer · bêta` sur un média possédant un `blob` original ;
-- traitement entièrement côté navigateur ;
-- modèle POC : `u2netp` (~4,7 Mo), choisi pour limiter mémoire et temps CPU sur iPad ;
-- sortie PNG RGBA ;
-- audit alpha via le code Gargottex existant ;
-- aperçu sur damier + durée ;
-- téléchargement facultatif du PNG de test ;
-- **aucune écriture `transparent_*` et aucune modification IndexedDB par le bouton bêta** ;
-- SHA-256 du Blob original vérifié avant/après le traitement.
-
-Le workflow de production validé reste `rembg + isnet-general-use`. Le modèle léger du POC n'est pas déclaré équivalent en qualité tant que les figurines Gargotte réelles n'ont pas été comparées sur iPad.
-
-## Chargement
-
-Le POC épingle ses dépendances de test navigateur :
-
-- `onnxruntime-web@1.23.0` ;
-- `@bunnio/rembg-web@1.0.2` (MIT) ;
-- modèle `u2netp.onnx` chargé depuis le miroir navigateur `edgetools/u2netp` sur Hugging Face ; ce miroir annonce un fichier byte-for-byte identique à l'asset rembg, SHA-256 `309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8`.
-
-Le premier essai nécessite donc le réseau. Le moteur rembg-web possède son propre cache modèle navigateur ; Gargottex ne modifie pas le schéma de `gargottex-v5-offline`.
-
-## Gate avant phase production
-
-Tester sur l'iPad réel :
-
-1. premier chargement ;
-2. temps de détourage ;
-3. plusieurs traitements successifs ;
-4. absence de crash/rechargement Safari ;
-5. cheveux, ailes, armes fines, cornes et socles ;
-6. halo blanc ;
-7. qualité comparée au dérivé `isnet-general-use` historique.
-
-Si le POC est satisfaisant, phase suivante : brancher explicitement le Blob produit sur `saveTransparentDerivative()`, puis conserver l'audit + validation visuelle existants.
-
-
-### Correctif disponibilité modèle — 21 septembre 2026
-
-Le premier test iPad a retourné `HTTP 503` lors du téléchargement direct depuis l'asset GitHub Release `bunn-io/rembg-web/base-models`.
-
-Le POC ne dépend plus de ce endpoint. Le chemin du modèle `u2netp` pointe désormais explicitement vers le miroir Hugging Face `edgetools/u2netp`, prévu pour un chargement navigateur et documenté comme copie byte-for-byte du modèle rembg attendu (4 574 861 octets, SHA-256 `309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8`).
-
-Aucun changement IndexedDB, moteur, modèle ou format de sortie n'accompagne ce correctif.
-
+Le modèle est identique à celui retenu dans le workflow rembg historique.
 
 ---
 
-## 16. Comparatif navigateur U2NetP / Silueta — 21 septembre 2026
+# 15. Flux de production avec validation humaine
 
-Le POC iPad propose désormais deux traitements indépendants sur le même Blob original :
+Le flux intégré est strictement :
 
-- **U2NetP · Rapide** : environ 4,7 Mo, destiné au traitement courant ;
-- **Silueta · Qualité** : environ 44,2 Mo, destiné aux cas difficiles comme les éléments blancs, la fumée et les détails fins.
+```text
+media_assets.blob ORIGINAL
+        |
+        v
+SHA-256 source
+        |
+        v
+ISNet General Use en mémoire
+        |
+        v
+PNG RGBA temporaire
+        |
+        v
+audit alpha
+        |
+        v
+APERÇU HUMAIN SUR DAMIER
+        |
+        +--> Rejeter / recommencer -> aucune écriture Gargottex
+        |
+        +--> Valider et enregistrer
+                    |
+                    v
+            saveTransparentDerivative()
+                    |
+                    v
+          transparent_* uniquement
+          review_status = approved
+```
 
-Le modèle Silueta est chargé depuis `tomjackson2023/rembg` sur Hugging Face. Le fichier annoncé fait 44,2 Mo et son SHA-256 est `75da6c8d2f8096ec743d071951be73b4a8bc7b3e51d9a6625d63644f90ffeedb`, identique au modèle Silueta de la release `base-models` de rembg-web.
+**Aucun `transparent_blob` n'est écrit avant le clic humain `Valider et enregistrer`.**
 
-Les traitements sont séquentiels sur iPad afin de limiter la pression mémoire. Les deux résultats peuvent néanmoins rester affichés en parallèle pour comparer la durée, l'audit alpha et le rendu visuel.
+Le clic humain constitue l'approbation visuelle du dérivé intégré. L'écriture est effectuée directement avec `transparent_review_status = "approved"` seulement si l'audit alpha est valide.
 
-Cette phase reste non destructive : aucun `transparent_blob` n'est écrit automatiquement.
-
+L'import manuel historique reste distinct : il écrit un dérivé en `pending` lorsqu'il passe l'audit, puis exige le contrôle visuel déjà présent.
 
 ---
 
-## 17. Test navigateur ISNet General Use — 21 septembre 2026
+# 16. Contrôles de sécurité
 
-Le POC iPad ajoute un troisième moteur afin de comparer directement le modèle historique du workflow rembg validé :
+Avant l'inférence :
 
-- **U2NetP · Rapide** : ~4,7 Mo ;
-- **Silueta · Qualité** : ~44,2 Mo ;
-- **ISNet General Use · Référence** : 178 648 008 octets (~178,6 Mo).
+- le Blob original doit exister ;
+- son SHA-256 est calculé.
 
-Le fichier `isnet-general-use.onnx` utilisé côté navigateur est chargé depuis le miroir Hugging Face `tomjackson2023/rembg`. Son SHA-256 est `60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a`, identique à l'asset `isnet-general-use.onnx` publié dans la release `base-models` de `bunn-io/rembg-web`.
+Après l'inférence, avant même d'afficher le candidat :
 
-Ce modèle correspond à la famille **IS-Net / DIS** et au modèle `isnet-general-use` déjà retenu dans le workflow Python Gargottex.
+- l'original est relu ;
+- son SHA-256 doit être identique.
 
-### Garde-fou mémoire iPad
+Juste avant la validation humaine :
 
-Les modèles ne tournent jamais en parallèle. Après chaque inférence réelle, la session ONNX est explicitement libérée avec `InferenceSession.release()`. Les PNG comparatifs restent en mémoire pour l'affichage, mais la session du modèle n'est pas conservée.
+- l'original est relu une nouvelle fois ;
+- son SHA-256 doit correspondre à l'empreinte mémorisée avec le candidat.
 
-Cette phase reste non destructive : aucun champ `transparent_*` n'est écrit par les boutons POC.
+Après `saveTransparentDerivative()` :
+
+- l'original est relu ;
+- son SHA-256 doit toujours être identique.
+
+Toute divergence déclenche un **STOP sécurité**.
+
+Seuls les champs `transparent_*` et `updated_at` du média sont modifiés lors de l'enregistrement du dérivé.
+
+Aucune migration de `gargottex-v5-offline` n'est nécessaire.
+
+---
+
+# 17. Mémoire et cache iPad
+
+Le modèle ISNet est lourd et peut exercer une forte pression mémoire sur Safari/iPadOS.
+
+Après chaque inférence :
+
+- la session ONNX est libérée via le mécanisme `disposeAllSessions()` de `rembg-web` ;
+- le PNG temporaire reste seulement en mémoire jusqu'à validation/rejet ;
+- le modèle téléchargé reste éligible au cache modèle de `rembg-web`.
+
+`rembg-web` stocke le modèle dans une base IndexedDB séparée nommée **`rembg-models`**.
+
+Ce cache :
+
+- ne modifie pas `gargottex-v5-offline` ;
+- permet de réutiliser le modèle sans nouveau téléchargement lorsqu'il est conservé par le navigateur ;
+- rend le détourage utilisable hors ligne après le premier chargement réussi, sous réserve que Safari n'ait pas évincé le stockage du site.
+
+Les scripts runtime distants sont également réutilisables via les caches navigateur / Service Worker après leur premier chargement lorsqu'ils sont disponibles.
+
+---
+
+# 18. Critères de validation humaine
+
+Avant de cliquer `Valider et enregistrer`, inspecter notamment :
+
+- cheveux ;
+- oreilles ;
+- cornes ;
+- ailes ;
+- armes ;
+- cordes et fils fins ;
+- éléments blancs sur fond blanc ;
+- brume / fumée ;
+- bords de socle ;
+- halos.
+
+Si le résultat n'est pas satisfaisant :
+
+- cliquer `Rejeter / recommencer` ;
+- aucun dérivé n'est écrit dans Gargottex ;
+- l'original reste intact et continue d'être utilisé.
+
+---
+
+# 19. Gate production
+
+Le workflow intégré est considéré valide si :
+
+1. ISNet produit un PNG RGBA décodable ;
+2. l'audit alpha passe ;
+3. l'original conserve le même SHA-256 avant/après ;
+4. aucune écriture `transparent_*` n'a lieu avant validation humaine ;
+5. la validation humaine écrit uniquement le dérivé ;
+6. le dérivé est enregistré directement en `approved` ;
+7. le Codex ne préfère que les dérivés `approved` avec audit valide ;
+8. le rejet d'un candidat ne modifie pas IndexedDB ;
+9. la session ONNX est libérée après traitement ;
+10. Chromium couvre intégralement la barrière d'écriture IndexedDB avant/après validation humaine ;
+11. WebKit exécute le flux complet lorsque le moteur de test sait persister les Blob/File dans IndexedDB ; le port Playwright WebKit/Linux actuellement utilisé en CI ne fournit pas toujours cette capacité et bascule alors sur un smoke UI explicite ;
+12. la validation réelle iPad reste requise pour la compatibilité Safari/iPadOS du stockage Blob et du moteur lourd ISNet.

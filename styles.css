@@ -1319,28 +1319,33 @@ body.cinematic-open{overflow:hidden}
 }
 
 
-/* UI-5B POC rembg navigateur · iPad */
-.media-rembg-poc-status,.media-rembg-poc-error,.media-rembg-poc-result{display:grid;gap:8px;padding:10px;border:1px solid var(--color-border-subtle);border-radius:10px;background:#110c09}
-.media-rembg-poc-status progress{width:100%;height:8px;accent-color:#b8893f}
-.media-rembg-poc-status strong{font:700 13px Alegreya,Georgia,serif}.media-rembg-poc-status small,.media-rembg-poc-proof{color:var(--color-text-tertiary);font-size:7px;line-height:1.45}
-.media-rembg-poc-error{border-color:#70413b;background:#21100e}.media-rembg-poc-error strong{color:#e5968b}.media-rembg-poc-error span{font-size:8px;color:#d2aaa4;overflow-wrap:anywhere}.media-rembg-poc-error button{justify-self:start}
-.media-rembg-poc-result{border-color:#655036}.media-rembg-poc-result>header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.media-rembg-poc-result>header>div{display:grid;gap:2px}.media-rembg-poc-result>header strong{font:700 16px Alegreya,Georgia,serif}.media-rembg-poc-result>header>span{padding:4px 7px;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:7px;white-space:nowrap}.media-rembg-poc-result>header>span.ok{color:#9bc5a1;border-color:#49684e}.media-rembg-poc-result>header>span.warn{color:#e3bd74;border-color:#786039}
-.media-rembg-poc-preview{height:260px;display:grid;place-items:center;overflow:hidden;border:1px solid #3c3329;border-radius:9px}.media-rembg-poc-preview.checker{background-color:#171717;background-image:linear-gradient(45deg,#252525 25%,transparent 25%),linear-gradient(-45deg,#252525 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#252525 75%),linear-gradient(-45deg,transparent 75%,#252525 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0}.media-rembg-poc-preview img{width:100%;height:100%;object-fit:contain;background:transparent}
-.media-rembg-poc-actions{display:flex;gap:6px;flex-wrap:wrap}
-@media(max-width:767px){.media-rembg-poc-preview{height:320px}.media-rembg-poc-actions{display:grid;grid-template-columns:1fr}.media-rembg-poc-actions button{width:100%}}
-
-
-/* POC rembg comparatif U2NetP / Silueta / ISNet */
-.media-rembg-model-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.media-rembg-model-actions button{min-height:42px}
-.media-rembg-comparison{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
-.media-rembg-comparison .media-rembg-poc-result{min-width:0}
-.media-rembg-comparison .media-rembg-poc-preview{height:300px}
-@media(max-width:1100px){
-  .media-rembg-model-actions{grid-template-columns:1fr}
-  .media-rembg-comparison{grid-template-columns:1fr}
-  .media-rembg-comparison .media-rembg-poc-preview{height:360px}
+/* UI-5B production rembg · ISNet General Use */
+.media-rembg-status,.media-rembg-error,.media-rembg-candidate{display:grid;gap:8px;padding:10px;border:1px solid var(--color-border-subtle);border-radius:10px;background:#110c09}
+.media-rembg-status progress{width:100%;height:8px;accent-color:#b8893f}
+.media-rembg-status strong{font:700 13px Alegreya,Georgia,serif}
+.media-rembg-status small,.media-rembg-proof{color:var(--color-text-tertiary);font-size:7px;line-height:1.45}
+.media-rembg-error{border-color:#70413b;background:#21100e}
+.media-rembg-error strong{color:#e5968b}
+.media-rembg-error span{font-size:8px;color:#d2aaa4;overflow-wrap:anywhere}
+.media-rembg-error button{justify-self:start}
+.media-rembg-candidate{border-color:#655036}
+.media-rembg-candidate>header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.media-rembg-candidate>header>div{display:grid;gap:2px}
+.media-rembg-candidate>header strong{font:700 16px Alegreya,Georgia,serif}
+.media-rembg-candidate>header>span{padding:4px 7px;border:1px solid var(--color-border-subtle);border-radius:999px;font-size:7px;white-space:nowrap}
+.media-rembg-candidate>header>span.ok{color:#9bc5a1;border-color:#49684e}
+.media-rembg-candidate>header>span.warn{color:#e3bd74;border-color:#786039}
+.media-rembg-preview{height:320px;display:grid;place-items:center;overflow:hidden;border:1px solid #3c3329;border-radius:9px}
+.media-rembg-preview.checker{background-color:#171717;background-image:linear-gradient(45deg,#252525 25%,transparent 25%),linear-gradient(-45deg,#252525 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#252525 75%),linear-gradient(-45deg,transparent 75%,#252525 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0}
+.media-rembg-preview img{width:100%;height:100%;object-fit:contain;background:transparent}
+.media-human-review{display:grid;gap:3px;padding:9px;border:1px solid #6a5538;border-radius:9px;background:#1a120b}
+.media-human-review strong{font:700 12px Alegreya,Georgia,serif;color:#e2bd75}
+.media-human-review span{font-size:8px;line-height:1.45;color:var(--color-text-secondary)}
+.media-rembg-candidate-actions{display:flex;gap:6px;flex-wrap:wrap}
+.media-approved-state{display:inline-flex;align-items:center;padding:6px 9px;border:1px solid #49684e;border-radius:999px;color:#9bc5a1;font-size:8px}
+@media(max-width:767px){
+  .media-rembg-preview{height:360px}
+  .media-rembg-candidate-actions{display:grid;grid-template-columns:1fr}
+  .media-rembg-candidate-actions button{width:100%}
 }
-@media(max-width:560px){
-  .media-rembg-model-actions{grid-template-columns:1fr}
-}
+
