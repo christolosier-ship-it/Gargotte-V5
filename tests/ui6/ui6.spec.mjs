@@ -140,7 +140,7 @@ test("Codex polish removes helper copy, applies dungeon accents and keeps creatu
     const cards = Array.from(el.querySelectorAll(".bestiary-gallery-card")).slice(0, 3);
     const rects = cards.map(card => {
       const rect = card.getBoundingClientRect();
-      return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width };
+      return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height };
     });
     const firstStyle = cards[0] ? getComputedStyle(cards[0]) : null;
     return {
@@ -179,7 +179,24 @@ test("Codex polish removes helper copy, applies dungeon accents and keeps creatu
   expect(dungeonAccent.shadow).not.toBe("none");
   expect(dungeonAccent.mediaBackground).not.toBe("none");
 
-  for (const type of ["heroes","npcs","quests","loot_items","interactables","brouhaha_effects"]) {
+  const dungeonRect = await page.locator(".dungeon-collection-card").first().evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  });
+
+  await page.locator('[data-action="set-codex-type"][data-type="heroes"]').first().click();
+  await expect(page.locator(".hero-collection-card").first()).toBeVisible();
+  const heroRect = await page.locator(".hero-collection-card").first().evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  });
+
+  const creatureRect = galleryLayout.rects[0];
+  expect(Math.abs(creatureRect.width - dungeonRect.width)).toBeLessThanOrEqual(12);
+  expect(Math.abs(creatureRect.width - heroRect.width)).toBeLessThanOrEqual(12);
+  expect(Math.abs(creatureRect.height - heroRect.height)).toBeLessThanOrEqual(35);
+
+  for (const type of ["npcs","quests","loot_items","interactables","brouhaha_effects"]) {
     await page.locator(`[data-action="set-codex-type"][data-type="${type}"]`).first().click();
     await expect(page.locator(".codex-family-heading .eyebrow")).toHaveCount(0);
     const search = page.locator(`[data-action="family-search"][data-type="${type}"]`);
@@ -714,7 +731,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
 
   const cacheState = await page.evaluate(async () => {
     const names = await caches.keys();
-    const cacheName = names.find(name => name === "gargottex-v6-polish-details-v1");
+    const cacheName = names.find(name => name === "gargottex-v6-polish-cards-v1");
     if (!cacheName) return { cacheName: null, missing: ["cache"] };
     const cache = await caches.open(cacheName);
     const core = ["./index.html","./styles.css","./manifest.webmanifest","./src/app.js","./src/storage/idb.js","./assets/fonts/Inter-Variable.ttf","./assets/fonts/Alegreya-Variable.ttf"];
@@ -722,7 +739,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
     for (const path of core) if (!(await cache.match(path,{ignoreSearch:true}))) missing.push(path);
     return { cacheName, missing };
   });
-  expect(cacheState.cacheName).toBe("gargottex-v6-polish-details-v1");
+  expect(cacheState.cacheName).toBe("gargottex-v6-polish-cards-v1");
   expect(cacheState.missing).toEqual([]);
 
   await gotoView(page, "import");
