@@ -304,3 +304,24 @@ Le modèle Silueta est chargé depuis `tomjackson2023/rembg` sur Hugging Face. L
 Les traitements sont séquentiels sur iPad afin de limiter la pression mémoire. Les deux résultats peuvent néanmoins rester affichés en parallèle pour comparer la durée, l'audit alpha et le rendu visuel.
 
 Cette phase reste non destructive : aucun `transparent_blob` n'est écrit automatiquement.
+
+
+---
+
+## 17. Test navigateur ISNet General Use — 21 septembre 2026
+
+Le POC iPad ajoute un troisième moteur afin de comparer directement le modèle historique du workflow rembg validé :
+
+- **U2NetP · Rapide** : ~4,7 Mo ;
+- **Silueta · Qualité** : ~44,2 Mo ;
+- **ISNet General Use · Référence** : 178 648 008 octets (~178,6 Mo).
+
+Le fichier `isnet-general-use.onnx` utilisé côté navigateur est chargé depuis le miroir Hugging Face `tomjackson2023/rembg`. Son SHA-256 est `60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a`, identique à l'asset `isnet-general-use.onnx` publié dans la release `base-models` de `bunn-io/rembg-web`.
+
+Ce modèle correspond à la famille **IS-Net / DIS** et au modèle `isnet-general-use` déjà retenu dans le workflow Python Gargottex.
+
+### Garde-fou mémoire iPad
+
+Les modèles ne tournent jamais en parallèle. Après chaque inférence réelle, la session ONNX est explicitement libérée avec `InferenceSession.release()`. Les PNG comparatifs restent en mémoire pour l'affichage, mais la session du modèle n'est pas conservée.
+
+Cette phase reste non destructive : aucun champ `transparent_*` n'est écrit par les boutons POC.
