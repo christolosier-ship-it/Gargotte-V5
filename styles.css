@@ -1330,13 +1330,14 @@ body.cinematic-open{overflow:hidden}
 @media(max-width:767px){.media-rembg-poc-preview{height:320px}.media-rembg-poc-actions{display:grid;grid-template-columns:1fr}.media-rembg-poc-actions button{width:100%}}
 
 
-/* POC rembg comparatif U2NetP / Silueta */
-.media-rembg-model-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+/* POC rembg comparatif U2NetP / Silueta / ISNet */
+.media-rembg-model-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .media-rembg-model-actions button{min-height:42px}
-.media-rembg-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
+.media-rembg-comparison{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
 .media-rembg-comparison .media-rembg-poc-result{min-width:0}
 .media-rembg-comparison .media-rembg-poc-preview{height:300px}
-@media(max-width:900px){
+@media(max-width:1100px){
+  .media-rembg-model-actions{grid-template-columns:1fr}
   .media-rembg-comparison{grid-template-columns:1fr}
   .media-rembg-comparison .media-rembg-poc-preview{height:360px}
 }
