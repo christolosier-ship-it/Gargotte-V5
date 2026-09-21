@@ -104,6 +104,26 @@ test("polished home keeps Berthold advice stable and session actions intact", as
   await assertNoHorizontalOverflow(page);
 });
 
+test("home cleanup removes crossed copy and sidebar navigation is Lucide-only", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
+
+  await expect(page.getByText("Gargotte & Va-Nu-Pieds", { exact: true })).toHaveCount(0);
+  await expect(page.getByText(/Une encyclopédie visuelle et un compagnon de partie local-first/)).toHaveCount(0);
+  await expect(page.getByText(/Ouvre le Codex, choisis ton Donjon ou lance une partie/)).toHaveCount(0);
+  await expect(page.getByText(/Choisis un Donjon pour créer un contexte de partie partagé/)).toHaveCount(0);
+
+  const sidebar = page.locator(".v6-sidebar .v6-nav");
+  await expect(sidebar.locator("img")).toHaveCount(0);
+  await expect(sidebar.locator("svg.ui-icon")).toHaveCount(8);
+
+  const expectedLabels = ["Accueil","Codex","Générateur","Brouhaha","Quêtes","Atelier","Médias","Import / Export"];
+  for (const label of expectedLabels) {
+    await expect(page.locator(".v6-sidebar .navbtn").filter({ hasText: label })).toBeVisible();
+  }
+});
+
+
 for (const [name, width, height] of viewports) {
   test(`responsive matrix ${name}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
@@ -538,7 +558,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
 
   const cacheState = await page.evaluate(async () => {
     const names = await caches.keys();
-    const cacheName = names.find(name => name === "gargottex-v6-polish-home-v1");
+    const cacheName = names.find(name => name === "gargottex-v6-polish-home-v2");
     if (!cacheName) return { cacheName: null, missing: ["cache"] };
     const cache = await caches.open(cacheName);
     const core = ["./index.html","./styles.css","./manifest.webmanifest","./src/app.js","./src/storage/idb.js","./assets/fonts/Inter-Variable.ttf","./assets/fonts/Alegreya-Variable.ttf"];
@@ -546,7 +566,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
     for (const path of core) if (!(await cache.match(path,{ignoreSearch:true}))) missing.push(path);
     return { cacheName, missing };
   });
-  expect(cacheState.cacheName).toBe("gargottex-v6-polish-home-v1");
+  expect(cacheState.cacheName).toBe("gargottex-v6-polish-home-v2");
   expect(cacheState.missing).toEqual([]);
 
   await gotoView(page, "import");
