@@ -1146,6 +1146,7 @@ function showDungeonCinematic(dungeon) {
   const safeImage = String(image || "").replace(/"/g, "%22");
   clearTimeout(showDungeonCinematic.timer);
   layer.dataset.kind = "discovery";
+  layer.setAttribute("aria-label", `Nouveau lieu : ${title}`);
   layer.style.setProperty("--cinematic-bg", image ? `url("${safeImage}")` : "none");
   layer.style.setProperty("--cinematic-accent", accent);
   layer.innerHTML = `
@@ -1155,7 +1156,7 @@ function showDungeonCinematic(dungeon) {
     <div class="cinematic-card">
       <img class="cinematic-emblem" src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="">
       <div class="cinematic-eyebrow">NOUVEAU LIEU</div>
-      <h2>${escapeHtml(title)}</h2>
+      <div class="cinematic-title">${escapeHtml(title)}</div>
       ${copy ? `<p>${escapeHtml(copy)}</p>` : ""}
       <div class="cinematic-sparks" aria-hidden="true">${Array.from({ length: 9 }, (_, index) => `<i style="--i:${index}"></i>`).join("")}</div>
       <button class="primary cinematic-skip" type="button">Continuer</button>
