@@ -4552,7 +4552,7 @@ function renderMediaAssetDetail(asset) {
           <button class="ghost" type="button" data-action="media-download-original" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob ? "" : "disabled"}>Télécharger l'original</button>
           <label class="secondary ${asset.blob ? "" : "disabled"}">Importer un PNG externe<input type="file" accept="image/png,.png" data-action="media-derivative-upload" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob ? "" : "disabled"} hidden></label>
         </div>
-        <small class="media-rembg-proof">ISNet pèse environ 178,6 Mo. `rembg-web` conserve le modèle dans son IndexedDB `rembg-models` après téléchargement lorsque le stockage navigateur le permet ; les traitements suivants peuvent alors fonctionner hors ligne. La session ONNX est libérée après chaque traitement pour limiter la mémoire iPad.</small>
+        <small class="media-rembg-proof">ISNet pèse environ 178,6 Mo. <code>rembg-web</code> conserve le modèle dans son IndexedDB <code>rembg-models</code> après téléchargement lorsque le stockage navigateur le permet ; les traitements suivants peuvent alors fonctionner hors ligne. La session ONNX est libérée après chaque traitement pour limiter la mémoire iPad.</small>
 
         ${rembg?.busy ? `
           <div class="media-rembg-status" aria-live="polite">
