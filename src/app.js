@@ -331,12 +331,14 @@ const BERTHOLD_ADVICES = [
 ];
 let bertholdAdviceIndex = Math.floor(Math.random() * BERTHOLD_ADVICES.length);
 let backupBusy = false;
-let rembgPocEnginePromise = null;
+const rembgPocEnginePromises = new Map();
 const REMBG_POC_RUNTIME_URL = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/ort.min.js";
 const REMBG_POC_RUNTIME_BASE = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/";
 const REMBG_POC_LIBRARY_URL = "https://cdn.jsdelivr.net/npm/@bunnio/rembg-web@1.0.2/dist/index.umd.min.js";
-const REMBG_POC_MODEL_URL = "https://huggingface.co/edgetools/u2netp/resolve/main/u2netp.onnx";
-const REMBG_POC_MODEL = "u2netp";
+const REMBG_POC_MODELS = {
+  u2netp: { label: "U2NetP · Rapide", shortLabel: "U2NetP", sizeLabel: "4,7 Mo", url: "https://huggingface.co/edgetools/u2netp/resolve/main/u2netp.onnx" },
+  silueta: { label: "Silueta · Qualité", shortLabel: "Silueta", sizeLabel: "44,2 Mo", url: "https://huggingface.co/tomjackson2023/rembg/resolve/main/silueta.onnx" }
+};
 let searchDebounceTimer = null;
 let bestiaryScrollSaveTimer = null;
 let restoringBestiaryScroll = false;
@@ -365,7 +367,7 @@ const state = {
   imageViewer: null,
   importRuntime: { preview: null, lastResult: null },
   diagnostic: null,
-  mediaRembgPoc: { assetId: "", busy: false, progress: 0, message: "", error: "", blob: null, url: "", audit: null, durationMs: 0, originalSha256: "" },
+  mediaRembgPoc: { assetId: "", busyModel: "", progress: 0, message: "", error: "", errorModel: "", results: {} },
   serviceWorkerRegistration: null,
   pwaInstallPrompt: null,
   workshop: {
