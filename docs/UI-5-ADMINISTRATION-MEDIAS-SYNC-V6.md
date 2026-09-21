@@ -644,3 +644,21 @@ UI-5B : **VALIDÉ**
 UI-5C : **VALIDÉ**
 
 **UI-5 est clos.**
+
+
+---
+
+## POC rembg navigateur iPad — 21 septembre 2026
+
+Un POC non destructif est ajouté à la fiche Média pour tester le détourage direct sur iPad.
+
+- source : `media_assets.blob` existant ;
+- modèle POC léger : `u2netp` ;
+- sortie : PNG RGBA temporaire en mémoire ;
+- contrôle : audit alpha local + SHA-256 original avant/après ;
+- persistance : **aucune** pour ce POC ;
+- l'import manuel du PNG rembg historique reste disponible ;
+- aucun changement de `DB_VERSION`, aucun store ajouté à la base Gargottex ;
+- validation sur appareil réel obligatoire avant de raccorder le résultat à `transparent_blob`.
+
+Ce POC n'altère pas le Gate UI-5B validé : le moteur de référence documenté reste `isnet-general-use` tant que la qualité et la stabilité iPad du mode navigateur ne sont pas confirmées.
