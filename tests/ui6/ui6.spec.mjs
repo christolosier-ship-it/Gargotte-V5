@@ -768,20 +768,21 @@ test("Media library opens detail without altering originals", async ({ page }) =
   expect(after).toEqual(before);
 });
 
-test("browser rembg POC compares U2NetP, Silueta and ISNet without writing IndexedDB", async ({ page }) => {
+test("ISNet production flow waits for human approval before writing the transparent derivative", async ({ page }) => {
   await page.addInitScript(() => {
-    window.__GARGOTTEX_REMBG_POC__ = {
+    window.__GARGOTTEX_REMBG__ = {
       async remove(_blob, onProgress) {
-        onProgress?.(35, "Détourage IA en cours…");
+        onProgress?.(30, "Détourage ISNet en cours…");
         const canvas = document.createElement("canvas");
         canvas.width = 64; canvas.height = 64;
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0,0,64,64);
         ctx.fillStyle = "#8b5a2b";
         ctx.fillRect(16,8,32,48);
-        onProgress?.(90, "Création du PNG transparent…");
+        onProgress?.(95, "Création du PNG transparent…");
         return await new Promise((resolve,reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("PNG test indisponible")), "image/png"));
-      }
+      },
+      async dispose() {}
     };
   });
   await ready(page);
@@ -792,53 +793,111 @@ test("browser rembg POC compares U2NetP, Silueta and ISNet without writing Index
     const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("blob")),"image/png"));
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
     const tx=db.transaction("media_assets","readwrite");
-    tx.objectStore("media_assets").put({id:"media-rembg-poc-test",label:"POC rembg",file_name:"poc-rembg.png",path:"local-media/gallery/poc-rembg.png",mime_type:"image/png",entity_type:"gallery",entity_id:"",blob,original_size:blob.size,created_at:new Date().toISOString(),updated_at:new Date().toISOString()});
+    tx.objectStore("media_assets").put({id:"media-rembg-prod-test",label:"ISNet production",file_name:"isnet-prod.png",path:"local-media/gallery/isnet-prod.png",mime_type:"image/png",entity_type:"gallery",entity_id:"",blob,original_size:blob.size,created_at:new Date().toISOString(),updated_at:new Date().toISOString()});
     await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});db.close();
   });
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.locator(".v6-app")).toBeVisible();
   await gotoView(page, "media");
-  await page.locator('[data-action="media-select"][data-id="media-rembg-poc-test"]').click();
+  await page.locator('[data-action="media-select"][data-id="media-rembg-prod-test"]').click();
   await expect(page.locator(".media-detail-v6")).toBeVisible();
+  await expect(page.locator('[data-action="media-rembg-run"]')).toBeEnabled();
 
-  const rapid = page.locator('[data-action="media-rembg-poc-run"][data-model="u2netp"]');
-  const quality = page.locator('[data-action="media-rembg-poc-run"][data-model="silueta"]');
-  const reference = page.locator('[data-action="media-rembg-poc-run"][data-model="isnet-general-use"]');
-  await expect(rapid).toBeEnabled();
-  await expect(quality).toBeEnabled();
-  await expect(reference).toBeEnabled();
-
-  const before = await page.evaluate(async () => {
+  const originalState = await page.evaluate(async () => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-rembg-poc-test");
+    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-rembg-prod-test");
     const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});db.close();
     const bytes=await row.blob.arrayBuffer(),hash=await crypto.subtle.digest("SHA-256",bytes);
-    return {size:row.blob.size,hash:Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,"0")).join(""),transparent:Boolean(row.transparent_blob)};
+    return {size:row.blob.size,hash:Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,"0")).join("")};
   });
 
-  await rapid.click();
-  await expect(page.locator('.media-rembg-poc-result[data-model="u2netp"]')).toBeVisible();
-  await expect(page.locator('.media-rembg-poc-result[data-model="u2netp"]')).toContainText("Audit alpha OK");
+  await page.locator('[data-action="media-rembg-run"]').click();
+  await expect(page.locator(".media-rembg-candidate")).toBeVisible();
+  await expect(page.locator(".media-rembg-candidate")).toContainText("Audit alpha OK");
+  await expect(page.locator('[data-action="media-rembg-approve-candidate"]')).toBeEnabled();
 
-  await quality.click();
-  await expect(page.locator('.media-rembg-poc-result[data-model="silueta"]')).toBeVisible();
-  await expect(page.locator('.media-rembg-poc-result[data-model="silueta"]')).toContainText("Audit alpha OK");
-
-  await reference.click();
-  await expect(page.locator('.media-rembg-poc-result[data-model="isnet-general-use"]')).toBeVisible();
-  await expect(page.locator(".media-rembg-poc-result")).toHaveCount(3);
-  await expect(page.locator('.media-rembg-poc-result[data-model="isnet-general-use"]')).toContainText("Audit alpha OK");
-
-  const after = await page.evaluate(async () => {
+  const beforeHumanApproval = await page.evaluate(async () => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-rembg-poc-test");
+    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-rembg-prod-test");
     const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});db.close();
     const bytes=await row.blob.arrayBuffer(),hash=await crypto.subtle.digest("SHA-256",bytes);
-    return {size:row.blob.size,hash:Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,"0")).join(""),transparent:Boolean(row.transparent_blob)};
+    return {
+      size:row.blob.size,
+      hash:Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,"0")).join(""),
+      transparent:Boolean(row.transparent_blob),
+      review:row.transparent_review_status||""
+    };
   });
-  expect(after).toEqual(before);
-  expect(after.transparent).toBe(false);
+  expect(beforeHumanApproval.size).toBe(originalState.size);
+  expect(beforeHumanApproval.hash).toBe(originalState.hash);
+  expect(beforeHumanApproval.transparent).toBe(false);
+  expect(beforeHumanApproval.review).toBe("");
+
+  await page.locator('[data-action="media-rembg-approve-candidate"]').click();
+  await expect(page.locator(".media-approved-state")).toContainText("validé");
+  await expect(page.locator(".media-rembg-candidate")).toHaveCount(0);
+
+  const afterHumanApproval = await page.evaluate(async () => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-rembg-prod-test");
+    const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});db.close();
+    const bytes=await row.blob.arrayBuffer(),hash=await crypto.subtle.digest("SHA-256",bytes);
+    return {
+      size:row.blob.size,
+      hash:Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,"0")).join(""),
+      transparent:Boolean(row.transparent_blob),
+      transparentType:row.transparent_blob?.type||"",
+      review:row.transparent_review_status||"",
+      model:row.transparent_model||"",
+      processing:row.transparent_processing||"",
+      sourceHash:row.transparent_source_sha256||"",
+      auditPass:row.transparent_audit?.pass===true
+    };
+  });
+  expect(afterHumanApproval.size).toBe(originalState.size);
+  expect(afterHumanApproval.hash).toBe(originalState.hash);
+  expect(afterHumanApproval.transparent).toBe(true);
+  expect(afterHumanApproval.transparentType).toBe("image/png");
+  expect(afterHumanApproval.review).toBe("approved");
+  expect(afterHumanApproval.model).toBe("isnet-general-use");
+  expect(afterHumanApproval.processing).toContain("IS-Net");
+  expect(afterHumanApproval.sourceHash).toBe(originalState.hash);
+  expect(afterHumanApproval.auditPass).toBe(true);
+});
+
+test("ISNet human approval write gate smoke @webkit", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__GARGOTTEX_REMBG__ = {
+      async remove() {
+        const canvas=document.createElement("canvas");canvas.width=48;canvas.height=48;
+        const ctx=canvas.getContext("2d");ctx.clearRect(0,0,48,48);ctx.fillStyle="#654321";ctx.fillRect(12,8,24,32);
+        return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("png")),"image/png"));
+      },
+      async dispose() {}
+    };
+  });
+  await ready(page);
+  await page.evaluate(async () => {
+    const canvas=document.createElement("canvas");canvas.width=48;canvas.height=48;
+    const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,48,48);ctx.fillStyle="#654321";ctx.fillRect(12,8,24,32);
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("blob")),"image/png"));
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction("media_assets","readwrite");
+    tx.objectStore("media_assets").put({id:"media-rembg-webkit-test",label:"ISNet WebKit",file_name:"webkit.png",path:"local-media/gallery/webkit.png",mime_type:"image/png",entity_type:"gallery",entity_id:"",blob,original_size:blob.size,created_at:new Date().toISOString(),updated_at:new Date().toISOString()});
+    await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();
+  });
+  await page.reload({waitUntil:"domcontentloaded"});
+  await gotoView(page,"media");
+  await page.locator('[data-action="media-select"][data-id="media-rembg-webkit-test"]').click();
+  await page.locator('[data-action="media-rembg-run"]').click();
+  await expect(page.locator(".media-rembg-candidate")).toBeVisible();
+  const before=await page.evaluate(async()=>{const db=await new Promise((res,rej)=>{const r=indexedDB.open("gargottex-v5-offline");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});const tx=db.transaction("media_assets","readonly"),r=tx.objectStore("media_assets").get("media-rembg-webkit-test");const row=await new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});db.close();return Boolean(row.transparent_blob);});
+  expect(before).toBe(false);
+  await page.locator('[data-action="media-rembg-approve-candidate"]').click();
+  await expect(page.locator(".media-approved-state")).toBeVisible();
+  const after=await page.evaluate(async()=>{const db=await new Promise((res,rej)=>{const r=indexedDB.open("gargottex-v5-offline");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});const tx=db.transaction("media_assets","readonly"),r=tx.objectStore("media_assets").get("media-rembg-webkit-test");const row=await new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});db.close();return {transparent:Boolean(row.transparent_blob),review:row.transparent_review_status};});
+  expect(after).toEqual({transparent:true,review:"approved"});
 });
 
 test("mobile WebKit critical navigation smoke @webkit", async ({ page }) => {
