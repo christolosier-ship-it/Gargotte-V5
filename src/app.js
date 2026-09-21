@@ -1128,6 +1128,14 @@ function hideDungeonCinematic() {
   clearTimeout(showDungeonCinematic.timer);
 }
 
+function queueDungeonCinematic(dungeon) {
+  if (!dungeon) return;
+  const key = String(dungeon.id || dungeon.name || "");
+  if (!key || dungeonCinematicSeen.has(key)) return;
+  dungeonCinematicSeen.add(key);
+  setTimeout(() => showDungeonCinematic(dungeon), 90);
+}
+
 function showDungeonCinematic(dungeon) {
   if (!dungeon) return;
   const layer = ensureDungeonCinematicLayer();
@@ -6232,13 +6240,7 @@ function bindEvents() {
           render();
           const comfortable = window.matchMedia?.("(min-width: 1480px)").matches;
           if (!comfortable) requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
-          if (dungeonForCinematic) {
-            const cinematicKey = String(dungeonForCinematic.id || dungeonForCinematic.name || "");
-            if (!dungeonCinematicSeen.has(cinematicKey)) {
-              dungeonCinematicSeen.add(cinematicKey);
-              setTimeout(() => showDungeonCinematic(dungeonForCinematic), 90);
-            }
-          }
+          queueDungeonCinematic(dungeonForCinematic);
           return;
         }
         case "codex-family-back": {
@@ -6393,6 +6395,7 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+          if (targetType === "dungeons") queueDungeonCinematic(target);
           return;
         }
         case "bestiary-see-dungeon": {
@@ -6485,6 +6488,7 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+          if (btn.dataset.type === "dungeons") queueDungeonCinematic(findById("dungeons", btn.dataset.id));
           return;
         case "set-workshop-type": {
           const type = btn.dataset.type;
