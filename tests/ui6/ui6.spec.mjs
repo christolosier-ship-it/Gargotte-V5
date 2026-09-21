@@ -73,6 +73,37 @@ const viewports = [
   ["desktop-wide-1920", 1920, 1080]
 ];
 
+test("polished home keeps Berthold advice stable and session actions intact", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
+
+  await expect(page.locator(".home-polish-v6")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ici, même les habitués ne savent plus pourquoi ils sont venus." })).toBeVisible();
+  await expect(page.locator(".home-berthold-note")).toBeVisible();
+  await expect(page.locator(".home-quick-links > button")).toHaveCount(4);
+
+  const advice = (await page.locator(".home-berthold-note strong").innerText()).trim();
+  expect(advice.startsWith("«")).toBe(true);
+  expect(advice.endsWith("»")).toBe(true);
+  expect(advice.length).toBeGreaterThan(30);
+
+  await gotoView(page, "codex");
+  await gotoView(page, "home");
+  await expect(page.locator(".home-berthold-note strong")).toHaveText(advice);
+
+  const dungeonSelect = page.locator('[data-action="session-start-dungeon"]');
+  await expect(dungeonSelect).toBeVisible();
+  await page.locator('[data-action="session-start"]').click();
+
+  await expect(page.locator(".home-session-board")).toBeVisible();
+  await expect(page.locator(".home-session-object")).toHaveCount(3);
+  await expect(page.locator('[data-action="session-set-dungeon"]')).toBeVisible();
+  await expect(page.locator('[data-action="session-set-floor"]')).toBeVisible();
+  await expect(page.locator('[data-action="session-end"]')).toBeVisible();
+  await expect(page.locator(".home-berthold-note strong")).toHaveText(advice);
+  await assertNoHorizontalOverflow(page);
+});
+
 for (const [name, width, height] of viewports) {
   test(`responsive matrix ${name}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
@@ -507,7 +538,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
 
   const cacheState = await page.evaluate(async () => {
     const names = await caches.keys();
-    const cacheName = names.find(name => name === "gargottex-v6-ui6-final");
+    const cacheName = names.find(name => name === "gargottex-v6-polish-home-v1");
     if (!cacheName) return { cacheName: null, missing: ["cache"] };
     const cache = await caches.open(cacheName);
     const core = ["./index.html","./styles.css","./manifest.webmanifest","./src/app.js","./src/storage/idb.js","./assets/fonts/Inter-Variable.ttf","./assets/fonts/Alegreya-Variable.ttf"];
@@ -515,7 +546,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
     for (const path of core) if (!(await cache.match(path,{ignoreSearch:true}))) missing.push(path);
     return { cacheName, missing };
   });
-  expect(cacheState.cacheName).toBe("gargottex-v6-ui6-final");
+  expect(cacheState.cacheName).toBe("gargottex-v6-polish-home-v1");
   expect(cacheState.missing).toEqual([]);
 
   await gotoView(page, "import");
