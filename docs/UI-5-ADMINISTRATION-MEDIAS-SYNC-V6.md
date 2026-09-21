@@ -662,3 +662,8 @@ Un POC non destructif est ajouté à la fiche Média pour tester le détourage d
 - validation sur appareil réel obligatoire avant de raccorder le résultat à `transparent_blob`.
 
 Ce POC n'altère pas le Gate UI-5B validé : le moteur de référence documenté reste `isnet-general-use` tant que la qualité et la stabilité iPad du mode navigateur ne sont pas confirmées.
+
+
+### Correctif POC rembg — disponibilité du modèle
+
+Le chargement direct du modèle POC depuis GitHub Releases a produit un HTTP 503 sur l'iPad réel. Le modèle `u2netp` est désormais adressé via le miroir navigateur Hugging Face `edgetools/u2netp`, avec le même SHA-256 attendu. Aucun changement de schéma ou de persistance.

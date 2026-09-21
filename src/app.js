@@ -335,7 +335,7 @@ let rembgPocEnginePromise = null;
 const REMBG_POC_RUNTIME_URL = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/ort.min.js";
 const REMBG_POC_RUNTIME_BASE = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/";
 const REMBG_POC_LIBRARY_URL = "https://cdn.jsdelivr.net/npm/@bunnio/rembg-web@1.0.2/dist/index.umd.min.js";
-const REMBG_POC_MODEL_BASE = "https://github.com/bunn-io/rembg-web/releases/download/base-models";
+const REMBG_POC_MODEL_URL = "https://huggingface.co/edgetools/u2netp/resolve/main/u2netp.onnx";
 const REMBG_POC_MODEL = "u2netp";
 let searchDebounceTimer = null;
 let bestiaryScrollSaveTimer = null;
@@ -5930,7 +5930,7 @@ async function ensureMediaRembgPocEngine() {
     }
     await loadExternalScriptOnce(REMBG_POC_LIBRARY_URL, () => Boolean(globalThis.RembgWeb?.remove && globalThis.RembgWeb?.newSession));
     const api = globalThis.RembgWeb;
-    api.rembgConfig?.setBaseUrl?.(REMBG_POC_MODEL_BASE);
+    api.rembgConfig?.setCustomModelPath?.(REMBG_POC_MODEL, REMBG_POC_MODEL_URL);
     api.rembgConfig?.enableWebNN?.(false);
     api.rembgConfig?.enableWebGPU?.(false);
     const session = await api.newSession(REMBG_POC_MODEL);
