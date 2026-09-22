@@ -344,7 +344,7 @@ const REMBG_MODEL = {
 };
 const REMBG_AUTO_ENTITY_TYPES = new Set(["creatures", "heroes", "npcs"]);
 const REMBG_AUTO_RETRY_MAX = 1;
-const REMBG_AUTO_PAUSE_MS = 250;
+const REMBG_AUTO_PAUSE_MS = 500;
 let searchDebounceTimer = null;
 let bestiaryScrollSaveTimer = null;
 let restoringBestiaryScroll = false;
@@ -5659,7 +5659,7 @@ function renderMediaRembgBatchPanel() {
       <div class="media-rembg-batch-actions">
         ${running ? `<button class="secondary" type="button" data-action="media-rembg-batch-pause">Pause</button><button class="ghost" type="button" data-action="media-rembg-batch-stop">Arrêter</button>` : ""}
         ${resumable ? `<button class="primary" type="button" data-action="media-rembg-batch-resume">Reprendre</button>` : ""}
-        ${!running && !resumable ? `<button class="secondary" type="button" data-action="media-rembg-batch-start">Nouvelle analyse</button>` : ""}
+        ${!running && !resumable && !counts.pending ? `<button class="secondary" type="button" data-action="media-rembg-batch-start">Nouvelle analyse</button>` : ""}
         ${!running && counts.pending ? `<button class="primary" type="button" data-action="media-rembg-review-open">Valider les détourages · ${counts.pending}</button>` : ""}
       </div>
     </div>
