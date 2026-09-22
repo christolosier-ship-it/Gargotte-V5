@@ -979,8 +979,8 @@ test("automatic ISNet queue only processes linked creatures, heroes and NPCs the
 
   const second=page.locator(".media-rembg-review[data-review-id]");
   await expect(second).toBeVisible();
+  await expect(second).not.toHaveAttribute("data-review-id", approvedId);
   const rejectedId=await second.getAttribute("data-review-id");
-  expect(rejectedId).not.toBe(approvedId);
   await second.locator('[data-action="media-rembg-review-reject"]').click();
 
   const reviewed=await page.evaluate(async ({approvedId,rejectedId}) => {
