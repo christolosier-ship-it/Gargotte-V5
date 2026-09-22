@@ -807,7 +807,14 @@ test("ISNet production flow waits for human approval before writing the transpar
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.locator(".v6-app")).toBeVisible();
   await gotoView(page, "media");
-  await page.locator('[data-action="media-select"][data-id="media-rembg-prod-test"]').click();
+  const targetCard = page.locator('[data-action="media-select"][data-id="media-rembg-prod-test"]');
+  const unrelatedCard = page.locator('[data-action="media-select"]:not([data-id="media-rembg-prod-test"])').filter({ has: page.locator("img") }).first();
+  await expect(targetCard).toHaveAttribute("data-card-variant", "thumbnail");
+  await expect(unrelatedCard).toBeVisible();
+  const unrelatedSrcBefore = await unrelatedCard.locator("img").getAttribute("src");
+  const targetSrcBefore = await targetCard.locator("img").getAttribute("src");
+
+  await targetCard.click();
   await expect(page.locator(".media-detail-v6")).toBeVisible();
   await expect(page.locator('[data-action="media-rembg-run"]')).toBeEnabled();
 
@@ -844,6 +851,13 @@ test("ISNet production flow waits for human approval before writing the transpar
   await page.locator('[data-action="media-rembg-approve-candidate"]').click();
   await expect(page.locator(".media-approved-state")).toContainText("validé");
   await expect(page.locator(".media-rembg-candidate")).toHaveCount(0);
+
+  await expect(targetCard).toHaveAttribute("data-card-variant", "transparent");
+  const targetSrcAfter = await targetCard.locator("img").getAttribute("src");
+  const unrelatedSrcAfter = await unrelatedCard.locator("img").getAttribute("src");
+  expect(targetSrcAfter).toBeTruthy();
+  expect(targetSrcAfter).not.toBe(targetSrcBefore);
+  expect(unrelatedSrcAfter).toBe(unrelatedSrcBefore);
 
   const afterHumanApproval = await page.evaluate(async () => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
