@@ -757,3 +757,8 @@ Contrôles disponibles :
 - validation groupée finale.
 
 La validation groupée transforme chaque `pending` en `approved` ou `needs_fix`. Tant qu'un dérivé reste `pending`, les cartes Média et le Codex continuent d'utiliser leurs fallbacks normaux.
+
+
+### Correctif stabilité batch iPad
+
+Le traitement automatique réutilise désormais une seule session ISNet pour toutes les images successives du lot. La session est libérée à la fin du lot, à la pause ou à l’arrêt. En cas d’échec d’une image, le moteur et son cache de session sont purgés avant l’unique retry afin d’éviter de réutiliser une session ONNX invalide.
