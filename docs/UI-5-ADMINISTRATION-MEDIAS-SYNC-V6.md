@@ -715,3 +715,5 @@ Dans la bibliothèque Média, une carte affiche en priorité le dérivé transpa
 - `transparent_audit.pass === true`.
 
 Les dérivés en attente ou à corriger ne remplacent pas la miniature normale.
+
+La même priorité est appliquée dans l'onglet **Médias du Codex** : un dérivé `approved` avec audit valide remplace visuellement la miniature, sinon le fallback actuel reste utilisé.
