@@ -717,3 +717,43 @@ Dans la bibliothèque Média, une carte affiche en priorité le dérivé transpa
 Les dérivés en attente ou à corriger ne remplacent pas la miniature normale.
 
 La même priorité est appliquée dans l'onglet **Médias du Codex** : un dérivé `approved` avec audit valide remplace visuellement la miniature, sinon le fallback actuel reste utilisé.
+
+
+---
+
+# 11.6 Détourage automatique séquentiel
+
+Le mode automatique réutilise le moteur ISNet de production sans modifier le workflow manuel existant.
+
+Périmètre strict :
+
+- Créatures ;
+- Héros ;
+- PNJ.
+
+Les médias doivent posséder un Blob original local, un rattachement valide et ne doivent avoir aucun dérivé transparent existant.
+
+Comportement :
+
+1. scan des médias éligibles ;
+2. une seule inférence à la fois ;
+3. audit alpha ;
+4. écriture du PNG uniquement si l'audit passe ;
+5. statut `pending` ;
+6. libération de la session ONNX ;
+7. courte pause ;
+8. média suivant.
+
+Une seule nouvelle tentative est permise après une erreur ISNet. Les audits alpha refusés ne sont pas enregistrés comme dérivés.
+
+La file est persistée dans l'état UI déjà existant, sans hausse de `DB_VERSION`. Une file active interrompue est reprise au redémarrage ; un média déjà passé en `pending` n'est pas retraité.
+
+Contrôles disponibles :
+
+- Pause ;
+- Arrêter ;
+- Reprendre ;
+- compteurs traités / restants / à valider / audits refusés / erreurs ;
+- validation groupée finale.
+
+La validation groupée transforme chaque `pending` en `approved` ou `needs_fix`. Tant qu'un dérivé reste `pending`, les cartes Média et le Codex continuent d'utiliser leurs fallbacks normaux.
