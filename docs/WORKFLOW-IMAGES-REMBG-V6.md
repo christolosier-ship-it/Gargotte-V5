@@ -414,7 +414,7 @@ La file traite **une seule image à la fois** :
 
 `scan -> SHA original -> ISNet -> audit alpha -> SHA original -> sauvegarde pending -> libération session ONNX -> pause courte -> suivante`.
 
-Le modèle reste `isnet-general-use`. La session ONNX est libérée après chaque image ; le cache séparé `rembg-models` est conservé.
+Le modèle reste `isnet-general-use`. La session ONNX est conservée pendant tout le lot séquentiel puis libérée à la fin, à la pause ou à l’arrêt ; le cache séparé `rembg-models` est conservé.
 
 Si l'audit alpha échoue, aucun dérivé n'est écrit. En cas d'erreur moteur, une seule nouvelle tentative est autorisée, soit deux tentatives maximum par média.
 
