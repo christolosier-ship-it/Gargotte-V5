@@ -996,6 +996,81 @@ test("automatic ISNet queue only processes linked creatures, heroes and NPCs the
   await expect(page.locator(".media-rembg-batch")).toContainText("1 à valider");
 });
 
+test("automatic ISNet queue resumes after a reload during an in-flight item without duplicating the derivative", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__GARGOTTEX_REMBG__ = {
+      async remove(_blob, onProgress) {
+        onProgress?.(25, "Détourage ISNet en cours…");
+        if (!sessionStorage.getItem("gargottex-rembg-reload-probe")) {
+          sessionStorage.setItem("gargottex-rembg-reload-probe", "1");
+          return await new Promise(() => {});
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = 40; canvas.height = 40;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0,0,40,40);
+        ctx.fillStyle = "#8b5a2b";
+        ctx.fillRect(10,5,20,30);
+        onProgress?.(95, "Création du PNG transparent…");
+        return await new Promise((resolve,reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("PNG test indisponible")), "image/png"));
+      },
+      async dispose() {}
+    };
+  });
+
+  await ready(page);
+  await page.evaluate(async () => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const entity=await new Promise((resolve,reject)=>{
+      const tx=db.transaction("creatures","readonly"),req=tx.objectStore("creatures").getAll();
+      req.onsuccess=()=>resolve(req.result?.[0]||null);req.onerror=()=>reject(req.error);
+    });
+    if(!entity) throw new Error("Fixture créature requise");
+    const canvas=document.createElement("canvas");canvas.width=40;canvas.height=40;
+    const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,40,40);ctx.fillStyle="#8b5a2b";ctx.fillRect(10,5,20,30);
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("blob")),"image/png"));
+    const tx=db.transaction("media_assets","readwrite");
+    tx.objectStore("media_assets").put({
+      id:"auto-reload-creature",label:"Reprise créature",file_name:"auto-reload-creature.png",
+      path:"local-media/creatures/auto-reload-creature.png",mime_type:"image/png",
+      entity_type:"creatures",entity_id:String(entity.id),blob,original_size:blob.size,
+      created_at:new Date().toISOString(),updated_at:new Date().toISOString()
+    });
+    await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
+    db.close();
+  });
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".v6-app")).toBeVisible();
+  await gotoView(page, "media");
+  await page.locator('[data-action="media-rembg-batch-start"]').click();
+  await expect(page.locator(".media-rembg-batch")).toHaveAttribute("data-queue-status","running");
+  await expect(page.locator(".media-rembg-batch-progress progress")).toHaveAttribute("value","25");
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".v6-app")).toBeVisible();
+  await gotoView(page, "media");
+  await expect(page.locator(".media-rembg-batch")).toHaveAttribute("data-queue-status","complete",{timeout:15_000});
+  await expect(page.locator(".media-rembg-batch")).toContainText("1 à valider");
+  await expect(page.locator(".media-rembg-batch-note")).toContainText("reprise après une interruption");
+
+  const persisted=await page.evaluate(async () => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("auto-reload-creature");
+    const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});db.close();
+    return {
+      transparent:Boolean(row.transparent_blob),
+      review:row.transparent_review_status||"",
+      createdAt:row.transparent_created_at||"",
+      sourceHash:row.transparent_source_sha256||""
+    };
+  });
+  expect(persisted.transparent).toBe(true);
+  expect(persisted.review).toBe("pending");
+  expect(persisted.createdAt).toBeTruthy();
+  expect(persisted.sourceHash).toBeTruthy();
+});
+
 test("ISNet media smoke and human gate when Blob IndexedDB is available @webkit", async ({ page }, testInfo) => {
   const sourcePngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAALklEQVR4nGP8////fwYKABMlmgeHASzoAmkuSng1zNpzj7ouGDVgMBjAOJoXGAAbGwsZJ9QthAAAAABJRU5ErkJggg==";
   const cutoutPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAJ0lEQVR4nGNgGAWM6AKpzor/8WmYvfc+ih4mSl0wasBgMGAUMDAAAMMxBBBZrUDTAAAAAElFTkSuQmCC";
