@@ -896,6 +896,7 @@ test("ISNet production flow waits for human approval before writing the transpar
 test("automatic ISNet queue only processes linked creatures, heroes and NPCs then keeps derivatives pending for grouped review", async ({ page }) => {
   await page.addInitScript(() => {
     window.__rembgAutoCalls = 0;
+    window.__rembgAutoDisposals = 0;
     window.__GARGOTTEX_REMBG__ = {
       async remove(_blob, onProgress) {
         window.__rembgAutoCalls += 1;
@@ -910,7 +911,9 @@ test("automatic ISNet queue only processes linked creatures, heroes and NPCs the
         onProgress?.(95, "Création du PNG transparent…");
         return await new Promise((resolve,reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("PNG test indisponible")), "image/png"));
       },
-      async dispose() {}
+      async dispose() {
+        window.__rembgAutoDisposals += 1;
+      }
     };
   });
 
@@ -951,6 +954,7 @@ test("automatic ISNet queue only processes linked creatures, heroes and NPCs the
   await expect(batch).toHaveAttribute("data-queue-status","complete",{timeout:20_000});
   await expect(batch).toContainText("3 à valider");
   expect(await page.evaluate(() => window.__rembgAutoCalls)).toBe(4);
+  expect(await page.evaluate(() => window.__rembgAutoDisposals)).toBe(2);
 
   const states=await page.evaluate(async () => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
