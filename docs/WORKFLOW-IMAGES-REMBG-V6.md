@@ -386,3 +386,62 @@ Le workflow intégré est considéré valide si :
 10. Chromium couvre intégralement la barrière d'écriture IndexedDB avant/après validation humaine ;
 11. WebKit exécute le flux complet lorsque le moteur de test sait persister les Blob/File dans IndexedDB ; le port Playwright WebKit/Linux actuellement utilisé en CI ne fournit pas toujours cette capacité et bascule alors sur un smoke UI explicite ;
 12. la validation réelle iPad reste requise pour la compatibilité Safari/iPadOS du stockage Blob et du moteur lourd ISNet.
+
+
+---
+
+## 15. File automatique ISNet dans la PWA
+
+Le traitement automatique est volontairement limité aux médias **rattachés** à :
+
+- `creatures` ;
+- `heroes` ;
+- `npcs`.
+
+Un média n'entre dans la file que si :
+
+- son `blob` original local existe ;
+- `entity_type` appartient aux trois familles ci-dessus ;
+- `entity_id` pointe encore vers une entité existante ;
+- aucun `transparent_blob` n'existe ;
+- aucun statut `transparent_review_status` n'est déjà présent.
+
+Les médias `gallery`, donjons, quêtes, loot, objets interactifs et Brouhaha sont hors périmètre de cette automatisation.
+
+### Cycle
+
+La file traite **une seule image à la fois** :
+
+`scan -> SHA original -> ISNet -> audit alpha -> SHA original -> sauvegarde pending -> libération session ONNX -> pause courte -> suivante`.
+
+Le modèle reste `isnet-general-use`. La session ONNX est libérée après chaque image ; le cache séparé `rembg-models` est conservé.
+
+Si l'audit alpha échoue, aucun dérivé n'est écrit. En cas d'erreur moteur, une seule nouvelle tentative est autorisée, soit deux tentatives maximum par média.
+
+### Persistance et reprise
+
+La file et ses états sont stockés dans l'état UI persistant existant. Aucune migration IndexedDB et aucun nouveau store Gargottex ne sont nécessaires.
+
+Si l'application est interrompue alors que la file est active :
+
+- l'élément marqué `processing` redevient `queued` au redémarrage ;
+- un dérivé déjà écrit en `pending` est détecté et n'est pas retraité ;
+- la file reprend automatiquement au prochain média restant.
+
+Le traitement n'est pas promis lorsque l'iPad suspend réellement la PWA en arrière-plan. La reprise rend l'opération résiliente à cette suspension.
+
+### Validation groupée
+
+Un traitement réussi est enregistré en :
+
+`transparent_review_status = "pending"`.
+
+Il n'est donc **jamais prioritaire dans le Codex** avant validation humaine.
+
+À la fin de la file, l'écran de validation groupée permet :
+
+- **Valider** -> `approved` ;
+- **À corriger** -> `needs_fix` ;
+- **Suivant** -> conserver `pending` et passer au prochain.
+
+L'audit alpha reste un contrôle technique. Il ne remplace pas le contrôle visuel des cheveux, cornes, armes, fils, zones blanches, halos et socles.

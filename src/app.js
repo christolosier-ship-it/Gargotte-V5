@@ -272,7 +272,7 @@ const WORKSHOP_REQUIRED_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
-const APP_VERSION = "5.5.5";
+const APP_VERSION = "5.5.6";
 const PWA_CACHE_NAME = "gargottex-v6-polish-cards-v1";
 const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js"];
 
@@ -342,6 +342,9 @@ const REMBG_MODEL = {
   url: "https://huggingface.co/tomjackson2023/rembg/resolve/main/isnet-general-use.onnx",
   sha256: "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a"
 };
+const REMBG_AUTO_ENTITY_TYPES = new Set(["creatures", "heroes", "npcs"]);
+const REMBG_AUTO_RETRY_MAX = 1;
+const REMBG_AUTO_PAUSE_MS = 500;
 let searchDebounceTimer = null;
 let bestiaryScrollSaveTimer = null;
 let restoringBestiaryScroll = false;
@@ -371,6 +374,7 @@ const state = {
   importRuntime: { preview: null, lastResult: null },
   diagnostic: null,
   mediaRembg: { assetId: "", busy: false, progress: 0, message: "", error: "", candidate: null },
+  mediaRembgBatch: { runnerActive: false, stopRequested: false },
   serviceWorkerRegistration: null,
   pwaInstallPrompt: null,
   workshop: {
@@ -414,7 +418,7 @@ const state = {
     questsResult: null,
     questDungeonId: "",
     import: { type: "creatures", fileName: "" },
-    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "" },
+    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "", rembgQueue: null, rembgReviewMode: false, rembgReviewId: "" },
     journalOpen: false,
     globalSearch: ""
   },
@@ -455,7 +459,7 @@ function defaultBlankUi() {
     questsResult: null,
     questDungeonId: "",
     import: { type: "creatures", fileName: "" },
-    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "" },
+    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "", rembgQueue: null, rembgReviewMode: false, rembgReviewId: "" },
     journalOpen: false,
     globalSearch: ""
   };
@@ -5512,6 +5516,200 @@ function renderMediaVariant(label, url, kind, meta = "") {
   </article>`;
 }
 
+function emptyMediaRembgQueue() {
+  return {
+    version: 1,
+    status: "idle",
+    itemIds: [],
+    items: {},
+    currentId: "",
+    currentProgress: 0,
+    currentMessage: "",
+    startedAt: "",
+    updatedAt: "",
+    completedAt: "",
+    interrupted: false
+  };
+}
+
+function mediaRembgQueue(create = false) {
+  if (!state.ui.media || typeof state.ui.media !== "object") return null;
+  let queue = state.ui.media.rembgQueue;
+  if ((!queue || typeof queue !== "object") && create) {
+    queue = emptyMediaRembgQueue();
+    state.ui.media.rembgQueue = queue;
+  }
+  if (!queue || typeof queue !== "object") return null;
+  if (!Array.isArray(queue.itemIds)) queue.itemIds = [];
+  if (!queue.items || typeof queue.items !== "object" || Array.isArray(queue.items)) queue.items = {};
+  queue.status = String(queue.status || "idle");
+  queue.currentId = String(queue.currentId || "");
+  queue.currentProgress = Math.max(0, Math.min(100, Number(queue.currentProgress || 0)));
+  queue.currentMessage = String(queue.currentMessage || "");
+  return queue;
+}
+
+function mediaRembgQueueCounts(queue = mediaRembgQueue(false)) {
+  const ids = queue?.itemIds || [];
+  const statuses = ids.map(id => String(queue?.items?.[id]?.status || "queued"));
+  const count = status => statuses.filter(value => value === status).length;
+  const queued = count("queued");
+  const processing = count("processing");
+  const pending = count("pending");
+  const approved = count("approved");
+  const needsFix = count("needs_fix");
+  const auditFailed = count("audit_failed");
+  const errors = count("error");
+  const skipped = count("skipped") + count("removed");
+  return {
+    total: ids.length,
+    queued,
+    processing,
+    pending,
+    approved,
+    needsFix,
+    auditFailed,
+    errors,
+    skipped,
+    remaining: queued + processing,
+    processed: Math.max(0, ids.length - queued - processing)
+  };
+}
+
+function isMediaRembgAutoEligible(asset) {
+  const type = String(asset?.entity_type || "");
+  const entityId = String(asset?.entity_id || "");
+  return Boolean(
+    asset?.blob &&
+    REMBG_AUTO_ENTITY_TYPES.has(type) &&
+    entityId &&
+    findById(type, entityId) &&
+    !asset.transparent_blob &&
+    !String(asset.transparent_review_status || "")
+  );
+}
+
+function mediaRembgEligibleAssets() {
+  return (state.data.media_assets || []).filter(isMediaRembgAutoEligible);
+}
+
+function syncMediaRembgQueueItemFromAsset(asset) {
+  const queue = mediaRembgQueue(false);
+  const id = String(asset?.id || "");
+  const item = queue?.items?.[id];
+  if (!item) return;
+  const review = String(asset?.transparent_review_status || "");
+  if (asset?.transparent_blob && ["pending", "approved", "needs_fix"].includes(review)) {
+    item.status = review;
+    item.error = "";
+  } else if (!asset?.transparent_blob && ["pending", "approved", "needs_fix"].includes(String(item.status || ""))) {
+    item.status = "removed";
+  }
+  item.updatedAt = nowISO();
+}
+
+function mediaRembgReviewAssets() {
+  const queue = mediaRembgQueue(false);
+  if (!queue) return [];
+  return queue.itemIds
+    .map(id => findById("media_assets", id))
+    .filter(asset => asset?.transparent_blob && asset.transparent_review_status === "pending" && asset.transparent_audit?.pass === true);
+}
+
+function currentMediaRembgReviewAsset() {
+  const list = mediaRembgReviewAssets();
+  const requested = String(state.ui.media.rembgReviewId || "");
+  return list.find(asset => String(asset.id) === requested) || list[0] || null;
+}
+
+function mediaRembgStatusLabel(status) {
+  return ({
+    idle: "Prêt",
+    running: "En cours",
+    paused: "En pause",
+    stopped: "Arrêté",
+    complete: "Terminé"
+  })[String(status || "")] || "Prêt";
+}
+
+function renderMediaRembgBatchPanel() {
+  const queue = mediaRembgQueue(false);
+  const eligibleCount = mediaRembgEligibleAssets().length;
+  if (!queue || !queue.itemIds.length) {
+    return `<section class="media-rembg-batch panel" data-queue-status="idle">
+      <div class="media-rembg-batch-head">
+        <div><span class="eyebrow">Détourage automatique</span><h2>ISNet · Créatures, Héros et PNJ</h2><p>${eligibleCount} média${eligibleCount > 1 ? "s" : ""} éligible${eligibleCount > 1 ? "s" : ""}. Une image à la fois, dérivé enregistré en attente de validation humaine.</p></div>
+        <button class="primary" type="button" data-action="media-rembg-batch-start" ${eligibleCount ? "" : "disabled"}>Lancer la file</button>
+      </div>
+    </section>`;
+  }
+
+  const counts = mediaRembgQueueCounts(queue);
+  const current = queue.currentId ? findById("media_assets", queue.currentId) : null;
+  const overall = counts.total ? Math.round((counts.processed / counts.total) * 100) : 0;
+  const running = queue.status === "running";
+  const resumable = ["paused", "stopped"].includes(queue.status) && counts.queued > 0;
+  return `<section class="media-rembg-batch panel" data-queue-status="${escapeHtml(queue.status)}">
+    <div class="media-rembg-batch-head">
+      <div>
+        <span class="eyebrow">Détourage automatique · ${escapeHtml(mediaRembgStatusLabel(queue.status))}</span>
+        <h2>ISNet séquentiel</h2>
+        <p>${counts.processed}/${counts.total} traités · ${counts.pending} à valider · ${counts.auditFailed} audits refusés · ${counts.errors} erreurs</p>
+      </div>
+      <div class="media-rembg-batch-actions">
+        ${running ? `<button class="secondary" type="button" data-action="media-rembg-batch-pause">Pause</button><button class="ghost" type="button" data-action="media-rembg-batch-stop">Arrêter</button>` : ""}
+        ${resumable ? `<button class="primary" type="button" data-action="media-rembg-batch-resume">Reprendre</button>` : ""}
+        ${!running && !resumable && !counts.pending ? `<button class="secondary" type="button" data-action="media-rembg-batch-start">Nouvelle analyse</button>` : ""}
+        ${!running && counts.pending ? `<button class="primary" type="button" data-action="media-rembg-review-open">Valider les détourages · ${counts.pending}</button>` : ""}
+      </div>
+    </div>
+    <div class="media-rembg-batch-progress">
+      <progress max="100" value="${running && queue.currentId ? queue.currentProgress : overall}"></progress>
+      <div>
+        <strong data-rembg-batch-message>${current ? escapeHtml(current.label || current.file_name || current.id) : escapeHtml(queue.currentMessage || mediaRembgStatusLabel(queue.status))}</strong>
+        <small>${running && queue.currentId ? `Image en cours · ${Math.round(queue.currentProgress || 0)} %` : `${counts.remaining} restante${counts.remaining > 1 ? "s" : ""}`}</small>
+      </div>
+    </div>
+    ${queue.interrupted ? `<small class="media-rembg-batch-note">La file a été reprise après une interruption. Les éléments déjà enregistrés ne sont pas retraités.</small>` : ""}
+  </section>`;
+}
+
+function renderMediaRembgReviewPanel() {
+  const list = mediaRembgReviewAssets();
+  const asset = currentMediaRembgReviewAsset();
+  if (!asset) {
+    return `<section class="media-rembg-review panel">
+      <div class="media-rembg-review-head"><div><span class="eyebrow">Validation groupée</span><h2>Rien à valider</h2><p>Les dérivés approuvés ou rejetés ont quitté la file.</p></div><button class="ghost" type="button" data-action="media-rembg-review-close">Fermer</button></div>
+    </section>`;
+  }
+  const index = Math.max(0, list.findIndex(row => String(row.id) === String(asset.id)));
+  const transparent = mediaUrlForAsset(asset, "transparent");
+  const audit = asset.transparent_audit || {};
+  return `<section class="media-rembg-review panel" data-review-id="${escapeHtml(String(asset.id || ""))}">
+    <div class="media-rembg-review-head">
+      <div><span class="eyebrow">Validation groupée · ${index + 1}/${list.length}</span><h2>${escapeHtml(asset.label || asset.file_name || asset.id || "Média")}</h2><p>${escapeHtml(getLabel(asset.entity_type || ""))} · contrôle visuel obligatoire</p></div>
+      <button class="ghost" type="button" data-action="media-rembg-review-close">Fermer</button>
+    </div>
+    <div class="media-rembg-review-body">
+      <div class="media-rembg-review-preview checker">${transparent ? `<img src="${escapeHtml(transparent)}" alt="Détourage à valider de ${escapeHtml(asset.label || asset.file_name || "ce média")}">` : "<span>Aperçu indisponible</span>"}</div>
+      <div class="media-rembg-review-copy">
+        <div class="media-alpha-audit ${audit.pass ? "pass" : "fail"}">
+          <div><span>Alpha réel</span><b>${audit.has_alpha_channel ? "Oui" : "Non"}</b></div>
+          <div><span>Transparent</span><b>${Number(audit.transparent_ratio || 0).toFixed(3)}</b></div>
+          <div><span>Bords doux</span><b>${Number(audit.soft_edge_ratio || 0).toFixed(3)}</b></div>
+          <div><span>Dimensions</span><b>${audit.width || "?"}×${audit.height || "?"}</b></div>
+        </div>
+        <p>Vérifie les cheveux, cornes, armes, fils, zones blanches, halos et le socle. L'audit alpha confirme la structure du PNG, pas la qualité du masque.</p>
+        <div class="media-rembg-review-actions">
+          <button class="primary" type="button" data-action="media-rembg-review-approve" data-id="${escapeHtml(String(asset.id || ""))}">Valider</button>
+          <button class="danger ghost" type="button" data-action="media-rembg-review-reject" data-id="${escapeHtml(String(asset.id || ""))}">À corriger</button>
+          <button class="secondary" type="button" data-action="media-rembg-review-next">Suivant</button>
+        </div>
+      </div>
+    </div>
+  </section>`;
+}
+
 function renderMedia() {
   const assets = mediaFilteredAssets();
   const selected = assets.find(asset => String(asset.id) === String(state.ui.media.selectedId || "")) ||
@@ -5530,6 +5728,8 @@ function renderMedia() {
         </div>
         <span class="media-count-v6">${assets.length} média${assets.length > 1 ? "s" : ""}</span>
       </div>
+      ${renderMediaRembgBatchPanel()}
+      ${state.ui.media.rembgReviewMode ? renderMediaRembgReviewPanel() : ""}
       <div class="media-library-layout">
         <section class="media-grid-v6">${assets.map(asset => renderMediaAssetCard(asset, selected && String(asset.id) === String(selected.id))).join("") || `<div class="panel empty">Aucun média pour ce filtre.</div>`}</section>
         <aside class="media-detail-pane-v6">${selected ? renderMediaAssetDetail(selected) : `<div class="panel empty">Sélectionne un média.</div>`}</aside>
@@ -5987,6 +6187,16 @@ function updateMediaRembgProgress(assetId, progress = 0, message = "") {
   const label = box?.querySelector("[data-rembg-message]");
   if (bar) bar.value = current.progress;
   if (label) label.textContent = current.message || "Préparation du détourage…";
+
+  const queue = mediaRembgQueue(false);
+  if (queue?.status === "running" && String(queue.currentId || "") === String(assetId)) {
+    queue.currentProgress = current.progress;
+    queue.currentMessage = current.message;
+    const batchBar = app?.querySelector(".media-rembg-batch-progress progress");
+    const batchLabel = app?.querySelector("[data-rembg-batch-message]");
+    if (batchBar) batchBar.value = queue.currentProgress;
+    if (batchLabel) batchLabel.textContent = queue.currentMessage || "Détourage ISNet en cours…";
+  }
 }
 
 function loadExternalScriptOnce(src, readyCheck) {
@@ -6126,6 +6336,242 @@ async function approveMediaRembgCandidate(assetId) {
   resetMediaRembg();
   render();
   return audit;
+}
+
+function rembgQueueDelay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function persistMediaRembgQueue(renderAfter = true) {
+  const queue = mediaRembgQueue(false);
+  if (queue) queue.updatedAt = nowISO();
+  await saveUiState(state.ui);
+  if (renderAfter && state.ready) render();
+}
+
+function prepareMediaRembgQueueAfterBoot() {
+  const queue = mediaRembgQueue(false);
+  if (!queue) return false;
+  const wasRunning = queue.status === "running";
+  for (const id of queue.itemIds) {
+    const item = queue.items?.[id];
+    if (item?.status === "processing") {
+      item.status = "queued";
+      item.interrupted = true;
+    }
+  }
+  queue.currentId = "";
+  queue.currentProgress = 0;
+  queue.currentMessage = "";
+  if (wasRunning) {
+    queue.status = "paused";
+    queue.interrupted = true;
+  }
+  return wasRunning && queue.itemIds.some(id => queue.items?.[id]?.status === "queued");
+}
+
+async function buildMediaRembgQueue() {
+  const eligible = mediaRembgEligibleAssets();
+  const queue = emptyMediaRembgQueue();
+  queue.status = eligible.length ? "paused" : "complete";
+  queue.itemIds = eligible.map(asset => String(asset.id));
+  queue.items = Object.fromEntries(queue.itemIds.map(id => [id, {
+    status: "queued",
+    attempts: 0,
+    error: "",
+    lastError: "",
+    durationMs: 0,
+    updatedAt: nowISO()
+  }]));
+  queue.startedAt = eligible.length ? nowISO() : "";
+  queue.completedAt = eligible.length ? "" : nowISO();
+  queue.updatedAt = nowISO();
+  state.ui.media.rembgQueue = queue;
+  state.ui.media.rembgReviewMode = false;
+  state.ui.media.rembgReviewId = "";
+  await persistMediaRembgQueue(true);
+  return queue;
+}
+
+async function processMediaRembgQueueItem(assetId) {
+  const queue = mediaRembgQueue(false);
+  const item = queue?.items?.[assetId];
+  if (!queue || !item) return;
+
+  const latest = await getById("media_assets", assetId);
+  if (!latest || !isMediaRembgAutoEligible(latest)) {
+    if (latest?.transparent_blob && ["pending", "approved", "needs_fix"].includes(String(latest.transparent_review_status || ""))) {
+      syncMediaRembgQueueItemFromAsset(latest);
+    } else {
+      item.status = "skipped";
+      item.error = "Média devenu inéligible ou source absente.";
+    }
+    item.updatedAt = nowISO();
+    return;
+  }
+
+  queue.currentId = String(assetId);
+  queue.currentProgress = 0;
+  queue.currentMessage = "Préparation d’ISNet…";
+
+  let attempts = Math.max(0, Number(item.attempts || 0));
+  if (attempts > REMBG_AUTO_RETRY_MAX) {
+    item.status = "error";
+    item.error = item.error || "Nombre maximal de tentatives atteint.";
+    return;
+  }
+
+  while (attempts <= REMBG_AUTO_RETRY_MAX) {
+    attempts += 1;
+    item.attempts = attempts;
+    item.status = "processing";
+    item.updatedAt = nowISO();
+    queue.currentMessage = attempts > 1 ? "Nouvelle tentative ISNet…" : "Préparation d’ISNet…";
+    await persistMediaRembgQueue(true);
+
+    try {
+      resetMediaRembg();
+      const result = await runMediaRembg(assetId);
+      const candidate = state.mediaRembg?.candidate;
+      item.durationMs = Number(result?.durationMs || 0);
+
+      if (!candidate?.blob || result?.audit?.pass !== true) {
+        item.status = "audit_failed";
+        item.error = "Audit alpha refusé : aucun dérivé n’a été enregistré.";
+        item.updatedAt = nowISO();
+        resetMediaRembg();
+        return;
+      }
+
+      await saveTransparentDerivative(assetId, candidate.blob, {
+        reviewStatus: "pending",
+        model: REMBG_MODEL.key,
+        processing: "rembg-web / IS-Net DIS · file automatique",
+        select: false,
+        render: false
+      });
+      const persisted = await getById("media_assets", assetId);
+      syncMediaRembgQueueItemFromAsset(persisted);
+      item.status = "pending";
+      item.error = "";
+      item.updatedAt = nowISO();
+      resetMediaRembg();
+      return;
+    } catch (err) {
+      item.lastError = err?.message || String(err);
+      resetMediaRembg();
+      if (attempts <= REMBG_AUTO_RETRY_MAX) {
+        item.status = "queued";
+        queue.currentMessage = "Échec ISNet · nouvelle tentative…";
+        await persistMediaRembgQueue(true);
+        await rembgQueueDelay(REMBG_AUTO_PAUSE_MS);
+        continue;
+      }
+      item.status = "error";
+      item.error = item.lastError || "Échec ISNet.";
+      item.updatedAt = nowISO();
+      return;
+    }
+  }
+}
+
+async function startMediaRembgQueue({ fresh = false } = {}) {
+  if (state.mediaRembgBatch.runnerActive) return false;
+
+  let queue = mediaRembgQueue(false);
+  if (fresh || !queue || !queue.itemIds.length || queue.status === "complete") {
+    queue = await buildMediaRembgQueue();
+  }
+  if (!queue?.itemIds.some(id => queue.items?.[id]?.status === "queued")) {
+    if (queue) {
+      queue.status = "complete";
+      queue.completedAt = queue.completedAt || nowISO();
+      await persistMediaRembgQueue(true);
+    }
+    return false;
+  }
+
+  state.mediaRembgBatch.runnerActive = true;
+  state.mediaRembgBatch.stopRequested = false;
+  queue.status = "running";
+  queue.startedAt = queue.startedAt || nowISO();
+  queue.completedAt = "";
+  await persistMediaRembgQueue(true);
+
+  try {
+    for (const id of queue.itemIds) {
+      if (state.mediaRembgBatch.stopRequested || queue.status !== "running") break;
+      const item = queue.items?.[id];
+      if (!item || item.status !== "queued") continue;
+
+      await processMediaRembgQueueItem(id);
+      queue.currentId = "";
+      queue.currentProgress = 0;
+      queue.currentMessage = "";
+      await persistMediaRembgQueue(true);
+
+      if (state.mediaRembgBatch.stopRequested || queue.status !== "running") break;
+      await rembgQueueDelay(REMBG_AUTO_PAUSE_MS);
+    }
+
+    const counts = mediaRembgQueueCounts(queue);
+    if (counts.remaining === 0) {
+      queue.status = "complete";
+      queue.completedAt = nowISO();
+    } else if (state.mediaRembgBatch.stopRequested) {
+      queue.status = "stopped";
+    } else if (queue.status === "running") {
+      queue.status = "paused";
+    }
+  } finally {
+    state.mediaRembgBatch.runnerActive = false;
+    state.mediaRembgBatch.stopRequested = false;
+    queue.currentId = "";
+    queue.currentProgress = 0;
+    queue.currentMessage = "";
+    await persistMediaRembgQueue(true);
+
+    if (queue.status === "complete") {
+      const counts = mediaRembgQueueCounts(queue);
+      toast(`Détourage automatique terminé : ${counts.pending} à valider, ${counts.auditFailed} audits refusés, ${counts.errors} erreurs.`, counts.errors || counts.auditFailed ? "warn" : "success");
+    }
+  }
+  return true;
+}
+
+async function pauseMediaRembgQueue() {
+  const queue = mediaRembgQueue(false);
+  if (!queue || queue.status !== "running") return;
+  queue.status = "paused";
+  queue.currentMessage = "Pause demandée · fin de l’image en cours";
+  await persistMediaRembgQueue(true);
+}
+
+async function stopMediaRembgQueue() {
+  const queue = mediaRembgQueue(false);
+  if (!queue) return;
+  state.mediaRembgBatch.stopRequested = true;
+  queue.status = "stopped";
+  queue.currentMessage = "Arrêt demandé · fin de l’image en cours";
+  await persistMediaRembgQueue(true);
+}
+
+function nextMediaRembgReviewId(currentId = "") {
+  const list = mediaRembgReviewAssets();
+  if (!list.length) return "";
+  const index = list.findIndex(asset => String(asset.id) === String(currentId));
+  if (index < 0) return String(list[0].id);
+  return String(list[(index + 1) % list.length].id);
+}
+
+async function reviewMediaRembgAsset(assetId, status) {
+  await setTransparentDerivativeReview(assetId, status, { select: false, render: false });
+  const asset = await getById("media_assets", assetId);
+  syncMediaRembgQueueItemFromAsset(asset);
+  const remaining = mediaRembgReviewAssets();
+  state.ui.media.rembgReviewId = remaining[0]?.id || "";
+  if (!remaining.length) state.ui.media.rembgReviewMode = false;
+  await persistMediaRembgQueue(true);
 }
 
 async function auditTransparentPng(file) {
@@ -6321,22 +6767,24 @@ async function saveTransparentDerivative(assetId, file, options = {}) {
   if (!afterHash || afterHash !== beforeHash) throw new Error("STOP sécurité : empreinte de l'original modifiée après écriture du dérivé.");
 
   replaceMediaAssetInMemory(persisted, ["transparent"]);
-  state.ui.media.selectedId = assetId;
+  syncMediaRembgQueueItemFromAsset(persisted);
+  if (options.select !== false) state.ui.media.selectedId = assetId;
   await saveUiState(state.ui);
-  render();
+  if (options.render !== false) render();
   return audit;
 }
 
-async function setTransparentDerivativeReview(assetId, status) {
+async function setTransparentDerivativeReview(assetId, status, options = {}) {
   const existing=await getById("media_assets",assetId);
   if(!existing?.transparent_blob) return false;
   if(status==="approved"&&existing.transparent_audit?.pass!==true) throw new Error("L'audit alpha doit être valide avant approbation visuelle.");
   const next=structuredClone(existing); next.transparent_review_status=status==="approved"?"approved":"needs_fix"; next.transparent_reviewed_at=nowISO(); next.updated_at=nowISO();
   await putOne("media_assets",next);
   replaceMediaAssetInMemory(next, []);
-  state.ui.media.selectedId=assetId;
+  syncMediaRembgQueueItemFromAsset(next);
+  if(options.select!==false) state.ui.media.selectedId=assetId;
   await saveUiState(state.ui);
-  render();
+  if(options.render!==false) render();
   return true;
 }
 
@@ -6349,6 +6797,7 @@ async function removeTransparentDerivative(assetId) {
   const persisted=await getById("media_assets",assetId);
   if(originalHash&&await sha256Blob(persisted?.blob)!==originalHash) throw new Error("STOP sécurité : l'original a changé pendant le retrait du dérivé.");
   replaceMediaAssetInMemory(persisted, ["transparent"]);
+  syncMediaRembgQueueItemFromAsset(persisted);
   state.ui.media.selectedId=assetId;
   await saveUiState(state.ui);
   render();
@@ -6997,6 +7446,47 @@ function bindEvents() {
           toast(result.audit?.pass ? `ISNet terminé en ${(result.durationMs/1000).toFixed(1)} s. Valide visuellement avant enregistrement.` : "ISNet terminé, mais l'audit alpha bloque l'enregistrement.", result.audit?.pass ? "success" : "warn");
           return;
         }
+        case "media-rembg-batch-start":
+          void startMediaRembgQueue({ fresh: true }).catch(err => reportError(err, "rembg.auto.start"));
+          return;
+        case "media-rembg-batch-pause":
+          await pauseMediaRembgQueue();
+          return;
+        case "media-rembg-batch-stop":
+          await stopMediaRembgQueue();
+          return;
+        case "media-rembg-batch-resume":
+          void startMediaRembgQueue({ fresh: false }).catch(err => reportError(err, "rembg.auto.resume"));
+          return;
+        case "media-rembg-review-open": {
+          const first=mediaRembgReviewAssets()[0];
+          state.ui.media.rembgReviewMode=true;
+          state.ui.media.rembgReviewId=first?.id||"";
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
+        case "media-rembg-review-close":
+          state.ui.media.rembgReviewMode=false;
+          state.ui.media.rembgReviewId="";
+          await saveUiState(state.ui);
+          render();
+          return;
+        case "media-rembg-review-next": {
+          const current=currentMediaRembgReviewAsset();
+          state.ui.media.rembgReviewId=nextMediaRembgReviewId(current?.id||"");
+          await saveUiState(state.ui);
+          render();
+          return;
+        }
+        case "media-rembg-review-approve":
+          await reviewMediaRembgAsset(btn.dataset.id,"approved");
+          toast("Détourage validé. Le Codex peut maintenant l’utiliser.","success");
+          return;
+        case "media-rembg-review-reject":
+          await reviewMediaRembgAsset(btn.dataset.id,"needs_fix");
+          toast("Détourage marqué à corriger. L’original reste utilisé.","warn");
+          return;
         case "media-rembg-download-candidate": {
           const candidate=state.mediaRembg?.candidate;
           if(!candidate?.blob){toast("Aucun aperçu temporaire à télécharger.","warn");return;}
@@ -7392,6 +7882,7 @@ async function bootstrap() {
   }
   ensureUiDefaults();
   ensureSelectionExists();
+  const resumeRembgOnBoot = prepareMediaRembgQueueAfterBoot();
   await saveUiState(state.ui);
 
   state.logs = await getLogs(100);
@@ -7405,6 +7896,12 @@ async function bootstrap() {
   wireCodexFamilyScrollTracking();
   wireCreatureMediaFallbacks();
   render();
+
+  if (resumeRembgOnBoot) {
+    setTimeout(() => {
+      void startMediaRembgQueue({ fresh: false }).catch(err => reportError(err, "rembg.auto.resume-on-boot"));
+    }, 0);
+  }
 
 if ("serviceWorker" in navigator) {
     const controlledBeforeRegistration = Boolean(navigator.serviceWorker.controller);
