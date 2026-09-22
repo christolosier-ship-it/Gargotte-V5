@@ -893,6 +893,109 @@ test("ISNet production flow waits for human approval before writing the transpar
   await expect(codexMediaCard.locator("img")).toHaveAttribute("src", targetSrcAfter);
 });
 
+test("automatic ISNet queue only processes linked creatures, heroes and NPCs then keeps derivatives pending for grouped review", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__rembgAutoCalls = 0;
+    window.__GARGOTTEX_REMBG__ = {
+      async remove(_blob, onProgress) {
+        window.__rembgAutoCalls += 1;
+        onProgress?.(25, "Détourage ISNet en cours…");
+        if (window.__rembgAutoCalls === 1) throw new Error("Échec simulé de première tentative");
+        const canvas = document.createElement("canvas");
+        canvas.width = 48; canvas.height = 48;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0,0,48,48);
+        ctx.fillStyle = "#8b5a2b";
+        ctx.fillRect(12,6,24,36);
+        onProgress?.(95, "Création du PNG transparent…");
+        return await new Promise((resolve,reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("PNG test indisponible")), "image/png"));
+      },
+      async dispose() {}
+    };
+  });
+
+  await ready(page);
+
+  await page.evaluate(async () => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const readFirst=(storeName)=>new Promise((resolve,reject)=>{
+      const tx=db.transaction(storeName,"readonly"),req=tx.objectStore(storeName).getAll();
+      req.onsuccess=()=>resolve(req.result?.[0]||null);req.onerror=()=>reject(req.error);
+    });
+    const [creature,hero,npc]=await Promise.all([readFirst("creatures"),readFirst("heroes"),readFirst("npcs")]);
+    if(!creature||!hero||!npc) throw new Error("Fixtures créature/héros/PNJ requises");
+
+    const canvas=document.createElement("canvas");canvas.width=48;canvas.height=48;
+    const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,48,48);ctx.fillStyle="#8b5a2b";ctx.fillRect(12,6,24,36);
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("blob")),"image/png"));
+    const now=new Date().toISOString();
+    const rows=[
+      {id:"auto-creature",label:"Auto créature",file_name:"auto-creature.png",path:"local-media/creatures/auto-creature.png",mime_type:"image/png",entity_type:"creatures",entity_id:String(creature.id),blob,original_size:blob.size,created_at:now,updated_at:now},
+      {id:"auto-hero",label:"Auto héros",file_name:"auto-hero.png",path:"local-media/heroes/auto-hero.png",mime_type:"image/png",entity_type:"heroes",entity_id:String(hero.id),blob,original_size:blob.size,created_at:now,updated_at:now},
+      {id:"auto-npc",label:"Auto PNJ",file_name:"auto-npc.png",path:"local-media/npcs/auto-npc.png",mime_type:"image/png",entity_type:"npcs",entity_id:String(npc.id),blob,original_size:blob.size,created_at:now,updated_at:now},
+      {id:"auto-gallery",label:"Hors périmètre",file_name:"auto-gallery.png",path:"local-media/gallery/auto-gallery.png",mime_type:"image/png",entity_type:"gallery",entity_id:"",blob,original_size:blob.size,created_at:now,updated_at:now}
+    ];
+    const tx=db.transaction("media_assets","readwrite");
+    for(const row of rows) tx.objectStore("media_assets").put(row);
+    await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
+    db.close();
+  });
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".v6-app")).toBeVisible();
+  await gotoView(page, "media");
+
+  const batch=page.locator(".media-rembg-batch");
+  await expect(batch).toContainText("Créatures, Héros et PNJ");
+  await page.locator('[data-action="media-rembg-batch-start"]').click();
+  await expect(batch).toHaveAttribute("data-queue-status","complete",{timeout:20_000});
+  await expect(batch).toContainText("3 à valider");
+  expect(await page.evaluate(() => window.__rembgAutoCalls)).toBe(4);
+
+  const states=await page.evaluate(async () => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction("media_assets","readonly"),store=tx.objectStore("media_assets");
+    const read=id=>new Promise((resolve,reject)=>{const req=store.get(id);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const rows=await Promise.all(["auto-creature","auto-hero","auto-npc","auto-gallery"].map(read));db.close();
+    return Object.fromEntries(rows.map(row=>[row.id,{transparent:Boolean(row.transparent_blob),review:row.transparent_review_status||"",model:row.transparent_model||"",processing:row.transparent_processing||""}]));
+  });
+  for(const id of ["auto-creature","auto-hero","auto-npc"]){
+    expect(states[id].transparent).toBe(true);
+    expect(states[id].review).toBe("pending");
+    expect(states[id].model).toBe("isnet-general-use");
+    expect(states[id].processing).toContain("file automatique");
+  }
+  expect(states["auto-gallery"].transparent).toBe(false);
+
+  await page.locator('[data-action="media-rembg-review-open"]').click();
+  const review=page.locator(".media-rembg-review[data-review-id]");
+  await expect(review).toBeVisible();
+  const approvedId=await review.getAttribute("data-review-id");
+  await review.locator('[data-action="media-rembg-review-approve"]').click();
+
+  const second=page.locator(".media-rembg-review[data-review-id]");
+  await expect(second).toBeVisible();
+  const rejectedId=await second.getAttribute("data-review-id");
+  expect(rejectedId).not.toBe(approvedId);
+  await second.locator('[data-action="media-rembg-review-reject"]').click();
+
+  const reviewed=await page.evaluate(async ({approvedId,rejectedId}) => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction("media_assets","readonly"),store=tx.objectStore("media_assets");
+    const read=id=>new Promise((resolve,reject)=>{const req=store.get(id);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const [approved,rejected]=await Promise.all([read(approvedId),read(rejectedId)]);db.close();
+    return {approved:approved.transparent_review_status,rejected:rejected.transparent_review_status};
+  },{approvedId,rejectedId});
+  expect(reviewed.approved).toBe("approved");
+  expect(reviewed.rejected).toBe("needs_fix");
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".v6-app")).toBeVisible();
+  await gotoView(page, "media");
+  await expect(page.locator(".media-rembg-batch")).toHaveAttribute("data-queue-status","complete");
+  await expect(page.locator(".media-rembg-batch")).toContainText("1 à valider");
+});
+
 test("ISNet media smoke and human gate when Blob IndexedDB is available @webkit", async ({ page }, testInfo) => {
   const sourcePngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAALklEQVR4nGP8////fwYKABMlmgeHASzoAmkuSng1zNpzj7ouGDVgMBjAOJoXGAAbGwsZJ9QthAAAAABJRU5ErkJggg==";
   const cutoutPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAJ0lEQVR4nGNgGAWM6AKpzor/8WmYvfc+ih4mSl0wasBgMGAUMDAAAMMxBBBZrUDTAAAAAElFTkSuQmCC";
