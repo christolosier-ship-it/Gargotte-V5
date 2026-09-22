@@ -1864,6 +1864,58 @@ function rebuildMediaCache() {
   }
 }
 
+function mediaBlobForKind(asset, kind) {
+  if (!asset) return null;
+  if (kind === "original") return asset.blob || null;
+  if (kind === "preview") return asset.preview_blob || null;
+  if (kind === "thumb") return asset.thumb_blob || null;
+  if (kind === "transparent") return asset.transparent_blob || null;
+  return null;
+}
+
+function refreshMediaAssetUrl(asset, kind) {
+  if (!asset?.id) return "";
+  const key = `${asset.id}:${kind}`;
+  const previous = state.mediaUrlCache.get(key) || state.mediaUrlReverse.get(key);
+  if (previous) {
+    try { URL.revokeObjectURL(previous); } catch (_) {}
+  }
+  state.mediaUrlCache.delete(key);
+  state.mediaUrlReverse.delete(key);
+  const blob = mediaBlobForKind(asset, kind);
+  if (!blob) return "";
+  const url = URL.createObjectURL(blob);
+  state.mediaUrlCache.set(key, url);
+  state.mediaUrlReverse.set(key, url);
+  return url;
+}
+
+function replaceMediaAssetInMemory(asset, refreshKinds = ["transparent"]) {
+  if (!asset?.id) return;
+  const list = state.data.media_assets || (state.data.media_assets = []);
+  const index = list.findIndex(row => String(row.id) === String(asset.id));
+  if (index >= 0) list[index] = asset;
+  else list.push(asset);
+  const byId = state.index?.media_assets?.byId;
+  if (byId) byId.set(asset.id, asset);
+  for (const kind of refreshKinds) refreshMediaAssetUrl(asset, kind);
+}
+
+function mediaHasApprovedTransparent(asset) {
+  return Boolean(
+    asset?.transparent_blob &&
+    asset.transparent_review_status === "approved" &&
+    asset.transparent_audit?.pass === true
+  );
+}
+
+function mediaCardUrlForAsset(asset) {
+  if (mediaHasApprovedTransparent(asset)) {
+    return mediaTransparentUrlForAsset(asset) || thumbUrlForAsset(asset);
+  }
+  return thumbUrlForAsset(asset);
+}
+
 function mediaOriginalUrlForAsset(asset) {
   if (!asset) return "";
   return state.mediaUrlCache.get(`${asset.id}:original`) || asset.path || "";
@@ -5435,12 +5487,13 @@ function mediaFilteredAssets() {
 }
 
 function renderMediaAssetCard(asset, active = false) {
-  const preview = thumbUrlForAsset(asset);
+  const hasApprovedTransparent = mediaHasApprovedTransparent(asset);
+  const preview = mediaCardUrlForAsset(asset);
   const attachment = mediaAttachment(asset);
   const derivative = mediaDerivativeState(asset);
   return `
-    <button class="media-card-v6 ${active ? "active" : ""}" type="button" data-action="media-select" data-id="${escapeHtml(String(asset.id || ""))}">
-      <div class="media-card-visual">${preview ? `<img src="${escapeHtml(preview)}" alt="" loading="lazy">` : `<div class="media-empty-visual">Aperçu indisponible</div>`}</div>
+    <button class="media-card-v6 ${active ? "active" : ""}" type="button" data-action="media-select" data-id="${escapeHtml(String(asset.id || ""))}" data-card-variant="${hasApprovedTransparent ? "transparent" : "thumbnail"}">
+      <div class="media-card-visual ${hasApprovedTransparent ? "transparent" : ""}">${preview ? `<img src="${escapeHtml(preview)}" alt="" loading="lazy">` : `<div class="media-empty-visual">Aperçu indisponible</div>`}</div>
       <div class="media-card-copy-v6">
         <div class="media-card-kicker"><span class="media-local-dot"></span><span>Original local</span></div>
         <strong>${escapeHtml(asset.label || asset.file_name || asset.id || "Média")}</strong>
@@ -6267,9 +6320,10 @@ async function saveTransparentDerivative(assetId, file, options = {}) {
   const afterHash = await sha256Blob(persisted?.blob);
   if (!afterHash || afterHash !== beforeHash) throw new Error("STOP sécurité : empreinte de l'original modifiée après écriture du dérivé.");
 
-  await refreshData();
+  replaceMediaAssetInMemory(persisted, ["transparent"]);
   state.ui.media.selectedId = assetId;
   await saveUiState(state.ui);
+  render();
   return audit;
 }
 
@@ -6278,7 +6332,12 @@ async function setTransparentDerivativeReview(assetId, status) {
   if(!existing?.transparent_blob) return false;
   if(status==="approved"&&existing.transparent_audit?.pass!==true) throw new Error("L'audit alpha doit être valide avant approbation visuelle.");
   const next=structuredClone(existing); next.transparent_review_status=status==="approved"?"approved":"needs_fix"; next.transparent_reviewed_at=nowISO(); next.updated_at=nowISO();
-  await putOne("media_assets",next); await refreshData(); state.ui.media.selectedId=assetId; await saveUiState(state.ui); return true;
+  await putOne("media_assets",next);
+  replaceMediaAssetInMemory(next, []);
+  state.ui.media.selectedId=assetId;
+  await saveUiState(state.ui);
+  render();
+  return true;
 }
 
 async function removeTransparentDerivative(assetId) {
@@ -6289,7 +6348,11 @@ async function removeTransparentDerivative(assetId) {
   next.updated_at=nowISO(); await putOne("media_assets",next);
   const persisted=await getById("media_assets",assetId);
   if(originalHash&&await sha256Blob(persisted?.blob)!==originalHash) throw new Error("STOP sécurité : l'original a changé pendant le retrait du dérivé.");
-  await refreshData(); state.ui.media.selectedId=assetId; await saveUiState(state.ui); return true;
+  replaceMediaAssetInMemory(persisted, ["transparent"]);
+  state.ui.media.selectedId=assetId;
+  await saveUiState(state.ui);
+  render();
+  return true;
 }
 
 async function attachMediaAsset(assetId, type, entityId) {
