@@ -885,6 +885,12 @@ test("ISNet production flow waits for human approval before writing the transpar
   expect(afterHumanApproval.processing).toContain("IS-Net");
   expect(afterHumanApproval.sourceHash).toBe(originalState.hash);
   expect(afterHumanApproval.auditPass).toBe(true);
+
+  await gotoView(page, "codex");
+  await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
+  const codexMediaCard = page.locator('[data-action="select-codex"][data-type="media_assets"][data-id="media-rembg-prod-test"]');
+  await expect(codexMediaCard).toBeVisible();
+  await expect(codexMediaCard.locator("img")).toHaveAttribute("src", targetSrcAfter);
 });
 
 test("ISNet media smoke and human gate when Blob IndexedDB is available @webkit", async ({ page }, testInfo) => {
