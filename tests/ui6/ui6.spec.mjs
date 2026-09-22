@@ -982,6 +982,7 @@ test("automatic ISNet queue only processes linked creatures, heroes and NPCs the
   await expect(second).not.toHaveAttribute("data-review-id", approvedId);
   const rejectedId=await second.getAttribute("data-review-id");
   await second.locator('[data-action="media-rembg-review-reject"]').click();
+  await expect(page.locator(".media-rembg-review[data-review-id]")).not.toHaveAttribute("data-review-id", rejectedId);
 
   const reviewed=await page.evaluate(async ({approvedId,rejectedId}) => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
