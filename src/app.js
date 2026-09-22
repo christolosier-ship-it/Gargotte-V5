@@ -272,7 +272,7 @@ const WORKSHOP_REQUIRED_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
-const APP_VERSION = "5.5.6";
+const APP_VERSION = "5.5.7";
 const PWA_CACHE_NAME = "gargottex-v6-polish-cards-v1";
 const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js"];
 
@@ -332,6 +332,7 @@ const BERTHOLD_ADVICES = [
 let bertholdAdviceIndex = Math.floor(Math.random() * BERTHOLD_ADVICES.length);
 let backupBusy = false;
 let rembgEnginePromise = null;
+let rembgActiveEngine = null;
 const REMBG_RUNTIME_URL = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/ort.min.js";
 const REMBG_RUNTIME_BASE = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/";
 const REMBG_LIBRARY_URL = "https://cdn.jsdelivr.net/npm/@bunnio/rembg-web@1.0.2/dist/index.umd.min.js";
@@ -6221,7 +6222,10 @@ function loadExternalScriptOnce(src, readyCheck) {
 }
 
 async function ensureMediaRembgEngine() {
-  if (globalThis.__GARGOTTEX_REMBG__?.remove) return globalThis.__GARGOTTEX_REMBG__;
+  if (globalThis.__GARGOTTEX_REMBG__?.remove) {
+    rembgActiveEngine = globalThis.__GARGOTTEX_REMBG__;
+    return rembgActiveEngine;
+  }
   if (rembgEnginePromise) return rembgEnginePromise;
   rembgEnginePromise = (async () => {
     await loadExternalScriptOnce(REMBG_RUNTIME_URL, () => Boolean(globalThis.ort?.InferenceSession));
@@ -6235,7 +6239,7 @@ async function ensureMediaRembgEngine() {
     api.rembgConfig?.enableWebNN?.(false);
     api.rembgConfig?.enableWebGPU?.(false);
     const session = await api.newSession(REMBG_MODEL.key);
-    return {
+    const engine = {
       async remove(blob, onProgress) {
         return api.remove(blob, {
           session,
@@ -6252,17 +6256,47 @@ async function ensureMediaRembgEngine() {
         });
       },
       async dispose() {
-        try { await api.disposeAllSessions?.(); } finally { rembgEnginePromise = null; }
+        let disposeError = null;
+        try {
+          await api.disposeAllSessions?.();
+        } catch (err) {
+          disposeError = err;
+        }
+        try {
+          api.clearSessionCache?.();
+        } catch (cacheErr) {
+          console.error("[Gargottex][ISNet] Échec du nettoyage du cache de sessions.", cacheErr);
+          if (!disposeError) disposeError = cacheErr;
+        }
+        if (disposeError) throw disposeError;
       }
     };
+    rembgActiveEngine = engine;
+    return engine;
   })().catch(err => {
     rembgEnginePromise = null;
+    rembgActiveEngine = null;
     throw err;
   });
   return rembgEnginePromise;
 }
 
-async function runMediaRembg(assetId) {
+async function disposeMediaRembgEngine(reason = "") {
+  const enginePromise = rembgEnginePromise;
+  const engine = rembgActiveEngine || (enginePromise ? await enginePromise.catch(() => null) : null);
+  rembgEnginePromise = null;
+  rembgActiveEngine = null;
+  if (!engine?.dispose) return true;
+  try {
+    await engine.dispose();
+    return true;
+  } catch (err) {
+    console.error(`[Gargottex][ISNet] Échec de libération du moteur${reason ? ` (${reason})` : ""}.`, err);
+    throw err;
+  }
+}
+
+async function runMediaRembg(assetId, { disposeEngine = true } = {}) {
   const existing = await getById("media_assets", assetId);
   if (!existing) throw new Error("Média introuvable.");
   if (!existing.blob) throw new Error("Original Blob local absent : impossible de lancer le détourage.");
@@ -6312,7 +6346,16 @@ async function runMediaRembg(assetId) {
     render();
     throw err;
   } finally {
-    try { await engine?.dispose?.(); } catch (_) {}
+    if (disposeEngine && engine) {
+      try {
+        await disposeMediaRembgEngine("traitement manuel");
+      } catch (disposeErr) {
+        const message = disposeErr?.message || String(disposeErr);
+        state.mediaRembg.error = `Détourage terminé, mais la libération d’ISNet a échoué : ${message}`;
+        console.error("[Gargottex][ISNet] Libération après traitement manuel incomplète.", disposeErr);
+        render();
+      }
+    }
   }
 }
 
@@ -6431,7 +6474,7 @@ async function processMediaRembgQueueItem(assetId) {
 
     try {
       resetMediaRembg();
-      const result = await runMediaRembg(assetId);
+      const result = await runMediaRembg(assetId, { disposeEngine: false });
       const candidate = state.mediaRembg?.candidate;
       item.durationMs = Number(result?.durationMs || 0);
 
@@ -6458,11 +6501,22 @@ async function processMediaRembgQueueItem(assetId) {
       resetMediaRembg();
       return;
     } catch (err) {
-      item.lastError = err?.message || String(err);
+      const processingError = err?.message || String(err);
       resetMediaRembg();
+      let resetError = "";
+      try {
+        await disposeMediaRembgEngine(attempts <= REMBG_AUTO_RETRY_MAX ? "reset avant retry" : "reset après erreur");
+      } catch (disposeErr) {
+        resetError = disposeErr?.message || String(disposeErr);
+      }
+      item.lastError = resetError
+        ? `${processingError} · reset moteur : ${resetError}`
+        : processingError;
       if (attempts <= REMBG_AUTO_RETRY_MAX) {
         item.status = "queued";
-        queue.currentMessage = "Échec ISNet · nouvelle tentative…";
+        queue.currentMessage = resetError
+          ? "Échec ISNet · moteur purgé avec avertissement · nouvelle tentative…"
+          : "Échec ISNet · moteur réinitialisé · nouvelle tentative…";
         await persistMediaRembgQueue(true);
         await rembgQueueDelay(REMBG_AUTO_PAUSE_MS);
         continue;
@@ -6524,11 +6578,23 @@ async function startMediaRembgQueue({ fresh = false } = {}) {
       queue.status = "paused";
     }
   } finally {
+    let disposeWarning = "";
+    try {
+      await disposeMediaRembgEngine(queue.status === "complete" ? "fin du lot" : "pause ou arrêt du lot");
+    } catch (disposeErr) {
+      disposeWarning = disposeErr?.message || String(disposeErr);
+      console.error("[Gargottex][ISNet] Fin de lot avec avertissement de libération.", disposeErr);
+    }
     state.mediaRembgBatch.runnerActive = false;
     state.mediaRembgBatch.stopRequested = false;
     queue.currentId = "";
     queue.currentProgress = 0;
     queue.currentMessage = "";
+    if (disposeWarning) {
+      queue.engineDisposeWarning = disposeWarning;
+    } else {
+      delete queue.engineDisposeWarning;
+    }
     await persistMediaRembgQueue(true);
 
     if (queue.status === "complete") {
