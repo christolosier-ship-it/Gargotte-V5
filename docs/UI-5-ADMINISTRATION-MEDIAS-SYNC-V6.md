@@ -700,3 +700,18 @@ Le rejet du candidat ne provoque aucune écriture IndexedDB.
 Après chaque inférence, les sessions ONNX sont explicitement libérées avec `disposeAllSessions()`. Le cache modèle `rembg-models` n'est pas supprimé.
 
 Aucune migration de `gargottex-v5-offline`, aucun nouveau store Gargottex et aucune modification des originaux existants.
+
+
+### Optimisation après validation du dérivé — 22 septembre 2026
+
+La validation, le rejet ou le retrait d'un dérivé transparent ne déclenche plus de rechargement complet de `media_assets`.
+
+Le média concerné est relu et remplacé localement dans l'état applicatif. Seule son URL Blob `transparent` est créée, remplacée ou révoquée. Les URL `original`, `preview` et `thumb` des autres médias restent intactes.
+
+Objectif : éviter les pics mémoire Safari/iPadOS provoqués par le rechargement de plusieurs centaines de Blob et la reconstruction globale de leurs Object URL après chaque détourage.
+
+Dans la bibliothèque Média, une carte affiche en priorité le dérivé transparent uniquement lorsque :
+- `transparent_review_status === "approved"` ;
+- `transparent_audit.pass === true`.
+
+Les dérivés en attente ou à corriger ne remplacent pas la miniature normale.
