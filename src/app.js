@@ -4304,7 +4304,7 @@ function codexBadge(type, item) {
 }
 
 function codexImageFor(type, item) {
-  if (type === "media_assets") return thumbUrlForAsset(item);
+  if (type === "media_assets") return mediaCardUrlForAsset(item);
   return imageUrlForEntity(item);
 }
 
