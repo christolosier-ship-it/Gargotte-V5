@@ -91,6 +91,13 @@ Familles :
 
 La V3 « menu classique à cases puis fiche » est la référence.
 
+Dans la famille **Créatures**, la barre de liste propose aussi deux filtres de complétude pour accélérer les corrections :
+
+- **Pas d’image** : conserve les créatures dont `image_path` est absent ou vide ;
+- **Pas de donjon** : conserve les créatures dont `dungeon_id` est absent ou vide.
+
+Ces filtres sont persistés avec l’état UI. **Pas d’image** peut se combiner au filtre Donjon ou à **Pas de donjon**. Sélectionner un Donjon désactive **Pas de donjon**, et activer **Pas de donjon** retire le Donjon sélectionné. Comme toute navigation de l’Atelier, leur changement respecte le garde-fou des modifications non enregistrées.
+
 ---
 
 # 4. Responsive Atelier

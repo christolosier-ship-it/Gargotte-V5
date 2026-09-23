@@ -272,8 +272,8 @@ const WORKSHOP_REQUIRED_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
-const APP_VERSION = "5.5.7";
-const PWA_CACHE_NAME = "gargottex-v6-polish-cards-v1";
+const APP_VERSION = "5.5.8";
+const PWA_CACHE_NAME = "gargottex-v6-atelier-creature-filters-v1";
 const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js"];
 
 const HOME_TAGLINE = "Ici, même les habitués ne savent plus pourquoi ils sont venus.";
@@ -413,6 +413,8 @@ const state = {
     codexHeroLevel: "",
     codexQuestDungeonId: "",
     workshopCreatureDungeonId: "",
+    workshopCreatureMissingImage: false,
+    workshopCreatureMissingDungeon: false,
     workshopQuestDungeonId: "",
     generator: { dungeonId: "", floorIndex: 0, boss: false, miniBoss: false, result: null },
     brouhaha: { dungeonId: "", level: 0, history: [], drawn: [] },
@@ -454,6 +456,8 @@ function defaultBlankUi() {
     codexHeroLevel: "",
     codexQuestDungeonId: "",
     workshopCreatureDungeonId: "",
+    workshopCreatureMissingImage: false,
+    workshopCreatureMissingDungeon: false,
     workshopQuestDungeonId: "",
     generator: { dungeonId: "", floorIndex: 0, boss: false, miniBoss: false, result: null },
     brouhaha: { dungeonId: "", level: 0, history: [], drawn: [] },
@@ -1981,6 +1985,14 @@ function getFilteredList(type, scope = "search") {
     if (type === "creatures") {
       const dungeonId = scope === "codex" ? state.ui.codexCreatureDungeonId : state.ui.workshopCreatureDungeonId;
       if (dungeonId) list = list.filter(item => item.dungeon_id === dungeonId);
+      if (scope === "atelier") {
+        if (state.ui.workshopCreatureMissingImage) {
+          list = list.filter(item => !String(item.image_path || "").trim());
+        }
+        if (state.ui.workshopCreatureMissingDungeon) {
+          list = list.filter(item => !String(item.dungeon_id || "").trim());
+        }
+      }
     }
     if (type === "heroes" && scope === "codex") {
       const level = state.ui.codexHeroLevel;
@@ -4325,6 +4337,21 @@ function renderCreatureDungeonFilter(selectedId, action) {
   `;
 }
 
+function renderWorkshopCreatureCompletenessFilters() {
+  const missingImage = Boolean(state.ui.workshopCreatureMissingImage);
+  const missingDungeon = Boolean(state.ui.workshopCreatureMissingDungeon);
+  return `
+    <div class="workshop-completeness-filters" role="group" aria-label="Filtres de complétude des créatures">
+      <button type="button" class="workshop-filter-chip" data-action="atelier-creature-missing-image-filter" aria-pressed="${missingImage}">
+        Pas d’image
+      </button>
+      <button type="button" class="workshop-filter-chip" data-action="atelier-creature-missing-dungeon-filter" aria-pressed="${missingDungeon}">
+        Pas de donjon
+      </button>
+    </div>
+  `;
+}
+
 function renderHeroLevelFilter(selectedLevel, action) {
   return `
     <label class="inline-filter">
@@ -5212,6 +5239,13 @@ async function performWorkshopNavigation(pending) {
     state.ui.workshopType = pending.type;
     state.ui.workshopSelectedId = pending.id;
     state.workshop.editorOpen = true;
+  } else if (pending.kind === "creature-filters") {
+    state.ui.workshopCreatureDungeonId = String(pending.dungeonId || "");
+    state.ui.workshopCreatureMissingImage = Boolean(pending.missingImage);
+    state.ui.workshopCreatureMissingDungeon = Boolean(pending.missingDungeon);
+    if (state.ui.workshopCreatureMissingDungeon) state.ui.workshopCreatureDungeonId = "";
+    state.ui.workshopSelectedId = "";
+    state.workshop.editorOpen = false;
   } else if (pending.kind === "new") {
     const draft = createWorkshopDraft(pending.type);
     state.ui.workshopType = pending.type;
@@ -5280,6 +5314,7 @@ function renderAtelier() {
         <div><strong>${escapeHtml(getLabel(type))}</strong><span>${items.length} fiche${items.length > 1 ? "s" : ""}</span></div>
         <button class="primary" type="button" data-action="new-item" data-type="${type}">＋ Nouveau</button>
         ${type === "creatures" ? renderCreatureDungeonFilter(state.ui.workshopCreatureDungeonId, "atelier-creature-dungeon-filter") : ""}
+        ${type === "creatures" ? renderWorkshopCreatureCompletenessFilters() : ""}
         ${type === "quests" ? renderQuestDungeonFilter(state.ui.workshopQuestDungeonId, "atelier-quest-dungeon-filter") : ""}
       </div>
 
@@ -7352,6 +7387,24 @@ function bindEvents() {
         case "new-item":
           await requestWorkshopNavigation({ kind: "new", type: btn.dataset.type });
           return;
+        case "atelier-creature-missing-image-filter":
+          await requestWorkshopNavigation({
+            kind: "creature-filters",
+            dungeonId: state.ui.workshopCreatureDungeonId,
+            missingImage: !Boolean(state.ui.workshopCreatureMissingImage),
+            missingDungeon: Boolean(state.ui.workshopCreatureMissingDungeon)
+          });
+          return;
+        case "atelier-creature-missing-dungeon-filter": {
+          const missingDungeon = !Boolean(state.ui.workshopCreatureMissingDungeon);
+          await requestWorkshopNavigation({
+            kind: "creature-filters",
+            dungeonId: missingDungeon ? "" : state.ui.workshopCreatureDungeonId,
+            missingImage: Boolean(state.ui.workshopCreatureMissingImage),
+            missingDungeon
+          });
+          return;
+        }
         case "workshop-back-list":
           state.workshop.editorOpen = false;
           render();
@@ -7694,10 +7747,12 @@ function bindEvents() {
           render();
           return;
         case "atelier-creature-dungeon-filter":
-          state.ui.workshopCreatureDungeonId = el.value;
-          state.ui.workshopSelectedId = "";
-          await saveUiState(state.ui);
-          render();
+          await requestWorkshopNavigation({
+            kind: "creature-filters",
+            dungeonId: el.value,
+            missingImage: Boolean(state.ui.workshopCreatureMissingImage),
+            missingDungeon: false
+          });
           return;
         case "codex-quest-dungeon-filter":
           state.ui.codexQuestDungeonId = el.value;
