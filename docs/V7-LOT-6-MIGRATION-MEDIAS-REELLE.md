@@ -19,9 +19,11 @@ Migrer l'ensemble des médias de production IndexedDB vers R2 en utilisant uniqu
 - Vérifier les métadonnées D1 associées.
 
 Pour chaque média attendu :
-- source identifiée ;
-- cible R2 identifiée ;
-- contrôle d'intégrité réussi ou état explicitement qualifié.
+- original identifié lorsqu'il existe ;
+- thumbnail et preview identifiés lorsqu'ils existent ;
+- dérivé `transparent_blob` identifié et migré lorsqu'il existe ;
+- chaque cible R2 identifiée séparément ;
+- contrôle d'intégrité réussi pour chaque variante ou état explicitement qualifié.
 
 ## Cas particuliers
 Tout média dont le Blob source est absent, illisible ou incohérent doit être signalé distinctement. Ne pas le faire passer silencieusement comme migré.
