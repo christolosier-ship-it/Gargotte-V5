@@ -10,7 +10,7 @@
 ## Travaux
 - Vérifier l'état du repo et la branche de production.
 - Identifier le commit exact qui devient la baseline V7.
-- Vérifier que la régression rembg et les optimisations visuelles attendues sont terminées ou hors périmètre.
+- Vérifier que le moteur rembg a bien été retiré, que son cache historique est nettoyé sans toucher à IndexedDB Gargottex et que les dérivés `transparent_*` existants restent lisibles.
 - Vérifier que l'application démarre correctement.
 - Vérifier que l'IndexedDB de production n'a subi aucune migration destructive.
 - Vérifier les tests existants pertinents.
