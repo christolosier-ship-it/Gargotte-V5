@@ -47,7 +47,9 @@ Définir :
 Définir :
 - nommage des objets ;
 - arborescence logique ;
-- règles original/thumbnail/preview ;
+- règles original/thumbnail/preview/transparent ;
+- conservation des `transparent_blob` existants comme variantes séparées ;
+- conservation des métadonnées historiques `transparent_*` sans exiger le moteur qui les a produites ;
 - métadonnées ;
 - contrôle SHA-256 ;
 - comportement en cas de doublon ;
