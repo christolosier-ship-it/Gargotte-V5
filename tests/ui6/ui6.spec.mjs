@@ -417,7 +417,7 @@ test("Atelier creature completeness filters isolate missing image and missing du
   await page.setViewportSize({ width: 1440, height: 900 });
   await ready(page);
 
-  await page.evaluate(async () => {
+  const seededDungeonId = await page.evaluate(async () => {
     const db = await new Promise((resolve, reject) => {
       const req = indexedDB.open("gargottex-v5-offline");
       req.onsuccess = () => resolve(req.result);
@@ -442,6 +442,7 @@ test("Atelier creature completeness filters isolate missing image and missing du
       tx.onabort = () => reject(tx.error);
     });
     db.close();
+    return dungeonId;
   });
 
   await page.reload({ waitUntil: "domcontentloaded" });
@@ -450,31 +451,32 @@ test("Atelier creature completeness filters isolate missing image and missing du
 
   const missingImage = page.locator('[data-action="atelier-creature-missing-image-filter"]');
   const missingDungeon = page.locator('[data-action="atelier-creature-missing-dungeon-filter"]');
+  const card = name => page.locator(".workshop-list-card").filter({ hasText: name });
   await expect(missingImage).toHaveAttribute("aria-pressed", "false");
   await expect(missingDungeon).toHaveAttribute("aria-pressed", "false");
 
   await missingImage.click();
   await expect(missingImage).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByText("Filtre Test Sans Image", { exact: true })).toBeVisible();
-  await expect(page.getByText("Filtre Test Sans Rien", { exact: true })).toBeVisible();
-  await expect(page.getByText("Filtre Test Sans Donjon", { exact: true })).toHaveCount(0);
+  await expect(card("Filtre Test Sans Image")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Rien")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Donjon")).toHaveCount(0);
 
   await missingDungeon.click();
   await expect(missingDungeon).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByText("Filtre Test Sans Rien", { exact: true })).toBeVisible();
-  await expect(page.getByText("Filtre Test Sans Image", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Filtre Test Sans Donjon", { exact: true })).toHaveCount(0);
+  await expect(card("Filtre Test Sans Rien")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Image")).toHaveCount(0);
+  await expect(card("Filtre Test Sans Donjon")).toHaveCount(0);
 
   await missingImage.click();
-  await expect(page.getByText("Filtre Test Sans Donjon", { exact: true })).toBeVisible();
-  await expect(page.getByText("Filtre Test Sans Rien", { exact: true })).toBeVisible();
-  await expect(page.getByText("Filtre Test Sans Image", { exact: true })).toHaveCount(0);
+  await expect(card("Filtre Test Sans Donjon")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Rien")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Image")).toHaveCount(0);
 
   const dungeonSelect = page.locator('[data-action="atelier-creature-dungeon-filter"]');
-  await dungeonSelect.selectOption({ index: 1 });
+  await dungeonSelect.selectOption(seededDungeonId);
   await expect(missingDungeon).toHaveAttribute("aria-pressed", "false");
-  await expect(page.getByText("Filtre Test Sans Image", { exact: true })).toBeVisible();
-  await expect(page.getByText("Filtre Test Sans Donjon", { exact: true })).toHaveCount(0);
+  await expect(card("Filtre Test Sans Image")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Donjon")).toHaveCount(0);
 
   await assertNoHorizontalOverflow(page);
 });
