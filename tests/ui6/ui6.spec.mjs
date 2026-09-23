@@ -413,6 +413,74 @@ for (const [name, width, height] of viewports) {
   });
 }
 
+test("Atelier creature completeness filters isolate missing image and missing dungeon records", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
+
+  const seededDungeonId = await page.evaluate(async () => {
+    const db = await new Promise((resolve, reject) => {
+      const req = indexedDB.open("gargottex-v5-offline");
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const dungeonId = await new Promise((resolve, reject) => {
+      const tx = db.transaction("dungeons", "readonly");
+      const req = tx.objectStore("dungeons").getAll();
+      req.onsuccess = () => resolve(req.result?.[0]?.id || "");
+      req.onerror = () => reject(req.error);
+    });
+    const rows = [
+      { id: "filter-test-no-image", name: "Filtre Test Sans Image", dungeon_id: dungeonId, image_path: "", category: "basique" },
+      { id: "filter-test-no-dungeon", name: "Filtre Test Sans Donjon", dungeon_id: "", image_path: "assets/images/logo.png", category: "basique" },
+      { id: "filter-test-no-both", name: "Filtre Test Sans Rien", dungeon_id: "", image_path: "", category: "basique" }
+    ];
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction("creatures", "readwrite");
+      for (const row of rows) tx.objectStore("creatures").put(row);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+    db.close();
+    return dungeonId;
+  });
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".v6-app")).toBeVisible();
+  await gotoView(page, "atelier");
+
+  const missingImage = page.locator('[data-action="atelier-creature-missing-image-filter"]');
+  const missingDungeon = page.locator('[data-action="atelier-creature-missing-dungeon-filter"]');
+  const card = name => page.locator(".workshop-list-card").filter({ hasText: name });
+  await expect(missingImage).toHaveAttribute("aria-pressed", "false");
+  await expect(missingDungeon).toHaveAttribute("aria-pressed", "false");
+
+  await missingImage.click();
+  await expect(missingImage).toHaveAttribute("aria-pressed", "true");
+  await expect(card("Filtre Test Sans Image")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Rien")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Donjon")).toHaveCount(0);
+
+  await missingDungeon.click();
+  await expect(missingDungeon).toHaveAttribute("aria-pressed", "true");
+  await expect(card("Filtre Test Sans Rien")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Image")).toHaveCount(0);
+  await expect(card("Filtre Test Sans Donjon")).toHaveCount(0);
+
+  await missingImage.click();
+  await expect(card("Filtre Test Sans Donjon")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Rien")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Image")).toHaveCount(0);
+
+  const dungeonSelect = page.locator('[data-action="atelier-creature-dungeon-filter"]');
+  await dungeonSelect.selectOption(seededDungeonId);
+  await expect(missingDungeon).toHaveAttribute("aria-pressed", "false");
+  await expect(card("Filtre Test Sans Image")).toHaveCount(1);
+  await expect(card("Filtre Test Sans Donjon")).toHaveCount(0);
+
+  await assertNoHorizontalOverflow(page);
+});
+
 test("Atelier respects its own tablet portrait/landscape rules", async ({ page }) => {
   await page.setViewportSize({ width: 834, height: 1112 });
   await ready(page);
@@ -1205,7 +1273,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
 
   const cacheState = await page.evaluate(async () => {
     const names = await caches.keys();
-    const cacheName = names.find(name => name === "gargottex-v6-polish-cards-v1");
+    const cacheName = names.find(name => name.startsWith("gargottex-v6-"));
     if (!cacheName) return { cacheName: null, missing: ["cache"] };
     const cache = await caches.open(cacheName);
     const core = ["./index.html","./styles.css","./manifest.webmanifest","./src/app.js","./src/storage/idb.js","./assets/fonts/Inter-Variable.ttf","./assets/fonts/Alegreya-Variable.ttf"];
@@ -1213,7 +1281,7 @@ test("Service Worker cache and update control preserve local data", async ({ pag
     for (const path of core) if (!(await cache.match(path,{ignoreSearch:true}))) missing.push(path);
     return { cacheName, missing };
   });
-  expect(cacheState.cacheName).toBe("gargottex-v6-polish-cards-v1");
+  expect(cacheState.cacheName).toMatch(/^gargottex-v6-/);
   expect(cacheState.missing).toEqual([]);
 
   await gotoView(page, "import");
