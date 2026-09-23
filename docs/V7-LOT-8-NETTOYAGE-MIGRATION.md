@@ -18,7 +18,8 @@ Selon l'implémentation réelle :
 - code de reprise de migration ;
 - diagnostics temporaires de migration ;
 - doubles chemins local/remote devenus inutiles ;
-- dépendances introduites uniquement pour le chantier.
+- dépendances introduites uniquement pour le chantier ;
+- le shim one-shot de nettoyage du cache historique `rembg-models`, uniquement après qu’une période suffisante de versions déployées ait permis aux clients V6 de l’exécuter.
 
 ## IndexedDB
 Ne pas effacer automatiquement la base pendant ce lot sauf décision explicitement validée séparément.
