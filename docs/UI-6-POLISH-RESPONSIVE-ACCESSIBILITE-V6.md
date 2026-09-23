@@ -535,7 +535,7 @@ L'INP navigateur réel reste à observer en mesure terrain ; le test d'interacti
 
 Validé automatiquement :
 
-- cache UI final : `gargottex-v6-ui6-final` ;
+- cache UI final : `gargottex-v6-rembg-retired-v1` ;
 - nom de cache identique dans l'application et le Service Worker ;
 - ressources cœur présentes dans le cache ;
 - contrôle Service Worker obtenu sans reload parasite au premier enregistrement ;
@@ -545,20 +545,19 @@ Validé automatiquement :
 - réouverture offline après upgrade IndexedDB ;
 - données et média historique toujours lisibles offline.
 
-## Images détourées
+## Dérivés transparents
 
-Validé automatiquement :
+Le moteur de détourage intégré est retiré. La validation automatique couvre désormais la non-régression des données qu'il a produites :
 
-- audit de détourage présent ;
-- modèle `isnet-general-use` ;
-- originaux déclarés préservés ;
-- SHA-256 sources présents ;
-- alpha bbox présent ;
-- ratios de transparence cohérents ;
-- aucun fond blanc ajouté sur la figure testée ;
-- rendu `object-fit: contain`.
+- un `transparent_blob` existant et approuvé reste prioritaire dans Média et le Codex ;
+- les métadonnées historiques `transparent_*` sont conservées ;
+- le Blob original et son SHA-256 restent inchangés ;
+- l'import manuel d'un PNG transparent reste disponible ;
+- le backup ZIP conserve toujours les dérivés transparents ;
+- le cache modèle historique `rembg-models` est supprimé séparément sans toucher à la base Gargottex ;
+- seules les entrées CacheStorage connues du runtime rembg/ONNX sont ciblées.
 
-La consultation d'un média dans la bibliothèque est également testée comme non mutante pour les originaux.
+La consultation d'un média dans la bibliothèque reste testée comme non mutante pour les originaux.
 
 ## Fidélité V3
 
