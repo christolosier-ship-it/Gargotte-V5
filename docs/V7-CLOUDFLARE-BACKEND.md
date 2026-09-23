@@ -70,6 +70,7 @@ Le modèle média cible doit privilégier :
 - original_key
 - thumbnail_key
 - preview_key
+- transparent_key lorsqu'un dérivé transparent existe
 - mime_type
 - size
 - width
@@ -78,7 +79,7 @@ Le modèle média cible doit privilégier :
 - entity_type
 - entity_id
 
-Les champs issus de rembg/transparent ne font pas partie du cœur V7. Si certains existent encore dans l'IndexedDB réel, le Lot 1 doit définir s'ils sont ignorés, archivés ou migrés à titre patrimonial.
+Le moteur rembg n'existe plus dans l'application, mais ses résultats font partie des médias de production. Les `transparent_blob` et métadonnées `transparent_*` existants doivent être préservés et migrés comme variantes média lorsque présents. Ils ne doivent jamais être supprimés ou ignorés au seul motif que le moteur de génération a été retiré.
 
 ## Authentification et autorisation
 Cloudflare Access assure l'authentification.
@@ -167,7 +168,6 @@ STOP validation si :
 ## Hors périmètre V7
 - refonte visuelle ;
 - amélioration de la qualité d'affichage ;
-- suppression/remplacement du moteur rembg de fin V6 ;
 - fonctionnalités gameplay sans rapport avec le backend.
 
 Ces sujets appartiennent à la fin V6 ou à des chantiers futurs distincts.
