@@ -6151,8 +6151,8 @@ async function saveTransparentDerivative(assetId, file, options = {}) {
   next.transparent_height = audit.height;
   next.transparent_audit = audit;
   next.transparent_review_status = wantsApproved ? "approved" : (audit.pass ? "pending" : "needs_fix");
-  next.transparent_model = options.model || "isnet-general-use";
-  next.transparent_processing = options.processing || "rembg / IS-Net DIS";
+  next.transparent_model = options.model || "external";
+  next.transparent_processing = options.processing || "import PNG transparent";
   next.transparent_source_sha256 = beforeHash;
   if (!next.original_sha256) next.original_sha256 = beforeHash;
   next.transparent_created_at = nowISO();
@@ -6166,7 +6166,7 @@ async function saveTransparentDerivative(assetId, file, options = {}) {
   if (!afterHash || afterHash !== beforeHash) throw new Error("STOP sécurité : empreinte de l'original modifiée après écriture du dérivé.");
 
   replaceMediaAssetInMemory(persisted, ["transparent"]);
-if (options.select !== false) state.ui.media.selectedId = assetId;
+  if (options.select !== false) state.ui.media.selectedId = assetId;
   await saveUiState(state.ui);
   if (options.render !== false) render();
   return audit;
@@ -6179,7 +6179,7 @@ async function setTransparentDerivativeReview(assetId, status, options = {}) {
   const next=structuredClone(existing); next.transparent_review_status=status==="approved"?"approved":"needs_fix"; next.transparent_reviewed_at=nowISO(); next.updated_at=nowISO();
   await putOne("media_assets",next);
   replaceMediaAssetInMemory(next, []);
-if(options.select!==false) state.ui.media.selectedId=assetId;
+  if(options.select!==false) state.ui.media.selectedId=assetId;
   await saveUiState(state.ui);
   if(options.render!==false) render();
   return true;
@@ -6194,7 +6194,7 @@ async function removeTransparentDerivative(assetId) {
   const persisted=await getById("media_assets",assetId);
   if(originalHash&&await sha256Blob(persisted?.blob)!==originalHash) throw new Error("STOP sécurité : l'original a changé pendant le retrait du dérivé.");
   replaceMediaAssetInMemory(persisted, ["transparent"]);
-state.ui.media.selectedId=assetId;
+  state.ui.media.selectedId=assetId;
   await saveUiState(state.ui);
   render();
   return true;
@@ -7254,7 +7254,7 @@ async function bootstrap() {
 
   setTimeout(() => { void retireLegacyRembgCachesOnce(); }, 0);
 
-if ("serviceWorker" in navigator) {
+  if ("serviceWorker" in navigator) {
     const controlledBeforeRegistration = Boolean(navigator.serviceWorker.controller);
     const reg = await navigator.serviceWorker.register("./service-worker.js");
     state.serviceWorkerRegistration = reg;
