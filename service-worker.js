@@ -1,5 +1,5 @@
 
-const CACHE = "gargottex-v6-atelier-creature-filters-v1";
+const CACHE = "gargottex-v6-rembg-retired-v1";
 const ASSETS = [
   "./",
   "./index.html",
