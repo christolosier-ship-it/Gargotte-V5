@@ -11,14 +11,15 @@ Construire le moteur temporaire qui migre les médias IndexedDB vers R2 un par u
 
 ## Principe
 Pour chaque média :
-1. lire le Blob source depuis IndexedDB ;
-2. calculer SHA-256 local ;
-3. collecter taille, type MIME et métadonnées utiles ;
-4. uploader vers R2 via l'API Worker ;
-5. vérifier l'objet distant ;
-6. comparer au minimum taille et SHA-256 ;
-7. écrire/mettre à jour la métadonnée cible ;
-8. marquer le média comme migré uniquement après vérification.
+1. inventorier les variantes présentes dans IndexedDB : original, thumbnail, preview et `transparent_blob` ;
+2. lire chaque Blob présent sans en synthétiser ni en supprimer ;
+3. calculer SHA-256 local de chaque variante ;
+4. collecter taille, type MIME et métadonnées utiles, y compris les champs `transparent_*` historiques ;
+5. uploader chaque variante présente vers R2 via l'API Worker ;
+6. vérifier chaque objet distant ;
+7. comparer au minimum taille et SHA-256 ;
+8. écrire/mettre à jour la métadonnée cible ;
+9. marquer le média comme migré uniquement lorsque toutes ses variantes attendues sont vérifiées.
 
 ## États provisoires
 Prévoir des états explicites, par exemple :
