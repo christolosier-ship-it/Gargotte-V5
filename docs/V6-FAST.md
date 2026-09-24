@@ -125,7 +125,16 @@ Résultat :
 ### Lot 2 — Runtime média
 docs/V6-FAST-LOT-2-RUNTIME-MEDIA.md
 
-Objectif : supprimer le chargement global des médias, introduire l'accès lazy et arrêter les refresh globaux.
+**Statut : CLOS — Gate validée le 24/09/2026.**
+
+Résultat :
+- `media_assets` retiré du bootstrap global ;
+- `MediaRepository` lazy sur IndexedDB existant ;
+- zéro scan catalogue / zéro lecture complète média / zéro Object URL au bootstrap standard ;
+- détourages actifs et Donjons originaux uniquement dans le chemin d'affichage ;
+- Object URLs libérées entre contextes ;
+- petites écritures Média sans `refreshData()` global ;
+- Fast 12/12 et Full 22/22.
 
 ### Lot 3 — Rendu média et overlays
 docs/V6-FAST-LOT-3-RENDU-MEDIA.md
