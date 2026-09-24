@@ -6544,6 +6544,8 @@ function bindEvents() {
           state.ui.bestiary.category = "";
           state.ui.bestiary.menace = "";
           state.ui.bestiary.tags = [];
+          state.ui.bestiary.sort = "name";
+          state.ui.bestiary.direction = "asc";
           state.ui.bestiary.scrollTop = 0;
           state.ui.codexCreatureDungeonId = "";
           await saveUiState(state.ui);
