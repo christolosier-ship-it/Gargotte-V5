@@ -1,14 +1,15 @@
 {
-  "name": "gargottex-v6-validation",
+  "name": "gargottex-v6-fast-validation",
   "private": true,
   "type": "module",
   "scripts": {
-    "test:ui6": "playwright test",
-    "test:ui6:chromium": "playwright test --project=chromium",
-    "test:ui6:webkit": "playwright test --project=webkit-smoke"
+    "test:v6fast:fast": "playwright test --config=playwright.fast.config.mjs",
+    "test:v6fast:full": "playwright test --config=playwright.config.mjs",
+    "test:v6fast:chromium": "playwright test --config=playwright.config.mjs --project=chromium",
+    "test:v6fast:webkit": "playwright test --config=playwright.config.mjs --project=webkit-ipad"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.10.2",
-    "@playwright/test": "^1.55.0"
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "1.55.0"
   }
 }
