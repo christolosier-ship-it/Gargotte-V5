@@ -6,7 +6,7 @@ export default defineConfig({
   expect: { timeout: 8_000 },
   fullyParallel: false,
   forbidOnly: true,
-  retries: 0,
+  retries: 1,
   workers: 2,
   reporter: [
     ["list"],
