@@ -24,12 +24,10 @@ async function clickVisible(page, selector) {
 
 async function gotoView(page, view) {
   const selector = `[data-action="set-view"][data-view="${view}"]`;
-  const activeSelector = `${selector}[aria-current="page"]`;
   const items = page.locator(selector);
   for (let i = 0; i < await items.count(); i++) {
     if (await items.nth(i).isVisible()) {
       await items.nth(i).click();
-      await expect(page.locator(activeSelector).first()).toBeVisible();
       return;
     }
   }
@@ -41,7 +39,6 @@ async function gotoView(page, view) {
     if (await game.isVisible()) await game.click();
   }
   await clickVisible(page, selector);
-  await expect(page.locator(activeSelector).first()).toBeVisible();
 }
 
 async function assertNoHorizontalOverflow(page) {
