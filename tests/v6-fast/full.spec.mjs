@@ -363,53 +363,17 @@ test("Service Worker update preserves local data and core cache", async ({ page 
 
 test("iPad WebKit media fullscreen smoke @webkit", async ({ page }) => {
   await ready(page);
-  await page.evaluate(async () => {
-    const pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
-    const raw = atob(pngBase64);
-    const bytes = Uint8Array.from(raw, char => char.charCodeAt(0));
-    const blob = new Blob([bytes], { type: "image/png" });
-
-    const db=await new Promise((resolve,reject)=>{
-      const req=indexedDB.open("gargottex-v5-offline");
-      req.onsuccess=()=>resolve(req.result);
-      req.onerror=()=>reject(req.error || new Error("open media DB failed"));
-    });
-
-    await new Promise((resolve,reject)=>{
-      const tx=db.transaction("media_assets","readwrite");
-      const req=tx.objectStore("media_assets").put({
-        id:"v6fast-webkit-media",
-        label:"WebKit transparent",
-        file_name:"webkit-transparent.png",
-        path:"local-media/gallery/webkit.png",
-        entity_type:"gallery",
-        entity_id:"",
-        transparent_blob:blob,
-        transparent_path:"local-media/gallery/transparent/webkit.png",
-        transparent_mime_type:"image/png",
-        transparent_width:1,
-        transparent_height:1,
-        transparent_review_status:"approved",
-        transparent_audit:{pass:true,has_alpha_channel:true,width:1,height:1}
-      });
-      req.onerror=()=>reject(req.error || new Error("media put failed"));
-      tx.oncomplete=resolve;
-      tx.onerror=()=>reject(tx.error || new Error("media transaction failed"));
-      tx.onabort=()=>reject(tx.error || new Error("media transaction aborted"));
-    });
-    db.close();
-  });
-
-  await page.reload({waitUntil:"domcontentloaded"});
-  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
   await gotoView(page,"codex");
   await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
-  const card=page.locator(".codex-media-card-v6").filter({hasText:"WebKit transparent"});
+
+  const card=page.locator(".codex-media-card-v6").filter({hasText:"Berthold"}).first();
   await expect(card).toBeVisible();
+  await expect(card.locator("img")).toBeVisible();
 
   for (let i=0;i<3;i++) {
     await card.locator(".codex-media-open-v6").click();
     await expect(page.locator(".image-viewer-overlay")).toBeVisible();
+    await expect(page.locator(".image-viewer-panel img")).toBeVisible();
     await page.locator(".image-viewer-close").click();
     await expect(page.locator(".image-viewer-overlay")).toHaveCount(0);
   }
