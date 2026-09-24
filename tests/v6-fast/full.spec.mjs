@@ -389,11 +389,11 @@ test("iPad WebKit media fullscreen smoke @webkit", async ({ page }) => {
   await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
   await gotoView(page,"codex");
   await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
-  const card=page.locator(".codex-media-card-v6").filter({hasText:"WebKit dungeon"});
-  await expect(card).toBeVisible();
-  await expect(card.locator("img")).toHaveAttribute("src", /assets\/images\/logo-192\.png/);
+  const open=page.locator('[data-action="open-image"][data-media-id="v6fast-webkit-dungeon"]');
+  await expect(open).toBeVisible();
+  await expect(open.locator("img")).toHaveAttribute("src", /assets\/images\/logo-192\.png/);
   for (let i=0;i<3;i++) {
-    await card.locator(".codex-media-open-v6").click();
+    await open.click();
     await expect(page.locator(".image-viewer-overlay")).toBeVisible();
     await expect(page.locator(".image-viewer-panel img")).toBeVisible();
     await page.locator(".image-viewer-close").click();
