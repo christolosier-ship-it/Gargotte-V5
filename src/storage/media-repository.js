@@ -295,6 +295,11 @@ export class MediaRepository {
     this.urlPromises.clear();
   }
 
+  resetContext() {
+    this.revokeAllUrls();
+    this.loadedEntities.clear();
+  }
+
   async getFullAsset(id) {
     const key = String(id || "");
     if (!key) return null;
