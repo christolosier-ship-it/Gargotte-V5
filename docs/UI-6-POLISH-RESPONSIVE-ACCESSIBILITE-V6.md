@@ -555,7 +555,8 @@ Le moteur de détourage intégré est retiré. La validation automatique couvre 
 - l'import manuel d'un PNG transparent reste disponible ;
 - le backup ZIP conserve toujours les dérivés transparents ;
 - le cache modèle historique `rembg-models` est supprimé séparément sans toucher à la base Gargottex ;
-- seules les entrées CacheStorage connues du runtime rembg/ONNX sont ciblées.
+- le code applicatif ne parcourt plus CacheStorage pendant le démarrage ;
+- le changement de cache PWA retire l’ancien cache Gargottex, tandis que le Service Worker ne supprime jamais les caches ne portant pas le préfixe `gargottex-`.
 
 La consultation d'un média dans la bibliothèque reste testée comme non mutante pour les originaux.
 
