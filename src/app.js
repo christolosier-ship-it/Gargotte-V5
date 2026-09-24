@@ -331,6 +331,13 @@ const BERTHOLD_ADVICES = [
 ];
 let bertholdAdviceIndex = Math.floor(Math.random() * BERTHOLD_ADVICES.length);
 let backupBusy = false;
+let searchDebounceTimer = null;
+let bestiaryScrollSaveTimer = null;
+let restoringBestiaryScroll = false;
+let codexFamilyScrollSaveTimer = null;
+let restoringCodexFamilyScroll = false;
+let overlayFocusReturn = null;
+
 const state = {
   ready: false,
   data: {},
