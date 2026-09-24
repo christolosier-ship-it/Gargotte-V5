@@ -1401,7 +1401,7 @@ function brouhahaIntensityClass(level) {
 }
 
 function defaultBestiaryUi() {
-  return { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null };
+  return { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", filtersOpen: false, scrollTop: 0, selectedId: "", contextReturn: null };
 }
 
 function ensureBestiaryUi() {
@@ -1413,6 +1413,7 @@ function ensureBestiaryUi() {
   if (!["gallery", "list", ""].includes(state.ui.bestiary.mode)) state.ui.bestiary.mode = "";
   if (!["name", "menace", "dungeon"].includes(state.ui.bestiary.sort)) state.ui.bestiary.sort = "name";
   if (!["asc", "desc"].includes(state.ui.bestiary.direction)) state.ui.bestiary.direction = "asc";
+  state.ui.bestiary.filtersOpen = Boolean(state.ui.bestiary.filtersOpen);
 }
 
 function snapshotBestiaryContext() {
@@ -1427,6 +1428,7 @@ function snapshotBestiaryContext() {
     tags: [...b.tags],
     sort: b.sort,
     direction: b.direction,
+    filtersOpen: b.filtersOpen,
     scrollTop: Math.max(0, Number(b.scrollTop || 0)),
     selectedId: b.selectedId
   };
@@ -1605,7 +1607,7 @@ function bestiaryAdvancedFilterCount() {
 function bestiaryAdvancedPanelOpen() {
   ensureBestiaryUi();
   const b = state.ui.bestiary;
-  return bestiaryAdvancedFilterCount() > 0 || b.sort !== "name" || b.direction !== "asc";
+  return b.filtersOpen || bestiaryAdvancedFilterCount() > 0 || b.sort !== "name" || b.direction !== "asc";
 }
 
 function getBestiaryCreatures() {
@@ -3448,7 +3450,7 @@ function renderBestiaryCollection() {
         ${renderBestiaryBrowseToolbar(items.length, total)}
 
         <details class="bestiary-advanced-filters" ${bestiaryAdvancedPanelOpen() ? "open" : ""}>
-          <summary>
+          <summary data-action="bestiary-filters-toggle">
             ${shellIcon("filter")}
             <span>Filtres</span>
             <small>${bestiaryAdvancedFilterCount() ? `${bestiaryAdvancedFilterCount()} actif${bestiaryAdvancedFilterCount() > 1 ? "s" : ""}` : "Donjon, catégorie, menace, tags et tri"}</small>
@@ -6522,6 +6524,13 @@ function bindEvents() {
           render();
           return;
         }
+        case "bestiary-filters-toggle": {
+          ensureBestiaryUi();
+          const details = btn.closest("details");
+          state.ui.bestiary.filtersOpen = details ? !details.open : !state.ui.bestiary.filtersOpen;
+          await saveUiState(state.ui);
+          return;
+        }
         case "bestiary-mode":
           ensureBestiaryUi();
           state.ui.bestiary.mode = btn.dataset.mode === "list" ? "list" : "gallery";
@@ -6544,6 +6553,7 @@ function bindEvents() {
           state.ui.bestiary.category = "";
           state.ui.bestiary.menace = "";
           state.ui.bestiary.tags = [];
+          state.ui.bestiary.filtersOpen = false;
           state.ui.bestiary.sort = "name";
           state.ui.bestiary.direction = "asc";
           state.ui.bestiary.scrollTop = 0;
