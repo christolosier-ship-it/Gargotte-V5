@@ -1,0 +1,58 @@
+name: V6-Fast full validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [V5.3]
+    paths:
+      - ".github/workflows/v6-full-validation.yml"
+      - "tests/v6-fast/full.spec.mjs"
+      - "tests/v6-fast/indexeddb.spec.mjs"
+      - "tests/v6-fast/fixtures/**"
+      - "src/storage/idb.js"
+      - "service-worker.js"
+      - "playwright.config.mjs"
+      - "package.json"
+      - "package-lock.json"
+
+concurrency:
+  group: v6fast-full-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  full:
+    name: Full / Chromium + WebKit iPad
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run V6-Fast full validation
+        run: npm run test:v6fast:full
+
+      - name: Upload failure report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v6fast-full-failure
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
