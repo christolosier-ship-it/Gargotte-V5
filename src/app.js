@@ -272,8 +272,8 @@ const WORKSHOP_REQUIRED_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
-const APP_VERSION = "5.6.0";
-const PWA_CACHE_NAME = "gargottex-v6-media-polish-v1";
+const APP_VERSION = "5.6.1";
+const PWA_CACHE_NAME = "gargottex-v6-codex-toolbar-v1";
 const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js"];
 
 const HOME_TAGLINE = "Ici, même les habitués ne savent plus pourquoi ils sont venus.";
@@ -893,38 +893,23 @@ function defaultCodexFamiliesUi() {
     dungeons: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
     heroes: { mode: "gallery", search: "", scrollTop: 0, selectedBase: "", levelByBase: {} },
     npcs: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
-    quests: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
+    quests: { mode: "gallery", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
     loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
-    interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
-    brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" }
+    interactables: { mode: "gallery", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
+    brouhaha_effects: { mode: "gallery", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
+    media_assets: { mode: "gallery", search: "", scrollTop: 0 }
   };
 }
 
 function ensureCodexFamilyUi() {
   const defaults = defaultCodexFamiliesUi();
   const current = state.ui.codexFamilies && typeof state.ui.codexFamilies === "object" ? state.ui.codexFamilies : {};
-  state.ui.codexFamilies = {
-    dungeons: { ...defaults.dungeons, ...(current.dungeons || {}) },
-    heroes: { ...defaults.heroes, ...(current.heroes || {}) },
-    npcs: { ...defaults.npcs, ...(current.npcs || {}) },
-    quests: { ...defaults.quests, ...(current.quests || {}) },
-    loot_items: { ...defaults.loot_items, ...(current.loot_items || {}) },
-    interactables: { ...defaults.interactables, ...(current.interactables || {}) },
-    brouhaha_effects: { ...defaults.brouhaha_effects, ...(current.brouhaha_effects || {}) }
-  };
-  const allowedModes = {
-    dungeons: ["gallery", "list"],
-    heroes: ["gallery", "list"],
-    npcs: ["gallery", "list"],
-    quests: ["list", "cards"],
-    loot_items: ["gallery", "list"],
-    interactables: ["list", "gallery"],
-    brouhaha_effects: ["cards", "list"]
-  };
-  for (const type of Object.keys(allowedModes)) {
-    if (!allowedModes[type].includes(state.ui.codexFamilies[type].mode)) {
-      state.ui.codexFamilies[type].mode = defaults[type].mode;
-    }
+  state.ui.codexFamilies = Object.fromEntries(
+    Object.keys(defaults).map(type => [type, { ...defaults[type], ...(current[type] || {}) }])
+  );
+  for (const type of Object.keys(defaults)) {
+    if (state.ui.codexFamilies[type].mode === "cards") state.ui.codexFamilies[type].mode = "gallery";
+    if (!["gallery", "list"].includes(state.ui.codexFamilies[type].mode)) state.ui.codexFamilies[type].mode = defaults[type].mode;
     state.ui.codexFamilies[type].search = String(state.ui.codexFamilies[type].search || "");
     state.ui.codexFamilies[type].scrollTop = Math.max(0, Number(state.ui.codexFamilies[type].scrollTop || 0));
     if (Object.prototype.hasOwnProperty.call(defaults[type], "dungeonId")) {
@@ -1364,15 +1349,7 @@ function getSimpleFamilyCollection(type) {
   return items.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "fr", { sensitivity: "base" }));
 }
 
-function familyModeOptions(type) {
-  if (type === "quests") return [
-    { value: "list", label: "Liste", icon: "list" },
-    { value: "cards", label: "Cartes", icon: "grid" }
-  ];
-  if (type === "brouhaha_effects") return [
-    { value: "cards", label: "Cartes", icon: "grid" },
-    { value: "list", label: "Liste", icon: "list" }
-  ];
+function familyModeOptions() {
   return [
     { value: "gallery", label: "Galerie", icon: "grid" },
     { value: "list", label: "Liste", icon: "list" }
@@ -1617,6 +1594,18 @@ function bestiaryHasActiveFilters() {
   ensureBestiaryUi();
   const b = state.ui.bestiary;
   return Boolean(b.search || b.dungeonId || b.category || b.menace !== "" || b.tags.length);
+}
+
+function bestiaryAdvancedFilterCount() {
+  ensureBestiaryUi();
+  const b = state.ui.bestiary;
+  return Number(Boolean(b.dungeonId)) + Number(Boolean(b.category)) + Number(b.menace !== "") + b.tags.length;
+}
+
+function bestiaryAdvancedPanelOpen() {
+  ensureBestiaryUi();
+  const b = state.ui.bestiary;
+  return bestiaryAdvancedFilterCount() > 0 || b.sort !== "name" || b.direction !== "asc";
 }
 
 function getBestiaryCreatures() {
@@ -3447,13 +3436,6 @@ function renderBestiaryCollection() {
     <section class="bestiary-v6">
       ${renderCodexReturnBar()}
       <div class="panel bestiary-collection-panel">
-        <div class="bestiary-heading">
-          <div>
-            <h2>Bestiaire</h2>
-          </div>
-          <div class="bestiary-counter" aria-live="polite"><strong>${items.length}</strong><span>sur ${total}</span></div>
-        </div>
-
         ${renderCodexTabs("creatures")}
 
         ${b.contextReturn ? `
@@ -3463,43 +3445,41 @@ function renderBestiaryCollection() {
           </div>
         ` : ""}
 
-        <div class="bestiary-toolbar">
-          <label class="bestiary-search-field">
-            ${shellIcon("search")}
-            <input class="field" data-action="bestiary-search" aria-label="Rechercher une créature" value="${escapeHtml(b.search)}" placeholder="Rechercher une créature…">
-          </label>
+        ${renderBestiaryBrowseToolbar(items.length, total)}
 
-          <div class="bestiary-filter-grid">
-            <label><span>Donjon</span><select class="field" data-action="bestiary-dungeon">
-              <option value="">Tous les donjons</option>
-              ${(state.data.dungeons || []).map(d => `<option value="${escapeHtml(String(d.id || ""))}" ${String(b.dungeonId) === String(d.id) ? "selected" : ""}>${escapeHtml(d.name || "Donjon")}</option>`).join("")}
-            </select></label>
-            <label><span>Catégorie</span><select class="field" data-action="bestiary-category">
-              <option value="">Toutes catégories</option>
-              ${Object.entries(CREATURE_CATEGORY_META).map(([key,meta]) => `<option value="${key}" ${b.category === key ? "selected" : ""}>${meta.label}</option>`).join("")}
-            </select></label>
-            <label><span>Menace</span><select class="field" data-action="bestiary-menace">
-              <option value="">Toutes</option>
-              ${menaceOptions.map(value => `<option value="${value}" ${String(b.menace) === String(value) ? "selected" : ""}>Menace ${value}</option>`).join("")}
-            </select></label>
-            ${renderBestiaryTagFilter()}
-            <label><span>Trier par</span><select class="field" data-action="bestiary-sort">
-              <option value="name" ${b.sort === "name" ? "selected" : ""}>Nom</option>
-              <option value="menace" ${b.sort === "menace" ? "selected" : ""}>Menace</option>
-              <option value="dungeon" ${b.sort === "dungeon" ? "selected" : ""}>Donjon</option>
-            </select></label>
-            <button class="ghost bestiary-direction" data-action="bestiary-toggle-direction" type="button" aria-label="Inverser le sens du tri" title="Inverser le sens du tri">${b.direction === "asc" ? "↑ Asc." : "↓ Desc."}</button>
-          </div>
-
-          <div class="bestiary-toolbar-foot">
-            <div class="view-switch segmented" aria-label="Mode d’affichage">
-              <button class="${b.mode === "gallery" ? "active" : ""}" data-action="bestiary-mode" data-mode="gallery" aria-pressed="${b.mode === "gallery"}">${shellIcon("grid")}<span>Galerie</span></button>
-              <button class="${b.mode === "list" ? "active" : ""}" data-action="bestiary-mode" data-mode="list" aria-pressed="${b.mode === "list"}">${shellIcon("list")}<span>Liste</span></button>
+        <details class="bestiary-advanced-filters" ${bestiaryAdvancedPanelOpen() ? "open" : ""}>
+          <summary>
+            ${shellIcon("filter")}
+            <span>Filtres</span>
+            <small>${bestiaryAdvancedFilterCount() ? `${bestiaryAdvancedFilterCount()} actif${bestiaryAdvancedFilterCount() > 1 ? "s" : ""}` : "Donjon, catégorie, menace, tags et tri"}</small>
+          </summary>
+          <div class="bestiary-filter-panel">
+            <div class="bestiary-filter-grid">
+              <label><span>Donjon</span><select class="field" data-action="bestiary-dungeon">
+                <option value="">Tous les donjons</option>
+                ${(state.data.dungeons || []).map(d => `<option value="${escapeHtml(String(d.id || ""))}" ${String(b.dungeonId) === String(d.id) ? "selected" : ""}>${escapeHtml(d.name || "Donjon")}</option>`).join("")}
+              </select></label>
+              <label><span>Catégorie</span><select class="field" data-action="bestiary-category">
+                <option value="">Toutes catégories</option>
+                ${Object.entries(CREATURE_CATEGORY_META).map(([key,meta]) => `<option value="${key}" ${b.category === key ? "selected" : ""}>${meta.label}</option>`).join("")}
+              </select></label>
+              <label><span>Menace</span><select class="field" data-action="bestiary-menace">
+                <option value="">Toutes</option>
+                ${menaceOptions.map(value => `<option value="${value}" ${String(b.menace) === String(value) ? "selected" : ""}>Menace ${value}</option>`).join("")}
+              </select></label>
+              ${renderBestiaryTagFilter()}
+              <label><span>Trier par</span><select class="field" data-action="bestiary-sort">
+                <option value="name" ${b.sort === "name" ? "selected" : ""}>Nom</option>
+                <option value="menace" ${b.sort === "menace" ? "selected" : ""}>Menace</option>
+                <option value="dungeon" ${b.sort === "dungeon" ? "selected" : ""}>Donjon</option>
+              </select></label>
+              <button class="ghost bestiary-direction" data-action="bestiary-toggle-direction" type="button" aria-label="Inverser le sens du tri" title="Inverser le sens du tri">${b.direction === "asc" ? "↑ Asc." : "↓ Desc."}</button>
             </div>
-            ${bestiaryHasActiveFilters() ? `<button class="ghost bestiary-reset" data-action="bestiary-reset" type="button">Réinitialiser les filtres</button>` : ""}
-            <span class="bestiary-result-label">${items.length} résultat${items.length > 1 ? "s" : ""}</span>
+            <div class="bestiary-filter-actions">
+              ${bestiaryHasActiveFilters() || b.sort !== "name" || b.direction !== "asc" ? `<button class="ghost bestiary-reset" data-action="bestiary-reset" type="button">Réinitialiser les filtres</button>` : ""}
+            </div>
           </div>
-        </div>
+        </details>
 
         <div class="bestiary-results ${b.mode}" data-bestiary-results>
           ${items.length
@@ -3512,24 +3492,60 @@ function renderBestiaryCollection() {
     </section>`);
 }
 
+function renderCodexBrowseToolbar({ type, count, search, mode, searchAction, modeAction, label, total = null }) {
+  const typeAttr = type ? ` data-type="${type}"` : "";
+  const countText = total === null
+    ? `${count} entrée${count > 1 ? "s" : ""}`
+    : `${count} sur ${total}`;
+  return `
+    <div class="codex-family-toolbar codex-browse-toolbar">
+      <label class="codex-family-search codex-browse-search">
+        ${shellIcon("search")}
+        <input class="field" data-action="${searchAction}"${typeAttr} aria-label="Rechercher dans ${escapeHtml(label)}" value="${escapeHtml(search)}" placeholder="Rechercher dans ${escapeHtml(label)}…">
+      </label>
+      <div class="segmented codex-browse-modes" aria-label="Mode d’affichage">
+        ${familyModeOptions().map(option => `<button class="${mode === option.value ? "active" : ""}" type="button" data-action="${modeAction}"${typeAttr} data-mode="${option.value}" aria-pressed="${mode === option.value}">${shellIcon(option.icon)}<span>${option.label}</span></button>`).join("")}
+      </div>
+      <span class="codex-family-count codex-browse-count" aria-live="polite">${countText}</span>
+    </div>`;
+}
+
 function renderFamilyToolbar(type, count) {
   ensureCodexFamilyUi();
   const ui = state.ui.codexFamilies[type];
-  const labels = { dungeons: "donjons", heroes: "héros", npcs: "PNJ", quests: "quêtes", loot_items: "loot" };
-  const label = labels[type] || getLabel(type).toLowerCase();
-  const modes = familyModeOptions(type);
-  return `
-    <div class="codex-family-toolbar">
-      <label class="codex-family-search">
-        ${shellIcon("search")}
-        <input class="field" data-action="family-search" data-type="${type}" aria-label="Rechercher dans ${label}" value="${escapeHtml(ui.search)}" placeholder="Rechercher dans ${label}…">
-      </label>
-      <div class="segmented" aria-label="Mode d’affichage">
-        ${modes.map(mode => `<button class="${ui.mode === mode.value ? "active" : ""}" type="button" data-action="family-mode" data-type="${type}" data-mode="${mode.value}" aria-pressed="${ui.mode === mode.value}">${shellIcon(mode.icon)}<span>${mode.label}</span></button>`).join("")}
-      </div>
-      ${ui.dungeonId ? `<span class="codex-family-filter">${shellIcon("filter")}<span>Donjon · ${escapeHtml(findById("dungeons", ui.dungeonId)?.name || "indisponible")}</span></span>` : ""}
-      <span class="codex-family-count">${count} entrée${count > 1 ? "s" : ""}</span>
-    </div>`;
+  const labels = {
+    dungeons: "donjons",
+    heroes: "héros",
+    npcs: "PNJ",
+    quests: "quêtes",
+    loot_items: "loot",
+    interactables: "objets interactifs",
+    brouhaha_effects: "brouhaha",
+    media_assets: "médias"
+  };
+  return renderCodexBrowseToolbar({
+    type,
+    count,
+    search: ui.search,
+    mode: ui.mode,
+    searchAction: "family-search",
+    modeAction: "family-mode",
+    label: labels[type] || getLabel(type).toLowerCase()
+  });
+}
+
+function renderBestiaryBrowseToolbar(count, total) {
+  const b = state.ui.bestiary;
+  return renderCodexBrowseToolbar({
+    type: "",
+    count,
+    total,
+    search: b.search,
+    mode: b.mode,
+    searchAction: "bestiary-search",
+    modeAction: "bestiary-mode",
+    label: "créatures"
+  });
 }
 
 function renderDungeonCollectionCard(item, mode = "gallery", active = false) {
@@ -3685,7 +3701,6 @@ function renderDungeonCodex() {
     <section class="codex-family-v6 dungeon-codex-v6">
       ${renderCodexReturnBar()}
       <div class="panel codex-family-collection-panel">
-        <div class="codex-family-heading"><div><h2>Donjons</h2></div></div>
         ${renderCodexTabs("dungeons")}
         ${renderFamilyToolbar("dungeons", items.length)}
         <div class="codex-family-results ${ui.mode}">
@@ -3814,7 +3829,6 @@ function renderHeroCodex() {
     <section class="codex-family-v6 hero-codex-v6">
       ${renderCodexReturnBar()}
       <div class="panel codex-family-collection-panel">
-        <div class="codex-family-heading"><div><h2>Héros</h2></div></div>
         ${renderCodexTabs("heroes")}
         ${renderFamilyToolbar("heroes", groups.length)}
         <div class="codex-family-results ${ui.mode}">
@@ -4194,7 +4208,6 @@ function renderSimpleFamilyCodex(type) {
     <section class="codex-family-v6 ${type}-codex-v6">
       ${renderCodexReturnBar()}
       <div class="panel codex-family-collection-panel">
-        <div class="codex-family-heading"><div><h2>${meta.label}</h2></div></div>
         ${renderCodexTabs(type)}
         ${renderFamilyToolbar(type,items.length)}
         <div class="codex-family-results ${ui.mode} ${type}">
@@ -4202,6 +4215,27 @@ function renderSimpleFamilyCodex(type) {
         </div>
       </div>
     </section>`);
+}
+
+function getMediaCodexCollection() {
+  ensureCodexFamilyUi();
+  const ui = state.ui.codexFamilies.media_assets;
+  const q = normalizeBestiaryText(ui.search);
+  let items = [...(state.data.media_assets || [])];
+  if (q) {
+    items = items.filter(asset => {
+      const attachment = mediaAttachment(asset);
+      const parts = [
+        mediaCodexDisplayTitle(asset),
+        attachment ? getLabel(attachment.type) : "Sans rattachement",
+        asset.label,
+        asset.file_name,
+        asset.mime_type
+      ];
+      return normalizeBestiaryText(parts.filter(Boolean).join(" ")).includes(q);
+    });
+  }
+  return items.sort((a,b) => mediaCodexDisplayTitle(a).localeCompare(mediaCodexDisplayTitle(b), "fr", { sensitivity: "base" }));
 }
 
 function mediaCodexDisplayTitle(asset) {
@@ -4213,14 +4247,14 @@ function mediaCodexDisplayTitle(asset) {
   return "Média non rattaché";
 }
 
-function renderMediaCodexCard(asset) {
+function renderMediaCodexCard(asset, mode = "gallery") {
   const image = mediaCardUrlForAsset(asset) || mediaOriginalUrlForAsset(asset);
   const attachment = mediaAttachment(asset);
   const title = mediaCodexDisplayTitle(asset);
   const family = attachment ? getLabel(attachment.type) : "Sans rattachement";
   const variant = mediaHasApprovedTransparent(asset) ? "Visuel détouré" : "Visuel original";
   return `
-    <article class="codex-media-card-v6">
+    <article class="codex-media-card-v6 ${mode}">
       <button class="codex-media-open-v6" type="button" data-action="open-image" data-src="${escapeHtml(image || "")}" data-alt="${escapeHtml(title)}" ${image ? "" : "disabled"}>
         <span class="codex-media-visual-v6 ${mediaHasApprovedTransparent(asset) ? "transparent" : ""}">
           ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(title)}" loading="lazy">` : `<span>Visuel indisponible</span>`}
@@ -4235,17 +4269,16 @@ function renderMediaCodexCard(asset) {
 }
 
 function renderMediaCodex() {
-  const items = getFilteredList("media_assets", "codex");
+  ensureCodexFamilyUi();
+  const ui = state.ui.codexFamilies.media_assets;
+  const items = getMediaCodexCollection();
   return renderShell(`
     <section class="panel codex-media-library-v6">
       ${renderCodexReturnBar()}
-      <div class="panel-title">
-        <h2>Médias</h2>
-        ${renderCodexTabs("media_assets")}
-      </div>
-      <div class="panel-subtitle"><span>${items.length} média${items.length > 1 ? "s" : ""}</span><span>Consultation uniquement</span></div>
-      <div class="codex-media-grid-v6">
-        ${items.map(renderMediaCodexCard).join("") || `<div class="empty">Aucun média disponible.</div>`}
+      ${renderCodexTabs("media_assets")}
+      ${renderFamilyToolbar("media_assets", items.length)}
+      <div class="codex-media-grid-v6 ${ui.mode}">
+        ${items.map(asset => renderMediaCodexCard(asset, ui.mode)).join("") || `<div class="empty">Aucun média disponible.</div>`}
       </div>
     </section>`);
 }
@@ -5619,7 +5652,7 @@ function restoreCodexFamilyScrollAfterRender() {
 function wireCodexFamilyScrollTracking() {
   window.addEventListener("scroll", () => {
     const type = state.ui.codexType;
-    if (restoringCodexFamilyScroll || state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(type)) return;
+    if (restoringCodexFamilyScroll || state.ui.view !== "codex" || state.ui.codexDetailOpen || !["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects", "media_assets"].includes(type)) return;
     ensureCodexFamilyUi();
     state.ui.codexFamilies[type].scrollTop = Math.max(0, window.scrollY || 0);
     if (codexFamilyScrollSaveTimer) clearTimeout(codexFamilyScrollSaveTimer);
@@ -6254,9 +6287,9 @@ function bindEvents() {
           return;
         case "family-mode": {
           const type = btn.dataset.type;
-          if (!["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(type)) return;
+          if (!["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects", "media_assets"].includes(type)) return;
           ensureCodexFamilyUi();
-          const allowed = familyModeOptions(type).map(mode => mode.value);
+          const allowed = familyModeOptions().map(mode => mode.value);
           state.ui.codexFamilies[type].mode = allowed.includes(btn.dataset.mode) ? btn.dataset.mode : defaultCodexFamiliesUi()[type].mode;
           state.ui.codexFamilies[type].scrollTop = 0;
           await saveUiState(state.ui);
@@ -6992,7 +7025,7 @@ function bindEvents() {
     }
     if (el.dataset.action === "family-search") {
       const type = el.dataset.type;
-      if (!["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects"].includes(type)) return;
+      if (!["dungeons", "heroes", "npcs", "quests", "loot_items", "interactables", "brouhaha_effects", "media_assets"].includes(type)) return;
       ensureCodexFamilyUi();
       state.ui.codexFamilies[type].search = el.value;
       state.ui.codexFamilies[type].scrollTop = 0;
