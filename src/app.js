@@ -5914,16 +5914,6 @@ async function sha256Blob(blob) {
 
 const REMBG_RETIREMENT_MARKER = "gargottex:rembg-retired:v1";
 const REMBG_LEGACY_DB = "rembg-models";
-const REMBG_LEGACY_CACHE_PREFIXES = [
-  "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/",
-  "https://cdn.jsdelivr.net/npm/@bunnio/rembg-web@1.0.2/",
-  "https://huggingface.co/tomjackson2023/rembg/resolve/main/isnet-general-use.onnx"
-];
-
-function isLegacyRembgCacheUrl(url) {
-  const value = String(url || "");
-  return REMBG_LEGACY_CACHE_PREFIXES.some(prefix => value.startsWith(prefix));
-}
 
 function deleteLegacyRembgModelDatabase() {
   if (!globalThis.indexedDB) return Promise.resolve(false);
@@ -5945,31 +5935,17 @@ function deleteLegacyRembgModelDatabase() {
   });
 }
 
-async function purgeLegacyRembgCacheStorage() {
-  if (!("caches" in globalThis)) return 0;
-  let removed = 0;
-  for (const cacheName of await caches.keys()) {
-    const cache = await caches.open(cacheName);
-    for (const request of await cache.keys()) {
-      if (!isLegacyRembgCacheUrl(request.url)) continue;
-      if (await cache.delete(request)) removed += 1;
-    }
-  }
-  return removed;
-}
-
-async function retireLegacyRembgCachesOnce() {
+async function retireLegacyRembgModelOnce() {
   try {
     if (localStorage.getItem(REMBG_RETIREMENT_MARKER) === "done") return;
   } catch (_) {}
 
   try {
     await deleteLegacyRembgModelDatabase();
-    const removed = await purgeLegacyRembgCacheStorage();
     try { localStorage.setItem(REMBG_RETIREMENT_MARKER, "done"); } catch (_) {}
-    console.info(`[Gargottex] Cache rembg retiré : base ${REMBG_LEGACY_DB} supprimée, ${removed} entrée(s) CacheStorage supprimée(s).`);
+    console.info(`[Gargottex] Cache modèle rembg retiré : base ${REMBG_LEGACY_DB} supprimée.`);
   } catch (err) {
-    console.warn("[Gargottex] Nettoyage rembg reporté au prochain démarrage.", err);
+    console.warn("[Gargottex] Nettoyage du modèle rembg reporté au prochain démarrage.", err);
   }
 }
 
@@ -7252,8 +7228,6 @@ async function bootstrap() {
   wireCreatureMediaFallbacks();
   render();
 
-  setTimeout(() => { void retireLegacyRembgCachesOnce(); }, 0);
-
   if ("serviceWorker" in navigator) {
     const controlledBeforeRegistration = Boolean(navigator.serviceWorker.controller);
     const reg = await navigator.serviceWorker.register("./service-worker.js");
@@ -7273,6 +7247,10 @@ async function bootstrap() {
   if (navigator.storage?.persist) {
     navigator.storage.persist().catch(() => {});
   }
+
+  // Le modèle rembg est une IndexedDB séparée : on la retire après le démarrage
+  // afin de ne jamais concurrencer l'installation/activation du Service Worker.
+  setTimeout(() => { void retireLegacyRembgModelOnce(); }, 0);
 }
 
 if (typeof document !== "undefined" && app) {
