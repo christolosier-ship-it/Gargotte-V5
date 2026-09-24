@@ -20,7 +20,11 @@ async function attachShot(locator, name, testInfo) {
 async function ready(page) {
   await page.goto("/index.html", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".v6-app")).toBeVisible();
-  await page.waitForLoadState("networkidle");
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await page.evaluate(async () => {
+    if (document.fonts?.ready) await document.fonts.ready;
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
 }
 
 test("V3 visual comparison pack: production and reference sections", async ({ page }, testInfo) => {

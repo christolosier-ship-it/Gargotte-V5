@@ -1,3 +1,5 @@
+> **ARCHIVE V6** — Ce document décrit l'ancien workflow rembg/ISNet retiré de l'application. Il est conservé uniquement pour l'historique technique. Les données `transparent_*` déjà produites restent valides et ne doivent pas être supprimées.
+
 # Gargottex V6 - Workflow images transparentes rembg
 
 ## Statut

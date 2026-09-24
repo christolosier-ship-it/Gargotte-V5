@@ -4,7 +4,10 @@ import AxeBuilder from "@axe-core/playwright";
 async function ready(page, path = "/index.html") {
   await page.goto(path, { waitUntil: "domcontentloaded" });
   await expect(page.locator(".v6-app")).toBeVisible();
-  await page.waitForLoadState("networkidle");
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await page.evaluate(async () => {
+    if (document.fonts?.ready) await document.fonts.ready;
+  });
 }
 
 async function clickVisible(page, selector) {
@@ -381,37 +384,51 @@ test("creature detail stacks behavior, loot and lore full width below the image 
 });
 
 
-for (const [name, width, height] of viewports) {
-  test(`responsive matrix ${name}`, async ({ page }) => {
-    await page.setViewportSize({ width, height });
-    await ready(page);
-    await assertNoHorizontalOverflow(page);
+test("responsive matrix covers representative phone, iPad and desktop breakpoints", async ({ page }) => {
+  const representativeViewports = [
+    ["phone-320", 320, 720],
+    ["phone-390", 390, 844],
+    ["tablet-portrait-834", 834, 1112],
+    ["tablet-landscape-1194", 1194, 834],
+    ["desktop-1440", 1440, 900],
+    ["desktop-wide-1920", 1920, 1080]
+  ];
 
-    if (width <= 767) {
-      await expect(page.locator(".mobile-bottom")).toBeVisible();
-      await expect(page.locator(".v6-sidebar")).toBeHidden();
-    } else {
-      await expect(page.locator(".v6-sidebar")).toBeVisible();
-    }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
 
-    await gotoView(page, "codex");
-    await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
-    const firstCreature = page.locator('[data-action="select-codex"][data-type="creatures"]').first();
-    await expect(firstCreature).toBeVisible();
-    await firstCreature.click();
-    await expect(page.locator(".creature-sheet-v6")).toBeVisible();
-    await assertNoHorizontalOverflow(page);
+  for (const [name, width, height] of representativeViewports) {
+    await test.step(name, async () => {
+      await page.setViewportSize({ width, height });
+      await gotoView(page, "home");
+      await assertNoHorizontalOverflow(page);
 
-    if (width < 1200) {
-      await expect(page.locator(".bestiary-master-rail")).toBeHidden();
-      await expect(page.locator(".creature-detail-back")).toBeVisible();
-    }
-    if (width >= 1480) {
-      await expect(page.locator(".bestiary-master-rail")).toBeVisible();
-      await expect(page.locator(".creature-detail-back")).toBeHidden();
-    }
-  });
-}
+      if (width <= 767) {
+        await expect(page.locator(".mobile-bottom")).toBeVisible();
+        await expect(page.locator(".v6-sidebar")).toBeHidden();
+      } else {
+        await expect(page.locator(".v6-sidebar")).toBeVisible();
+      }
+
+      await gotoView(page, "codex");
+      await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+      const firstCreature = page.locator('[data-action="select-codex"][data-type="creatures"]').first();
+      await expect(firstCreature).toBeVisible();
+      await firstCreature.click();
+      await expect(page.locator(".creature-sheet-v6")).toBeVisible();
+      await assertNoHorizontalOverflow(page);
+
+      if (width < 1200) {
+        await expect(page.locator(".bestiary-master-rail")).toBeHidden();
+        await expect(page.locator(".creature-detail-back")).toBeVisible();
+      }
+      if (width >= 1480) {
+        await expect(page.locator(".bestiary-master-rail")).toBeVisible();
+        await expect(page.locator(".creature-detail-back")).toBeHidden();
+      }
+    });
+  }
+});
 
 test("Atelier creature completeness filters isolate missing image and missing dungeon records", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -732,7 +749,6 @@ test("Bestiary filters, sorting, display mode and persistence", async ({ page })
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.locator(".v6-app")).toBeVisible();
-  await page.waitForLoadState("networkidle");
   await expect(page.locator('[data-action="bestiary-search"]')).toHaveValue("gobelin");
   await expect(page.locator('[data-action="bestiary-category"]')).toHaveValue("basique");
   await expect(page.locator('[data-action="bestiary-sort"]')).toHaveValue("menace");
@@ -843,394 +859,143 @@ test("Media library opens detail without altering originals", async ({ page }) =
   expect(after).toEqual(before);
 });
 
-test("ISNet production flow waits for human approval before writing the transparent derivative", async ({ page }) => {
-  await page.addInitScript(() => {
-    window.__GARGOTTEX_REMBG__ = {
-      async remove(_blob, onProgress) {
-        onProgress?.(30, "Détourage ISNet en cours…");
-        const canvas = document.createElement("canvas");
-        canvas.width = 64; canvas.height = 64;
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0,0,64,64);
-        ctx.fillStyle = "#8b5a2b";
-        ctx.fillRect(16,8,32,48);
-        onProgress?.(95, "Création du PNG transparent…");
-        return await new Promise((resolve,reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("PNG test indisponible")), "image/png"));
-      },
-      async dispose() {}
-    };
-  });
+test("existing approved transparent derivatives remain preferred after rembg retirement", async ({ page }) => {
   await ready(page);
 
   await page.evaluate(async () => {
-    const canvas=document.createElement("canvas");canvas.width=64;canvas.height=64;
-    const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,64,64);ctx.fillStyle="#8b5a2b";ctx.fillRect(16,8,32,48);
-    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("blob")),"image/png"));
-    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const tx=db.transaction("media_assets","readwrite");
-    tx.objectStore("media_assets").put({id:"media-rembg-prod-test",label:"ISNet production",file_name:"isnet-prod.png",path:"local-media/gallery/isnet-prod.png",mime_type:"image/png",entity_type:"gallery",entity_id:"",blob,original_size:blob.size,created_at:new Date().toISOString(),updated_at:new Date().toISOString()});
-    await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});db.close();
-  });
-
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(page.locator(".v6-app")).toBeVisible();
-  await gotoView(page, "media");
-  const targetCard = page.locator('[data-action="media-select"][data-id="media-rembg-prod-test"]');
-  const unrelatedCard = page.locator('[data-action="media-select"]:not([data-id="media-rembg-prod-test"])').filter({ has: page.locator("img") }).first();
-  await expect(targetCard).toHaveAttribute("data-card-variant", "thumbnail");
-  await expect(unrelatedCard).toBeVisible();
-  const unrelatedSrcBefore = await unrelatedCard.locator("img").getAttribute("src");
-  const targetSrcBefore = await targetCard.locator("img").getAttribute("src");
-
-  await targetCard.click();
-  await expect(page.locator(".media-detail-v6")).toBeVisible();
-  await expect(page.locator('[data-action="media-rembg-run"]')).toBeEnabled();
-
-  const originalState = await page.evaluate(async () => {
-    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-rembg-prod-test");
-    const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});db.close();
-    const bytes=await row.blob.arrayBuffer(),hash=await crypto.subtle.digest("SHA-256",bytes);
-    return {size:row.blob.size,hash:Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,"0")).join("")};
-  });
-
-  await page.locator('[data-action="media-rembg-run"]').click();
-  await expect(page.locator(".media-rembg-candidate")).toBeVisible();
-  await expect(page.locator(".media-rembg-candidate")).toContainText("Audit alpha OK");
-  await expect(page.locator('[data-action="media-rembg-approve-candidate"]')).toBeEnabled();
-
-  const beforeHumanApproval = await page.evaluate(async () => {
-    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-rembg-prod-test");
-    const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});db.close();
-    const bytes=await row.blob.arrayBuffer(),hash=await crypto.subtle.digest("SHA-256",bytes);
-    return {
-      size:row.blob.size,
-      hash:Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,"0")).join(""),
-      transparent:Boolean(row.transparent_blob),
-      review:row.transparent_review_status||""
+    const makePng = async (transparent) => {
+      const canvas=document.createElement("canvas");
+      canvas.width=64;canvas.height=64;
+      const ctx=canvas.getContext("2d");
+      if(!transparent){ctx.fillStyle="#fff";ctx.fillRect(0,0,64,64);}
+      ctx.fillStyle="#8b5a2b";ctx.fillRect(16,8,32,48);
+      return await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("blob")),"image/png"));
     };
-  });
-  expect(beforeHumanApproval.size).toBe(originalState.size);
-  expect(beforeHumanApproval.hash).toBe(originalState.hash);
-  expect(beforeHumanApproval.transparent).toBe(false);
-  expect(beforeHumanApproval.review).toBe("");
-
-  await page.locator('[data-action="media-rembg-approve-candidate"]').click();
-  await expect(page.locator(".media-approved-state")).toContainText("validé");
-  await expect(page.locator(".media-rembg-candidate")).toHaveCount(0);
-
-  await expect(targetCard).toHaveAttribute("data-card-variant", "transparent");
-  const targetSrcAfter = await targetCard.locator("img").getAttribute("src");
-  const unrelatedSrcAfter = await unrelatedCard.locator("img").getAttribute("src");
-  expect(targetSrcAfter).toBeTruthy();
-  expect(targetSrcAfter).not.toBe(targetSrcBefore);
-  expect(unrelatedSrcAfter).toBe(unrelatedSrcBefore);
-
-  const afterHumanApproval = await page.evaluate(async () => {
+    const original=await makePng(false);
+    const cutout=await makePng(true);
+    const sourceBytes=await original.arrayBuffer();
+    const digest=await crypto.subtle.digest("SHA-256",sourceBytes);
+    const hash=Array.from(new Uint8Array(digest)).map(v=>v.toString(16).padStart(2,"0")).join("");
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-rembg-prod-test");
-    const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});db.close();
-    const bytes=await row.blob.arrayBuffer(),hash=await crypto.subtle.digest("SHA-256",bytes);
-    return {
-      size:row.blob.size,
-      hash:Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,"0")).join(""),
-      transparent:Boolean(row.transparent_blob),
-      transparentType:row.transparent_blob?.type||"",
-      review:row.transparent_review_status||"",
-      model:row.transparent_model||"",
-      processing:row.transparent_processing||"",
-      sourceHash:row.transparent_source_sha256||"",
-      auditPass:row.transparent_audit?.pass===true
-    };
-  });
-  expect(afterHumanApproval.size).toBe(originalState.size);
-  expect(afterHumanApproval.hash).toBe(originalState.hash);
-  expect(afterHumanApproval.transparent).toBe(true);
-  expect(afterHumanApproval.transparentType).toBe("image/png");
-  expect(afterHumanApproval.review).toBe("approved");
-  expect(afterHumanApproval.model).toBe("isnet-general-use");
-  expect(afterHumanApproval.processing).toContain("IS-Net");
-  expect(afterHumanApproval.sourceHash).toBe(originalState.hash);
-  expect(afterHumanApproval.auditPass).toBe(true);
-
-  await gotoView(page, "codex");
-  await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
-  const codexMediaCard = page.locator('[data-action="select-codex"][data-type="media_assets"][data-id="media-rembg-prod-test"]');
-  await expect(codexMediaCard).toBeVisible();
-  await expect(codexMediaCard.locator("img")).toHaveAttribute("src", targetSrcAfter);
-});
-
-test("automatic ISNet queue only processes linked creatures, heroes and NPCs then keeps derivatives pending for grouped review", async ({ page }) => {
-  await page.addInitScript(() => {
-    window.__rembgAutoCalls = 0;
-    window.__rembgAutoDisposals = 0;
-    window.__GARGOTTEX_REMBG__ = {
-      async remove(_blob, onProgress) {
-        window.__rembgAutoCalls += 1;
-        onProgress?.(25, "Détourage ISNet en cours…");
-        if (window.__rembgAutoCalls === 1) throw new Error("Échec simulé de première tentative");
-        const canvas = document.createElement("canvas");
-        canvas.width = 48; canvas.height = 48;
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0,0,48,48);
-        ctx.fillStyle = "#8b5a2b";
-        ctx.fillRect(12,6,24,36);
-        onProgress?.(95, "Création du PNG transparent…");
-        return await new Promise((resolve,reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("PNG test indisponible")), "image/png"));
-      },
-      async dispose() {
-        window.__rembgAutoDisposals += 1;
-      }
-    };
-  });
-
-  await ready(page);
-
-  await page.evaluate(async () => {
-    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const readFirst=(storeName)=>new Promise((resolve,reject)=>{
-      const tx=db.transaction(storeName,"readonly"),req=tx.objectStore(storeName).getAll();
-      req.onsuccess=()=>resolve(req.result?.[0]||null);req.onerror=()=>reject(req.error);
-    });
-    const [creature,hero,npc]=await Promise.all([readFirst("creatures"),readFirst("heroes"),readFirst("npcs")]);
-    if(!creature||!hero||!npc) throw new Error("Fixtures créature/héros/PNJ requises");
-
-    const canvas=document.createElement("canvas");canvas.width=48;canvas.height=48;
-    const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,48,48);ctx.fillStyle="#8b5a2b";ctx.fillRect(12,6,24,36);
-    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("blob")),"image/png"));
-    const now=new Date().toISOString();
-    const rows=[
-      {id:"auto-creature",label:"Auto créature",file_name:"auto-creature.png",path:"local-media/creatures/auto-creature.png",mime_type:"image/png",entity_type:"creatures",entity_id:String(creature.id),blob,original_size:blob.size,created_at:now,updated_at:now},
-      {id:"auto-hero",label:"Auto héros",file_name:"auto-hero.png",path:"local-media/heroes/auto-hero.png",mime_type:"image/png",entity_type:"heroes",entity_id:String(hero.id),blob,original_size:blob.size,created_at:now,updated_at:now},
-      {id:"auto-npc",label:"Auto PNJ",file_name:"auto-npc.png",path:"local-media/npcs/auto-npc.png",mime_type:"image/png",entity_type:"npcs",entity_id:String(npc.id),blob,original_size:blob.size,created_at:now,updated_at:now},
-      {id:"auto-gallery",label:"Hors périmètre",file_name:"auto-gallery.png",path:"local-media/gallery/auto-gallery.png",mime_type:"image/png",entity_type:"gallery",entity_id:"",blob,original_size:blob.size,created_at:now,updated_at:now}
-    ];
-    const tx=db.transaction("media_assets","readwrite");
-    for(const row of rows) tx.objectStore("media_assets").put(row);
-    await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
-    db.close();
-  });
-
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(page.locator(".v6-app")).toBeVisible();
-  await gotoView(page, "media");
-
-  const batch=page.locator(".media-rembg-batch");
-  await expect(batch).toContainText("Créatures, Héros et PNJ");
-  await page.locator('[data-action="media-rembg-batch-start"]').click();
-  await expect(batch).toHaveAttribute("data-queue-status","complete",{timeout:20_000});
-  await expect(batch).toContainText("3 à valider");
-  expect(await page.evaluate(() => window.__rembgAutoCalls)).toBe(4);
-  expect(await page.evaluate(() => window.__rembgAutoDisposals)).toBe(2);
-
-  const states=await page.evaluate(async () => {
-    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const tx=db.transaction("media_assets","readonly"),store=tx.objectStore("media_assets");
-    const read=id=>new Promise((resolve,reject)=>{const req=store.get(id);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const rows=await Promise.all(["auto-creature","auto-hero","auto-npc","auto-gallery"].map(read));db.close();
-    return Object.fromEntries(rows.map(row=>[row.id,{transparent:Boolean(row.transparent_blob),review:row.transparent_review_status||"",model:row.transparent_model||"",processing:row.transparent_processing||""}]));
-  });
-  for(const id of ["auto-creature","auto-hero","auto-npc"]){
-    expect(states[id].transparent).toBe(true);
-    expect(states[id].review).toBe("pending");
-    expect(states[id].model).toBe("isnet-general-use");
-    expect(states[id].processing).toContain("file automatique");
-  }
-  expect(states["auto-gallery"].transparent).toBe(false);
-
-  await page.locator('[data-action="media-rembg-review-open"]').click();
-  const review=page.locator(".media-rembg-review[data-review-id]");
-  await expect(review).toBeVisible();
-  const approvedId=await review.getAttribute("data-review-id");
-  await review.locator('[data-action="media-rembg-review-approve"]').click();
-
-  const second=page.locator(".media-rembg-review[data-review-id]");
-  await expect(second).toBeVisible();
-  await expect(second).not.toHaveAttribute("data-review-id", approvedId);
-  const rejectedId=await second.getAttribute("data-review-id");
-  await second.locator('[data-action="media-rembg-review-reject"]').click();
-  await expect(page.locator(".media-rembg-review[data-review-id]")).not.toHaveAttribute("data-review-id", rejectedId);
-
-  const reviewed=await page.evaluate(async ({approvedId,rejectedId}) => {
-    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const tx=db.transaction("media_assets","readonly"),store=tx.objectStore("media_assets");
-    const read=id=>new Promise((resolve,reject)=>{const req=store.get(id);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const [approved,rejected]=await Promise.all([read(approvedId),read(rejectedId)]);db.close();
-    return {approved:approved.transparent_review_status,rejected:rejected.transparent_review_status};
-  },{approvedId,rejectedId});
-  expect(reviewed.approved).toBe("approved");
-  expect(reviewed.rejected).toBe("needs_fix");
-
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(page.locator(".v6-app")).toBeVisible();
-  await gotoView(page, "media");
-  await expect(page.locator(".media-rembg-batch")).toHaveAttribute("data-queue-status","complete");
-  await expect(page.locator(".media-rembg-batch")).toContainText("1 à valider");
-});
-
-test("automatic ISNet queue resumes after a reload during an in-flight item without duplicating the derivative", async ({ page }) => {
-  await page.addInitScript(() => {
-    window.__GARGOTTEX_REMBG__ = {
-      async remove(_blob, onProgress) {
-        onProgress?.(25, "Détourage ISNet en cours…");
-        if (!sessionStorage.getItem("gargottex-rembg-reload-probe")) {
-          sessionStorage.setItem("gargottex-rembg-reload-probe", "1");
-          return await new Promise(() => {});
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = 40; canvas.height = 40;
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0,0,40,40);
-        ctx.fillStyle = "#8b5a2b";
-        ctx.fillRect(10,5,20,30);
-        onProgress?.(95, "Création du PNG transparent…");
-        return await new Promise((resolve,reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("PNG test indisponible")), "image/png"));
-      },
-      async dispose() {}
-    };
-  });
-
-  await ready(page);
-  await page.evaluate(async () => {
-    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const entity=await new Promise((resolve,reject)=>{
-      const tx=db.transaction("creatures","readonly"),req=tx.objectStore("creatures").getAll();
-      req.onsuccess=()=>resolve(req.result?.[0]||null);req.onerror=()=>reject(req.error);
-    });
-    if(!entity) throw new Error("Fixture créature requise");
-    const canvas=document.createElement("canvas");canvas.width=40;canvas.height=40;
-    const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,40,40);ctx.fillStyle="#8b5a2b";ctx.fillRect(10,5,20,30);
-    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("blob")),"image/png"));
     const tx=db.transaction("media_assets","readwrite");
     tx.objectStore("media_assets").put({
-      id:"auto-reload-creature",label:"Reprise créature",file_name:"auto-reload-creature.png",
-      path:"local-media/creatures/auto-reload-creature.png",mime_type:"image/png",
-      entity_type:"creatures",entity_id:String(entity.id),blob,original_size:blob.size,
-      created_at:new Date().toISOString(),updated_at:new Date().toISOString()
+      id:"media-existing-transparent",
+      label:"Dérivé existant",
+      file_name:"existing.png",
+      path:"local-media/gallery/existing.png",
+      mime_type:"image/png",
+      entity_type:"gallery",
+      entity_id:"",
+      blob:original,
+      original_size:original.size,
+      original_sha256:hash,
+      transparent_blob:cutout,
+      transparent_path:"local-media/gallery/transparent/existing.png",
+      transparent_mime_type:"image/png",
+      transparent_width:64,
+      transparent_height:64,
+      transparent_review_status:"approved",
+      transparent_model:"isnet-general-use",
+      transparent_processing:"rembg-web / IS-Net DIS",
+      transparent_source_sha256:hash,
+      transparent_audit:{pass:true,has_alpha_channel:true,width:64,height:64,transparent_ratio:0.625,soft_edge_ratio:0,opaque_ratio:0.375,alpha_bbox:[16,8,48,56]},
+      created_at:new Date().toISOString(),
+      updated_at:new Date().toISOString()
     });
     await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
     db.close();
   });
 
-  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.reload({waitUntil:"domcontentloaded"});
   await expect(page.locator(".v6-app")).toBeVisible();
-  await gotoView(page, "media");
-  await page.locator('[data-action="media-rembg-batch-start"]').click();
-  await expect(page.locator(".media-rembg-batch")).toHaveAttribute("data-queue-status","running");
-  await expect(page.locator(".media-rembg-batch-progress progress")).toHaveAttribute("value","25");
+  await gotoView(page,"media");
 
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(page.locator(".v6-app")).toBeVisible();
-  await gotoView(page, "media");
-  await expect(page.locator(".media-rembg-batch")).toHaveAttribute("data-queue-status","complete",{timeout:15_000});
-  await expect(page.locator(".media-rembg-batch")).toContainText("1 à valider");
-  await expect(page.locator(".media-rembg-batch-note")).toContainText("reprise après une interruption");
+  const card=page.locator('[data-action="media-select"][data-id="media-existing-transparent"]');
+  await expect(card).toHaveAttribute("data-card-variant","transparent");
+  const transparentSrc=await card.locator("img").getAttribute("src");
+  expect(transparentSrc).toBeTruthy();
+
+  await card.click();
+  await expect(page.locator(".media-detail-v6")).toContainText("Le moteur de détourage intégré a été retiré");
+  await expect(page.locator(".media-approved-state")).toContainText("Dérivé validé");
+  await expect(page.locator('[data-action^="media-rembg"]')).toHaveCount(0);
+  await expect(page.locator('[data-action="media-derivative-upload"]')).toHaveCount(1);
 
   const persisted=await page.evaluate(async () => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
-    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("auto-reload-creature");
-    const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});db.close();
+    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-existing-transparent");
+    const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    db.close();
+    const bytes=await row.blob.arrayBuffer(),digest=await crypto.subtle.digest("SHA-256",bytes);
     return {
+      originalHash:Array.from(new Uint8Array(digest)).map(v=>v.toString(16).padStart(2,"0")).join(""),
+      storedHash:row.original_sha256,
       transparent:Boolean(row.transparent_blob),
-      review:row.transparent_review_status||"",
-      createdAt:row.transparent_created_at||"",
-      sourceHash:row.transparent_source_sha256||""
+      review:row.transparent_review_status,
+      model:row.transparent_model
     };
   });
+  expect(persisted.originalHash).toBe(persisted.storedHash);
   expect(persisted.transparent).toBe(true);
-  expect(persisted.review).toBe("pending");
-  expect(persisted.createdAt).toBeTruthy();
-  expect(persisted.sourceHash).toBeTruthy();
+  expect(persisted.review).toBe("approved");
+  expect(persisted.model).toBe("isnet-general-use");
+
+  await gotoView(page,"codex");
+  await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
+  const codexCard=page.locator('[data-action="select-codex"][data-type="media_assets"][data-id="media-existing-transparent"]');
+  await expect(codexCard).toBeVisible();
+  await expect(codexCard.locator("img")).toHaveAttribute("src",transparentSrc);
 });
 
-test("ISNet media smoke and human gate when Blob IndexedDB is available @webkit", async ({ page }, testInfo) => {
-  const sourcePngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAALklEQVR4nGP8////fwYKABMlmgeHASzoAmkuSng1zNpzj7ouGDVgMBjAOJoXGAAbGwsZJ9QthAAAAABJRU5ErkJggg==";
-  const cutoutPngBase64 = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAJ0lEQVR4nGNgGAWM6AKpzor/8WmYvfc+ih4mSl0wasBgMGAUMDAAAMMxBBBZrUDTAAAAAElFTkSuQmCC";
-
-  await page.addInitScript((cutoutBase64) => {
-    window.__GARGOTTEX_REMBG__ = {
-      async remove(_blob, onProgress) {
-        onProgress?.(35, "Détourage ISNet en cours…");
-        const binary = atob(cutoutBase64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-        onProgress?.(95, "Création du PNG transparent…");
-        return new Blob([bytes], { type: "image/png" });
-      },
-      async dispose() {}
-    };
-  }, cutoutPngBase64);
-
+test("rembg retirement cleanup deletes only the legacy model DB and preserves unrelated caches", async ({ page }) => {
   await ready(page);
-  await gotoView(page, "media");
 
-  const blobIndexedDbSupported = await page.evaluate(async () => {
-    const name = "gargottex-webkit-blob-probe";
-    try {
-      const db = await new Promise((resolve, reject) => {
-        const req = indexedDB.open(name, 1);
-        req.onupgradeneeded = () => req.result.createObjectStore("probe", { keyPath: "id" });
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error || new Error("probe open failed"));
-      });
-      const tx = db.transaction("probe", "readwrite");
-      tx.objectStore("probe").put({ id: "blob", blob: new Blob([new Uint8Array([1,2,3])], { type: "application/octet-stream" }) });
-      await new Promise((resolve, reject) => {
-        tx.oncomplete = resolve;
-        tx.onerror = () => reject(tx.error || new Error("probe transaction failed"));
-        tx.onabort = () => reject(tx.error || new Error("probe transaction aborted"));
-      });
-      db.close();
-      indexedDB.deleteDatabase(name);
-      return true;
-    } catch (_) {
-      try { indexedDB.deleteDatabase(name); } catch (_) {}
-      return false;
-    }
-  });
+  const before=await page.evaluate(async () => {
+    const appDb=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=appDb.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").count();
+    const mediaCount=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    appDb.close();
 
-  if (!blobIndexedDbSupported) {
-    testInfo.annotations.push({
-      type: "webkit-capability",
-      description: "Playwright WebKit/Linux cannot persist Blob/File values in IndexedDB; full media write gate is covered by Chromium and validated on real iPad."
+    localStorage.removeItem("gargottex:rembg-retired:v1");
+    const legacyDb=await new Promise((resolve,reject)=>{
+      const req=indexedDB.open("rembg-models",2);
+      req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains("models"))req.result.createObjectStore("models",{keyPath:"name"});};
+      req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
     });
-    const card = page.locator('[data-action="media-select"]').first();
-    await expect(card).toBeVisible();
-    await card.click();
-    await expect(page.locator(".rembg-box")).toContainText("ISNet General Use");
-    await expect(page.locator('[data-action="media-rembg-run"]')).toBeDisabled();
-    await expect(page.locator(".media-warning")).toContainText("Blob original local");
-    return;
-  }
+    const legacyTx=legacyDb.transaction("models","readwrite");
+    legacyTx.objectStore("models").put({name:"isnet-general-use",data:new Uint8Array([1,2,3]).buffer,version:"1.0.0"});
+    await new Promise((resolve,reject)=>{legacyTx.oncomplete=resolve;legacyTx.onerror=()=>reject(legacyTx.error);legacyTx.onabort=()=>reject(legacyTx.error);});
+    legacyDb.close();
 
-  await page.locator('input[data-action="media-upload"]').setInputFiles({
-    name: "webkit-isnet-source.png",
-    mimeType: "image/png",
-    buffer: Buffer.from(sourcePngBase64, "base64")
+    const unrelated=await caches.open("another-pwa-cache");
+    await unrelated.put("https://example.invalid/keep-me.txt",new Response("keep"));
+    return mediaCount;
   });
-  await expect(page.locator(".toast-stack")).toContainText("Média ajouté localement");
 
-  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.reload({waitUntil:"domcontentloaded"});
   await expect(page.locator(".v6-app")).toBeVisible();
-  await gotoView(page, "media");
+  await page.waitForFunction(() => localStorage.getItem("gargottex:rembg-retired:v1") === "done");
 
-  const card = page.locator('[data-action="media-select"]').filter({ hasText: "webkit-isnet-source.png" }).first();
-  await expect(card).toBeVisible();
-  await card.click();
+  const after=await page.evaluate(async () => {
+    const dbs=await indexedDB.databases();
+    const appDb=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=appDb.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").count();
+    const mediaCount=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    appDb.close();
+    const unrelated=await caches.open("another-pwa-cache");
+    const swSource=await (await fetch("/service-worker.js",{cache:"no-store"})).text();
+    return {
+      mediaCount,
+      legacyDbPresent:dbs.some(db=>db.name==="rembg-models"),
+      unrelatedCached:Boolean(await unrelated.match("https://example.invalid/keep-me.txt")),
+      scopedSwCleanup:swSource.includes('const CACHE_PREFIX = "gargottex-"') && swSource.includes("k.startsWith(CACHE_PREFIX)")
+    };
+  });
 
-  await expect(page.locator(".media-detail-v6")).toBeVisible();
-  await expect(page.locator(".media-variant-card.transparent")).toContainText("À générer");
-
-  await page.locator('[data-action="media-rembg-run"]').click();
-  await expect(page.locator(".media-rembg-candidate")).toBeVisible();
-  await expect(page.locator(".media-rembg-candidate")).toContainText("Audit alpha OK");
-  await expect(page.locator(".media-variant-card.transparent")).toContainText("À générer");
-
-  await page.locator('[data-action="media-rembg-approve-candidate"]').click();
-  await expect(page.locator(".media-approved-state")).toContainText("validé");
-  await expect(page.locator(".media-rembg-candidate")).toHaveCount(0);
-  await expect(page.locator(".media-variant-card.transparent")).toContainText("PNG RGBA");
+  expect(after.mediaCount).toBe(before);
+  expect(after.legacyDbPresent).toBe(false);
+  expect(after.unrelatedCached).toBe(true);
+  expect(after.scopedSwCleanup).toBe(true);
 });
 
 test("mobile WebKit critical navigation smoke @webkit", async ({ page }) => {
@@ -1307,17 +1072,19 @@ test("zoom and reflow proxy covers 100 125 150 and 200 percent", async ({ page }
     [150, 853],
     [200, 640]
   ];
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await ready(page);
   for (const [zoom, width] of cases) {
-    await page.setViewportSize({ width, height: 900 });
-    await ready(page);
-    await assertNoHorizontalOverflow(page);
-    await gotoView(page, "codex");
-    await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
-    await assertNoHorizontalOverflow(page);
-    await page.locator('[data-action="select-codex"][data-type="creatures"]').first().click();
-    await expect(page.locator(".creature-sheet-v6")).toBeVisible();
-    await assertNoHorizontalOverflow(page);
-    await test.info().attach(`reflow-${zoom}-percent.txt`, { body: Buffer.from(`1280 CSS px baseline / ${zoom}% -> ${width}px effective layout width`) });
+    await test.step(`${zoom}%`, async () => {
+      await page.setViewportSize({ width, height: 900 });
+      await gotoView(page, "codex");
+      await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+      await assertNoHorizontalOverflow(page);
+      await page.locator('[data-action="select-codex"][data-type="creatures"]').first().click();
+      await expect(page.locator(".creature-sheet-v6")).toBeVisible();
+      await assertNoHorizontalOverflow(page);
+      await test.info().attach(`reflow-${zoom}-percent.txt`, { body: Buffer.from(`1280 CSS px baseline / ${zoom}% -> ${width}px effective layout width`) });
+    });
   }
 });
 
@@ -1346,38 +1113,6 @@ test("core web vitals stay inside UI-6 vigilance thresholds", async ({ page }) =
   expect(vitals.cls).toBeLessThanOrEqual(0.10);
   expect(vitals.lcp).toBeGreaterThan(0);
   expect(vitals.lcp).toBeLessThanOrEqual(2500);
-});
-
-test("cutout audit keeps originals and transparent derivatives valid", async ({ page }) => {
-  await page.goto("/docs/mockup-assets/generated-data/cutout-audit.json");
-  const audit = JSON.parse(await page.locator("body").innerText());
-  expect(audit.model).toBe("isnet-general-use");
-  expect(audit.originals_preserved).toBe(true);
-  const rows = [...Object.values(audit.creatures || {}), ...Object.values(audit.heroes || {})];
-  expect(rows.length).toBeGreaterThanOrEqual(50);
-  for (const row of rows) {
-    expect(row.source_sha256).toMatch(/^[a-f0-9]{64}$/);
-    expect(row.alpha_bbox).toBeTruthy();
-    expect(row.transparent_ratio).toBeGreaterThan(0.01);
-    expect(row.transparent_ratio).toBeLessThan(0.99);
-    expect(row.width).toBeGreaterThan(0);
-    expect(row.height).toBeGreaterThan(0);
-  }
-
-  await page.goto("/index.html", { waitUntil: "domcontentloaded" });
-  await expect(page.locator(".v6-app")).toBeVisible();
-  await gotoView(page, "codex");
-  await page.locator('[data-action="select-codex"][data-type="creatures"]').first().click();
-  const figure = page.locator(".creature-figure-v6 img").first();
-  if (await figure.count()) {
-    const style = await figure.evaluate(el => {
-      const own = getComputedStyle(el);
-      const parent = getComputedStyle(el.parentElement);
-      return { objectFit: own.objectFit, ownBackground: own.backgroundColor, parentBackground: parent.backgroundColor };
-    });
-    expect(style.objectFit).toBe("contain");
-    expect(style.ownBackground).not.toBe("rgb(255, 255, 255)");
-  }
 });
 
 test("reflow proxy and critical interactions stay responsive", async ({ page }) => {

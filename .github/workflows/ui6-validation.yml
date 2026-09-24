@@ -36,7 +36,6 @@ jobs:
 
       - name: Run UI-6
         run: npm run test:ui6
-
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4

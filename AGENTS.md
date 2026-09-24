@@ -7,8 +7,7 @@ Pour toute tâche concernant la refonte UI/UX V6, lire avant modification :
 1. `docs/REFONTE-UI-UX-V6.md` — document maître et contrat de chantier ;
 2. le document `docs/UI-X-*.md` du lot concerné ;
 3. `docs/GARGOTTEX-V6-MAQUETTE-PREMIUM-V3.html` et ses ressources pour la référence visuelle ;
-4. `docs/WORKFLOW-IMAGES-REMBG-V6.md` si la tâche touche des figurines/images détourées ;
-5. le code de production réellement touché, notamment IndexedDB et Service Worker.
+4. le code de production réellement touché, notamment IndexedDB, médias et Service Worker.
 
 ## Données de production
 
@@ -64,14 +63,16 @@ L'Atelier suit UI-5 et peut conserver liste + formulaire en tablette paysage.
 
 ## Images
 
-Pour le détourage :
+Le moteur de détourage intégré a été retiré après la campagne V6.
 
-- rembg ;
-- IS-Net / DIS ;
-- `isnet-general-use` ;
-- original immutable ;
-- dérivé transparent séparé ;
-- contrôle alpha + contrôle visuel.
+Règles toujours obligatoires :
+
+- original média immutable ;
+- dérivé transparent séparé dans les champs `transparent_*` ;
+- aucun nettoyage ne supprime ou ne réécrit les dérivés existants ;
+- les dérivés approuvés restent utilisables dans le Codex ;
+- l'import manuel d'un PNG transparent reste autorisé avec contrôle alpha et contrôle visuel ;
+- les métadonnées historiques de provenance sont conservées telles quelles.
 
 ## Workflow léger par tâche
 

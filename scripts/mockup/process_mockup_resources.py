@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
-"""Gargottex mockup resource pipeline.
+"""Gargottex frozen V6 mockup resource audit.
 
-Documented workflow under test:
-- preserve originals;
-- derive transparent PNGs with rembg IS-Net / DIS (model: isnet-general-use);
-- audit transparency;
-- extract the Gargottex XLSX with Python standard-library XLSX parsing;
-- build a compact creature/hero catalog for the HTML mockup.
+This utility no longer performs image cutout generation.
+It only:
+- preserves and audits existing transparent PNG derivatives;
+- verifies their source hashes when the matching original exists;
+- extracts the Gargottex XLSX with Python standard-library XLSX parsing;
+- rebuilds the compact creature/hero catalog for the archived HTML mockup.
 
-Only mockup derivatives and generated metadata are written.
+No source image or transparent derivative is written.
 """
 
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import re
 import unicodedata
@@ -24,7 +23,6 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from PIL import Image
-from rembg import new_session, remove
 
 ROOT = Path(__file__).resolve().parents[2]
 ASSETS = ROOT / "docs" / "mockup-assets"
@@ -39,7 +37,6 @@ SELECTION_PATH = GENERATED / "gargottex-selection.json"
 CATALOG_PATH = GENERATED / "mockup-catalog.json"
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
-MODEL_NAME = "isnet-general-use"
 
 
 def normalize_text(value: object) -> str:
@@ -98,46 +95,24 @@ def alpha_audit(path: Path) -> dict[str, object]:
         }
 
 
-def previous_audit_map() -> dict[str, dict[str, object]]:
-    if not AUDIT_PATH.exists():
-        return {}
-    try:
-        old = json.loads(AUDIT_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-    rows = list(old.get("creatures", [])) + list(old.get("heroes", []))
-    return {str(row.get("source")): row for row in rows if row.get("source")}
-
-
-def process_folder(source: Path, target: Path, get_session, previous: dict[str, dict[str, object]]) -> list[dict[str, object]]:
-    target.mkdir(parents=True, exist_ok=True)
+def audit_existing_folder(source: Path, target: Path) -> list[dict[str, object]]:
     audit: list[dict[str, object]] = []
     sources = sorted(p for p in source.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_EXTS)
     for index, src in enumerate(sources, 1):
         dst = target / f"{src.stem}.png"
         source_rel = str(src.relative_to(ROOT)).replace("\\", "/")
-        digest = sha256(src)
-        old = previous.get(source_rel, {})
-        reusable = dst.exists() and (old.get("source_sha256") in {None, digest})
-
-        if reusable:
-            print(f"[reuse  {index:02d}/{len(sources):02d}] {src.name}")
-        else:
-            print(f"[cutout {index:02d}/{len(sources):02d}] {src.name}")
-            output = remove(
-                src.read_bytes(),
-                session=get_session(),
-                alpha_matting=False,
-                post_process_mask=True,
-            )
-            with Image.open(io.BytesIO(output)) as im:
-                im.convert("RGBA").save(dst, "PNG", optimize=True)
-
+        if not dst.exists():
+            print(f"::warning::Missing frozen transparent derivative for {source_rel}")
+            continue
+        print(f"[audit {index:02d}/{len(sources):02d}] {dst.name}")
         row = alpha_audit(dst)
-        row.update({"source": source_rel, "source_sha256": digest, "model": MODEL_NAME})
+        row.update({
+            "source": source_rel,
+            "source_sha256": sha256(src),
+            "provenance": "frozen-v6-derivative",
+        })
         audit.append(row)
     return audit
-
 
 NS_MAIN = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 NS_REL = {"r": "http://schemas.openxmlformats.org/package/2006/relationships"}
@@ -423,21 +398,12 @@ def build_selection(tables: dict[str, list[dict[str, object]]]) -> dict[str, obj
 
 def main() -> None:
     GENERATED.mkdir(parents=True, exist_ok=True)
-    previous = previous_audit_map()
-    session_holder: dict[str, object] = {}
-
-    def get_session():
-        if "session" not in session_holder:
-            print(f"Loading IS-Net / DIS session: {MODEL_NAME}")
-            session_holder["session"] = new_session(MODEL_NAME)
-        return session_holder["session"]
 
     audit = {
-        "workflow": "rembg / IS-Net DIS",
-        "model": MODEL_NAME,
+        "workflow": "existing transparent derivatives audit",
         "originals_preserved": True,
-        "creatures": process_folder(CREATURE_SOURCE, CREATURE_OUT, get_session, previous),
-        "heroes": process_folder(HERO_SOURCE, HERO_OUT, get_session, previous),
+        "creatures": audit_existing_folder(CREATURE_SOURCE, CREATURE_OUT),
+        "heroes": audit_existing_folder(HERO_SOURCE, HERO_OUT),
     }
     AUDIT_PATH.write_text(json.dumps(audit, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -454,11 +420,10 @@ def main() -> None:
 
     all_rows = audit["creatures"] + audit["heroes"]
     transparent_count = sum(1 for row in all_rows if row["transparent_ratio"] > 0.01)
-    print(f"Transparent derivatives: {transparent_count}/{len(all_rows)} pass the >1% transparent-pixel sanity check.")
+    print(f"Frozen transparent derivatives: {transparent_count}/{len(all_rows)} pass the >1% transparent-pixel sanity check.")
     print(f"Catalog: {len(catalog['creatures'])} creatures, {len(catalog['heroes'])} heroes.")
     if catalog["unmatched"]["creatures"] or catalog["unmatched"]["heroes"]:
         print("::warning::Some source images could not be matched confidently to the XLSX. See mockup-catalog.json.")
-
 
 if __name__ == "__main__":
     main()

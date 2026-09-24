@@ -10,7 +10,6 @@ La production doit reprendre les ressources validées pertinentes en respectant 
 
 - `docs/REFONTE-UI-UX-V6.md`
 - `docs/UI-1-DESIGN-SYSTEM-V6.md`
-- `docs/WORKFLOW-IMAGES-REMBG-V6.md`
 
 ---
 
@@ -111,17 +110,13 @@ Ces ressources servent à stresser la maquette. Elles ne représentent pas l'int
 
 ---
 
-# 5. Détourage
+# 5. Dérivés transparents historiques
 
-Workflow :
+Les dossiers `creatures-transparent/` et `heros-transparent/` sont conservés comme ressources V6 déjà générées.
 
-- `rembg`
-- IS-Net / DIS
-- `isnet-general-use`
+Le moteur de détourage et sa génération automatique ne font plus partie du projet actif. Le script de mockup peut seulement auditer ces dérivés existants et reconstruire les catalogues de référence.
 
-Voir `docs/WORKFLOW-IMAGES-REMBG-V6.md`.
-
-Originals intacts, dérivés séparés.
+Originaux intacts, dérivés séparés.
 
 ---
 
