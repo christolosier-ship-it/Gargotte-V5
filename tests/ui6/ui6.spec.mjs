@@ -4,8 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 async function ready(page, path = "/index.html") {
   await page.goto(path, { waitUntil: "domcontentloaded" });
   await expect(page.locator(".v6-app")).toBeVisible();
-  // Une PWA peut continuer à précharger son cache Service Worker après que l'UI est prête.
-  // "networkidle" mesure donc l'activité du cache, pas la disponibilité fonctionnelle.
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
   await page.evaluate(async () => {
     if (document.fonts?.ready) await document.fonts.ready;
   });
