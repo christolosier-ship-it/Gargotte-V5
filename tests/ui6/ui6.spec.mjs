@@ -144,7 +144,7 @@ test("Codex polish removes helper copy, applies dungeon accents and keeps creatu
   const advancedFilters = page.locator(".bestiary-advanced-filters");
   await expect(advancedFilters).toBeVisible();
   await expect(advancedFilters).not.toHaveAttribute("open", "");
-  await advancedFilters.locator("summary").click();
+  await advancedFilters.locator(":scope > summary").click();
   await expect(advancedFilters).toHaveAttribute("open", "");
   await expect(page.locator('[data-action="bestiary-dungeon"]')).toBeVisible();
 
@@ -767,7 +767,7 @@ test("Bestiary filters, sorting, display mode and persistence", async ({ page })
   await page.locator('[data-action="bestiary-search"]').fill("gobelin");
   await expect(page.locator(".bestiary-result-label")).toContainText("résultat");
   const filters = page.locator(".bestiary-advanced-filters");
-  if (!(await filters.getAttribute("open"))) await filters.locator("summary").click();
+  if (!(await filters.getAttribute("open"))) await filters.locator(":scope > summary").click();
   await page.locator('[data-action="bestiary-category"]').selectOption("basique");
   await page.locator('[data-action="bestiary-sort"]').selectOption("menace");
   await page.locator('[data-action="bestiary-toggle-direction"]').click();
@@ -996,8 +996,13 @@ test("approved cutouts stay intact, PNJ Codex uses them, and Media Codex is read
   await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
   await expect(page.locator(".codex-media-library-v6")).toBeVisible();
   await expect(page.locator('[data-action="family-mode"][data-type="media_assets"][data-mode="gallery"]')).toBeVisible();
+  const galleryColumns=await page.locator(".codex-media-grid-v6.gallery").evaluate(el => getComputedStyle(el).gridTemplateColumns.split(" ").filter(Boolean).length);
+  expect(galleryColumns).toBe(4);
+
   await page.locator('[data-action="family-mode"][data-type="media_assets"][data-mode="list"]').click();
   await expect(page.locator(".codex-media-grid-v6.list")).toBeVisible();
+  const listColumns=await page.locator(".codex-media-grid-v6.list").evaluate(el => getComputedStyle(el).gridTemplateColumns.split(" ").filter(Boolean).length);
+  expect(listColumns).toBe(1);
   await expect(page.locator(".codex-media-library-v6 .media-detail-v6")).toHaveCount(0);
   await expect(page.locator('[data-action="select-codex"][data-type="media_assets"]')).toHaveCount(0);
 
@@ -1005,8 +1010,6 @@ test("approved cutouts stay intact, PNJ Codex uses them, and Media Codex is read
   await expect(codexCard).toBeVisible();
   await expect(codexCard).not.toContainText("A0D7BFF3");
   await expect(codexCard.locator("img")).toHaveAttribute("src",transparentSrc);
-  const columns=await page.locator(".codex-media-grid-v6").evaluate(el => getComputedStyle(el).gridTemplateColumns.split(" ").length);
-  expect(columns).toBe(4);
 });
 
 test("rembg retirement cleanup deletes only the legacy model DB and preserves unrelated caches", async ({ page }) => {
