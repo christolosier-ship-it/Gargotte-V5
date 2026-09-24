@@ -52,7 +52,7 @@ async function dbSnapshot(page) {
 }
 
 test("IndexedDB v1 -> V6 v2 preserves IDs, unknown fields, relations and Blobs through edit/reopen/offline/export", async ({ page, context }) => {
-  await page.goto("/tests/ui6/fixtures/legacy-v1.html", { waitUntil: "domcontentloaded" });
+  await page.goto("/tests/v6-fast/fixtures/legacy-v1.html", { waitUntil: "domcontentloaded" });
   await expect(page.locator("body")).toHaveAttribute("data-ready", "true");
 
   await page.goto("/index.html", { waitUntil: "domcontentloaded" });
@@ -119,7 +119,7 @@ test("IndexedDB v1 -> V6 v2 preserves IDs, unknown fields, relations and Blobs t
 });
 
 test("old incomplete records and broken relations render without rewriting them", async ({ page }) => {
-  await page.goto("/tests/ui6/fixtures/legacy-v1.html", { waitUntil: "domcontentloaded" });
+  await page.goto("/tests/v6-fast/fixtures/legacy-v1.html", { waitUntil: "domcontentloaded" });
   await expect(page.locator("body")).toHaveAttribute("data-ready", "true");
   await page.goto("/index.html", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".v6-app")).toBeVisible();

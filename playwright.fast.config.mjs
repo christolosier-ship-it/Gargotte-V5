@@ -2,16 +2,16 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/v6-fast",
+  testMatch: "fast.spec.mjs",
   timeout: 45_000,
   expect: { timeout: 8_000 },
   fullyParallel: false,
   forbidOnly: true,
-  retries: 1,
+  retries: 0,
   workers: 2,
   reporter: [
     ["list"],
-    ["html", { outputFolder: "playwright-report", open: "never" }],
-    ["junit", { outputFile: "test-results/v6fast-full-junit.xml" }]
+    ["junit", { outputFile: "test-results/v6fast-fast-junit.xml" }]
   ],
   use: {
     baseURL: "http://127.0.0.1:4173",
@@ -28,14 +28,8 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium",
-      use: { browserName: "chromium", viewport: { width: 1440, height: 900 } },
-      grepInvert: /@webkit/
-    },
-    {
-      name: "webkit-ipad",
-      use: { browserName: "webkit", viewport: { width: 834, height: 1112 }, hasTouch: true },
-      grep: /@webkit/
+      name: "chromium-fast",
+      use: { browserName: "chromium", viewport: { width: 1440, height: 900 } }
     }
   ]
 });

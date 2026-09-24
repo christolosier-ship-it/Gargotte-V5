@@ -1,5 +1,9 @@
 # V6-Fast Lot 1 — CI légère et fermeture UI-6
 
+## Statut
+
+**CLOS — Gate validée le 24/09/2026.**
+
 ## Objectif
 Remplacer la recette finale UI-6 par une validation V6-Fast adaptée aux risques actuels.
 
@@ -134,3 +138,76 @@ Le lot est validé si :
 - la Full conserve les scénarios coûteux réellement utiles ;
 - la CI est verte et plus légère ;
 - aucun code de production n'a été modifié pour faire passer les tests.
+
+
+## Bilan d'exécution — 24/09/2026
+
+### CI active
+La recette UI-6 a été remplacée par :
+- `V6-Fast CI` sur chaque PR vers `V5.3` ;
+- `V6-Fast full validation` pour les changements lourds et le déclenchement manuel.
+
+### Fast
+- 11 scénarios Chromium ;
+- run #3 : **11/11 passés** ;
+- durée Playwright : **32,6 s** ;
+- aucun retry ;
+- aucun artefact lourd produit sur succès.
+
+Le temps Playwright de la CI quotidienne est donc environ divisé par deux par rapport à l'ancienne suite UI-6 d'environ une minute.
+
+### Full
+- 21 scénarios au total ;
+- Chromium + WebKit iPad ;
+- run #3 : **21/21 passés** ;
+- durée Playwright : **59,1 s** ;
+- aucun retry final ;
+- aucun artefact d'échec produit.
+
+La Full couvre notamment :
+- migration IndexedDB historique ;
+- PWA / Service Worker ;
+- responsive étendu ;
+- accessibilité étendue ;
+- 48 vrais Blobs PNG transparents 768×768 sous Chromium ;
+- ouvertures/fermetures plein écran répétées ;
+- smoke Média WebKit au format iPad.
+
+### Limite WebKit CI documentée
+Playwright WebKit sous Linux échoue lorsqu'un test tente d'écrire artificiellement un Blob dans IndexedDB avec :
+
+`UnknownError: Error preparing Blob/File data to be stored in object store`
+
+Ce comportement appartient à l'environnement WebKit Playwright utilisé par GitHub Actions. Il intervient pendant la création du fixture, avant le parcours applicatif.
+
+Décision :
+- le stress avec vrais Blobs IndexedDB reste couvert sous Chromium ;
+- WebKit iPad utilise un média seedé existant pour tester la navigation Média et le viewer ;
+- un smoke réel iPad reste la référence matérielle pour le chemin Blob IndexedDB sur Safari/iPadOS.
+
+### Nettoyage réalisé
+Retirés de la CI active :
+- workflow `UI-6 final validation` ;
+- workflow de génération du cahier V3 ;
+- comparatif visuel V3 ;
+- assertions historiques/cosmétiques UI-6 ;
+- anciens tests `tests/ui6`.
+
+### Outillage
+- `package-lock.json` versionné ;
+- dépendances Playwright/axe épinglées ;
+- `npm ci` validé dans Fast et Full ;
+- Fast installe uniquement Chromium ;
+- rapports détaillés uniquement sur échec.
+
+## Gate — résultat
+
+- UI-6 n'est plus le workflow quotidien : **OK**
+- aucun comparatif visuel V3 automatique : **OK**
+- Fast / Full distinctes : **OK**
+- Fast centrée sur les risques actuels : **OK**
+- Full conserve les contrôles lourds utiles : **OK**
+- CI verte : **OK**
+- aucun code de production modifié pour faire passer les tests : **OK**
+
+**Lot 1 validé.**

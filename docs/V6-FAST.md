@@ -113,7 +113,14 @@ Les seuils arbitraires de pixels ou de timing ne doivent pas devenir des sources
 ### Lot 1 — CI V6-Fast
 docs/V6-FAST-LOT-1-CI.md
 
-Objectif : fermer réellement l'héritage UI-6 et obtenir une CI courte avant les gros changements.
+**Statut : CLOS — Gate validée le 24/09/2026.**
+
+Résultat :
+- Fast Chromium : 11 tests, 32,6 s Playwright ;
+- Full Chromium + WebKit iPad : 21 tests, 59,1 s Playwright ;
+- UI-6 et comparatif V3 retirés de la CI active ;
+- package lock + npm ci ;
+- stress réel Blob transparent ajouté à la Full.
 
 ### Lot 2 — Runtime média
 docs/V6-FAST-LOT-2-RUNTIME-MEDIA.md
