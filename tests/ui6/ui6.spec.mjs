@@ -835,7 +835,7 @@ test("session Generator, Brouhaha and Quest flows remain coherent", async ({ pag
   await expect(page.locator(".quest-sheet-v6")).toBeVisible();
 });
 
-test("Media library opens detail without altering originals", async ({ page }) => {
+test("Media admin keeps attachment tools but removes rembg-era comparison controls without altering originals", async ({ page }) => {
   await ready(page);
   await gotoView(page, "media");
   const before = await page.evaluate(async () => {
@@ -843,26 +843,43 @@ test("Media library opens detail without altering originals", async ({ page }) =
     const tx=db.transaction("media_assets","readonly"), req=tx.objectStore("media_assets").getAll();
     const rows=await new Promise((resolve,reject)=>{ req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
     db.close();
-    return rows.map(row=>({id:row.id,size:row.blob?.size||0,type:row.blob?.type||"",path:row.path||""}));
+    return rows.map(row=>({id:row.id,size:row.blob?.size||0,type:row.blob?.type||"",path:row.path||"",transparentSize:row.transparent_blob?.size||0}));
   });
   const card = page.locator('[data-action="media-select"]').first();
   await card.click();
   await expect(page.locator(".media-detail-v6")).toBeVisible();
-  await expect(page.locator(".media-variant-card.original")).toBeVisible();
+  await expect(page.locator(".media-admin-preview-v6")).toBeVisible();
+  await expect(page.locator('[data-action="media-link-type"]')).toBeVisible();
+  await expect(page.locator('[data-action="media-attach"]')).toBeVisible();
+  await expect(page.locator('[data-action="media-download-original"]')).toBeVisible();
+  await expect(page.locator(".media-variant-card")).toHaveCount(0);
+  await expect(page.locator(".media-alpha-audit")).toHaveCount(0);
+  await expect(page.locator('[data-action="media-derivative-upload"]')).toHaveCount(0);
+  await expect(page.locator('[data-action="media-derivative-approve"]')).toHaveCount(0);
+  await expect(page.locator('[data-action="media-derivative-reject"]')).toHaveCount(0);
+  await expect(page.locator('[data-action="media-derivative-remove"]')).toHaveCount(0);
   const after = await page.evaluate(async () => {
     const db = await new Promise((resolve,reject) => { const req=indexedDB.open("gargottex-v5-offline"); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
     const tx=db.transaction("media_assets","readonly"), req=tx.objectStore("media_assets").getAll();
     const rows=await new Promise((resolve,reject)=>{ req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); });
     db.close();
-    return rows.map(row=>({id:row.id,size:row.blob?.size||0,type:row.blob?.type||"",path:row.path||""}));
+    return rows.map(row=>({id:row.id,size:row.blob?.size||0,type:row.blob?.type||"",path:row.path||"",transparentSize:row.transparent_blob?.size||0}));
   });
   expect(after).toEqual(before);
 });
 
-test("existing approved transparent derivatives remain preferred after rembg retirement", async ({ page }) => {
+test("approved cutouts stay intact, PNJ Codex uses them, and Media Codex is read-only", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await ready(page);
 
-  await page.evaluate(async () => {
+  const linkedNpc = await page.evaluate(async () => {
+    const readDb=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const npcTx=readDb.transaction("npcs","readonly"),npcReq=npcTx.objectStore("npcs").getAll();
+    const npcs=await new Promise((resolve,reject)=>{npcReq.onsuccess=()=>resolve(npcReq.result);npcReq.onerror=()=>reject(npcReq.error);});
+    readDb.close();
+    const npc=npcs[0];
+    if(!npc) throw new Error("PNJ test absent");
+
     const makePng = async (transparent) => {
       const canvas=document.createElement("canvas");
       canvas.width=64;canvas.height=64;
@@ -873,24 +890,24 @@ test("existing approved transparent derivatives remain preferred after rembg ret
     };
     const original=await makePng(false);
     const cutout=await makePng(true);
-    const sourceBytes=await original.arrayBuffer();
-    const digest=await crypto.subtle.digest("SHA-256",sourceBytes);
+    const digest=await crypto.subtle.digest("SHA-256",await original.arrayBuffer());
     const hash=Array.from(new Uint8Array(digest)).map(v=>v.toString(16).padStart(2,"0")).join("");
+
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
     const tx=db.transaction("media_assets","readwrite");
     tx.objectStore("media_assets").put({
       id:"media-existing-transparent",
-      label:"Dérivé existant",
-      file_name:"existing.png",
-      path:"local-media/gallery/existing.png",
+      label:"A0D7BFF3-3F23-4EF1-B111-F79EDE75A6AA.png",
+      file_name:"A0D7BFF3-3F23-4EF1-B111-F79EDE75A6AA.png",
+      path:"local-media/npcs/existing.png",
       mime_type:"image/png",
-      entity_type:"gallery",
-      entity_id:"",
+      entity_type:"npcs",
+      entity_id:npc.id,
       blob:original,
       original_size:original.size,
       original_sha256:hash,
       transparent_blob:cutout,
-      transparent_path:"local-media/gallery/transparent/existing.png",
+      transparent_path:"local-media/npcs/transparent/existing.png",
       transparent_mime_type:"image/png",
       transparent_width:64,
       transparent_height:64,
@@ -904,29 +921,29 @@ test("existing approved transparent derivatives remain preferred after rembg ret
     });
     await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
     db.close();
+    return {id:npc.id,name:npc.name || "PNJ"};
   });
 
   await page.reload({waitUntil:"domcontentloaded"});
-  await expect(page.locator(".v6-app")).toBeVisible();
-  await gotoView(page,"media");
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
 
-  const card=page.locator('[data-action="media-select"][data-id="media-existing-transparent"]');
-  await expect(card).toHaveAttribute("data-card-variant","transparent");
-  const transparentSrc=await card.locator("img").getAttribute("src");
+  await gotoView(page,"media");
+  const adminCard=page.locator('[data-action="media-select"][data-id="media-existing-transparent"]');
+  await expect(adminCard).toHaveAttribute("data-card-variant","transparent");
+  const transparentSrc=await adminCard.locator("img").getAttribute("src");
   expect(transparentSrc).toBeTruthy();
 
-  await card.click();
-  await expect(page.locator(".media-detail-v6")).toContainText("Le moteur de détourage intégré a été retiré");
-  await expect(page.locator(".media-approved-state")).toContainText("Dérivé validé");
-  await expect(page.locator('[data-action^="media-rembg"]')).toHaveCount(0);
-  await expect(page.locator('[data-action="media-derivative-upload"]')).toHaveCount(1);
+  await adminCard.click();
+  await expect(page.locator(".media-admin-preview-v6 img")).toHaveAttribute("src",transparentSrc);
+  await expect(page.locator('[data-action^="media-derivative-"]')).toHaveCount(0);
+  await expect(page.locator(".media-alpha-audit")).toHaveCount(0);
 
   const persisted=await page.evaluate(async () => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
     const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get("media-existing-transparent");
     const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
     db.close();
-    const bytes=await row.blob.arrayBuffer(),digest=await crypto.subtle.digest("SHA-256",bytes);
+    const digest=await crypto.subtle.digest("SHA-256",await row.blob.arrayBuffer());
     return {
       originalHash:Array.from(new Uint8Array(digest)).map(v=>v.toString(16).padStart(2,"0")).join(""),
       storedHash:row.original_sha256,
@@ -941,10 +958,25 @@ test("existing approved transparent derivatives remain preferred after rembg ret
   expect(persisted.model).toBe("isnet-general-use");
 
   await gotoView(page,"codex");
+  await page.locator('[data-action="set-codex-type"][data-type="npcs"]').first().click();
+  const npcCard=page.locator(`[data-action="select-family-codex"][data-type="npcs"][data-id="${linkedNpc.id}"]`).first();
+  await expect(npcCard).toBeVisible();
+  await expect(npcCard.locator("img").first()).toHaveAttribute("src",transparentSrc);
+  await npcCard.click();
+  await expect(page.locator(".npc-sheet-v6 .npc-portrait-v6 img").first()).toHaveAttribute("src",transparentSrc);
+
   await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
-  const codexCard=page.locator('[data-action="select-codex"][data-type="media_assets"][data-id="media-existing-transparent"]');
+  await expect(page.locator(".codex-media-library-v6")).toBeVisible();
+  await expect(page.locator(".codex-media-library-v6")).toContainText("Consultation uniquement");
+  await expect(page.locator(".codex-media-library-v6 .media-detail-v6")).toHaveCount(0);
+  await expect(page.locator('[data-action="select-codex"][data-type="media_assets"]')).toHaveCount(0);
+
+  const codexCard=page.locator(".codex-media-card-v6").filter({hasText:linkedNpc.name});
   await expect(codexCard).toBeVisible();
+  await expect(codexCard).not.toContainText("A0D7BFF3");
   await expect(codexCard.locator("img")).toHaveAttribute("src",transparentSrc);
+  const columns=await page.locator(".codex-media-grid-v6").evaluate(el => getComputedStyle(el).gridTemplateColumns.split(" ").length);
+  expect(columns).toBe(4);
 });
 
 test("rembg retirement cleanup deletes only the legacy model DB and preserves unrelated caches", async ({ page }) => {
