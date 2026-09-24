@@ -34,8 +34,8 @@ jobs:
       - name: Install browsers
         run: npx playwright install --with-deps chromium webkit
 
-      - name: Run UI-6 diagnostic
-        run: npx playwright test tests/ui6/ui6.spec.mjs --project=chromium --grep "polished home keeps Berthold advice stable" --retries=0
+      - name: Run UI-6
+        run: npm run test:ui6
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
