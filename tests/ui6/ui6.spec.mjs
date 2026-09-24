@@ -948,7 +948,7 @@ test("existing approved transparent derivatives remain preferred after rembg ret
   await expect(codexCard.locator("img")).toHaveAttribute("src",transparentSrc);
 });
 
-test("rembg retirement cleanup deletes only legacy model/cache resources", async ({ page }) => {
+test("rembg retirement cleanup deletes only the legacy model DB and preserves unrelated caches", async ({ page }) => {
   await ready(page);
 
   const before=await page.evaluate(async () => {
@@ -968,9 +968,8 @@ test("rembg retirement cleanup deletes only legacy model/cache resources", async
     await new Promise((resolve,reject)=>{legacyTx.oncomplete=resolve;legacyTx.onerror=()=>reject(legacyTx.error);legacyTx.onabort=()=>reject(legacyTx.error);});
     legacyDb.close();
 
-    const cache=await caches.open("gargottex-v6-rembg-retired-v1");
-    await cache.put("https://cdn.jsdelivr.net/npm/@bunnio/rembg-web@1.0.2/dist/index.umd.min.js",new Response("legacy"));
-    await cache.put("https://example.invalid/gargottex-keep-me.txt",new Response("keep"));
+    const unrelated=await caches.open("another-pwa-cache");
+    await unrelated.put("https://example.invalid/keep-me.txt",new Response("keep"));
     return mediaCount;
   });
 
@@ -984,18 +983,20 @@ test("rembg retirement cleanup deletes only legacy model/cache resources", async
     const tx=appDb.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").count();
     const mediaCount=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
     appDb.close();
-    const cache=await caches.open("gargottex-v6-rembg-retired-v1");
+    const unrelated=await caches.open("another-pwa-cache");
+    const swSource=await (await fetch("/service-worker.js",{cache:"no-store"})).text();
     return {
       mediaCount,
       legacyDbPresent:dbs.some(db=>db.name==="rembg-models"),
-      legacyCached:Boolean(await cache.match("https://cdn.jsdelivr.net/npm/@bunnio/rembg-web@1.0.2/dist/index.umd.min.js")),
-      unrelatedCached:Boolean(await cache.match("https://example.invalid/gargottex-keep-me.txt"))
+      unrelatedCached:Boolean(await unrelated.match("https://example.invalid/keep-me.txt")),
+      scopedSwCleanup:swSource.includes('const CACHE_PREFIX = "gargottex-"') && swSource.includes("k.startsWith(CACHE_PREFIX)")
     };
   });
+
   expect(after.mediaCount).toBe(before);
   expect(after.legacyDbPresent).toBe(false);
-  expect(after.legacyCached).toBe(false);
   expect(after.unrelatedCached).toBe(true);
+  expect(after.scopedSwCleanup).toBe(true);
 });
 
 test("mobile WebKit critical navigation smoke @webkit", async ({ page }) => {
