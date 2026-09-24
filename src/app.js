@@ -3494,9 +3494,9 @@ function renderBestiaryCollection() {
 
 function renderCodexBrowseToolbar({ type, count, search, mode, searchAction, modeAction, label, total = null }) {
   const typeAttr = type ? ` data-type="${type}"` : "";
-  const countText = total === null
-    ? `${count} entrée${count > 1 ? "s" : ""}`
-    : `${count} sur ${total}`;
+  const countMarkup = total === null
+    ? `<span class="codex-family-count codex-browse-count" aria-live="polite">${count} entrée${count > 1 ? "s" : ""}</span>`
+    : `<span class="codex-family-count codex-browse-count bestiary-counter bestiary-result-label" aria-live="polite"><strong>${count}</strong><span> résultat${count > 1 ? "s" : ""} sur ${total}</span></span>`;
   return `
     <div class="codex-family-toolbar codex-browse-toolbar">
       <label class="codex-family-search codex-browse-search">
@@ -3506,7 +3506,7 @@ function renderCodexBrowseToolbar({ type, count, search, mode, searchAction, mod
       <div class="segmented codex-browse-modes" aria-label="Mode d’affichage">
         ${familyModeOptions().map(option => `<button class="${mode === option.value ? "active" : ""}" type="button" data-action="${modeAction}"${typeAttr} data-mode="${option.value}" aria-pressed="${mode === option.value}">${shellIcon(option.icon)}<span>${option.label}</span></button>`).join("")}
       </div>
-      <span class="codex-family-count codex-browse-count" aria-live="polite">${countText}</span>
+      ${countMarkup}
     </div>`;
 }
 
