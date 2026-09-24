@@ -133,10 +133,20 @@ test("Codex polish removes helper copy, applies dungeon accents and keeps creatu
   await expect(page.getByText("Comptoir de départ", { exact: true })).toHaveCount(0);
 
   await gotoView(page, "codex");
-  await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+  await expect(page.locator(".bestiary-v6")).toBeVisible();
   await expect(page.getByText("Codex · Créatures", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Galerie pour explorer. Liste pour arbitrer.", { exact: true })).toHaveCount(0);
-  await expect(page.locator('[data-action="bestiary-search"]')).toHaveAttribute("aria-label", "Rechercher une créature");
+  await expect(page.locator(".bestiary-heading")).toHaveCount(0);
+  await expect(page.locator(".codex-browse-toolbar")).toBeVisible();
+  await expect(page.locator('[data-action="bestiary-search"]')).toHaveAttribute("aria-label", "Rechercher dans créatures");
+  await expect(page.locator('[data-action="bestiary-mode"][data-mode="gallery"]')).toContainText("Galerie");
+  await expect(page.locator('[data-action="bestiary-mode"][data-mode="list"]')).toContainText("Liste");
+  const advancedFilters = page.locator(".bestiary-advanced-filters");
+  await expect(advancedFilters).toBeVisible();
+  await expect(advancedFilters).not.toHaveAttribute("open", "");
+  await advancedFilters.locator("summary").click();
+  await expect(advancedFilters).toHaveAttribute("open", "");
+  await expect(page.locator('[data-action="bestiary-dungeon"]')).toBeVisible();
 
   const galleryLayout = await page.locator(".bestiary-gallery-grid").evaluate(el => {
     const style = getComputedStyle(el);
@@ -165,9 +175,12 @@ test("Codex polish removes helper copy, applies dungeon accents and keeps creatu
   expect(galleryLayout.rects[2].left).toBeGreaterThanOrEqual(galleryLayout.rects[1].right - 1);
 
   await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
-  await expect(page.getByRole("heading", { name: "Donjons" })).toBeVisible();
-  await expect(page.locator(".codex-family-heading .eyebrow")).toHaveCount(0);
+  await expect(page.locator(".dungeon-codex-v6")).toBeVisible();
+  await expect(page.locator(".codex-family-heading")).toHaveCount(0);
+  await expect(page.locator(".codex-browse-toolbar")).toBeVisible();
   await expect(page.locator('[data-action="family-search"][data-type="dungeons"]')).toHaveAttribute("aria-label", "Rechercher dans donjons");
+  await expect(page.locator('[data-action="family-mode"][data-type="dungeons"][data-mode="gallery"]')).toContainText("Galerie");
+  await expect(page.locator('[data-action="family-mode"][data-type="dungeons"][data-mode="list"]')).toContainText("Liste");
   const dungeonAccent = await page.locator(".dungeon-collection-card").first().evaluate(el => {
     const style = getComputedStyle(el);
     const media = el.querySelector(".dungeon-collection-media");
@@ -199,12 +212,24 @@ test("Codex polish removes helper copy, applies dungeon accents and keeps creatu
   expect(Math.abs(creatureRect.width - heroRect.width)).toBeLessThanOrEqual(12);
   expect(Math.abs(creatureRect.height - heroRect.height)).toBeLessThanOrEqual(35);
 
-  for (const type of ["npcs","quests","loot_items","interactables","brouhaha_effects"]) {
+  for (const type of ["npcs","quests","loot_items","interactables","brouhaha_effects","media_assets"]) {
     await page.locator(`[data-action="set-codex-type"][data-type="${type}"]`).first().click();
-    await expect(page.locator(".codex-family-heading .eyebrow")).toHaveCount(0);
+    await expect(page.locator(".codex-family-heading")).toHaveCount(0);
+    await expect(page.locator(".panel-title > h2")).toHaveCount(0);
+    await expect(page.locator(".codex-browse-toolbar")).toBeVisible();
     const search = page.locator(`[data-action="family-search"][data-type="${type}"]`);
-    if (await search.count()) await expect(search).toHaveAttribute("aria-label", /Rechercher dans /);
+    await expect(search).toHaveAttribute("aria-label", /Rechercher dans /);
+    await expect(page.locator(`[data-action="family-mode"][data-type="${type}"][data-mode="gallery"]`)).toContainText("Galerie");
+    await expect(page.locator(`[data-action="family-mode"][data-type="${type}"][data-mode="list"]`)).toContainText("Liste");
   }
+
+  await page.locator('[data-action="set-codex-type"][data-type="npcs"]').first().click();
+  const npcBackgrounds = await page.locator(".npc-collection-media").first().evaluate(el => {
+    const style = getComputedStyle(el);
+    return { color: style.backgroundColor, image: style.backgroundImage };
+  });
+  expect(npcBackgrounds.color).not.toMatch(/rgb\(2(?:1[678]|2[0-9]|3[0-9]),/);
+  expect(npcBackgrounds.image).toContain("radial-gradient");
 
   await assertNoHorizontalOverflow(page);
 });
@@ -411,7 +436,7 @@ test("responsive matrix covers representative phone, iPad and desktop breakpoint
       }
 
       await gotoView(page, "codex");
-      await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+      await expect(page.locator(".bestiary-v6")).toBeVisible();
       const firstCreature = page.locator('[data-action="select-codex"][data-type="creatures"]').first();
       await expect(firstCreature).toBeVisible();
       await firstCreature.click();
@@ -741,6 +766,8 @@ test("Bestiary filters, sorting, display mode and persistence", async ({ page })
 
   await page.locator('[data-action="bestiary-search"]').fill("gobelin");
   await expect(page.locator(".bestiary-result-label")).toContainText("résultat");
+  const filters = page.locator(".bestiary-advanced-filters");
+  if (!(await filters.getAttribute("open"))) await filters.locator("summary").click();
   await page.locator('[data-action="bestiary-category"]').selectOption("basique");
   await page.locator('[data-action="bestiary-sort"]').selectOption("menace");
   await page.locator('[data-action="bestiary-toggle-direction"]').click();
@@ -750,6 +777,7 @@ test("Bestiary filters, sorting, display mode and persistence", async ({ page })
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.locator(".v6-app")).toBeVisible();
   await expect(page.locator('[data-action="bestiary-search"]')).toHaveValue("gobelin");
+  await expect(page.locator(".bestiary-advanced-filters")).toHaveAttribute("open", "");
   await expect(page.locator('[data-action="bestiary-category"]')).toHaveValue("basique");
   await expect(page.locator('[data-action="bestiary-sort"]')).toHaveValue("menace");
   await expect(page.locator('[data-action="bestiary-mode"][data-mode="list"]')).toHaveAttribute("aria-pressed", "true");
@@ -767,7 +795,7 @@ test("Codex cross-family navigation covers dungeon context, hero levels, NPC que
   const seeAll = page.locator('[data-action="dungeon-see-all"][data-type="creatures"]').first();
   await expect(seeAll).toBeVisible();
   await seeAll.click();
-  await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+  await expect(page.locator(".bestiary-v6")).toBeVisible();
   await expect(page.locator('[data-action="bestiary-dungeon"]')).toHaveValue("dungeon_le-cabaret-des-joyeuses");
   await page.locator('[data-action="codex-context-back"]').click();
   await expect(page.getByRole("heading", { name: "Le Cabaret des Joyeuses" })).toBeVisible();
@@ -967,7 +995,9 @@ test("approved cutouts stay intact, PNJ Codex uses them, and Media Codex is read
 
   await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
   await expect(page.locator(".codex-media-library-v6")).toBeVisible();
-  await expect(page.locator(".codex-media-library-v6")).toContainText("Consultation uniquement");
+  await expect(page.locator('[data-action="family-mode"][data-type="media_assets"][data-mode="gallery"]')).toBeVisible();
+  await page.locator('[data-action="family-mode"][data-type="media_assets"][data-mode="list"]').click();
+  await expect(page.locator(".codex-media-grid-v6.list")).toBeVisible();
   await expect(page.locator(".codex-media-library-v6 .media-detail-v6")).toHaveCount(0);
   await expect(page.locator('[data-action="select-codex"][data-type="media_assets"]')).toHaveCount(0);
 
@@ -1037,7 +1067,7 @@ test("mobile WebKit critical navigation smoke @webkit", async ({ page }) => {
   await page.locator('[data-action="select-codex"][data-type="creatures"]').first().click();
   await expect(page.locator(".creature-detail-back")).toBeVisible();
   await page.locator(".creature-detail-back").click();
-  await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+  await expect(page.locator(".bestiary-v6")).toBeVisible();
   await gotoView(page, "atelier");
   await expect(page.getByRole("heading", { name: "Atelier" })).toBeVisible();
   await assertNoHorizontalOverflow(page);
@@ -1110,7 +1140,7 @@ test("zoom and reflow proxy covers 100 125 150 and 200 percent", async ({ page }
     await test.step(`${zoom}%`, async () => {
       await page.setViewportSize({ width, height: 900 });
       await gotoView(page, "codex");
-      await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+      await expect(page.locator(".bestiary-v6")).toBeVisible();
       await assertNoHorizontalOverflow(page);
       await page.locator('[data-action="select-codex"][data-type="creatures"]').first().click();
       await expect(page.locator(".creature-sheet-v6")).toBeVisible();
