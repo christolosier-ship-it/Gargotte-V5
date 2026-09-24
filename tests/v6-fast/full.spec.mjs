@@ -364,17 +364,20 @@ test("Service Worker update preserves local data and core cache", async ({ page 
 test("iPad WebKit media fullscreen smoke @webkit", async ({ page }) => {
   await ready(page);
   await page.evaluate(async () => {
-    const canvas=document.createElement("canvas");
-    canvas.width=320; canvas.height=420;
-    const ctx=canvas.getContext("2d");
-    ctx.clearRect(0,0,320,420);
-    ctx.fillStyle="rgba(120,190,255,0.8)";
-    ctx.fillRect(55,40,210,340);
-    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("blob")),"image/png"));
-    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+    const raw = atob(pngBase64);
+    const bytes = Uint8Array.from(raw, char => char.charCodeAt(0));
+    const blob = new Blob([bytes], { type: "image/png" });
+
+    const db=await new Promise((resolve,reject)=>{
+      const req=indexedDB.open("gargottex-v5-offline");
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error || new Error("open media DB failed"));
+    });
+
     await new Promise((resolve,reject)=>{
       const tx=db.transaction("media_assets","readwrite");
-      tx.objectStore("media_assets").put({
+      const req=tx.objectStore("media_assets").put({
         id:"v6fast-webkit-media",
         label:"WebKit transparent",
         file_name:"webkit-transparent.png",
@@ -384,21 +387,26 @@ test("iPad WebKit media fullscreen smoke @webkit", async ({ page }) => {
         transparent_blob:blob,
         transparent_path:"local-media/gallery/transparent/webkit.png",
         transparent_mime_type:"image/png",
-        transparent_width:320,
-        transparent_height:420,
+        transparent_width:1,
+        transparent_height:1,
         transparent_review_status:"approved",
-        transparent_audit:{pass:true,has_alpha_channel:true,width:320,height:420}
+        transparent_audit:{pass:true,has_alpha_channel:true,width:1,height:1}
       });
-      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+      req.onerror=()=>reject(req.error || new Error("media put failed"));
+      tx.oncomplete=resolve;
+      tx.onerror=()=>reject(tx.error || new Error("media transaction failed"));
+      tx.onabort=()=>reject(tx.error || new Error("media transaction aborted"));
     });
     db.close();
   });
+
   await page.reload({waitUntil:"domcontentloaded"});
   await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
   await gotoView(page,"codex");
   await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
   const card=page.locator(".codex-media-card-v6").filter({hasText:"WebKit transparent"});
   await expect(card).toBeVisible();
+
   for (let i=0;i<3;i++) {
     await card.locator(".codex-media-open-v6").click();
     await expect(page.locator(".image-viewer-overlay")).toBeVisible();
@@ -407,4 +415,3 @@ test("iPad WebKit media fullscreen smoke @webkit", async ({ page }) => {
   }
   await assertNoHorizontalOverflow(page);
 });
-
