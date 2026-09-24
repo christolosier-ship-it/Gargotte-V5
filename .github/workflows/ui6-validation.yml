@@ -34,8 +34,13 @@ jobs:
       - name: Install browsers
         run: npx playwright install --with-deps chromium webkit
 
-      - name: Run UI-6
-        run: npm run test:ui6
+      - name: Run UI-6 diagnostic
+        run: >
+          npx playwright test
+          tests/ui6/indexeddb.spec.mjs
+          tests/ui6/ui6.spec.mjs
+          tests/ui6/visual.spec.mjs
+          --grep "IndexedDB|old incomplete|polished home|Codex polish|detail polish|responsive matrix covers|Media library|existing approved|rembg retirement cleanup|Service Worker cache|mobile WebKit|V3 visual comparison pack"
 
       - name: Upload Playwright report
         if: always()
