@@ -6,7 +6,7 @@ export default defineConfig({
   expect: { timeout: 8_000 },
   fullyParallel: false,
   forbidOnly: true,
-  retries: 1,
+  retries: 0,
   workers: 2,
   reporter: [
     ["list"],
@@ -17,7 +17,7 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:4173",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    video: "off",
     serviceWorkers: "allow"
   },
   webServer: {
