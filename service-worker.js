@@ -1,5 +1,5 @@
 
-const CACHE = "gargottex-v6-media-polish-v1";
+const CACHE = "gargottex-v6-codex-toolbar-v1";
 const CACHE_PREFIX = "gargottex-";
 const ASSETS = [
   "./",
