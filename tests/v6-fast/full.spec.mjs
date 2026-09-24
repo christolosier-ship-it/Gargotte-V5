@@ -363,13 +363,35 @@ test("Service Worker update preserves local data and core cache", async ({ page 
 
 test("iPad WebKit media fullscreen smoke @webkit", async ({ page }) => {
   await ready(page);
+  await page.evaluate(async () => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const dungeon=await new Promise((resolve,reject)=>{
+      const tx=db.transaction("dungeons","readonly"),req=tx.objectStore("dungeons").openCursor();
+      req.onsuccess=()=>resolve(req.result?.value||null);req.onerror=()=>reject(req.error);
+    });
+    if(!dungeon){db.close();throw new Error("Donjon fixture absent");}
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction("media_assets","readwrite");
+      tx.objectStore("media_assets").put({
+        id:"v6fast-webkit-dungeon",
+        label:"WebKit dungeon",
+        file_name:"logo-192.png",
+        path:"assets/images/logo-192.png",
+        entity_type:"dungeons",
+        entity_id:dungeon.id,
+        mime_type:"image/png"
+      });
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+    db.close();
+  });
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
   await gotoView(page,"codex");
   await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
-
-  const card=page.locator(".codex-media-card-v6").filter({hasText:"Berthold"}).first();
+  const card=page.locator(".codex-media-card-v6").filter({hasText:"WebKit dungeon"});
   await expect(card).toBeVisible();
-  await expect(card.locator("img")).toBeVisible();
-
+  await expect(card.locator("img")).toHaveAttribute("src", /assets\/images\/logo-192\.png/);
   for (let i=0;i<3;i++) {
     await card.locator(".codex-media-open-v6").click();
     await expect(page.locator(".image-viewer-overlay")).toBeVisible();
