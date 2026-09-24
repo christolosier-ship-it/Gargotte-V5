@@ -1,3 +1,10 @@
+> **ARCHIVE — chantier UI-6 clos le 24/09/2026.**
+>
+> Ce document est conservé uniquement comme historique de la refactorisation UI V6.
+> Il n'est plus normatif pour les travaux courants.
+> La maquette V3 et le comparatif visuel V3 ne font plus partie de la validation active.
+> Pour le chantier d'optimisation courant, utiliser docs/V6-FAST.md.
+
 # Gargottex V6 - UI-6 Polish, Accessibilité & Validation finale
 
 ## Statut

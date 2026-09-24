@@ -1,73 +1,82 @@
-# V7 Lot 5 — Migrateur médias incrémental
+# V7 Lot 5 — Migrateur médias actifs incrémental
 
 ## Objectif
-Construire le moteur temporaire qui migre les médias IndexedDB vers R2 un par un, avec reprise et contrôle d'intégrité.
+Construire le moteur temporaire qui migre vers R2 uniquement les médias actifs prévus par le contrat V7, un par un, avec reprise et contrôle d'intégrité.
 
 ## Préconditions
 - Lire le maître V7.
 - Lot 3 validé.
 - Modèle media_assets du Lot 1 appliqué.
-- Aucun besoin d'attendre la bascule D1 pour commencer les tests synthétiques.
+
+## Éligibilité
+Pour chaque relation média, déterminer une seule source binaire attendue :
+- dérivé transparent actif pour les entités détourées ;
+- image non détourée pour un Donjon.
+
+Ne pas uploader :
+- original blanc historique ;
+- thumb_blob historique ;
+- preview_blob historique.
+
+Un média sans source active éligible doit être qualifié explicitement. Il ne faut pas utiliser l'ancien original blanc comme fallback silencieux.
 
 ## Principe
-Pour chaque média :
-1. inventorier les variantes présentes dans IndexedDB : original, thumbnail, preview et `transparent_blob` ;
-2. lire chaque Blob présent sans en synthétiser ni en supprimer ;
-3. calculer SHA-256 local de chaque variante ;
-4. collecter taille, type MIME et métadonnées utiles, y compris les champs `transparent_*` historiques ;
-5. uploader chaque variante présente vers R2 via l'API Worker ;
-6. vérifier chaque objet distant ;
-7. comparer au minimum taille et SHA-256 ;
-8. écrire/mettre à jour la métadonnée cible ;
-9. marquer le média comme migré uniquement lorsque toutes ses variantes attendues sont vérifiées.
+Pour chaque média actif attendu :
+1. identifier la source locale éligible ;
+2. lire uniquement ce Blob ;
+3. calculer SHA-256 local ;
+4. collecter taille, MIME, dimensions et relation ;
+5. uploader vers R2 via le Worker ;
+6. vérifier l'objet distant ;
+7. comparer taille et SHA-256 ;
+8. écrire/mettre à jour la métadonnée D1 ;
+9. marquer migrated uniquement après vérification.
 
 ## États provisoires
-Prévoir des états explicites, par exemple :
-- pending
-- uploading
-- verifying
-- migrated
-- failed
+Prévoir des états explicites comme pending, uploading, verifying, migrated, failed et skipped_not_eligible.
 
-Le modèle exact doit rester temporaire et facilement supprimable au Lot 8.
+Le modèle exact reste temporaire et supprimable au Lot 8.
 
 ## Reprise
 Le moteur doit :
-- reprendre après fermeture de la PWA ;
-- ne pas créer de doublon ;
-- reconnaître un objet déjà migré et vérifié ;
-- permettre de relancer uniquement les échecs ;
-- ne pas dépendre d'une longue session continue.
+- reprendre après fermeture ;
+- éviter les doublons ;
+- reconnaître un média déjà vérifié ;
+- relancer uniquement les échecs ;
+- fonctionner par petites unités ;
+- ne pas retraiter les variantes historiques exclues.
 
 ## Interface provisoire
-Prévoir un écran simple permettant de suivre :
-- total ;
+Afficher au minimum :
+- total éligible ;
 - migrés ;
 - vérifiés ;
 - en cours ;
 - échecs ;
+- hors périmètre ;
 - restants ;
 - volume migré ;
 - erreurs détaillées.
 
 ## Tests obligatoires
-Tester d'abord sur un très petit échantillon :
-- petit fichier ;
+Tester sur un petit échantillon comprenant :
+- transparent lié à une entité ;
+- image de Donjon ;
+- média contenant aussi un original blanc/thumbnails afin de vérifier qu'ils sont ignorés ;
 - gros fichier ;
-- plusieurs types MIME ;
-- média lié ;
-- média orphelin ;
-- interruption volontaire ;
+- interruption ;
 - reprise ;
-- retry après échec.
+- retry ;
+- média non éligible.
 
 ## Interdictions
 - Ne jamais supprimer le Blob local.
 - Ne jamais marquer migrated avant contrôle.
-- Ne pas lancer toute la bibliothèque pendant la construction du moteur.
+- Ne pas lancer toute la bibliothèque pendant la construction.
+- Ne pas uploader une variante historique simplement parce qu'elle existe.
 
 ## Gate
-Le moteur est fiable, idempotent et reprend correctement après interruption sur un échantillon contrôlé.
+Le moteur est fiable, idempotent, reprend après interruption et n'uploade que le patrimoine média actif.
 
 ## Livrable
-Migrateur média prêt pour l'exécution réelle du Lot 6.
+Migrateur prêt pour le Lot 6.
