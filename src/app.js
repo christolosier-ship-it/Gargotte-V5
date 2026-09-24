@@ -1822,7 +1822,15 @@ function rebuildRelations() {
 
 let mediaImageObserver = null;
 let mediaRenderTimer = null;
+let mediaContextGeneration = 0;
 const pendingMediaLoads = new Map();
+
+function resetMediaRuntimeContext() {
+  mediaContextGeneration += 1;
+  mediaImageObserver?.disconnect?.();
+  mediaImageObserver = null;
+  mediaRepository.resetContext();
+}
 
 function mediaEntityType(entity, hint = "") {
   const normalizedHint = relationStore(hint);
@@ -1862,11 +1870,13 @@ function queueMediaEntityLoad(type, id) {
   if (!entityType || !entityId || mediaRepository.isEntityLoaded(entityType, entityId)) return;
   const key = `entity:${entityType}:${entityId}`;
   if (pendingMediaLoads.has(key)) return;
+  const generation = mediaContextGeneration;
   const promise = mediaRepository.loadMetadataForEntity(entityType, entityId)
     .then(async assets => {
+      if (generation !== mediaContextGeneration) return;
       const active = assets.find(asset => repositoryHasApprovedTransparent(asset));
       if (active) await mediaRepository.ensureActiveUrl(active, entityType);
-      scheduleMediaRender();
+      if (generation === mediaContextGeneration) scheduleMediaRender();
     })
     .catch(error => console.warn("[Gargottex] Chargement média ciblé impossible.", error))
     .finally(() => pendingMediaLoads.delete(key));
@@ -1878,10 +1888,12 @@ function queueMediaPathLoad(path, type = "dungeons") {
   if (!clean || isStaticMediaPath(clean)) return;
   const key = `path:${clean}`;
   if (pendingMediaLoads.has(key)) return;
+  const generation = mediaContextGeneration;
   const promise = mediaRepository.loadMetadataByPath(clean)
     .then(async asset => {
+      if (generation !== mediaContextGeneration) return;
       if (asset) await mediaRepository.ensureActiveUrl(asset, relationStore(type) || asset.entity_type || "dungeons");
-      scheduleMediaRender();
+      if (generation === mediaContextGeneration) scheduleMediaRender();
     })
     .catch(error => console.warn("[Gargottex] Chargement média par chemin impossible.", error))
     .finally(() => pendingMediaLoads.delete(key));
@@ -6335,6 +6347,7 @@ function bindEvents() {
         case "go-home":
         case "set-view": {
           const nextView = btn.dataset.view || "home";
+          if (nextView !== state.ui.view) resetMediaRuntimeContext();
           clearCodexContext(true);
           state.ui.view = nextView;
           state.ui.codexReturnStack = [];
@@ -6369,7 +6382,9 @@ function bindEvents() {
         case "set-codex-type":
           clearCodexContext(true);
           state.ui.codexReturnStack = [];
-          state.ui.codexType = btn.dataset.type;
+          const nextCodexType = btn.dataset.type;
+          if (nextCodexType !== state.ui.codexType) resetMediaRuntimeContext();
+          state.ui.codexType = nextCodexType;
           ensureBestiaryUi();
           ensureCodexFamilyUi();
           state.ui.codexSelectedId = state.ui.codexType === "media_assets"
@@ -6547,6 +6562,7 @@ function bindEvents() {
             return;
           }
           const currentType = state.ui.codexType;
+          if (targetType !== currentType) resetMediaRuntimeContext();
           const currentId = state.ui.codexSelectedId;
           const current = findById(currentType, currentId);
           const stack = ensureCodexReturnStack();
