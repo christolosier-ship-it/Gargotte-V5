@@ -1837,12 +1837,23 @@ function mediaEntityType(entity, hint = "") {
   return "";
 }
 
-function scheduleMediaRender() {
+function mediaRenderWouldInterruptInput() {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || !app?.contains(active)) return false;
+  return active.matches("input, textarea, select, [contenteditable='true']");
+}
+
+function scheduleMediaRender(delay = 40) {
   if (!state.ready || mediaRenderTimer) return;
   mediaRenderTimer = setTimeout(() => {
     mediaRenderTimer = null;
-    if (state.ready && app?.isConnected) render();
-  }, 40);
+    if (!state.ready || !app?.isConnected) return;
+    if (mediaRenderWouldInterruptInput()) {
+      scheduleMediaRender(180);
+      return;
+    }
+    render();
+  }, delay);
 }
 
 function queueMediaEntityLoad(type, id) {
