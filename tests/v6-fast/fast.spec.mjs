@@ -171,6 +171,10 @@ test("media runtime stays lazy and enforces active visual rules", async ({ page 
   expect(targeted.entityLookups).toBeGreaterThan(0);
   expect(targeted.objectUrlsCreated).toBeGreaterThan(0);
 
+  await gotoView(page,"home");
+  const released = await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(released.liveObjectUrls).toBe(0);
+
   await gotoView(page,"media");
   const whiteCard=page.locator('[data-action="media-select"][data-id="v6fast-white-original"]');
   const dungeonCard=page.locator('[data-action="media-select"][data-id="v6fast-dungeon-original"]');
@@ -570,9 +574,12 @@ test("approved cutouts stay active across Media and PNJ Codex", async ({ page })
   await page.locator('[data-action="set-codex-type"][data-type="npcs"]').first().click();
   const npcCard=page.locator(`[data-action="select-family-codex"][data-type="npcs"][data-id="${linkedNpc.id}"]`).first();
   await expect(npcCard).toBeVisible();
-  await expect(npcCard.locator("img").first()).toHaveAttribute("src",transparentSrc);
+  await expect(npcCard.locator("img").first()).toHaveAttribute("src", /^blob:/);
+  const npcSrc = await npcCard.locator("img").first().getAttribute("src");
+  expect(npcSrc).toBeTruthy();
+  expect(npcSrc).not.toBe(transparentSrc);
   await npcCard.click();
-  await expect(page.locator(".npc-sheet-v6 .npc-portrait-v6 img").first()).toHaveAttribute("src",transparentSrc);
+  await expect(page.locator(".npc-sheet-v6 .npc-portrait-v6 img").first()).toHaveAttribute("src",npcSrc);
 
   await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
   await expect(page.locator(".codex-media-library-v6")).toBeVisible();
@@ -585,7 +592,7 @@ test("approved cutouts stay active across Media and PNJ Codex", async ({ page })
 
   const codexCard=page.locator(".codex-media-card-v6").filter({hasText:linkedNpc.name});
   await expect(codexCard).toBeVisible();
-  await expect(codexCard.locator("img")).toHaveAttribute("src",transparentSrc);
+  await expect(codexCard.locator("img")).toHaveAttribute("src", /^blob:/);
 });
 
 test("representative phone iPad and desktop layouts remain usable", async ({ page }) => {
