@@ -1,5 +1,9 @@
 # V6-Fast Lot 2 — Runtime média lazy
 
+## Statut
+
+**CLOS — Gate validée le 24/09/2026.**
+
 ## Objectif
 Supprimer le chargement global des médias et mettre en place une couche d'accès média à la demande, compatible avec le futur backend V7.
 
@@ -111,3 +115,104 @@ Le lot est validé si :
 - IndexedDB et ses données sont intacts ;
 - la Fast CI passe ;
 - la couche d'accès média peut raisonnablement être remplacée par D1/R2 en V7.
+
+
+## Bilan d'exécution — 24/09/2026
+
+### Architecture mise en place
+- `loadAllData()` exclut désormais `media_assets`.
+- Aucun changement de `DB_VERSION` et aucun nouveau store IndexedDB.
+- Ajout de `src/storage/media-repository.js`.
+- Le repository conserve uniquement des métadonnées légères dans le runtime.
+- Les lectures complètes de records média sont réservées aux besoins explicites : visuel actif, téléchargement original ou backup complet.
+- Les index existants `entity_id` et `path` sont utilisés pour les lectures ciblées.
+- Le catalogue Média est parcouru uniquement lorsque la vue Média/Codex Média en a besoin, puis les Blobs ne sont pas conservés dans le catalogue runtime.
+
+### Cycle de vie des visuels
+- dérivé transparent approuvé : actif ;
+- original Donjon : actif ;
+- ancien original blanc / thumb / preview : stockage historique uniquement, sans fallback visuel normal ;
+- Object URL : création à la demande ;
+- changement de vue ou de famille Codex : révocation des Object URLs et remise à zéro du contexte média ;
+- retour ultérieur : nouvelle URL éphémère créée à partir du Blob toujours intact.
+
+Le runtime ne dépend donc plus de la persistance d'une URL `blob:` entre deux écrans.
+
+### Écritures ciblées
+Les opérations Média suivantes ne déclenchent plus `refreshData()` :
+- upload d'un média ;
+- rattachement/changement de famille-entité ;
+- rafraîchissement de la bibliothèque Média.
+
+Une instrumentation de test expose temporairement les compteurs runtime via `__GARGOTTEX_MEDIA_DEBUG__`.
+
+### Correctif découvert pendant la validation
+La première Fast CI a mis en évidence qu'un chargement média asynchrone pouvait déclencher un `render()` pendant la saisie d'un champ Bestiaire et remplacer l'input actif.
+
+Correction :
+- un rendu provoqué uniquement par l'arrivée d'un média est différé tant qu'un `input`, `textarea`, `select` ou `contenteditable` de l'application est actif ;
+- la saisie et sa persistance restent prioritaires.
+
+Le test historique de persistance Bestiaire repasse sans assouplissement.
+
+### PWA
+- version application : **5.6.2** ;
+- cache : `gargottex-v6-fast-media-runtime-v1` ;
+- `media-repository.js` fait partie du cœur offline ;
+- la Full CI est déclenchée quand ce module change.
+
+### Mesures validées
+Fast CI finale :
+- **12/12 tests** ;
+- **37,2 s Playwright** ;
+- nouveau test d'invariants runtime média : OK.
+
+Full CI finale :
+- **22/22 tests** ;
+- **1,1 min Playwright** ;
+- 48 vrais Blobs PNG transparents 768×768 : OK ;
+- ouvertures plein écran répétées : OK ;
+- migration IndexedDB historique : OK ;
+- Service Worker / offline : OK ;
+- WebKit iPad : OK.
+
+### Invariants vérifiés automatiquement
+Au bootstrap standard :
+- `catalogScans = 0` ;
+- `fullRecordReads = 0` ;
+- `objectUrlsCreated = 0` ;
+- `liveObjectUrls = 0`.
+
+Après consultation ciblée :
+- lecture par entité sans scan du catalogue complet ;
+- création d'Object URL seulement lorsque le visuel actif est demandé.
+
+Après changement de contexte vers l'Accueil :
+- `liveObjectUrls = 0`.
+
+Après rattachement d'un média :
+- compteur `refreshDataCalls` inchangé ;
+- Blob original présent et taille non nulle ;
+- relation persistée.
+
+### Écart volontaire vers le Lot 3
+Le Lot 2 ne virtualise pas encore les grilles Média.
+
+Le catalogue peut donc contenir plusieurs centaines de métadonnées et le DOM peut encore monter toutes les cartes. Le chargement binaire est désormais lazy, mais le bornage du nombre de cartes DOM et le cycle de vie par carte appartiennent au Lot 3.
+
+## Gate — résultat
+- aucun Blob média global au démarrage : **OK**
+- `rebuildMediaCache()` supprimé : **OK**
+- lectures ciblées : **OK**
+- priorité des détourages : **OK**
+- Donjons non détourés conservés : **OK**
+- anciens originaux blancs hors chemin d'affichage normal : **OK**
+- petites écritures sans `refreshData()` global : **OK**
+- Object URLs révocables et libérées entre contextes : **OK**
+- IndexedDB et Blobs existants intacts : **OK**
+- PWA/offline : **OK**
+- Fast CI : **OK**
+- Full CI ciblée : **OK**
+- couche compatible avec futur D1/R2 : **OK**
+
+**Lot 2 validé.**
