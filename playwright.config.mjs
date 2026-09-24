@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./tests/ui6",
+  testDir: "./tests/v6-fast",
   timeout: 45_000,
   expect: { timeout: 8_000 },
   fullyParallel: false,
@@ -11,7 +11,7 @@ export default defineConfig({
   reporter: [
     ["list"],
     ["html", { outputFolder: "playwright-report", open: "never" }],
-    ["junit", { outputFile: "test-results/ui6-junit.xml" }]
+    ["junit", { outputFile: "test-results/v6fast-full-junit.xml" }]
   ],
   use: {
     baseURL: "http://127.0.0.1:4173",
@@ -29,20 +29,12 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: {
-        browserName: "chromium",
-        viewport: { width: 1440, height: 900 }
-      },
+      use: { browserName: "chromium", viewport: { width: 1440, height: 900 } },
       grepInvert: /@webkit/
     },
     {
-      name: "webkit-smoke",
-      use: {
-        browserName: "webkit",
-        viewport: { width: 390, height: 844 },
-        isMobile: true,
-        hasTouch: true
-      },
+      name: "webkit-ipad",
+      use: { browserName: "webkit", viewport: { width: 834, height: 1112 }, hasTouch: true },
       grep: /@webkit/
     }
   ]
