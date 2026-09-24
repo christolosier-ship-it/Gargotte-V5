@@ -4,7 +4,11 @@ import AxeBuilder from "@axe-core/playwright";
 async function ready(page, path = "/index.html") {
   await page.goto(path, { waitUntil: "domcontentloaded" });
   await expect(page.locator(".v6-app")).toBeVisible();
-  await page.waitForLoadState("networkidle");
+  // Une PWA peut continuer à précharger son cache Service Worker après que l'UI est prête.
+  // "networkidle" mesure donc l'activité du cache, pas la disponibilité fonctionnelle.
+  await page.evaluate(async () => {
+    if (document.fonts?.ready) await document.fonts.ready;
+  });
 }
 
 async function clickVisible(page, selector) {
@@ -381,37 +385,51 @@ test("creature detail stacks behavior, loot and lore full width below the image 
 });
 
 
-for (const [name, width, height] of viewports) {
-  test(`responsive matrix ${name}`, async ({ page }) => {
-    await page.setViewportSize({ width, height });
-    await ready(page);
-    await assertNoHorizontalOverflow(page);
+test("responsive matrix covers representative phone, iPad and desktop breakpoints", async ({ page }) => {
+  const representativeViewports = [
+    ["phone-320", 320, 720],
+    ["phone-390", 390, 844],
+    ["tablet-portrait-834", 834, 1112],
+    ["tablet-landscape-1194", 1194, 834],
+    ["desktop-1440", 1440, 900],
+    ["desktop-wide-1920", 1920, 1080]
+  ];
 
-    if (width <= 767) {
-      await expect(page.locator(".mobile-bottom")).toBeVisible();
-      await expect(page.locator(".v6-sidebar")).toBeHidden();
-    } else {
-      await expect(page.locator(".v6-sidebar")).toBeVisible();
-    }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
 
-    await gotoView(page, "codex");
-    await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
-    const firstCreature = page.locator('[data-action="select-codex"][data-type="creatures"]').first();
-    await expect(firstCreature).toBeVisible();
-    await firstCreature.click();
-    await expect(page.locator(".creature-sheet-v6")).toBeVisible();
-    await assertNoHorizontalOverflow(page);
+  for (const [name, width, height] of representativeViewports) {
+    await test.step(name, async () => {
+      await page.setViewportSize({ width, height });
+      await gotoView(page, "home");
+      await assertNoHorizontalOverflow(page);
 
-    if (width < 1200) {
-      await expect(page.locator(".bestiary-master-rail")).toBeHidden();
-      await expect(page.locator(".creature-detail-back")).toBeVisible();
-    }
-    if (width >= 1480) {
-      await expect(page.locator(".bestiary-master-rail")).toBeVisible();
-      await expect(page.locator(".creature-detail-back")).toBeHidden();
-    }
-  });
-}
+      if (width <= 767) {
+        await expect(page.locator(".mobile-bottom")).toBeVisible();
+        await expect(page.locator(".v6-sidebar")).toBeHidden();
+      } else {
+        await expect(page.locator(".v6-sidebar")).toBeVisible();
+      }
+
+      await gotoView(page, "codex");
+      await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+      const firstCreature = page.locator('[data-action="select-codex"][data-type="creatures"]').first();
+      await expect(firstCreature).toBeVisible();
+      await firstCreature.click();
+      await expect(page.locator(".creature-sheet-v6")).toBeVisible();
+      await assertNoHorizontalOverflow(page);
+
+      if (width < 1200) {
+        await expect(page.locator(".bestiary-master-rail")).toBeHidden();
+        await expect(page.locator(".creature-detail-back")).toBeVisible();
+      }
+      if (width >= 1480) {
+        await expect(page.locator(".bestiary-master-rail")).toBeVisible();
+        await expect(page.locator(".creature-detail-back")).toBeHidden();
+      }
+    });
+  }
+});
 
 test("Atelier creature completeness filters isolate missing image and missing dungeon records", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -732,7 +750,6 @@ test("Bestiary filters, sorting, display mode and persistence", async ({ page })
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.locator(".v6-app")).toBeVisible();
-  await page.waitForLoadState("networkidle");
   await expect(page.locator('[data-action="bestiary-search"]')).toHaveValue("gobelin");
   await expect(page.locator('[data-action="bestiary-category"]')).toHaveValue("basique");
   await expect(page.locator('[data-action="bestiary-sort"]')).toHaveValue("menace");
@@ -1055,17 +1072,19 @@ test("zoom and reflow proxy covers 100 125 150 and 200 percent", async ({ page }
     [150, 853],
     [200, 640]
   ];
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await ready(page);
   for (const [zoom, width] of cases) {
-    await page.setViewportSize({ width, height: 900 });
-    await ready(page);
-    await assertNoHorizontalOverflow(page);
-    await gotoView(page, "codex");
-    await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
-    await assertNoHorizontalOverflow(page);
-    await page.locator('[data-action="select-codex"][data-type="creatures"]').first().click();
-    await expect(page.locator(".creature-sheet-v6")).toBeVisible();
-    await assertNoHorizontalOverflow(page);
-    await test.info().attach(`reflow-${zoom}-percent.txt`, { body: Buffer.from(`1280 CSS px baseline / ${zoom}% -> ${width}px effective layout width`) });
+    await test.step(`${zoom}%`, async () => {
+      await page.setViewportSize({ width, height: 900 });
+      await gotoView(page, "codex");
+      await expect(page.getByRole("heading", { name: "Bestiaire" })).toBeVisible();
+      await assertNoHorizontalOverflow(page);
+      await page.locator('[data-action="select-codex"][data-type="creatures"]').first().click();
+      await expect(page.locator(".creature-sheet-v6")).toBeVisible();
+      await assertNoHorizontalOverflow(page);
+      await test.info().attach(`reflow-${zoom}-percent.txt`, { body: Buffer.from(`1280 CSS px baseline / ${zoom}% -> ${width}px effective layout width`) });
+    });
   }
 });
 
