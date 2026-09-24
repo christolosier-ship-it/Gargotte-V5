@@ -7243,6 +7243,7 @@ async function bootstrap() {
   }
   state.diagnostic = await collectLocalDiagnostic();
   render();
+  document.documentElement.dataset.gargottexReady = "true";
 
   if (navigator.storage?.persist) {
     navigator.storage.persist().catch(() => {});
