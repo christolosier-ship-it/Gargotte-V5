@@ -694,7 +694,7 @@ test("Secondary Codex WHAOU keeps four personalities coherent and lazy", async (
       tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
     });
     db.close();
-    return {dungeonId:dungeon.id,creatureId:creature.id};
+    return {dungeonId:dungeon.id,creatureId:creature.id,creatureName:creature.name};
   });
 
   await page.reload({waitUntil:"domcontentloaded"});
@@ -723,7 +723,7 @@ test("Secondary Codex WHAOU keeps four personalities coherent and lazy", async (
   await lootWithImage.click();
   await expect(page.locator(".loot-sheet-v6.basique")).toBeVisible();
   await expect(page.locator(".loot-effect-v6")).toContainText("Effet prioritaire 1");
-  await expect(page.locator(".loot-source-v6")).toContainText(creature.name);
+  await expect(page.locator(".loot-source-v6")).toContainText(fixture.creatureName);
   await page.locator('[data-action="codex-family-back"][data-type="loot_items"]').click();
   await expect(page.locator('.loot-codex-card[data-id="whaou5-loot-2"] .loot-media-fallback')).toBeVisible();
 
