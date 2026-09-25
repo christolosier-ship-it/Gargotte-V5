@@ -487,6 +487,83 @@ test("log reads stay truly limited and newest-first", async ({ page }) => {
   expect(result.every((row,index,array)=>index===0 || array[index-1].created_at >= row.created_at)).toBe(true);
 });
 
+test("Administration XLSX import and three export safety levels remain non-destructive", async ({ page }) => {
+  await page.setViewportSize({width:1194,height:834});
+  await ready(page);
+  await gotoView(page,"import");
+
+  await expect(page.locator(".import-family-band")).toBeVisible();
+  await expect(page.locator(".export-level")).toHaveCount(3);
+  await expect(page.locator(".backup-card-v6")).toHaveAttribute("data-state","idle");
+  await expect(page.locator(".diagnostic-v6")).toBeVisible();
+  await expect.poll(async()=>page.locator(".diagnostic-status-pill").count()).toBe(1);
+  expect(await page.locator(".diagnostic-line").count()).toBeGreaterThanOrEqual(3);
+
+  const counts=async()=>page.evaluate(async()=>{
+    const names=["dungeons","creatures","heroes","npcs","quests","loot_items","interactables","brouhaha_effects","media_assets"];
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction(names,"readonly"),out={};
+    for(const name of names) out[name]=await new Promise((resolve,reject)=>{const req=tx.objectStore(name).count();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    db.close();return out;
+  });
+  const before=await counts();
+
+  await page.locator('[data-action="import-xlsx-file"]').setInputFiles("templates/creatures.xlsx");
+  await expect(page.locator(".import-preview-v6")).toBeVisible();
+  await expect(page.locator(".import-preview-v6")).toContainText("XLSX");
+  await expect(page.getByText("Aucune donnée métier écrite")).toBeVisible();
+  expect(await counts()).toEqual(before);
+  await page.locator('[data-action="import-clear"]').click();
+  await expect(page.locator(".import-preview-v6")).toHaveCount(0);
+
+  const xlsxDownload=page.waitForEvent("download");
+  await page.locator('[data-action="export-all"]').click();
+  const xlsx=await xlsxDownload;
+  expect(xlsx.suggestedFilename()).toMatch(/gargottex_export_.*\.xlsx$/);
+
+  const jsonDownload=page.waitForEvent("download");
+  await page.locator('[data-action="export-structured-json"]').click();
+  const json=await jsonDownload;
+  expect(json.suggestedFilename()).toMatch(/\.json$/);
+
+  const backupButton=page.locator('[data-action="export-backup"]');
+  const zipDownload=page.waitForEvent("download");
+  await backupButton.click();
+  await expect.poll(async()=>page.locator("[data-backup-card]").getAttribute("data-state")).toBe("ready");
+  await expect(page.locator("[data-backup-state-label]")).toContainText("Vérifié");
+  await expect(backupButton).toBeEnabled();
+  const zip=await zipDownload;
+  expect(zip.suggestedFilename()).toMatch(/gargottex_backup_.*\.zip$/);
+
+  expect(await counts()).toEqual(before);
+  await assertNoHorizontalOverflow(page);
+});
+
+test("Administration reduced motion removes non-essential feedback motion", async ({ page }) => {
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await ready(page);
+
+  await gotoView(page,"atelier");
+  await expect(page.locator(".workshop-v6")).toBeVisible();
+  const first=page.locator('[data-action="select-workshop"]').first();
+  if(await first.count()) await first.click();
+  const atelierMotion=await page.locator(".workshop-v6").evaluate(el=>{
+    const nodes=[el,...el.querySelectorAll("*")];
+    const parse=value=>value.split(",").map(part=>part.trim()).map(text=>text.endsWith("ms")?parseFloat(text):parseFloat(text)*1000).filter(Number.isFinite);
+    return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
+  });
+  expect(atelierMotion).toBeLessThanOrEqual(20);
+
+  await gotoView(page,"import");
+  await expect(page.locator(".admin-io-v6")).toBeVisible();
+  const adminMotion=await page.locator(".admin-io-v6").evaluate(el=>{
+    const nodes=[el,...el.querySelectorAll("*")];
+    const parse=value=>value.split(",").map(part=>part.trim()).map(text=>text.endsWith("ms")?parseFloat(text):parseFloat(text)*1000).filter(Number.isFinite);
+    return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
+  });
+  expect(adminMotion).toBeLessThanOrEqual(20);
+});
+
 test("Service Worker update preserves local data and core cache", async ({ page }) => {
   await ready(page);
   const controlled = await page.evaluate(async () => {
