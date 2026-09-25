@@ -1907,25 +1907,23 @@ function mediaAssetMatchesStoredPath(asset, path) {
     .some(field => String(asset[field] || "").trim() === clean);
 }
 
-function queueDungeonMediaLoad(entity, path) {
+function queueDungeonMediaLoad(entity, path = "") {
   const dungeonId = String(entity?.id || "");
   const clean = String(path || "").trim();
-  if (!dungeonId || !clean || isStaticMediaPath(clean)) return;
-  const key = `dungeon:${dungeonId}:${clean}`;
+  if (!dungeonId) return;
+  const key = `dungeon:${dungeonId}:${clean || "linked"}`;
   if (pendingMediaLoads.has(key)) return;
   const generation = mediaContextGeneration;
 
   const promise = (async () => {
-    let asset = await mediaRepository.loadMetadataByPath(clean);
+    const linked = await mediaRepository.loadMetadataForEntity("dungeons", dungeonId);
     if (generation !== mediaContextGeneration) return;
 
-    if (!asset) {
-      const linked = await mediaRepository.loadMetadataForEntity("dungeons", dungeonId);
-      if (generation !== mediaContextGeneration) return;
-      asset = linked.find(candidate => mediaAssetMatchesStoredPath(candidate, clean))
-        || linked.find(candidate => mediaRepository.canDisplay(candidate, "dungeons"))
-        || null;
-    }
+    const asset = (clean
+      ? linked.find(candidate => mediaAssetMatchesStoredPath(candidate, clean))
+      : null)
+      || linked.find(candidate => mediaRepository.canDisplay(candidate, "dungeons"))
+      || null;
 
     if (asset) await mediaRepository.ensureActiveUrl(asset, "dungeons");
     if (generation === mediaContextGeneration) scheduleMediaRender();
@@ -1969,23 +1967,23 @@ function imageUrlForEntity(entity, typeHint = "") {
   const imagePath = String(entity.image_path || "").trim();
 
   if (type === "dungeons") {
-    if (!imagePath) return "";
-    if (isStaticMediaPath(imagePath)) return imagePath;
-
     const linked = mediaRepository.getCachedForEntity("dungeons", entity.id);
-    const asset = mediaRepository.getCachedByPath(imagePath)
-      || linked.find(candidate => mediaAssetMatchesStoredPath(candidate, imagePath))
-      || (mediaRepository.isEntityLoaded("dungeons", entity.id)
-        ? linked.find(candidate => mediaRepository.canDisplay(candidate, "dungeons"))
-        : null);
+    const asset = (imagePath
+      ? linked.find(candidate => mediaAssetMatchesStoredPath(candidate, imagePath))
+      : null)
+      || linked.find(candidate => mediaRepository.canDisplay(candidate, "dungeons"))
+      || null;
 
     if (asset) {
       const url = mediaRepository.cachedActiveUrl(asset, "dungeons");
       if (url) return url;
     }
 
-    queueDungeonMediaLoad(entity, imagePath);
-    return "";
+    if (!mediaRepository.isEntityLoaded("dungeons", entity.id) || asset) {
+      queueDungeonMediaLoad(entity, imagePath);
+    }
+
+    return isStaticMediaPath(imagePath) ? imagePath : "";
   }
 
   if (!type || !entity.id) return "";
