@@ -208,6 +208,15 @@ test("media runtime stays lazy and enforces active visual rules", async ({ page 
   await page.locator('[data-action="media-link-entity"]').selectOption(seeded.dungeonId);
   const beforeAttach = await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().refreshDataCalls);
   await page.locator('[data-action="media-attach"]').click();
+
+  await expect.poll(async () => page.evaluate(async id => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get(id);
+    const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    db.close();
+    return row ? `${row.entity_type}:${row.entity_id}` : "";
+  },"v6fast-white-original")).toBe(`dungeons:${seeded.dungeonId}`);
+
   const afterAttach = await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().refreshDataCalls);
   expect(afterAttach).toBe(beforeAttach);
 
