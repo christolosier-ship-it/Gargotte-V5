@@ -390,7 +390,8 @@ const state = {
       quests: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
       loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
       interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
-      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" }
+      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
+      media_assets: { mode: "gallery", search: "", scrollTop: 0, page: 0 }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     session: { active: false, dungeonId: "", floorIndex: 0, mode: "normal", encounter: null, brouhaha: { level: 0, current: null, history: [] }, questId: "", startedAt: "", updatedAt: "" },
@@ -441,7 +442,8 @@ function defaultBlankUi() {
       quests: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
       loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
       interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
-      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" }
+      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
+      media_assets: { mode: "gallery", search: "", scrollTop: 0, page: 0 }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     session: { active: false, dungeonId: "", floorIndex: 0, mode: "normal", encounter: null, brouhaha: { level: 0, current: null, history: [] }, questId: "", startedAt: "", updatedAt: "" },
@@ -7498,7 +7500,8 @@ async function bootstrap() {
         quests: { ...defaultBlankUi().codexFamilies.quests, ...(savedUi.codexFamilies?.quests || {}) },
         loot_items: { ...defaultBlankUi().codexFamilies.loot_items, ...(savedUi.codexFamilies?.loot_items || {}) },
         interactables: { ...defaultBlankUi().codexFamilies.interactables, ...(savedUi.codexFamilies?.interactables || {}) },
-        brouhaha_effects: { ...defaultBlankUi().codexFamilies.brouhaha_effects, ...(savedUi.codexFamilies?.brouhaha_effects || {}) }
+        brouhaha_effects: { ...defaultBlankUi().codexFamilies.brouhaha_effects, ...(savedUi.codexFamilies?.brouhaha_effects || {}) },
+        media_assets: { ...defaultBlankUi().codexFamilies.media_assets, ...(savedUi.codexFamilies?.media_assets || {}) }
       },
       bestiary: { ...defaultBlankUi().bestiary, ...(savedUi.bestiary || {}) }
     };
