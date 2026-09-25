@@ -2329,3 +2329,241 @@ body.cinematic-open{overflow:hidden}
   .hero-level-change-v6 .hero-skill-v6.current .hero-brouhaha-stamp,
   .npc-portrait-v6>img{animation:none!important}
 }
+
+
+/* V6-WHAOU · Lot 05 · Codex secondaire */
+/* Quêtes : tableau de contrats */
+.quest-codex-card{
+  position:relative;overflow:hidden;
+  transition:transform var(--whaou-motion-touch) var(--whaou-ease),border-color var(--whaou-motion-touch),box-shadow var(--whaou-motion-touch)
+}
+.quest-codex-card:after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:linear-gradient(90deg,var(--quest-accent,#9d7449),transparent 72%);
+  opacity:.38;pointer-events:none
+}
+.quest-card-emblem{position:relative;isolation:isolate}
+.quest-card-emblem:before{
+  content:"";position:absolute;inset:14%;border:1px solid color-mix(in srgb,var(--quest-accent,#9d7449) 46%,#6f5236);border-radius:50%;opacity:.58
+}
+.quest-card-emblem i{
+  position:absolute;right:8px;bottom:8px;width:13px;height:13px;border-radius:50%;
+  background:var(--quest-accent,#9d7449);box-shadow:0 0 0 3px rgba(10,7,5,.72)
+}
+.quest-card-copy em{
+  display:grid!important;gap:2px;padding:8px 10px!important;
+  border-left:3px solid var(--quest-accent,#ad7940)!important;
+  background:rgba(212,164,95,.035);font-size:11px!important
+}
+.quest-card-copy em span{
+  color:#b99a79;font:800 7px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.09em
+}
+.quest-codex-card.active{
+  border-color:color-mix(in srgb,var(--quest-accent,#b88b55) 78%,#c9a16c);
+  box-shadow:0 10px 24px #0004,inset 3px 0 var(--quest-accent,#b88b55)
+}
+.quest-sheet-v6{position:relative;isolation:isolate}
+.quest-contract-fold{
+  position:absolute;z-index:3;right:0;top:0;width:48px;height:48px;pointer-events:none;
+  background:linear-gradient(225deg,#120d09 0 48%,rgba(164,122,76,.28) 49% 51%,#d5b17a 52% 100%);
+  clip-path:polygon(0 0,100% 0,100% 100%);
+  opacity:.78
+}
+.quest-contract-v6{
+  position:relative;
+  box-shadow:inset 0 0 44px rgba(85,52,25,.08)
+}
+.quest-contract-v6:before{
+  content:"";position:absolute;inset:10px;border:1px solid color-mix(in srgb,var(--quest-accent,#9d7449) 18%,transparent);pointer-events:none
+}
+.quest-contract-head,.quest-parties-v6,.quest-description-v6,.quest-objective-v6,.quest-reward-v6,.quest-tags-v6{position:relative;z-index:1}
+.quest-contract-head .semantic-tier{
+  box-shadow:0 5px 10px rgba(74,45,22,.12),inset 0 0 0 1px rgba(255,255,255,.08)
+}
+.quest-objective-v6{
+  border-left-color:var(--quest-accent,#ad7940);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--quest-accent,#b99161) 48%,#b99161),0 7px 14px rgba(76,47,24,.08)
+}
+.quest-reward-v6{
+  margin-top:20px;border-top-width:2px;
+  box-shadow:inset 0 1px rgba(255,255,255,.12)
+}
+.quest-sheet-v6{
+  animation:whaou-contract-enter var(--whaou-motion-local) var(--whaou-ease) both
+}
+@keyframes whaou-contract-enter{
+  from{opacity:.45;transform:translateY(6px) scaleY(.99);transform-origin:top}
+  to{opacity:1;transform:none}
+}
+
+/* Loot : vitrine, halo local de rareté */
+.loot-codex-card,.loot-sheet-v6{--loot-tier:#8c765f}
+.loot-codex-card.basique,.loot-sheet-v6.basique{--loot-tier:var(--game-basic)}
+.loot-codex-card.tactique,.loot-sheet-v6.tactique{--loot-tier:var(--game-tactical)}
+.loot-codex-card.speciale,.loot-sheet-v6.speciale{--loot-tier:var(--game-special)}
+.loot-codex-card.brute,.loot-sheet-v6.brute{--loot-tier:var(--game-brute)}
+.loot-codex-card.mini_boss,.loot-sheet-v6.mini_boss{--loot-tier:var(--game-mini)}
+.loot-codex-card.boss,.loot-sheet-v6.boss{--loot-tier:var(--game-boss)}
+.loot-codex-card{
+  transition:transform var(--whaou-motion-touch) var(--whaou-ease),border-color var(--whaou-motion-touch),box-shadow var(--whaou-motion-touch)
+}
+.loot-card-media{position:relative;isolation:isolate}
+.loot-card-halo{
+  position:absolute;z-index:0;inset:14%;
+  border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--loot-tier) 18%,transparent),transparent 67%);
+  filter:blur(7px);pointer-events:none
+}
+.loot-card-media>img{position:relative;z-index:2;filter:drop-shadow(0 14px 14px #000a)}
+.loot-card-shadow{
+  position:absolute;z-index:1;left:24%;right:24%;bottom:10%;height:7%;
+  border-radius:50%;background:rgba(0,0,0,.52);filter:blur(5px);pointer-events:none
+}
+.loot-card-gold{
+  position:absolute;z-index:4;right:9px;bottom:9px;display:flex;align-items:baseline;gap:3px;
+  min-width:42px;justify-content:center;padding:6px 8px 5px;
+  border:1px solid #b98c39;border-radius:999px;background:rgba(36,22,11,.9);color:#f2d28d;
+  font:900 15px/1 Alegreya,Georgia,serif;box-shadow:0 5px 11px #0007
+}
+.loot-card-gold small{font:800 7px/1 Inter,sans-serif;text-transform:uppercase}
+.loot-codex-card.active{
+  border-color:color-mix(in srgb,var(--loot-tier) 68%,#c39439);
+  box-shadow:0 10px 24px #0004,inset 3px 0 var(--loot-tier)
+}
+.loot-stage-v6{isolation:isolate}
+.loot-stage-reflection{
+  position:absolute;z-index:0;inset:9% 10%;
+  border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--loot-tier) 16%,transparent),transparent 65%);
+  filter:blur(12px);pointer-events:none
+}
+.loot-stage-v6>img,.loot-stage-v6>.loot-media-fallback{position:relative;z-index:2}
+.loot-value-v6{z-index:4;border-color:color-mix(in srgb,var(--loot-tier) 32%,#b98c39)}
+.loot-effect-v6{
+  border-color:color-mix(in srgb,var(--loot-tier) 24%,var(--color-border-subtle));
+  box-shadow:inset 4px 0 color-mix(in srgb,var(--loot-tier) 54%,#9b7544)
+}
+.loot-sheet-v6{animation:whaou-display-enter var(--whaou-motion-local) var(--whaou-ease) both}
+@keyframes whaou-display-enter{from{opacity:.5;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* Objets interactifs : inventaire technique / blueprint */
+.interactable-codex-card{
+  transition:transform var(--whaou-motion-touch) var(--whaou-ease),border-color var(--whaou-motion-touch),box-shadow var(--whaou-motion-touch)
+}
+.interactable-card-media{position:relative;isolation:isolate}
+.interactable-card-grid{
+  position:absolute;z-index:0;inset:0;opacity:.16;
+  background-image:
+    linear-gradient(rgba(109,167,189,.28) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(109,167,189,.28) 1px,transparent 1px);
+  background-size:20px 20px;pointer-events:none
+}
+.interactable-card-media>img{position:relative;z-index:2;filter:drop-shadow(0 12px 12px #0009)}
+.interactable-card-facts{
+  display:flex!important;gap:5px;flex-wrap:wrap;align-items:center
+}
+.interactable-card-facts b,.interactable-card-facts i{
+  padding:4px 7px;border:1px solid rgba(91,140,158,.28);border-radius:6px;
+  background:rgba(16,32,38,.58);color:#a9c5cf;font-size:7px;font-style:normal
+}
+.interactable-card-facts b{color:#d0e4ea}
+.interactable-codex-card.active{
+  border-color:#5b8ca0;box-shadow:0 10px 24px #0004,inset 3px 0 #5b8ca0
+}
+.interactable-blueprint-v6{isolation:isolate}
+.interactable-blueprint-arrows{position:absolute;z-index:1;inset:0;pointer-events:none;opacity:.22}
+.interactable-blueprint-arrows i{
+  position:absolute;width:76px;height:1px;background:#6da7bd
+}
+.interactable-blueprint-arrows i:after{
+  content:"";position:absolute;right:-1px;top:-3px;border-left:6px solid #6da7bd;border-top:3px solid transparent;border-bottom:3px solid transparent
+}
+.interactable-blueprint-arrows i:nth-child(1){left:12%;top:24%;transform:rotate(12deg)}
+.interactable-blueprint-arrows i:nth-child(2){right:13%;top:43%;transform:rotate(164deg)}
+.interactable-blueprint-arrows i:nth-child(3){left:21%;bottom:20%;transform:rotate(-18deg)}
+.interactable-blueprint-v6>img,.interactable-blueprint-v6>.interactable-media-fallback{position:relative;z-index:2}
+.interactable-actions-v6 b{
+  box-shadow:inset 0 -2px rgba(88,137,156,.18),0 4px 8px #0002
+}
+.interactable-effect-v6{
+  border-left:4px solid #5b8ca0;
+  background:linear-gradient(100deg,rgba(76,126,145,.08),rgba(10,16,18,.65))
+}
+.interactable-sheet-v6{
+  animation:whaou-blueprint-enter var(--whaou-motion-local) var(--whaou-ease) both
+}
+.interactable-sheet-v6 .interactable-blueprint-v6>img{
+  animation:whaou-blueprint-object var(--whaou-motion-local) 55ms var(--whaou-ease) both
+}
+@keyframes whaou-blueprint-enter{from{opacity:.45}to{opacity:1}}
+@keyframes whaou-blueprint-object{from{opacity:.25;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Brouhaha référentiel : pression graduée mais lecture stable */
+.brouhaha-ref-card,.brouhaha-reference-sheet-v6{--noise:#8b665c;--noise-strength:.12}
+.brouhaha-ref-card.calm,.brouhaha-reference-sheet-v6.calm{--noise:#8b665c;--noise-strength:.08}
+.brouhaha-ref-card.rising,.brouhaha-reference-sheet-v6.rising{--noise:#a96555;--noise-strength:.14}
+.brouhaha-ref-card.hot,.brouhaha-reference-sheet-v6.hot{--noise:#c55749;--noise-strength:.21}
+.brouhaha-ref-card.critical,.brouhaha-reference-sheet-v6.critical{--noise:#e3483e;--noise-strength:.3}
+.brouhaha-ref-card{
+  position:relative;isolation:isolate;overflow:hidden;
+  transition:transform var(--whaou-motion-touch) var(--whaou-ease),border-color var(--whaou-motion-touch),box-shadow var(--whaou-motion-touch)
+}
+.brouhaha-ref-card:before{
+  content:"";position:absolute;z-index:0;inset:0;
+  background:
+    repeating-linear-gradient(105deg,transparent 0 15px,color-mix(in srgb,var(--noise) 15%,transparent) 16px 17px,transparent 18px 34px);
+  opacity:var(--noise-strength);pointer-events:none
+}
+.brouhaha-ref-level,.brouhaha-ref-copy,.brouhaha-ref-mark{position:relative;z-index:1}
+.brouhaha-ref-level:after{
+  content:attr(data-level);position:absolute;inset:auto 0 -8px;
+  color:color-mix(in srgb,var(--noise) 12%,transparent);font:900 84px/.8 Alegreya,Georgia,serif;pointer-events:none
+}
+.brouhaha-ref-card .brouhaha-noise-wave{opacity:var(--noise-strength)}
+.brouhaha-ref-card.active{
+  box-shadow:0 10px 25px #0005,inset 3px 0 var(--noise),inset 0 -2px color-mix(in srgb,var(--noise) 36%,transparent)
+}
+.brouhaha-ref-card.level-12{
+  border-color:#f05b51;
+  box-shadow:0 0 26px rgba(227,72,62,.12),inset 3px 0 #f05b51,inset 0 -2px rgba(227,72,62,.42)
+}
+.brouhaha-ref-card.level-12 .brouhaha-ref-level b{text-shadow:0 0 18px rgba(227,72,62,.24)}
+.brouhaha-reference-sheet-v6{position:relative;isolation:isolate}
+.brouhaha-reference-sheet-v6:after{
+  content:"";position:absolute;z-index:5;inset:0;pointer-events:none;opacity:calc(var(--noise-strength) * .5);
+  background:
+    linear-gradient(124deg,transparent 0 36%,var(--noise) 36.3% 36.55%,transparent 36.9%),
+    linear-gradient(64deg,transparent 0 73%,var(--noise) 73.2% 73.45%,transparent 73.8%)
+}
+.brouhaha-reference-sheet-v6.level-12:after{
+  opacity:.22;
+  background:
+    linear-gradient(124deg,transparent 0 31%,#e3483e 31.2% 31.45%,transparent 31.8%),
+    linear-gradient(71deg,transparent 0 63%,#e3483e 63.2% 63.45%,transparent 63.8%),
+    linear-gradient(18deg,transparent 0 81%,#e3483e 81.2% 81.45%,transparent 81.8%)
+}
+.brouhaha-reference-note{position:relative;z-index:6}
+.brouhaha-reference-effect{position:relative;z-index:6}
+.brouhaha-scope-v6{position:relative;z-index:6}
+
+/* cohérence de famille */
+.quests-codex-v6 .codex-family-collection-panel,
+.loot_items-codex-v6 .codex-family-collection-panel,
+.interactables-codex-v6 .codex-family-collection-panel,
+.brouhaha_effects-codex-v6 .codex-family-collection-panel{
+  box-shadow:0 16px 36px #0004,inset 0 1px rgba(255,255,255,.02)
+}
+
+@media(hover:hover) and (pointer:fine){
+  .quest-codex-card:hover,.loot-codex-card:hover,.interactable-codex-card:hover,.brouhaha-ref-card:hover{transform:translateY(-2px)}
+}
+@media(max-width:767px){
+  .quest-contract-fold{width:38px;height:38px}
+  .loot-card-gold{right:6px;bottom:6px;padding:5px 7px}
+  .interactable-card-facts{gap:3px}
+  .interactable-blueprint-arrows{opacity:.14}
+}
+@media(prefers-reduced-motion:reduce){
+  .quest-codex-card,.loot-codex-card,.interactable-codex-card,.brouhaha-ref-card{transition:none!important}
+  .quest-sheet-v6,.loot-sheet-v6,.interactable-sheet-v6,.interactable-sheet-v6 .interactable-blueprint-v6>img{animation:none!important}
+}

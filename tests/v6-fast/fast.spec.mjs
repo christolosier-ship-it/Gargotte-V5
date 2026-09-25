@@ -625,6 +625,152 @@ test("Hero progression and NPC dossiers stay lazy distinct and complete", async 
   await assertNoHorizontalOverflow(page);
 });
 
+test("Secondary Codex WHAOU keeps four personalities coherent and lazy", async ({ page }) => {
+  await page.setViewportSize({ width: 834, height: 1112 });
+  await ready(page);
+
+  const fixture = await page.evaluate(async () => {
+    const raw=atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+    const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));
+    const transparent=new Blob([bytes],{type:"image/png"});
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const readFirst=storeName=>new Promise((resolve,reject)=>{
+      const tx=db.transaction(storeName,"readonly"),req=tx.objectStore(storeName).openCursor();
+      req.onsuccess=()=>resolve(req.result?.value||null);req.onerror=()=>reject(req.error);
+    });
+    const dungeon=await readFirst("dungeons");
+    const creature=await readFirst("creatures");
+    if(!dungeon||!creature){db.close();throw new Error("Fixtures Codex absentes");}
+
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(["npcs","quests","loot_items","interactables","brouhaha_effects","media_assets"],"readwrite");
+      const npcs=tx.objectStore("npcs"),quests=tx.objectStore("quests"),loot=tx.objectStore("loot_items");
+      const interactables=tx.objectStore("interactables"),brouhaha=tx.objectStore("brouhaha_effects"),media=tx.objectStore("media_assets");
+
+      npcs.put({id:"whaou5-npc",name:"WHAOU5 Commanditaire",slug:"whaou5-commanditaire",race:"Gobelin",role:"Client exigeant",tone:"Pressé",lore:"Attend son contrat.",tags:["whaou5"]});
+
+      for(let difficulty=1;difficulty<=6;difficulty++){
+        quests.put({
+          id:"whaou5-quest-"+difficulty,name:"WHAOU5 Contrat "+difficulty,slug:"whaou5-contrat-"+difficulty,
+          description:"Description contrat "+difficulty,objective:"Objectif majeur "+difficulty,reward:"Récompense "+difficulty,
+          difficulty,npc_id:"whaou5-npc",npc_name:"WHAOU5 Commanditaire",
+          dungeon_id:dungeon.id,dungeon_name:dungeon.name,tags:["whaou5"]
+        });
+      }
+
+      for(let rarity=1;rarity<=6;rarity++){
+        const id="whaou5-loot-"+rarity;
+        loot.put({
+          id,creature_id:creature.id,creature_name:creature.name,name:"WHAOU5 Loot "+rarity,
+          type:"Trophée",effect:"Effet prioritaire "+rarity,gold_value:rarity*11,rarity,tags:["whaou5"]
+        });
+        if(rarity===1){
+          media.put({
+            id:"whaou5-loot-media",label:"WHAOU5 loot",file_name:"whaou5-loot.png",
+            path:"local-media/loot_items/whaou5-loot.png",entity_type:"loot_items",entity_id:id,
+            transparent_blob:transparent,transparent_path:"local-media/loot_items/transparent/whaou5-loot.png",
+            transparent_review_status:"approved",transparent_audit:{pass:true,has_alpha_channel:true,width:1,height:1}
+          });
+        }
+      }
+
+      interactables.put({
+        id:"whaou5-interactable-full",name:"WHAOU5 Levier à bière",slug:"whaou5-levier-a-biere",
+        dungeon_id:dungeon.id,dungeon_name:dungeon.name,type:"Levier",hp:7,
+        actions_allowed:"tirer; pousser; casser",effect:"Ouvre la trappe et renverse une chope.",tags:["whaou5"]
+      });
+      interactables.put({
+        id:"whaou5-interactable-min",name:"WHAOU5 Objet muet",slug:"whaou5-objet-muet",
+        dungeon_id:dungeon.id,dungeon_name:dungeon.name,type:"Décor",actions_allowed:"",effect:"",tags:["whaou5"]
+      });
+
+      for(const [level,effect] of [[0,"Calme plat"],[5,"Ça monte"],[8,"Ça chauffe"],[12,"Catastrophe réglementaire"]]){
+        brouhaha.put({
+          id:"whaou5-brouhaha-"+level,level,dungeon_id:level===12?dungeon.id:"",dungeon_name:level===12?dungeon.name:"",
+          effect_text:effect
+        });
+      }
+
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+    db.close();
+    return {dungeonId:dungeon.id,creatureId:creature.id,creatureName:creature.name};
+  });
+
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await gotoView(page,"codex");
+
+  await page.locator('[data-action="set-codex-type"][data-type="quests"]').first().click();
+  for(const cls of ["basique","tactique","speciale","brute","mini_boss","boss"]){
+    await expect(page.locator(".quest-codex-card."+cls).filter({hasText:"WHAOU5"}).first()).toBeVisible();
+  }
+  const questCard=page.locator('.quest-codex-card[data-id="whaou5-quest-6"]');
+  await expect(questCard).toContainText("Objectif");
+  await questCard.click();
+  await expect(page.locator(".quest-sheet-v6.boss")).toBeVisible();
+  await expect(page.locator(".quest-objective-v6")).toContainText("Objectif majeur 6");
+  await expect(page.locator(".quest-reward-v6")).toContainText("Récompense 6");
+  await page.locator('[data-action="codex-family-back"][data-type="quests"]').click();
+
+  await page.locator('[data-action="set-codex-type"][data-type="loot_items"]').first().click();
+  for(const cls of ["basique","tactique","speciale","brute","mini_boss","boss"]){
+    await expect(page.locator(".loot-codex-card."+cls).filter({hasText:"WHAOU5"}).first()).toBeVisible();
+  }
+  const lootWithImage=page.locator('.loot-codex-card[data-id="whaou5-loot-1"]');
+  await expect(lootWithImage.locator(".loot-card-gold")).toContainText("11");
+  await expect(lootWithImage.locator(".loot-card-media>img")).toHaveAttribute("src",/^blob:/);
+  await lootWithImage.click();
+  await expect(page.locator(".loot-sheet-v6.basique")).toBeVisible();
+  await expect(page.locator(".loot-effect-v6")).toContainText("Effet prioritaire 1");
+  await expect(page.locator(".loot-source-v6")).toContainText(fixture.creatureName);
+  await page.locator('[data-action="codex-family-back"][data-type="loot_items"]').click();
+  await expect(page.locator('.loot-codex-card[data-id="whaou5-loot-2"] .loot-media-fallback')).toBeVisible();
+
+  await page.locator('[data-action="set-codex-type"][data-type="interactables"]').first().click();
+  const interactable=page.locator('.interactable-codex-card[data-id="whaou5-interactable-full"]');
+  await expect(interactable.locator(".interactable-card-facts i")).toHaveCount(2);
+  await expect(interactable).toContainText("PV 7");
+  await interactable.click();
+  await expect(page.locator(".interactable-blueprint-arrows i")).toHaveCount(3);
+  await expect(page.locator(".interactable-actions-v6 b")).toHaveCount(3);
+  await expect(page.locator(".interactable-effect-v6")).toContainText("renverse une chope");
+  await page.locator('[data-action="codex-family-back"][data-type="interactables"]').click();
+  await expect(page.locator('.interactable-codex-card[data-id="whaou5-interactable-min"] .interactable-card-facts i')).toHaveCount(0);
+
+  await page.locator('[data-action="set-codex-type"][data-type="brouhaha_effects"]').first().click();
+  await expect(page.locator('.brouhaha-ref-card.calm[data-id="whaou5-brouhaha-0"]')).toBeVisible();
+  await expect(page.locator('.brouhaha-ref-card.rising[data-id="whaou5-brouhaha-5"]')).toBeVisible();
+  await expect(page.locator('.brouhaha-ref-card.hot[data-id="whaou5-brouhaha-8"]')).toBeVisible();
+  const critical=page.locator('.brouhaha-ref-card.critical.level-12[data-id="whaou5-brouhaha-12"]');
+  await expect(critical).toBeVisible();
+  await critical.click();
+  await expect(page.locator(".brouhaha-reference-sheet-v6.critical.level-12")).toBeVisible();
+  await expect(page.locator(".brouhaha-reference-note")).toContainText("ne modifie");
+  await expect(page.locator('[data-action^="session-brouhaha"]')).toHaveCount(0);
+
+  const mediaDebug=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(mediaDebug.catalogScans).toBe(0);
+  await assertNoHorizontalOverflow(page);
+
+  await page.setViewportSize({width:390,height:844});
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await gotoView(page,"codex");
+  for(const [type,id,root] of [
+    ["quests","whaou5-quest-1",".quest-sheet-v6"],
+    ["loot_items","whaou5-loot-1",".loot-sheet-v6"],
+    ["interactables","whaou5-interactable-full",".interactable-sheet-v6"],
+    ["brouhaha_effects","whaou5-brouhaha-12",".brouhaha-reference-sheet-v6"]
+  ]){
+    await page.locator('[data-action="set-codex-type"][data-type="'+type+'"]').first().click();
+    await page.locator('[data-action="select-family-codex"][data-type="'+type+'"][data-id="'+id+'"]').click();
+    await expect(page.locator(root)).toBeVisible();
+    await assertNoHorizontalOverflow(page);
+    await page.locator('[data-action="codex-family-back"][data-type="'+type+'"]').click();
+  }
+});
+
 test("session Generator Brouhaha and Quest flows remain coherent", async ({ page }) => {
   await ready(page);
 
