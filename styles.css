@@ -2567,3 +2567,231 @@ body.cinematic-open{overflow:hidden}
   .quest-codex-card,.loot-codex-card,.interactable-codex-card,.brouhaha-ref-card{transition:none!important}
   .quest-sheet-v6,.loot-sheet-v6,.interactable-sheet-v6,.interactable-sheet-v6 .interactable-blueprint-v6>img{animation:none!important}
 }
+
+
+/* V6-WHAOU · Lot 06 · Générateur de rencontre */
+/* Configuration : cinq étapes, même logique, présence plus tactile. */
+.generator-v6{--generator-accent:#8a5e31}
+.generator-config-v6{
+  position:relative;overflow:hidden;
+  border-color:color-mix(in srgb,var(--generator-accent) 30%,var(--color-border-subtle));
+  box-shadow:inset 0 1px color-mix(in srgb,var(--generator-accent) 12%,transparent),0 12px 26px #0003
+}
+.generator-config-v6:before{
+  content:"";position:absolute;inset:0 0 auto;height:2px;
+  background:linear-gradient(90deg,var(--generator-accent),transparent 62%);opacity:.55;pointer-events:none
+}
+.generator-order-v6>*{position:relative;min-width:0}
+@media(min-width:1200px){
+  .generator-order-v6>*:not(:last-child):after{
+    content:"";position:absolute;top:58%;right:-10px;width:10px;height:1px;
+    background:linear-gradient(90deg,color-mix(in srgb,var(--generator-accent) 50%,#7e654d),transparent);
+    pointer-events:none
+  }
+}
+.generator-mode-v6 .segmented{padding:3px;border:1px solid color-mix(in srgb,var(--generator-accent) 22%,var(--color-border-subtle));border-radius:10px;background:#100b08}
+.generator-mode-v6 button{
+  display:grid;grid-template-columns:27px minmax(0,1fr);gap:5px;align-items:center;
+  border:1px solid transparent;border-radius:7px;background:transparent;color:var(--color-text-secondary);
+  transition:transform var(--whaou-motion-touch) var(--whaou-ease),border-color var(--whaou-motion-touch),background var(--whaou-motion-touch)
+}
+.generator-mode-v6 button img{width:26px;height:26px;object-fit:contain;opacity:.62}
+.generator-mode-v6 button span{font-size:8px;font-weight:800}
+.generator-mode-v6 button.active{
+  border-color:color-mix(in srgb,var(--generator-accent) 50%,#8d6b43);
+  background:linear-gradient(120deg,color-mix(in srgb,var(--generator-accent) 15%,#2b1b12),#17100c);
+  color:#f0dec4;box-shadow:inset 0 -2px color-mix(in srgb,var(--generator-accent) 28%,transparent)
+}
+.generator-mode-v6 button.active img{opacity:1;filter:drop-shadow(0 3px 5px #0008)}
+.generator-mode-v6 button.mode-mini_boss.active{border-color:color-mix(in srgb,var(--game-mini) 58%,#8d6b43)}
+.generator-mode-v6 button.mode-boss.active{border-color:color-mix(in srgb,var(--game-boss) 58%,#8d6b43)}
+.generator-budget-v6{
+  align-content:center;min-height:58px;text-align:center;
+  border-color:color-mix(in srgb,var(--generator-accent) 34%,var(--color-border-subtle));
+  background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--generator-accent) 10%,transparent),transparent 68%),#15100c;
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.1)
+}
+.generator-budget-v6 b{
+  color:#f1ddbc;font-size:31px;line-height:.9;
+  text-shadow:0 3px 8px #0008
+}
+.generator-budget-v6.missing b{color:#9e8b76}
+.generator-roll-v6{
+  position:relative;overflow:hidden;
+  border-color:color-mix(in srgb,var(--generator-accent) 62%,#b68448);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--generator-accent) 42%,#714323),#4a2817);
+  box-shadow:0 8px 18px #0005,inset 0 1px rgba(255,255,255,.08);
+  transition:transform var(--whaou-motion-touch) var(--whaou-ease),filter var(--whaou-motion-touch),box-shadow var(--whaou-motion-touch)
+}
+.generator-roll-v6:active:not(:disabled){transform:translateY(1px) scale(.985);box-shadow:0 3px 9px #0005}
+.generator-v6.has-result .generator-config-v6{opacity:.93}
+.generator-result-v6{min-width:0}
+
+/* Rencontre : une composition par type, pas une figurine par occurrence. */
+.session-encounter-v6{
+  --encounter-accent:#8a5e31;
+  position:relative;overflow:hidden;
+  border-color:color-mix(in srgb,var(--encounter-accent) 26%,var(--color-border-subtle));
+  box-shadow:0 18px 42px #0005,inset 0 1px color-mix(in srgb,var(--encounter-accent) 11%,transparent)
+}
+.session-encounter-v6:before{
+  content:"";position:absolute;z-index:0;inset:0 0 auto;height:3px;
+  background:linear-gradient(90deg,var(--encounter-accent),transparent 70%);opacity:.62;pointer-events:none
+}
+.session-encounter-v6>*{position:relative;z-index:1}
+.session-encounter-v6.encounter-enter-v6{animation:encounter-article-enter 220ms var(--whaou-ease) both}
+@keyframes encounter-article-enter{from{opacity:.38;transform:translateY(8px) scale(.994)}to{opacity:1;transform:none}}
+.encounter-mode-chip{
+  display:inline-flex;align-items:center;gap:7px;padding:4px 8px 4px 5px;
+  border:1px solid color-mix(in srgb,var(--encounter-accent) 35%,#735637);border-radius:999px;
+  background:#120d09;color:#ddc5a6
+}
+.encounter-mode-chip img{width:28px;height:28px;object-fit:contain}
+.encounter-mode-chip b{font-size:8px;text-transform:uppercase;letter-spacing:.08em}
+.session-encounter-v6.mode-mini_boss .encounter-mode-chip{border-color:color-mix(in srgb,var(--game-mini) 58%,#735637)}
+.session-encounter-v6.mode-boss .encounter-mode-chip{border-color:color-mix(in srgb,var(--game-boss) 62%,#735637);background:rgba(54,17,15,.72)}
+.session-encounter-v6.mode-boss{box-shadow:0 20px 46px #0006,inset 0 3px rgba(239,75,75,.18)}
+.encounter-remaining-v6{
+  min-width:118px;
+  border-color:color-mix(in srgb,var(--encounter-accent) 38%,#765936);
+  background:linear-gradient(120deg,color-mix(in srgb,var(--encounter-accent) 7%,#1b120d),#120c09)
+}
+.encounter-remaining-v6 b{color:#f0dcc0;text-shadow:0 4px 10px #0008}
+
+/* Figurines de rencontre */
+.encounter-creature-v6{--enc-cat:var(--game-basic);grid-template-columns:126px minmax(0,1fr) 132px;position:relative}
+.encounter-creature-v6.tactique{--enc-cat:var(--game-tactical)}
+.encounter-creature-v6.speciale{--enc-cat:var(--game-special)}
+.encounter-creature-v6.brute{--enc-cat:var(--game-brute)}
+.encounter-creature-v6.mini_boss{--enc-cat:var(--game-mini)}
+.encounter-creature-v6.boss{--enc-cat:var(--game-boss)}
+.encounter-creature-v6{
+  border-left-color:var(--enc-cat);
+  background:
+    linear-gradient(90deg,color-mix(in srgb,var(--enc-cat) 4%,#17100c),#17100c 34%);
+  transition:border-color var(--whaou-motion-touch),box-shadow var(--whaou-motion-touch),opacity 140ms,transform 140ms
+}
+.encounter-creature-media{
+  position:relative;isolation:isolate;min-height:124px;
+  background:
+    radial-gradient(ellipse at 50% 84%,color-mix(in srgb,var(--enc-cat) 13%,transparent),transparent 34%),
+    radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--enc-cat) 8%,transparent),transparent 48%),
+    #100b08
+}
+.encounter-figure-stage{
+  position:absolute;z-index:0;left:8%;right:8%;bottom:8%;height:22%;
+  border-radius:50%;background:radial-gradient(ellipse,color-mix(in srgb,var(--enc-cat) 16%,transparent),transparent 68%);
+  filter:blur(4px);pointer-events:none
+}
+.encounter-figure-plinth{
+  position:absolute;z-index:1;left:19%;right:19%;bottom:5%;height:8%;
+  border-radius:50%;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--enc-cat) 16%,#865936),#25170f);
+  box-shadow:0 8px 12px #0009,inset 0 1px rgba(240,207,147,.13);
+  transform:perspective(85px) rotateX(60deg);pointer-events:none
+}
+.encounter-creature-media>img:not(.encounter-creature-sigil){
+  position:relative;z-index:2;width:100%;height:128px;object-fit:contain;object-position:center bottom;
+  filter:saturate(1.04) contrast(1.025) drop-shadow(0 14px 13px #000a)
+}
+.encounter-creature-sigil{
+  position:absolute;z-index:4;right:6px;top:6px!important;width:33px!important;height:33px!important;
+  opacity:.78;filter:drop-shadow(0 3px 6px #000a)
+}
+.encounter-creature-main{padding-block:12px}
+.encounter-stat-strip>span{
+  background:#120d09;
+  border-color:color-mix(in srgb,var(--enc-cat) 12%,#473326)
+}
+.encounter-ability-v6{
+  width:max-content;max-width:100%;padding:5px 8px;border-left:3px solid color-mix(in srgb,var(--enc-cat) 60%,#9d7848);
+  background:color-mix(in srgb,var(--enc-cat) 5%,#130d09)
+}
+.encounter-quantity-v6{
+  justify-content:center;padding:5px 7px;border:1px solid color-mix(in srgb,var(--enc-cat) 24%,#4f3929);
+  border-radius:8px;background:#0f0a08
+}
+.encounter-quantity-v6 b{font-size:38px;color:#f2dec6;line-height:.8}
+.encounter-creature-v6.mini_boss{
+  box-shadow:inset 0 -2px color-mix(in srgb,var(--game-mini) 22%,transparent)
+}
+.encounter-creature-v6.boss{
+  border-left-width:6px;
+  box-shadow:0 9px 22px rgba(239,75,75,.045),inset 0 -2px rgba(239,75,75,.24)
+}
+.encounter-creature-v6.boss .encounter-creature-name h4{font-size:25px;color:#f2d9d2}
+.encounter-creature-v6.is-eliminating{animation:encounter-eliminate-feedback 145ms ease-out both}
+.encounter-creature-v6.is-updated{animation:encounter-row-update 210ms var(--whaou-ease) both}
+@keyframes encounter-eliminate-feedback{from{opacity:1;transform:none}to{opacity:.46;transform:translateX(5px) scale(.995)}}
+@keyframes encounter-row-update{0%{box-shadow:inset 5px 0 var(--enc-cat),0 0 18px color-mix(in srgb,var(--enc-cat) 13%,transparent)}100%{box-shadow:none}}
+
+/* Objets de salle : blueprint simplifié, sans schéma fonctionnel inventé. */
+.encounter-object-v6{position:relative;isolation:isolate;overflow:hidden}
+.encounter-object-gridlines{
+  position:absolute;z-index:0;inset:0;opacity:.13;
+  background-image:
+    linear-gradient(rgba(109,167,189,.3) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(109,167,189,.3) 1px,transparent 1px);
+  background-size:18px 18px;pointer-events:none
+}
+.encounter-object-v6>*:not(.encounter-object-gridlines){position:relative;z-index:1}
+.encounter-object-actions-v6{display:flex!important;gap:5px;flex-wrap:wrap}
+.encounter-object-actions-v6 b{
+  padding:4px 7px;border:1px solid rgba(91,140,158,.34);border-radius:6px;
+  background:#101d22;color:#b8d0d8;font-size:7px;text-transform:none
+}
+.encounter-object-effect-v6{
+  padding:7px 8px;border-left:3px solid #5b8ca0;background:rgba(76,126,145,.07)
+}
+
+/* Loot : réponse causale locale uniquement lorsqu'un vrai Loot tombe. */
+.session-loot-row.has-loot{
+  border-color:#76582e;background:linear-gradient(90deg,rgba(212,164,95,.08),#21160e)
+}
+.session-loot-row.no-loot{opacity:.72}
+.session-loot-row.loot-enter-v6{animation:encounter-loot-enter 230ms var(--whaou-ease) both}
+@keyframes encounter-loot-enter{from{opacity:.2;transform:translateY(-5px);box-shadow:0 0 0 rgba(212,164,95,0)}to{opacity:1;transform:none;box-shadow:0 0 16px rgba(212,164,95,.07)}}
+
+/* Fin de rencontre : la table se calme, aucune donnée supplémentaire. */
+.session-encounter-v6.is-complete{
+  border-color:color-mix(in srgb,var(--game-tactical) 28%,var(--color-border-subtle));
+  box-shadow:0 14px 32px #0004,inset 0 3px rgba(95,175,114,.12)
+}
+.encounter-complete-v6{
+  background:linear-gradient(110deg,rgba(95,175,114,.055),rgba(13,9,7,.45));
+  border-color:rgba(95,175,114,.3)
+}
+.encounter-complete-v6.complete-enter-v6{animation:encounter-complete-settle 230ms var(--whaou-ease) both}
+@keyframes encounter-complete-settle{from{opacity:.4;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+@media(hover:hover) and (pointer:fine){
+  .generator-mode-v6 button:not(.active):hover{border-color:color-mix(in srgb,var(--generator-accent) 26%,var(--color-border-subtle))}
+  .encounter-creature-v6:hover{border-color:color-mix(in srgb,var(--enc-cat) 38%,var(--color-border-subtle))}
+}
+@media(max-width:1199px){
+  .encounter-creature-v6{grid-template-columns:108px minmax(0,1fr) 120px}
+}
+@media(max-width:767px){
+  .generator-mode-v6 button{grid-template-columns:24px minmax(0,1fr)}
+  .generator-mode-v6 button img{width:23px;height:23px}
+  .generator-budget-v6{text-align:left}
+  .encounter-creature-v6{grid-template-columns:88px minmax(0,1fr)}
+  .encounter-creature-media{min-height:108px}
+  .encounter-creature-media>img:not(.encounter-creature-sigil){height:108px}
+  .encounter-creature-sigil{width:28px!important;height:28px!important}
+  .encounter-quantity-v6{justify-content:flex-start}
+}
+@media(max-width:430px){
+  .encounter-creature-v6{grid-template-columns:76px minmax(0,1fr)}
+  .encounter-creature-media{min-height:96px}
+  .encounter-creature-media>img:not(.encounter-creature-sigil){height:96px}
+  .encounter-creature-sigil{width:24px!important;height:24px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .generator-mode-v6 button,.generator-roll-v6,.encounter-creature-v6{transition:none!important}
+  .session-encounter-v6.encounter-enter-v6,
+  .encounter-creature-v6.is-eliminating,
+  .encounter-creature-v6.is-updated,
+  .session-loot-row.loot-enter-v6,
+  .encounter-complete-v6.complete-enter-v6{animation:none!important}
+}
