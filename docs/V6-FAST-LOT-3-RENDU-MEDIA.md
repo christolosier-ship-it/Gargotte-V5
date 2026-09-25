@@ -1,5 +1,11 @@
 # V6-Fast Lot 3 — Rendu média, mémoire et overlays
 
+## Statut
+
+**IMPLÉMENTÉ — Gate automatisée validée le 25/09/2026.**
+
+**Reste avant clôture complète : smoke sur iPad physique après merge.**
+
 ## Objectif
 Borner la consommation DOM/mémoire des vues Média et supprimer les reconstructions globales provoquées par le viewer, les toasts et les overlays.
 
@@ -103,3 +109,130 @@ Le lot est validé si :
 - un scénario répété de plein écran ne provoque plus de panne dans les tests et lors d'un smoke iPad réel ;
 - les données restent intactes ;
 - Fast + Full ciblée passent.
+
+
+## Bilan d'exécution — 25/09/2026
+
+### Bibliothèques Média bornées
+Les deux vues concernées utilisent une pagination bornée à **48 cartes maximum** :
+- Administration > Médias ;
+- Codex > Médias.
+
+La recherche, les filtres et le tri continuent de porter sur la bibliothèque complète. Seule la tranche rendue est limitée.
+
+Les changements de page utilisent un rendu local du sous-arbre Média et ne reconstruisent pas tout `#app`.
+
+### Rendus Média locaux
+Les actions suivantes ont été sorties du renderer global lorsqu'elles ne concernent que la bibliothèque Média :
+- page précédente / suivante ;
+- recherche Administration Média ;
+- recherche Codex Média ;
+- scope / filtres ;
+- mode Galerie / Liste du Codex Média ;
+- sélection d'un média ;
+- rattachement ;
+- upload ;
+- retour depuis la fiche Média.
+
+Un compteur `mediaPartialRenders` permet aux tests de distinguer ces mises à jour d'un `render()` global.
+
+### Viewer, toasts et Journal
+Deux roots indépendants de `#app` sont créés au runtime :
+- `#toast-root` ;
+- `#overlay-root`.
+
+Le viewer image :
+- n'appelle plus `render()` à l'ouverture ;
+- n'appelle plus `render()` à la fermeture ;
+- ne remplace plus la grille derrière ;
+- conserve le scroll ;
+- restaure le focus sur la carte exacte grâce à `mediaId` / `mediaType`.
+
+Les toasts ne déclenchent plus aucun rendu global.
+
+Le Journal est également rendu dans le root d'overlay et son ouverture/fermeture ne reconstruit plus l'application.
+
+Les modales Atelier restent volontairement dans `#app`, car elles dépendent directement de l'état d'édition.
+
+### Dépendance cachée découverte
+Le premier run Fast a révélé que l'Atelier dépendait implicitement de l'ancien comportement de `toast()` : après une sauvegarde, le toast déclenchait autrefois le `render()` qui rafraîchissait le statut « Enregistré localement ».
+
+Correction :
+- l'Atelier déclenche maintenant explicitement son rendu parce que les données ont changé ;
+- le toast reste totalement indépendant.
+
+La Fast repasse sans assouplissement du test Atelier.
+
+### Cycle de vie Object URL
+Garanties validées :
+- création à la demande ;
+- maximum structurel borné par la page active ;
+- révocation lors des changements de page, recherche, filtre ou contexte ;
+- réutilisation de l'URL active par le viewer ;
+- aucune croissance cumulative au fil de plusieurs pages ;
+- aucune URL globale recréée au simple open/close du viewer.
+
+Le stress automatisé confirme :
+- **cartes Média montées <= 48** ;
+- **Object URLs vivantes <= 48**.
+
+### Qualité des détourages
+Aucune représentation basse définition temporaire n'a été ajoutée.
+
+Décision du Lot 3 :
+- le détourage pleine qualité reste la source active ;
+- le plein écran utilise la source active haute qualité ;
+- la pagination + le chargement à la demande bornent suffisamment le nombre de consommateurs simultanés dans les tests actuels ;
+- aucun nouveau Blob d'affichage n'est persisté.
+
+Une réduction transitoire calculée depuis le détourage pourra être étudiée uniquement si un smoke matériel montre encore une pression mémoire mesurable.
+
+### PWA
+- version application : **5.6.3** ;
+- cache : `gargottex-v6-fast-media-render-v1`.
+
+La Full CI se déclenche également sur les changements de `styles.css`.
+
+### Stress test réaliste
+La Full CI crée **420 médias** comportant de vrais Blobs PNG transparents 768x768.
+
+Le scénario :
+1. ouvre le Codex Média ;
+2. vérifie 48 cartes maximum ;
+3. parcourt plusieurs pages ;
+4. contrôle que le nombre d'Object URLs ne croît pas ;
+5. change plusieurs visuels ;
+6. ouvre et ferme le plein écran 12 fois ;
+7. vérifie que le nœud de grille reste le même ;
+8. vérifie que le compteur `renderCalls` ne bouge pas pendant le viewer ;
+9. vérifie le scroll avant/après chaque open/close.
+
+Le premier run du nouveau test attribuait à tort au viewer le scroll provoqué par Playwright lorsqu'il amenait une nouvelle carte à l'écran. Le test a été corrigé pour mesurer le scroll juste autour de chaque ouverture/fermeture, sans réduire les invariants DOM/mémoire.
+
+### Validation CI finale
+Fast :
+- **12/12 tests** ;
+- **37,8 s Playwright**.
+
+Full :
+- **22/22 tests** ;
+- **58,3 s Playwright** ;
+- stress 420 médias : **7,4 s** ;
+- WebKit iPad : **16,1 s** ;
+- IndexedDB historique : OK ;
+- Service Worker / offline : OK ;
+- détourages : OK.
+
+## Gate — résultat automatisé
+- vues Média bornées : **OK**
+- longue navigation sans croissance DOM illimitée : **OK**
+- viewer sans reconstruction globale : **OK**
+- Object URLs bornées et libérées : **OK**
+- qualité des détourages conservée : **OK**
+- stress répété plein écran en Chromium : **OK**
+- smoke WebKit format iPad : **OK**
+- données intactes : **OK**
+- Fast + Full : **OK**
+- smoke sur iPad physique : **À VALIDER APRÈS MERGE**
+
+**Lot 3 techniquement prêt. La clôture complète attend uniquement le smoke matériel iPad.**

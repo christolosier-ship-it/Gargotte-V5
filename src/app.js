@@ -45,6 +45,19 @@ import {
   isStaticPath as isStaticMediaPath
 } from "./storage/media-repository.js";
 
+function ensureLayerRoot(id) {
+  let root = document.getElementById(id);
+  if (root) return root;
+  root = document.createElement("div");
+  root.id = id;
+  document.body.appendChild(root);
+  return root;
+}
+
+const app = document.getElementById("app");
+const toastRoot = ensureLayerRoot("toast-root");
+const overlayRoot = ensureLayerRoot("overlay-root");
+
 const ENTITY_ORDER = [
   "dungeons",
   "creatures",
@@ -277,8 +290,8 @@ const WORKSHOP_REQUIRED_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
-const APP_VERSION = "5.6.2";
-const PWA_CACHE_NAME = "gargottex-v6-fast-media-runtime-v1";
+const APP_VERSION = "5.6.3";
+const PWA_CACHE_NAME = "gargottex-v6-fast-media-render-v1";
 const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js","./src/storage/media-repository.js"];
 
 const HOME_TAGLINE = "Ici, même les habitués ne savent plus pourquoi ils sont venus.";
@@ -377,7 +390,8 @@ const state = {
       quests: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
       loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
       interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
-      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" }
+      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
+      media_assets: { mode: "gallery", search: "", scrollTop: 0, page: 0 }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     session: { active: false, dungeonId: "", floorIndex: 0, mode: "normal", encounter: null, brouhaha: { level: 0, current: null, history: [] }, questId: "", startedAt: "", updatedAt: "" },
@@ -395,7 +409,7 @@ const state = {
     questsResult: null,
     questDungeonId: "",
     import: { type: "creatures", fileName: "" },
-    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "" },
+    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "", page: 0 },
     journalOpen: false,
     globalSearch: ""
   },
@@ -404,10 +418,13 @@ const state = {
 };
 
 const mediaRepository = new MediaRepository();
-const runtimeMetrics = { refreshDataCalls: 0 };
+const runtimeMetrics = { refreshDataCalls: 0, renderCalls: 0, mediaPartialRenders: 0 };
 globalThis.__GARGOTTEX_MEDIA_DEBUG__ = () => ({
   ...mediaRepository.debugSnapshot(),
-  refreshDataCalls: runtimeMetrics.refreshDataCalls
+  refreshDataCalls: runtimeMetrics.refreshDataCalls,
+  renderCalls: runtimeMetrics.renderCalls,
+  mediaPartialRenders: runtimeMetrics.mediaPartialRenders,
+  mountedMediaCards: document.querySelectorAll(".media-card-v6, .codex-media-card-v6").length
 });
 
 function defaultBlankUi() {
@@ -425,7 +442,8 @@ function defaultBlankUi() {
       quests: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
       loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
       interactables: { mode: "list", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
-      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" }
+      brouhaha_effects: { mode: "cards", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
+      media_assets: { mode: "gallery", search: "", scrollTop: 0, page: 0 }
     },
     bestiary: { mode: "", search: "", dungeonId: "", category: "", menace: "", tags: [], sort: "name", direction: "asc", scrollTop: 0, selectedId: "", contextReturn: null },
     session: { active: false, dungeonId: "", floorIndex: 0, mode: "normal", encounter: null, brouhaha: { level: 0, current: null, history: [] }, questId: "", startedAt: "", updatedAt: "" },
@@ -443,7 +461,7 @@ function defaultBlankUi() {
     questsResult: null,
     questDungeonId: "",
     import: { type: "creatures", fileName: "" },
-    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "" },
+    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "", page: 0 },
     journalOpen: false,
     globalSearch: ""
   };
@@ -907,7 +925,7 @@ function defaultCodexFamiliesUi() {
     loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
     interactables: { mode: "gallery", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
     brouhaha_effects: { mode: "gallery", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
-    media_assets: { mode: "gallery", search: "", scrollTop: 0 }
+    media_assets: { mode: "gallery", search: "", scrollTop: 0, page: 0 }
   };
 }
 
@@ -922,6 +940,9 @@ function ensureCodexFamilyUi() {
     if (!["gallery", "list"].includes(state.ui.codexFamilies[type].mode)) state.ui.codexFamilies[type].mode = defaults[type].mode;
     state.ui.codexFamilies[type].search = String(state.ui.codexFamilies[type].search || "");
     state.ui.codexFamilies[type].scrollTop = Math.max(0, Number(state.ui.codexFamilies[type].scrollTop || 0));
+    if (type === "media_assets") {
+      state.ui.codexFamilies[type].page = Math.max(0, Math.floor(Number(state.ui.codexFamilies[type].page || 0)));
+    }
     if (Object.prototype.hasOwnProperty.call(defaults[type], "dungeonId")) {
       state.ui.codexFamilies[type].dungeonId = String(state.ui.codexFamilies[type].dungeonId || "");
     }
@@ -2277,13 +2298,15 @@ function normalizeCreatureCategory(value) {
 
 function openImageViewer(src, alt = "") {
   if (!src) return;
+  const captureFocus = !activeExternalDialog();
   state.imageViewer = { src, alt };
-  render();
+  syncOverlayLayers({ captureFocus });
 }
 
 function closeImageViewer() {
+  if (!state.imageViewer) return;
   state.imageViewer = null;
-  render();
+  syncOverlayLayers({ restoreFocus: true });
 }
 
 function renderImageViewer() {
@@ -2766,8 +2789,6 @@ function renderShell(content){
         '<div class="search-wrap" role="search"><span class="search-leading">'+shellIcon("search")+'</span><input class="search" data-action="search" type="search" role="searchbox" aria-label="Recherche globale" autocomplete="off" placeholder="Rechercher dans le Codex…" value="'+escapeHtml(state.ui.globalSearch)+'">'+(state.ui.globalSearch?renderSearchResults():"")+'</div>',
         '<div class="topbar-right"><span class="offline-badge" title="Données locales disponibles">'+shellIcon("wifi")+'<span>Local</span></span><button class="ghost topbar-action" data-action="toggle-journal" aria-label="Ouvrir le journal">'+shellIcon("journal")+'<span>Journal</span></button></div>',
       '</header><main class="page v6-main" id="main-content">'+content+'</main>',
-      '<aside class="toast-stack" aria-live="polite" aria-atomic="true">'+state.toasts.map(t=>'<div class="toast '+t.tone+'">'+escapeHtml(t.message)+'</div>').join("")+'</aside>',
-      renderImageViewer(), state.ui.journalOpen?renderJournalDrawer():"",
       '<nav class="mobile-bottom" aria-label="Navigation téléphone">',
         mobileNavButton("home","Accueil",shellIcon("home")),
         mobileNavButton("codex","Codex",shellIcon("book")),
@@ -4390,18 +4411,27 @@ function renderMediaCodexCard(asset, mode = "gallery") {
     </article>`;
 }
 
-function renderMediaCodex() {
+function renderMediaCodexBody() {
   ensureCodexFamilyUi();
   const ui = state.ui.codexFamilies.media_assets;
   const items = getMediaCodexCollection();
+  const page = boundedMediaPage(items, ui.page);
+  ui.page = page.page;
+  return `
+    ${renderFamilyToolbar("media_assets", items.length)}
+    <div class="codex-media-grid-v6 ${ui.mode}">
+      ${page.items.map(asset => renderMediaCodexCard(asset, ui.mode)).join("") || `<div class="empty">Aucun média disponible.</div>`}
+    </div>
+    ${renderMediaPager(page, "media-codex-page")}
+  `;
+}
+
+function renderMediaCodex() {
   return renderShell(`
     <section class="panel codex-media-library-v6">
       ${renderCodexReturnBar()}
       ${renderCodexTabs("media_assets")}
-      ${renderFamilyToolbar("media_assets", items.length)}
-      <div class="codex-media-grid-v6 ${ui.mode}">
-        ${items.map(asset => renderMediaCodexCard(asset, ui.mode)).join("") || `<div class="empty">Aucun média disponible.</div>`}
-      </div>
+      <div data-media-codex-body>${renderMediaCodexBody()}</div>
     </section>`);
 }
 
@@ -5268,8 +5298,8 @@ async function saveEntityFromWorkshopForm(type, form, options = {}) {
   state.workshop.editorOpen = true;
   await saveUiState(state.ui);
 
+  if (toastAfter || renderAfter) render();
   if (toastAfter) toast("Enregistré localement", "success");
-  else if (renderAfter) render();
   return entity;
 }
 
@@ -5603,6 +5633,54 @@ function mediaDerivativeState(asset) {
   return { key: "pending", label: "Contrôle visuel requis", tone: "warn" };
 }
 
+const MEDIA_PAGE_SIZE = 48;
+
+function boundedMediaPage(items, requestedPage, pageSize = MEDIA_PAGE_SIZE) {
+  const total = items.length;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const page = clamp(Math.floor(Number(requestedPage || 0)), 0, pageCount - 1);
+  const start = page * pageSize;
+  return {
+    total,
+    page,
+    pageCount,
+    pageSize,
+    start,
+    end: Math.min(total, start + pageSize),
+    items: items.slice(start, start + pageSize)
+  };
+}
+
+function renderMediaPager(info, action) {
+  if (!info || info.total <= info.pageSize) return "";
+  const first = info.total ? info.start + 1 : 0;
+  return `
+    <nav class="media-pager-v6" aria-label="Pagination des médias">
+      <button type="button" class="secondary" data-action="${action}" data-page="${info.page - 1}" ${info.page <= 0 ? "disabled" : ""}>Précédent</button>
+      <span><strong>${first}–${info.end}</strong> sur ${info.total} · page ${info.page + 1}/${info.pageCount}</span>
+      <button type="button" class="secondary" data-action="${action}" data-page="${info.page + 1}" ${info.page >= info.pageCount - 1 ? "disabled" : ""}>Suivant</button>
+    </nav>`;
+}
+
+function renderMediaSurfaceInPlace(kind) {
+  if (kind === "admin") {
+    const root = app.querySelector("[data-media-admin-body]");
+    const shell = app.querySelector(".media-library-v6");
+    if (!root) return false;
+    root.innerHTML = renderMediaAdminBody();
+    shell?.classList.toggle("detail-open", Boolean(state.ui.media.selectedId));
+  } else if (kind === "codex") {
+    const root = app.querySelector("[data-media-codex-body]");
+    if (!root) return false;
+    root.innerHTML = renderMediaCodexBody();
+  } else {
+    return false;
+  }
+  runtimeMetrics.mediaPartialRenders += 1;
+  wireLazyMediaImages();
+  return true;
+}
+
 function mediaFilteredAssets() {
   const ui = state.ui.media || {};
   const scope = ["all","linked","orphan"].includes(ui.scope) ? ui.scope : "all";
@@ -5639,28 +5717,38 @@ function renderMediaAssetCard(asset, active = false) {
     </button>`;
 }
 
-function renderMedia() {
+function renderMediaAdminBody() {
   const assets = mediaFilteredAssets();
-  const selected = assets.find(asset => String(asset.id) === String(state.ui.media.selectedId || "")) ||
-    (state.ui.media.selectedId ? mediaRepository.getCachedById(state.ui.media.selectedId) : null) || assets[0] || null;
+  const page = boundedMediaPage(assets, state.ui.media.page);
+  state.ui.media.page = page.page;
+  const selected = page.items.find(asset => String(asset.id) === String(state.ui.media.selectedId || "")) ||
+    (state.ui.media.selectedId ? mediaRepository.getCachedById(state.ui.media.selectedId) : null) ||
+    page.items[0] || null;
   const scope = ["all","linked","orphan"].includes(state.ui.media.scope) ? state.ui.media.scope : "all";
+  return `
+    <div class="media-toolbar-v6">
+      <label class="media-search-v6"><span>Recherche</span><input type="search" data-action="media-search" value="${escapeHtml(state.ui.media.search || "")}" placeholder="Rechercher un média…"></label>
+      <div class="segmented" role="group" aria-label="Filtre de bibliothèque">
+        ${[["all","Tous"],["linked","Liés"],["orphan","Orphelins"]].map(([value,label]) => `<button type="button" data-action="media-scope" data-scope="${value}" class="${scope === value ? "active" : ""}" aria-pressed="${scope === value ? "true" : "false"}">${label}</button>`).join("")}
+      </div>
+      <span class="media-count-v6">${assets.length} média${assets.length > 1 ? "s" : ""}</span>
+    </div>
+    <div class="media-library-layout">
+      <section class="media-grid-v6">${page.items.map(asset => renderMediaAssetCard(asset, selected && String(asset.id) === String(selected.id))).join("") || `<div class="panel empty">Aucun média pour ce filtre.</div>`}</section>
+      <aside class="media-detail-pane-v6">${selected ? renderMediaAssetDetail(selected) : `<div class="panel empty">Sélectionne un média.</div>`}</aside>
+    </div>
+    ${renderMediaPager(page, "media-admin-page")}
+  `;
+}
+
+function renderMedia() {
   return renderShell(`
-    <section class="media-library-v6 ${selected && state.ui.media.selectedId ? "detail-open" : ""}">
+    <section class="media-library-v6 ${state.ui.media.selectedId ? "detail-open" : ""}">
       <header class="media-library-head">
         <div><span class="eyebrow">Administration locale</span><h1>Médias</h1><p>Bibliothèque locale, rattachements et visuel actif.</p></div>
         <label class="primary media-add-button">Ajouter<input type="file" accept="image/*" multiple data-action="media-upload" hidden></label>
       </header>
-      <div class="media-toolbar-v6">
-        <label class="media-search-v6"><span>Recherche</span><input type="search" data-action="media-search" value="${escapeHtml(state.ui.media.search || "")}" placeholder="Rechercher un média…"></label>
-        <div class="segmented" role="group" aria-label="Filtre de bibliothèque">
-          ${[["all","Tous"],["linked","Liés"],["orphan","Orphelins"]].map(([value,label]) => `<button type="button" data-action="media-scope" data-scope="${value}" class="${scope === value ? "active" : ""}" aria-pressed="${scope === value ? "true" : "false"}">${label}</button>`).join("")}
-        </div>
-        <span class="media-count-v6">${assets.length} média${assets.length > 1 ? "s" : ""}</span>
-      </div>
-      <div class="media-library-layout">
-        <section class="media-grid-v6">${assets.map(asset => renderMediaAssetCard(asset, selected && String(asset.id) === String(selected.id))).join("") || `<div class="panel empty">Aucun média pour ce filtre.</div>`}</section>
-        <aside class="media-detail-pane-v6">${selected ? renderMediaAssetDetail(selected) : `<div class="panel empty">Sélectionne un média.</div>`}</aside>
-      </div>
+      <div data-media-admin-body>${renderMediaAdminBody()}</div>
     </section>`);
 }
 
@@ -5807,7 +5895,7 @@ const OVERLAY_FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled])
 function focusDescriptor(element) {
   if (!(element instanceof HTMLElement) || !app.contains(element)) return null;
   const dataset = {};
-  for (const key of ["action","view","type","id","base","level","src"]) {
+  for (const key of ["action","view","type","id","base","level","src","mediaId","mediaType"]) {
     if (element.dataset?.[key]) dataset[key] = element.dataset[key];
   }
   return {
@@ -5835,6 +5923,64 @@ function focusDialog(dialog) {
   (focusable[0] || dialog).focus({ preventScroll: true });
 }
 
+function renderToastLayer() {
+  return `<aside class="toast-stack" aria-live="polite" aria-atomic="true">${state.toasts.map(t=>`<div class="toast ${escapeHtml(t.tone)}">${escapeHtml(t.message)}</div>`).join("")}</aside>`;
+}
+
+function syncToastLayer() {
+  toastRoot.innerHTML = renderToastLayer();
+}
+
+function activeExternalDialog() {
+  return overlayRoot.querySelector(".image-viewer-panel[role='dialog']")
+    || overlayRoot.querySelector(".journal[role='dialog']")
+    || null;
+}
+
+function syncOverlayLayers({ captureFocus = false, restoreFocus = false } = {}) {
+  const previous = activeExternalDialog();
+  if (captureFocus && !previous && !overlayFocusReturn) {
+    overlayFocusReturn = focusDescriptor(document.activeElement);
+  }
+
+  overlayRoot.innerHTML = [
+    state.ui.journalOpen ? renderJournalDrawer() : "",
+    state.imageViewer?.src ? renderImageViewer() : ""
+  ].join("");
+
+  const next = activeExternalDialog();
+  if (next) {
+    requestAnimationFrame(() => focusDialog(next));
+  } else if (restoreFocus && overlayFocusReturn) {
+    const descriptor = overlayFocusReturn;
+    overlayFocusReturn = null;
+    requestAnimationFrame(() => findFocusDescriptor(descriptor)?.focus({ preventScroll: true }));
+  }
+}
+
+async function toggleJournalOverlay() {
+  const opening = !state.ui.journalOpen;
+  const captureFocus = opening && !activeExternalDialog();
+  state.ui.journalOpen = opening;
+  await saveUiState(state.ui);
+  syncOverlayLayers({ captureFocus, restoreFocus: !opening });
+}
+
+function wireExternalLayerEvents() {
+  overlayRoot.addEventListener("click", async event => {
+    const control = event.target.closest?.("[data-action]");
+    if (!(control instanceof HTMLElement)) return;
+    const action = control.dataset.action;
+    if (action === "close-image-viewer") {
+      if (control.classList.contains("image-viewer-close") || event.target === control) closeImageViewer();
+      return;
+    }
+    if (action === "toggle-journal") {
+      await toggleJournalOverlay();
+    }
+  });
+}
+
 function closeActiveOverlay(dialog) {
   if (!(dialog instanceof HTMLElement)) return false;
   const selector = dialog.classList.contains("danger-modal")
@@ -5856,7 +6002,7 @@ function closeActiveOverlay(dialog) {
 
 function wireOverlayKeyboard() {
   document.addEventListener("keydown", event => {
-    const dialog = app.querySelector('[role="dialog"][aria-modal="true"]');
+    const dialog = activeExternalDialog() || app.querySelector('[role="dialog"][aria-modal="true"]');
     if (!(dialog instanceof HTMLElement)) return;
     if (event.key === "Escape") {
       if (closeActiveOverlay(dialog)) {
@@ -5884,6 +6030,7 @@ function wireOverlayKeyboard() {
 }
 
 function render() {
+  runtimeMetrics.renderCalls += 1;
   const previousDialog = app.querySelector('[role="dialog"][aria-modal="true"]');
   const hadDialog = previousDialog instanceof HTMLElement;
   const focusBefore = hadDialog ? null : focusDescriptor(document.activeElement);
@@ -5908,10 +6055,10 @@ function toast(message, tone = "info") {
   const id = uid("toast");
   state.toasts.unshift({ id, message, tone });
   state.toasts = state.toasts.slice(0, 5);
-  render();
+  syncToastLayer();
   setTimeout(() => {
     state.toasts = state.toasts.filter(t => t.id !== id);
-    render();
+    syncToastLayer();
   }, 3200);
 }
 
@@ -6248,7 +6395,9 @@ async function handleMediaUpload(files) {
     state.ui.media.linkEntityId=latest.entity_id||"";
     await saveUiState(state.ui);
   }
-  render();
+  state.ui.media.page = 0;
+  resetMediaRuntimeContext();
+  if (!renderMediaSurfaceInPlace("admin")) render();
   toast("Média ajouté localement. Original conservé.", "success");
 }
 
@@ -6261,7 +6410,7 @@ async function attachMediaAsset(assetId, type, entityId) {
   const metadata = await mediaRepository.saveAsset(next);
   if (mediaRepository.canDisplay(metadata, metadata.entity_type)) await mediaRepository.ensureActiveUrl(metadata, metadata.entity_type);
   state.ui.media.selectedId=assetId;state.ui.media.linkType=next.entity_type;state.ui.media.linkEntityId=next.entity_id;await saveUiState(state.ui);
-  render();
+  if (!renderMediaSurfaceInPlace("admin")) render();
 }
 
 function structuredEntityForExport(entity){const copy=structuredClone(entity);for(const key of["blob","thumb_blob","preview_blob","transparent_blob","has_blob","has_thumb_blob","has_preview_blob","has_transparent_blob","blob_size","thumb_blob_size","preview_blob_size","transparent_blob_size"])delete copy[key];return copy;}
@@ -6401,9 +6550,7 @@ function bindEvents() {
           return;
         }
         case "toggle-journal":
-          state.ui.journalOpen = !state.ui.journalOpen;
-          await saveUiState(state.ui);
-          render();
+          await toggleJournalOverlay();
           return;
         case "open-image": {
           if (btn.dataset.mediaId) {
@@ -6447,7 +6594,12 @@ function bindEvents() {
           const allowed = familyModeOptions().map(mode => mode.value);
           state.ui.codexFamilies[type].mode = allowed.includes(btn.dataset.mode) ? btn.dataset.mode : defaultCodexFamiliesUi()[type].mode;
           state.ui.codexFamilies[type].scrollTop = 0;
+          if (type === "media_assets") {
+            state.ui.codexFamilies.media_assets.page = 0;
+            resetMediaRuntimeContext();
+          }
           await saveUiState(state.ui);
+          if (type === "media_assets" && renderMediaSurfaceInPlace("codex")) return;
           render();
           return;
         }
@@ -6929,17 +7081,46 @@ function bindEvents() {
         case "media-scope":
           state.ui.media.scope = ["all","linked","orphan"].includes(btn.dataset.scope) ? btn.dataset.scope : "all";
           state.ui.media.selectedId = "";
-          await saveUiState(state.ui); render(); return;
+          state.ui.media.page = 0;
+          resetMediaRuntimeContext();
+          await saveUiState(state.ui);
+          if (!renderMediaSurfaceInPlace("admin")) render();
+          return;
+        case "media-admin-page": {
+          const nextPage = Math.max(0, Math.floor(Number(btn.dataset.page || 0)));
+          if (nextPage === state.ui.media.page) return;
+          state.ui.media.page = nextPage;
+          state.ui.media.selectedId = "";
+          resetMediaRuntimeContext();
+          await saveUiState(state.ui);
+          if (!renderMediaSurfaceInPlace("admin")) render();
+          return;
+        }
+        case "media-codex-page": {
+          ensureCodexFamilyUi();
+          const nextPage = Math.max(0, Math.floor(Number(btn.dataset.page || 0)));
+          if (nextPage === state.ui.codexFamilies.media_assets.page) return;
+          state.ui.codexFamilies.media_assets.page = nextPage;
+          resetMediaRuntimeContext();
+          await saveUiState(state.ui);
+          if (!renderMediaSurfaceInPlace("codex")) render();
+          return;
+        }
         case "media-select": {
           let asset = mediaRepository.getCachedById(btn.dataset.id);
           if (!asset) asset = await mediaRepository.loadMetadataById(btn.dataset.id);
           if (!asset) return;
           state.ui.media.selectedId=String(asset.id); state.ui.media.linkType=asset.entity_type||"gallery"; state.ui.media.linkEntityId=asset.entity_id||"";
           if (mediaRepository.canDisplay(asset, asset.entity_type)) await mediaRepository.ensureActiveUrl(asset, asset.entity_type);
-          await saveUiState(state.ui); render(); return;
+          await saveUiState(state.ui);
+          if (!renderMediaSurfaceInPlace("admin")) render();
+          return;
         }
         case "media-back-library":
-          state.ui.media.selectedId=""; await saveUiState(state.ui); render(); return;
+          state.ui.media.selectedId="";
+          await saveUiState(state.ui);
+          if (!renderMediaSurfaceInPlace("admin")) render();
+          return;
         case "media-attach":
           await attachMediaAsset(btn.dataset.id,state.ui.media.linkType||"gallery",state.ui.media.linkEntityId||""); toast("Rattachement média enregistré.","success"); return;
         case "media-download-original": {
@@ -6948,7 +7129,10 @@ function bindEvents() {
         }
         case "media-refresh":
           await ensureMediaCatalog(true);
-          render();
+          state.ui.media.page = 0;
+          state.ui.media.selectedId = "";
+          resetMediaRuntimeContext();
+          if (!renderMediaSurfaceInPlace("admin")) render();
           return;
         case "export-entity":
           await exportEntityFile(btn.dataset.type);toast("XLSX structuré exporté. Aucun Blob média inclus.","info");return;
@@ -7118,8 +7302,10 @@ function bindEvents() {
         case "media-filter-type":
           state.ui.media.filterType = el.value;
           state.ui.media.filterEntity = "";
+          state.ui.media.page = 0;
+          resetMediaRuntimeContext();
           await saveUiState(state.ui);
-          render();
+          if (!renderMediaSurfaceInPlace("admin")) render();
           return;
         case "media-link-type":
           state.ui.media.linkType=el.value||"gallery"; state.ui.media.linkEntityId=""; await saveUiState(state.ui); render(); return;
@@ -7127,8 +7313,10 @@ function bindEvents() {
           state.ui.media.linkEntityId=el.value||""; await saveUiState(state.ui); return;
         case "media-filter-entity":
           state.ui.media.filterEntity = el.value;
+          state.ui.media.page = 0;
+          resetMediaRuntimeContext();
           await saveUiState(state.ui);
-          render();
+          if (!renderMediaSurfaceInPlace("admin")) render();
           return;
         case "media-upload": {
           const files = Array.from(el.files || []);
@@ -7171,9 +7359,14 @@ function bindEvents() {
       return;
     }
     if (el.dataset.action === "media-search") {
-      state.ui.media.search=el.value; state.ui.media.selectedId="";
+      state.ui.media.search=el.value; state.ui.media.selectedId=""; state.ui.media.page=0;
       if(searchDebounceTimer)clearTimeout(searchDebounceTimer);
-      searchDebounceTimer=setTimeout(async()=>{await saveUiState(state.ui);render();requestAnimationFrame(()=>{const input=app.querySelector('[data-action="media-search"]');if(input){input.focus({preventScroll:true});input.setSelectionRange?.(input.value.length,input.value.length);}})},140);
+      searchDebounceTimer=setTimeout(async()=>{
+        resetMediaRuntimeContext();
+        await saveUiState(state.ui);
+        if (!renderMediaSurfaceInPlace("admin")) render();
+        requestAnimationFrame(()=>{const input=app.querySelector('[data-action="media-search"]');if(input){input.focus({preventScroll:true});input.setSelectionRange?.(input.value.length,input.value.length);}});
+      },140);
       return;
     }
     if (el.dataset.action === "search") {
@@ -7199,10 +7392,12 @@ function bindEvents() {
       ensureCodexFamilyUi();
       state.ui.codexFamilies[type].search = el.value;
       state.ui.codexFamilies[type].scrollTop = 0;
+      if (type === "media_assets") state.ui.codexFamilies.media_assets.page = 0;
       if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
       searchDebounceTimer = setTimeout(async () => {
+        if (type === "media_assets") resetMediaRuntimeContext();
         await saveUiState(state.ui);
-        render();
+        if (!(type === "media_assets" && renderMediaSurfaceInPlace("codex"))) render();
         requestAnimationFrame(() => {
           const input = app.querySelector(`[data-action="family-search"][data-type="${type}"]`);
           if (input) {
@@ -7266,7 +7461,7 @@ async function reportError(err, context = "") {
   state.logs = [log, ...state.logs].slice(0, 100);
   toast(`⚠️ ${message}`, "error");
   await saveUiState(state.ui);
-  render();
+  if (state.ui.journalOpen) syncOverlayLayers();
 }
 
 function wireGlobalErrors() {
@@ -7305,7 +7500,8 @@ async function bootstrap() {
         quests: { ...defaultBlankUi().codexFamilies.quests, ...(savedUi.codexFamilies?.quests || {}) },
         loot_items: { ...defaultBlankUi().codexFamilies.loot_items, ...(savedUi.codexFamilies?.loot_items || {}) },
         interactables: { ...defaultBlankUi().codexFamilies.interactables, ...(savedUi.codexFamilies?.interactables || {}) },
-        brouhaha_effects: { ...defaultBlankUi().codexFamilies.brouhaha_effects, ...(savedUi.codexFamilies?.brouhaha_effects || {}) }
+        brouhaha_effects: { ...defaultBlankUi().codexFamilies.brouhaha_effects, ...(savedUi.codexFamilies?.brouhaha_effects || {}) },
+        media_assets: { ...defaultBlankUi().codexFamilies.media_assets, ...(savedUi.codexFamilies?.media_assets || {}) }
       },
       bestiary: { ...defaultBlankUi().bestiary, ...(savedUi.bestiary || {}) }
     };
@@ -7326,11 +7522,14 @@ async function bootstrap() {
   wireWorkshopUnloadGuard();
   wirePwaInstallPrompt();
   wireOverlayKeyboard();
+  wireExternalLayerEvents();
   bindEvents();
   wireBestiaryScrollTracking();
   wireCodexFamilyScrollTracking();
   wireCreatureMediaFallbacks();
   render();
+  syncToastLayer();
+  syncOverlayLayers({ captureFocus: Boolean(state.ui.journalOpen) });
 
   if ("serviceWorker" in navigator) {
     const controlledBeforeRegistration = Boolean(navigator.serviceWorker.controller);

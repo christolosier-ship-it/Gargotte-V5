@@ -228,7 +228,7 @@ test("large structured datasets long text and missing relations remain usable", 
   await expect(page.locator(".creature-sheet-v6")).toBeVisible();
 });
 
-test("real transparent Blob library remains consultable through repeated fullscreen opens", async ({ page }) => {
+test("large transparent Blob library keeps DOM URLs and viewer renders bounded", async ({ page }) => {
   await ready(page);
   const created = await page.evaluate(async count => {
     const db = await new Promise((resolve,reject) => {
@@ -236,75 +236,110 @@ test("real transparent Blob library remains consultable through repeated fullscr
       req.onsuccess=()=>resolve(req.result);
       req.onerror=()=>reject(req.error);
     });
-    const storeBlob = async index => {
-      const canvas=document.createElement("canvas");
-      canvas.width=768;
-      canvas.height=768;
-      const ctx=canvas.getContext("2d");
-      ctx.clearRect(0,0,768,768);
-      ctx.fillStyle=`hsl(${(index*37)%360} 70% 52% / 0.86)`;
-      ctx.beginPath();
-      ctx.arc(384,384,220+(index%5)*12,0,Math.PI*2);
-      ctx.fill();
-      ctx.fillStyle="rgba(255,255,255,0.45)";
-      ctx.fillRect(250,250,268,268);
-      return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("PNG blob failed")),"image/png"));
-    };
-    const rows=[];
-    for (let i=0;i<count;i++) {
-      const blob=await storeBlob(i);
-      rows.push({
-        id:`v6fast-real-media-${i}`,
-        label:`Stress transparent ${i}`,
-        file_name:`stress-transparent-${i}.png`,
-        path:`local-media/gallery/stress-${i}.png`,
-        mime_type:"image/png",
-        entity_type:"gallery",
-        entity_id:"",
-        transparent_blob:blob,
-        transparent_path:`local-media/gallery/transparent/stress-${i}.png`,
-        transparent_mime_type:"image/png",
-        transparent_width:768,
-        transparent_height:768,
-        transparent_review_status:"approved",
-        transparent_audit:{pass:true,has_alpha_channel:true,width:768,height:768},
-        created_at:new Date().toISOString(),
-        updated_at:new Date().toISOString()
-      });
-    }
+
+    const canvas=document.createElement("canvas");
+    canvas.width=768;
+    canvas.height=768;
+    const ctx=canvas.getContext("2d");
+    ctx.clearRect(0,0,768,768);
+    ctx.fillStyle="rgba(132, 82, 214, 0.84)";
+    ctx.beginPath();
+    ctx.arc(384,384,244,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.38)";
+    ctx.fillRect(246,246,276,276);
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("PNG blob failed")),"image/png"));
+
     await new Promise((resolve,reject)=>{
       const tx=db.transaction("media_assets","readwrite");
       const store=tx.objectStore("media_assets");
-      for (const row of rows) store.put(row);
+      for (let i=0;i<count;i++) {
+        store.put({
+          id:`v6fast-bounded-media-${String(i).padStart(3,"0")}`,
+          label:`Bounded transparent ${String(i).padStart(3,"0")}`,
+          file_name:`bounded-transparent-${i}.png`,
+          path:`local-media/gallery/bounded-${i}.png`,
+          mime_type:"image/png",
+          entity_type:"gallery",
+          entity_id:"",
+          transparent_blob:blob,
+          transparent_path:`local-media/gallery/transparent/bounded-${i}.png`,
+          transparent_mime_type:"image/png",
+          transparent_width:768,
+          transparent_height:768,
+          transparent_review_status:"approved",
+          transparent_audit:{pass:true,has_alpha_channel:true,width:768,height:768},
+          created_at:new Date().toISOString(),
+          updated_at:new Date().toISOString()
+        });
+      }
       tx.oncomplete=resolve;
       tx.onerror=()=>reject(tx.error);
       tx.onabort=()=>reject(tx.error);
     });
-    const checkTx=db.transaction("media_assets","readonly");
-    const req=checkTx.objectStore("media_assets").get("v6fast-real-media-0");
-    const first=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
     db.close();
-    return {count:rows.length,firstBlobSize:first?.transparent_blob?.size||0};
-  }, 48);
-  expect(created.count).toBe(48);
-  expect(created.firstBlobSize).toBeGreaterThan(0);
+    return {count,blobSize:blob.size};
+  }, 420);
+
+  expect(created.count).toBe(420);
+  expect(created.blobSize).toBeGreaterThan(0);
 
   await page.reload({waitUntil:"domcontentloaded"});
   await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
   await gotoView(page,"codex");
   await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
-  const stressCards=page.locator(".codex-media-card-v6").filter({hasText:"Stress transparent"});
-  await expect(stressCards).toHaveCount(48);
-  await stressCards.last().scrollIntoViewIfNeeded();
 
-  for (let i=0;i<8;i++) {
-    const card=stressCards.nth(i);
+  const cards=page.locator(".codex-media-card-v6");
+  await expect(cards).toHaveCount(48);
+  await expect(page.locator(".media-pager-v6")).toContainText("sur");
+  let snapshot=await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(snapshot.mountedMediaCards).toBeLessThanOrEqual(48);
+  expect(snapshot.liveObjectUrls).toBeLessThanOrEqual(48);
+
+  for (let pageIndex=1;pageIndex<=5;pageIndex++) {
+    await cards.last().scrollIntoViewIfNeeded();
+    await page.locator('[data-action="media-codex-page"]').filter({hasText:"Suivant"}).click();
+    await expect(page.locator(".codex-media-card-v6")).toHaveCount(48);
+    snapshot=await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+    expect(snapshot.mountedMediaCards).toBeLessThanOrEqual(48);
+    expect(snapshot.liveObjectUrls).toBeLessThanOrEqual(48);
+  }
+
+  await page.locator(".codex-media-card-v6").first().scrollIntoViewIfNeeded();
+  const before=await page.evaluate(() => {
+    globalThis.__v6fastMediaGridNode=document.querySelector(".codex-media-grid-v6");
+    return {
+      renderCalls:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().renderCalls,
+      partial:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().mediaPartialRenders
+    };
+  });
+
+  for (let i=0;i<12;i++) {
+    const card=page.locator(".codex-media-card-v6").nth(i % 12);
+    await card.scrollIntoViewIfNeeded();
+    const scrollBeforeViewer=await page.evaluate(() => window.scrollY);
     await card.locator(".codex-media-open-v6").click();
     await expect(page.locator(".image-viewer-overlay")).toBeVisible();
-    await expect(page.locator(".image-viewer-panel img")).toBeVisible();
+    await expect(page.locator(".image-viewer-panel img")).toHaveAttribute("src", /^blob:/);
     await page.locator(".image-viewer-close").click();
     await expect(page.locator(".image-viewer-overlay")).toHaveCount(0);
+    const scrollAfterViewer=await page.evaluate(() => window.scrollY);
+    expect(Math.abs(scrollAfterViewer-scrollBeforeViewer)).toBeLessThanOrEqual(2);
   }
+
+  const after=await page.evaluate(() => ({
+    sameGrid:globalThis.__v6fastMediaGridNode===document.querySelector(".codex-media-grid-v6"),
+    renderCalls:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().renderCalls,
+    partial:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().mediaPartialRenders,
+    mounted:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().mountedMediaCards,
+    live:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().liveObjectUrls
+  }));
+
+  expect(after.sameGrid).toBe(true);
+  expect(after.renderCalls).toBe(before.renderCalls);
+  expect(after.partial).toBe(before.partial);
+  expect(after.mounted).toBeLessThanOrEqual(48);
+  expect(after.live).toBeLessThanOrEqual(48);
   await assertNoHorizontalOverflow(page);
 });
 

@@ -11,6 +11,7 @@ on:
       - "tests/v6-fast/indexeddb.spec.mjs"
       - "tests/v6-fast/fixtures/**"
       - "src/app.js"
+      - "styles.css"
       - "src/storage/idb.js"
       - "src/storage/media-repository.js"
       - "service-worker.js"
