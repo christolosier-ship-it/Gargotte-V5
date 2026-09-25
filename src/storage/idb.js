@@ -107,6 +107,30 @@ export async function getById(storeName, id) {
   return await withTx([storeName], "readonly", async ({ [storeName]: store }) => reqToPromise(store.get(id)));
 }
 
+export async function getOneByIndex(storeName, indexName, key) {
+  return await withTx([storeName], "readonly", async ({ [storeName]: store }) =>
+    reqToPromise(store.index(indexName).get(key))
+  );
+}
+
+export async function getAllByIndex(storeName, indexName, key) {
+  return await withTx([storeName], "readonly", async ({ [storeName]: store }) =>
+    reqToPromise(store.index(indexName).getAll(key))
+  );
+}
+
+export async function countStore(storeName) {
+  return await withTx([storeName], "readonly", async ({ [storeName]: store }) =>
+    reqToPromise(store.count())
+  );
+}
+
+export async function countByIndex(storeName, indexName, key) {
+  return await withTx([storeName], "readonly", async ({ [storeName]: store }) =>
+    reqToPromise(store.index(indexName).count(key))
+  );
+}
+
 export async function putOne(storeName, item) {
   await withTx([storeName], "readwrite", async ({ [storeName]: store }) => {
     await reqToPromise(store.put(item));
@@ -170,12 +194,32 @@ export async function appendLog(entry) {
 }
 
 export async function getLogs(limit = 100) {
-  const rows = await getAll("logs");
-  return rows.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, limit);
+  const max = Math.max(0, Number(limit || 0));
+  if (!max) return [];
+  return await withTx(["logs"], "readonly", async ({ logs }) => {
+    const index = logs.index("created_at");
+    const rows = [];
+    await new Promise((resolve, reject) => {
+      const req = index.openCursor(null, "prev");
+      req.onerror = () => reject(req.error || new Error("IndexedDB log cursor failed"));
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (!cursor || rows.length >= max) {
+          resolve();
+          return;
+        }
+        rows.push(cursor.value);
+        cursor.continue();
+      };
+    });
+    return rows;
+  });
 }
 
 export async function loadAllData() {
-  const names = STORE_DEFS.filter(s => s.name !== "meta" && s.name !== "logs").map(s => s.name);
+  const names = STORE_DEFS
+    .filter(s => !["meta", "logs", "media_assets"].includes(s.name))
+    .map(s => s.name);
   const data = {};
   await withTx(names, "readonly", async (stores) => {
     for (const name of names) data[name] = await reqToPromise(stores[name].getAll());

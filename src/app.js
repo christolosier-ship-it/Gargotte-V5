@@ -39,6 +39,11 @@ import {
   DB_VERSION,
   STORE_DEFS
 } from "./storage/idb.js";
+import {
+  MediaRepository,
+  mediaHasApprovedTransparent as repositoryHasApprovedTransparent,
+  isStaticPath as isStaticMediaPath
+} from "./storage/media-repository.js";
 
 const ENTITY_ORDER = [
   "dungeons",
@@ -272,9 +277,9 @@ const WORKSHOP_REQUIRED_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
-const APP_VERSION = "5.6.1";
-const PWA_CACHE_NAME = "gargottex-v6-codex-toolbar-v1";
-const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js"];
+const APP_VERSION = "5.6.2";
+const PWA_CACHE_NAME = "gargottex-v6-fast-media-runtime-v1";
+const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js","./src/storage/media-repository.js"];
 
 const HOME_TAGLINE = "Ici, même les habitués ne savent plus pourquoi ils sont venus.";
 const BERTHOLD_ADVICES = [
@@ -395,10 +400,15 @@ const state = {
     globalSearch: ""
   },
   toasts: [],
-  logs: [],
-  mediaUrlCache: new Map(),
-  mediaUrlReverse: new Map()
+  logs: []
 };
+
+const mediaRepository = new MediaRepository();
+const runtimeMetrics = { refreshDataCalls: 0 };
+globalThis.__GARGOTTEX_MEDIA_DEBUG__ = () => ({
+  ...mediaRepository.debugSnapshot(),
+  refreshDataCalls: runtimeMetrics.refreshDataCalls
+});
 
 function defaultBlankUi() {
   return {
@@ -1027,32 +1037,25 @@ function familyCollectionInitialId(type) {
 function pathUrl(path) {
   const clean = String(path || "").trim();
   if (!clean) return "";
-  const asset = (state.data.media_assets || []).find(media => media.path === clean || media.thumb_path === clean);
-  return mediaUrlForAsset(asset, false) || clean;
+  if (isStaticMediaPath(clean)) return clean;
+  const asset = mediaRepository.getCachedByPath(clean);
+  if (asset) {
+    const url = mediaRepository.cachedActiveUrl(asset, asset.entity_type);
+    if (url) return url;
+  }
+  queueMediaPathLoad(clean, asset?.entity_type || "");
+  return "";
 }
 
 function transparentDerivativeUrlForEntity(entity, type = "heroes") {
   if (!entity) return "";
   for (const field of ["transparent_image_path", "image_transparent_path", "cutout_path", "image_cutout_path", "rembg_path"]) {
-    const candidate = pathUrl(entity[field]);
+    const raw = String(entity[field] || "").trim();
+    if (!raw) continue;
+    const candidate = pathUrl(raw);
     if (candidate) return candidate;
   }
-  const entityAssets = (state.data.media_assets || []).filter(asset => {
-    const entityType = relationStore(asset.entity_type);
-    return entityType === type && String(asset.entity_id || "") === String(entity.id || "");
-  });
-  const approved = entityAssets.find(asset =>
-    asset.transparent_blob &&
-    asset.transparent_review_status === "approved" &&
-    asset.transparent_audit?.pass === true
-  );
-  if (approved) return mediaTransparentUrlForAsset(approved) || mediaUrlForAsset(approved, false);
-  const legacy = entityAssets.find(asset => {
-    const marker = normalizeBestiaryText([asset.variant, asset.purpose, asset.role, asset.derivative_type, asset.processing].filter(Boolean).join(" "));
-    return asset.is_transparent === true || asset.is_cutout === true ||
-      marker.includes("transparent") || marker.includes("cutout") || marker.includes("rembg");
-  });
-  return legacy ? mediaUrlForAsset(legacy, false) : imageUrlForEntity(entity);
+  return imageUrlForEntity(entity, type);
 }
 
 const DUNGEON_ACCENT_PALETTE = ["#76907E","#657F9A","#A56E45","#9B5D73","#B8893F","#7F667E","#6F7F54","#8B7051"];
@@ -1674,6 +1677,7 @@ function getBestiaryCreatures() {
 }
 
 function findById(type, id) {
+  if (type === "media_assets") return mediaRepository.getCachedById(id);
   return (state.data[type] || []).find(item => item.id === id) || null;
 }
 
@@ -1816,114 +1820,188 @@ function rebuildRelations() {
   }
 }
 
-function rebuildMediaCache() {
-  for (const url of state.mediaUrlReverse.values()) {
-    try { URL.revokeObjectURL(url); } catch (_) {}
+let mediaImageObserver = null;
+let mediaRenderTimer = null;
+let mediaContextGeneration = 0;
+const pendingMediaLoads = new Map();
+
+function resetMediaRuntimeContext() {
+  mediaContextGeneration += 1;
+  mediaImageObserver?.disconnect?.();
+  mediaImageObserver = null;
+  mediaRepository.resetContext();
+}
+
+function mediaEntityType(entity, hint = "") {
+  const normalizedHint = relationStore(hint);
+  if (normalizedHint) return normalizedHint;
+  const id = entity?.id;
+  if (!id) return "";
+  for (const type of ENTITY_ORDER) {
+    if (type === "media_assets") continue;
+    if (state.index?.[type]?.byId?.get(id) === entity) return type;
+    if ((state.data[type] || []).some(item => item === entity || String(item.id || "") === String(id))) return type;
   }
-  state.mediaUrlCache.clear();
-  state.mediaUrlReverse.clear();
-  for (const asset of state.data.media_assets || []) {
-    const variants = [["original", asset.blob],["preview", asset.preview_blob],["thumb", asset.thumb_blob],["transparent", asset.transparent_blob]];
-    for (const [kind, blob] of variants) {
-      if (!blob) continue;
-      const url = URL.createObjectURL(blob);
-      state.mediaUrlCache.set(`${asset.id}:${kind}`, url);
-      state.mediaUrlReverse.set(`${asset.id}:${kind}`, url);
+  return "";
+}
+
+function mediaRenderWouldInterruptInput() {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || !app?.contains(active)) return false;
+  return active.matches("input, textarea, select, [contenteditable='true']");
+}
+
+function scheduleMediaRender(delay = 40) {
+  if (!state.ready || mediaRenderTimer) return;
+  mediaRenderTimer = setTimeout(() => {
+    mediaRenderTimer = null;
+    if (!state.ready || !app?.isConnected) return;
+    if (mediaRenderWouldInterruptInput()) {
+      scheduleMediaRender(180);
+      return;
     }
-  }
+    render();
+  }, delay);
 }
 
-function mediaBlobForKind(asset, kind) {
-  if (!asset) return null;
-  if (kind === "original") return asset.blob || null;
-  if (kind === "preview") return asset.preview_blob || null;
-  if (kind === "thumb") return asset.thumb_blob || null;
-  if (kind === "transparent") return asset.transparent_blob || null;
-  return null;
+function queueMediaEntityLoad(type, id) {
+  const entityType = relationStore(type);
+  const entityId = String(id || "");
+  if (!entityType || !entityId || mediaRepository.isEntityLoaded(entityType, entityId)) return;
+  const key = `entity:${entityType}:${entityId}`;
+  if (pendingMediaLoads.has(key)) return;
+  const generation = mediaContextGeneration;
+  const promise = mediaRepository.loadMetadataForEntity(entityType, entityId)
+    .then(async assets => {
+      if (generation !== mediaContextGeneration) return;
+      const active = assets.find(asset => repositoryHasApprovedTransparent(asset));
+      if (active) await mediaRepository.ensureActiveUrl(active, entityType);
+      if (generation === mediaContextGeneration) scheduleMediaRender();
+    })
+    .catch(error => console.warn("[Gargottex] Chargement média ciblé impossible.", error))
+    .finally(() => pendingMediaLoads.delete(key));
+  pendingMediaLoads.set(key, promise);
 }
 
-function refreshMediaAssetUrl(asset, kind) {
-  if (!asset?.id) return "";
-  const key = `${asset.id}:${kind}`;
-  const previous = state.mediaUrlCache.get(key) || state.mediaUrlReverse.get(key);
-  if (previous) {
-    try { URL.revokeObjectURL(previous); } catch (_) {}
-  }
-  state.mediaUrlCache.delete(key);
-  state.mediaUrlReverse.delete(key);
-  const blob = mediaBlobForKind(asset, kind);
-  if (!blob) return "";
-  const url = URL.createObjectURL(blob);
-  state.mediaUrlCache.set(key, url);
-  state.mediaUrlReverse.set(key, url);
-  return url;
+function queueMediaPathLoad(path, type = "dungeons") {
+  const clean = String(path || "").trim();
+  if (!clean || isStaticMediaPath(clean)) return;
+  const key = `path:${clean}`;
+  if (pendingMediaLoads.has(key)) return;
+  const generation = mediaContextGeneration;
+  const promise = mediaRepository.loadMetadataByPath(clean)
+    .then(async asset => {
+      if (generation !== mediaContextGeneration) return;
+      if (asset) await mediaRepository.ensureActiveUrl(asset, relationStore(type) || asset.entity_type || "dungeons");
+      if (generation === mediaContextGeneration) scheduleMediaRender();
+    })
+    .catch(error => console.warn("[Gargottex] Chargement média par chemin impossible.", error))
+    .finally(() => pendingMediaLoads.delete(key));
+  pendingMediaLoads.set(key, promise);
 }
 
-function replaceMediaAssetInMemory(asset, refreshKinds = ["transparent"]) {
-  if (!asset?.id) return;
-  const list = state.data.media_assets || (state.data.media_assets = []);
-  const index = list.findIndex(row => String(row.id) === String(asset.id));
-  if (index >= 0) list[index] = asset;
-  else list.push(asset);
-  const byId = state.index?.media_assets?.byId;
-  if (byId) byId.set(asset.id, asset);
-  for (const kind of refreshKinds) refreshMediaAssetUrl(asset, kind);
+async function ensureMediaCatalog(force = false) {
+  return mediaRepository.loadCatalogMetadata({ force });
 }
 
 function mediaHasApprovedTransparent(asset) {
-  return Boolean(
-    asset?.transparent_blob &&
-    asset.transparent_review_status === "approved" &&
-    asset.transparent_audit?.pass === true
-  );
+  return repositoryHasApprovedTransparent(asset);
+}
+
+function mediaCardCanDisplay(asset) {
+  return mediaRepository.canDisplay(asset, asset?.entity_type);
 }
 
 function mediaCardUrlForAsset(asset) {
-  if (mediaHasApprovedTransparent(asset)) {
-    return mediaTransparentUrlForAsset(asset) || thumbUrlForAsset(asset);
-  }
-  return thumbUrlForAsset(asset);
+  if (!asset) return "";
+  return mediaRepository.cachedActiveUrl(asset, asset.entity_type);
 }
 
 function mediaOriginalUrlForAsset(asset) {
-  if (!asset) return "";
-  return state.mediaUrlCache.get(`${asset.id}:original`) || asset.path || "";
+  if (!asset || String(asset.entity_type || "") !== "dungeons") return "";
+  return mediaRepository.cachedActiveUrl(asset, "dungeons");
 }
 
 function mediaTransparentUrlForAsset(asset) {
-  if (!asset) return "";
-  return state.mediaUrlCache.get(`${asset.id}:transparent`) || asset.transparent_path || "";
+  if (!mediaHasApprovedTransparent(asset)) return "";
+  return mediaRepository.cachedActiveUrl(asset, asset.entity_type);
 }
 
-function mediaUrlForAsset(asset, variant = false) {
-  if (!asset) return "";
-  const kind = variant === true ? "thumb" : variant === false ? "preview" : String(variant || "preview");
-  if (kind === "original") return mediaOriginalUrlForAsset(asset);
-  if (kind === "transparent") return mediaTransparentUrlForAsset(asset);
-  if (kind === "thumb") return state.mediaUrlCache.get(`${asset.id}:thumb`) || asset.thumb_path || state.mediaUrlCache.get(`${asset.id}:preview`) || asset.preview_path || mediaOriginalUrlForAsset(asset);
-  return state.mediaUrlCache.get(`${asset.id}:preview`) || asset.preview_path || mediaOriginalUrlForAsset(asset);
-}
+function imageUrlForEntity(entity, typeHint = "") {
+  if (!entity) return "";
+  const type = mediaEntityType(entity, typeHint);
+  const imagePath = String(entity.image_path || "").trim();
 
-function imageUrlForEntity(entity) {
-  if (!entity?.image_path) return "";
-  const asset = (state.data.media_assets || []).find(m =>
-    m.path === entity.image_path || m.preview_path === entity.image_path || m.thumb_path === entity.image_path || m.transparent_path === entity.image_path
-  );
-  if (asset?.transparent_blob && asset.transparent_review_status === "approved" && asset.transparent_audit?.pass === true) {
-    return mediaTransparentUrlForAsset(asset) || mediaUrlForAsset(asset, false);
+  if (type === "dungeons") {
+    if (!imagePath) return "";
+    if (isStaticMediaPath(imagePath)) return imagePath;
+    const asset = mediaRepository.getCachedByPath(imagePath);
+    if (asset) {
+      const url = mediaRepository.cachedActiveUrl(asset, "dungeons");
+      if (url) return url;
+    }
+    queueMediaPathLoad(imagePath, "dungeons");
+    return "";
   }
-  return mediaUrlForAsset(asset, false) || entity.image_path || "";
+
+  if (!type || !entity.id) return "";
+  const assets = mediaRepository.getCachedForEntity(type, entity.id);
+  if (!mediaRepository.isEntityLoaded(type, entity.id)) queueMediaEntityLoad(type, entity.id);
+  const approved = assets.find(asset => mediaHasApprovedTransparent(asset));
+  if (!approved) return "";
+  const url = mediaRepository.cachedActiveUrl(approved, type);
+  if (url) return url;
+  queueMediaEntityLoad(type, entity.id);
+  return "";
 }
 
-function thumbUrlForAsset(asset) {
-  return mediaUrlForAsset(asset, true) || mediaUrlForAsset(asset, false) || asset.path || "";
+function lazyMediaMarkup(asset, alt = "", className = "") {
+  if (!asset || !mediaCardCanDisplay(asset)) return "";
+  const cached = mediaCardUrlForAsset(asset);
+  if (cached) return `<img src="${escapeHtml(cached)}" alt="${escapeHtml(alt)}" loading="lazy" class="${escapeHtml(className)}">`;
+  return `<img alt="${escapeHtml(alt)}" loading="lazy" class="${escapeHtml(className)}" data-media-lazy-id="${escapeHtml(String(asset.id || ""))}" data-media-lazy-type="${escapeHtml(String(asset.entity_type || ""))}">`;
+}
+
+function wireLazyMediaImages() {
+  mediaImageObserver?.disconnect?.();
+  mediaImageObserver = null;
+  const nodes = [...app.querySelectorAll("img[data-media-lazy-id]")];
+  if (!nodes.length) return;
+
+  const load = async img => {
+    if (!(img instanceof HTMLImageElement) || !img.isConnected) return;
+    const id = String(img.dataset.mediaLazyId || "");
+    let asset = mediaRepository.getCachedById(id);
+    if (!asset) asset = await mediaRepository.loadMetadataById(id);
+    if (!asset || !img.isConnected) return;
+    const type = relationStore(img.dataset.mediaLazyType) || asset.entity_type;
+    const url = await mediaRepository.ensureActiveUrl(asset, type);
+    if (!url || !img.isConnected) return;
+    img.src = url;
+    delete img.dataset.mediaLazyId;
+    delete img.dataset.mediaLazyType;
+  };
+
+  if (!("IntersectionObserver" in globalThis)) {
+    nodes.slice(0, 24).forEach(img => { void load(img); });
+    return;
+  }
+
+  mediaImageObserver = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      mediaImageObserver?.unobserve(entry.target);
+      void load(entry.target);
+    }
+  }, { rootMargin: "320px 0px" });
+
+  for (const img of nodes) mediaImageObserver.observe(img);
 }
 
 function hydrateState(rawData) {
-  state.data = rawData;
+  state.data = { ...rawData, media_assets: [] };
   rebuildIndexes();
   rebuildRelations();
-  rebuildMediaCache();
   ensureUiDefaults();
   ensureSelectionExists();
 }
@@ -3251,11 +3329,6 @@ function getCreatureRelations(item) {
     else broken.push(ref);
   }
 
-  const media = (state.data.media_assets || []).filter(asset => {
-    const type = relationStore(asset.entity_type);
-    return type === "creatures" && String(asset.entity_id || "") === String(item.id || "");
-  });
-
   const phaseGroup = getBossPhaseGroup(item);
   const phaseIds = new Set(phaseGroup.map(row => String(row.id || "")));
   return {
@@ -3263,7 +3336,6 @@ function getCreatureRelations(item) {
     sameDungeon: sameDungeon.filter(row => !phaseIds.has(String(row.id || ""))),
     explicit: resolved.filter(ref => !(ref.type === "creatures" && phaseIds.has(String(ref.id)))),
     broken,
-    media,
     phaseGroup
   };
 }
@@ -4223,7 +4295,7 @@ function getMediaCodexCollection() {
   ensureCodexFamilyUi();
   const ui = state.ui.codexFamilies.media_assets;
   const q = normalizeBestiaryText(ui.search);
-  let items = [...(state.data.media_assets || [])];
+  let items = mediaRepository.getCatalog();
   if (q) {
     items = items.filter(asset => {
       const attachment = mediaAttachment(asset);
@@ -4250,16 +4322,21 @@ function mediaCodexDisplayTitle(asset) {
 }
 
 function renderMediaCodexCard(asset, mode = "gallery") {
-  const image = mediaCardUrlForAsset(asset) || mediaOriginalUrlForAsset(asset);
   const attachment = mediaAttachment(asset);
   const title = mediaCodexDisplayTitle(asset);
   const family = attachment ? getLabel(attachment.type) : "Sans rattachement";
-  const variant = mediaHasApprovedTransparent(asset) ? "Visuel détouré" : "Visuel original";
+  const canDisplay = mediaCardCanDisplay(asset);
+  const visual = lazyMediaMarkup(asset, title);
+  const variant = mediaHasApprovedTransparent(asset)
+    ? "Visuel détouré"
+    : String(asset.entity_type || "") === "dungeons"
+      ? "Visuel Donjon"
+      : "Visuel historique non affiché";
   return `
     <article class="codex-media-card-v6 ${mode}">
-      <button class="codex-media-open-v6" type="button" data-action="open-image" data-src="${escapeHtml(image || "")}" data-alt="${escapeHtml(title)}" ${image ? "" : "disabled"}>
+      <button class="codex-media-open-v6" type="button" data-action="open-image" data-media-id="${escapeHtml(String(asset.id || ""))}" data-media-type="${escapeHtml(String(asset.entity_type || ""))}" data-alt="${escapeHtml(title)}" ${canDisplay ? "" : "disabled"}>
         <span class="codex-media-visual-v6 ${mediaHasApprovedTransparent(asset) ? "transparent" : ""}">
-          ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(title)}" loading="lazy">` : `<span>Visuel indisponible</span>`}
+          ${visual || `<span>Visuel indisponible</span>`}
         </span>
       </button>
       <div class="codex-media-copy-v6">
@@ -4637,7 +4714,7 @@ function renderBrouhahaEffectDetail(item) {
 function renderMediaAssetDetail(asset) {
   if (!asset) return `<div class="panel empty">Sélectionne un média.</div>`;
   const attachment = mediaAttachment(asset);
-  const activeImage = mediaCardUrlForAsset(asset) || mediaOriginalUrlForAsset(asset);
+  const activeImage = mediaCardUrlForAsset(asset);
   const title = attachment ? mediaEntityTitle(attachment.type, attachment.entity) : (asset.label || "Média non rattaché");
   const ui = state.ui.media || {};
   const linkType = ui.selectedId === asset.id ? (ui.linkType || asset.entity_type || "gallery") : (asset.entity_type || "gallery");
@@ -4651,7 +4728,7 @@ function renderMediaAssetDetail(asset) {
       <div class="media-detail-state"><span class="local">Local</span></div>
     </header>
     <div class="media-admin-preview-v6 ${mediaHasApprovedTransparent(asset) ? "transparent" : ""}">
-      ${activeImage ? `<img src="${escapeHtml(activeImage)}" alt="${escapeHtml(title)}">` : `<span>Visuel indisponible</span>`}
+      ${activeImage ? `<img src="${escapeHtml(activeImage)}" alt="${escapeHtml(title)}">` : (lazyMediaMarkup(asset, title) || `<span>Visuel indisponible</span>`)}
     </div>
     <div class="media-detail-main-v6">
       <section class="media-detail-box">
@@ -4670,7 +4747,7 @@ function renderMediaAssetDetail(asset) {
         <span class="eyebrow">Source locale</span>
         <h3>Original conservé</h3>
         <p>L’image source reste stockée localement. Le visuel affiché ci-dessus utilise automatiquement la variante validée disponible, sans modifier l’original.</p>
-        <button class="ghost" type="button" data-action="media-download-original" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.blob ? "" : "disabled"}>Télécharger l’original</button>
+        <button class="ghost" type="button" data-action="media-download-original" data-id="${escapeHtml(String(asset.id || ""))}" ${asset.has_blob ? "" : "disabled"}>Télécharger l’original</button>
       </section>
     </div>
   </section>`;
@@ -4976,7 +5053,9 @@ function workshopRelationSummary(type, item) {
   } else if (type === "npcs") {
     add("Quêtes commanditées", (state.data.quests || []).filter(row => String(row.npc_id || "") === id).length);
   }
-  add("Médias liés", (state.data.media_assets || []).filter(row => String(row.entity_type || "") === type && String(row.entity_id || "") === id).length);
+  const mediaRows = mediaRepository.getCachedForEntity(type, id);
+  if (!mediaRepository.isEntityLoaded(type, id)) queueMediaEntityLoad(type, id);
+  add("Médias liés", mediaRows.length);
   return rows;
 }
 
@@ -5475,7 +5554,7 @@ function mediaBytes(value) {
 }
 
 function mediaDerivativeState(asset) {
-  if (!asset?.transparent_blob) return { key: "none", label: "Aucun dérivé", tone: "muted" };
+  if (!asset?.has_transparent_blob) return { key: "none", label: "Aucun dérivé", tone: "muted" };
   if (asset.transparent_review_status === "approved" && asset.transparent_audit?.pass === true) return { key: "approved", label: "Dérivé validé", tone: "ok" };
   if (asset.transparent_review_status === "needs_fix" || asset.transparent_audit?.pass === false) return { key: "needs_fix", label: "Dérivé à corriger", tone: "err" };
   return { key: "pending", label: "Contrôle visuel requis", tone: "warn" };
@@ -5485,7 +5564,7 @@ function mediaFilteredAssets() {
   const ui = state.ui.media || {};
   const scope = ["all","linked","orphan"].includes(ui.scope) ? ui.scope : "all";
   const query = normalizeBestiaryText(ui.search || "");
-  return [...(state.data.media_assets || [])].filter(asset => {
+  return mediaRepository.getCatalog().filter(asset => {
     const linked = mediaIsLinked(asset);
     if (scope === "linked" && !linked) return false;
     if (scope === "orphan" && linked) return false;
@@ -5502,14 +5581,14 @@ function mediaFilteredAssets() {
 
 function renderMediaAssetCard(asset, active = false) {
   const hasApprovedTransparent = mediaHasApprovedTransparent(asset);
-  const preview = mediaCardUrlForAsset(asset);
+  const visual = lazyMediaMarkup(asset, "");
   const attachment = mediaAttachment(asset);
   const derivative = mediaDerivativeState(asset);
   return `
-    <button class="media-card-v6 ${active ? "active" : ""}" type="button" data-action="media-select" data-id="${escapeHtml(String(asset.id || ""))}" data-card-variant="${hasApprovedTransparent ? "transparent" : "thumbnail"}">
-      <div class="media-card-visual ${hasApprovedTransparent ? "transparent" : ""}">${preview ? `<img src="${escapeHtml(preview)}" alt="" loading="lazy">` : `<div class="media-empty-visual">Aperçu indisponible</div>`}</div>
+    <button class="media-card-v6 ${active ? "active" : ""}" type="button" data-action="media-select" data-id="${escapeHtml(String(asset.id || ""))}" data-card-variant="${hasApprovedTransparent ? "transparent" : String(asset.entity_type || "") === "dungeons" ? "dungeon-original" : "inactive-original"}">
+      <div class="media-card-visual ${hasApprovedTransparent ? "transparent" : ""}">${visual || `<div class="media-empty-visual">Visuel actif indisponible</div>`}</div>
       <div class="media-card-copy-v6">
-        <div class="media-card-kicker"><span class="media-local-dot"></span><span>Original local</span></div>
+        <div class="media-card-kicker"><span class="media-local-dot"></span><span>Stockage local</span></div>
         <strong>${escapeHtml(asset.label || asset.file_name || asset.id || "Média")}</strong>
         <small>${attachment ? `${escapeHtml(getLabel(attachment.type))} · ${escapeHtml(mediaEntityTitle(attachment.type, attachment.entity))}` : "Orphelin · sans rattachement"}</small>
         <div class="media-card-state ${derivative.tone}"><i></i><span>${escapeHtml(derivative.label)}</span></div>
@@ -5520,7 +5599,7 @@ function renderMediaAssetCard(asset, active = false) {
 function renderMedia() {
   const assets = mediaFilteredAssets();
   const selected = assets.find(asset => String(asset.id) === String(state.ui.media.selectedId || "")) ||
-    (state.ui.media.selectedId ? findById("media_assets", state.ui.media.selectedId) : null) || assets[0] || null;
+    (state.ui.media.selectedId ? mediaRepository.getCachedById(state.ui.media.selectedId) : null) || assets[0] || null;
   const scope = ["all","linked","orphan"].includes(state.ui.media.scope) ? state.ui.media.scope : "all";
   return renderShell(`
     <section class="media-library-v6 ${selected && state.ui.media.selectedId ? "detail-open" : ""}">
@@ -5768,6 +5847,7 @@ function render() {
   app.innerHTML = renderPage();
   restoreBestiaryScrollAfterRender();
   restoreCodexFamilyScrollAfterRender();
+  wireLazyMediaImages();
 
   const nextDialog = app.querySelector('[role="dialog"][aria-modal="true"]');
   const hasDialog = nextDialog instanceof HTMLElement;
@@ -5883,6 +5963,7 @@ async function applyImportPreview(){
 }
 
 async function refreshData() {
+  runtimeMetrics.refreshDataCalls += 1;
   const raw = await loadAllData();
   hydrateState(raw);
   state.logs = await getLogs(100);
@@ -6015,7 +6096,9 @@ async function storeMediaFile(file, entityType = "gallery", entityId = "") {
     width:preview.width,height:preview.height,original_size:originalBlob.size,original_sha256:await sha256Blob(originalBlob),
     media_schema:"v6-local-original-preview-derivative",created_at:nowISO(),updated_at:nowISO()
   };
-  await putOne("media_assets", media); return media;
+  await putOne("media_assets", media);
+  mediaRepository.rememberRecord(media, { includeInCatalog: mediaRepository.isCatalogLoaded() });
+  return media;
 }
 
 async function saveMediaForEntity(type, entity, file) {
@@ -6113,40 +6196,51 @@ function shuffle(arr) {
 }
 
 async function handleMediaUpload(files) {
-  for (const file of files) await storeMediaFile(file, "gallery", "");
-  await refreshData();
-  const latest = (state.data.media_assets || []).slice().sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")))[0];
-  if (latest) { state.ui.media.selectedId=latest.id; state.ui.media.linkType=latest.entity_type||"gallery"; state.ui.media.linkEntityId=latest.entity_id||""; await saveUiState(state.ui); }
+  let latest = null;
+  for (const file of files) latest = await storeMediaFile(file, "gallery", "");
+  if (mediaRepository.isCatalogLoaded()) await ensureMediaCatalog(true);
+  if (latest) {
+    state.ui.media.selectedId=latest.id;
+    state.ui.media.linkType=latest.entity_type||"gallery";
+    state.ui.media.linkEntityId=latest.entity_id||"";
+    await saveUiState(state.ui);
+  }
+  render();
   toast("Média ajouté localement. Original conservé.", "success");
 }
 
 async function attachMediaAsset(assetId, type, entityId) {
-  const existing=await getById("media_assets",assetId); if(!existing) throw new Error("Média introuvable.");
+  const existing=await mediaRepository.getFullAsset(assetId); if(!existing) throw new Error("Média introuvable.");
   const next=structuredClone(existing);
   if(type==="gallery"){next.entity_type="gallery";next.entity_id="";}
   else {const target=findById(type,entityId);if(!target)throw new Error("Entité de rattachement introuvable.");next.entity_type=type;next.entity_id=String(target.id);}
-  next.updated_at=nowISO(); await putOne("media_assets",next); await refreshData();
+  next.updated_at=nowISO();
+  const metadata = await mediaRepository.saveAsset(next);
+  if (mediaRepository.canDisplay(metadata, metadata.entity_type)) await mediaRepository.ensureActiveUrl(metadata, metadata.entity_type);
   state.ui.media.selectedId=assetId;state.ui.media.linkType=next.entity_type;state.ui.media.linkEntityId=next.entity_id;await saveUiState(state.ui);
+  render();
 }
 
-function structuredEntityForExport(entity){const copy=structuredClone(entity);for(const key of["blob","thumb_blob","preview_blob","transparent_blob"])delete copy[key];return copy;}
+function structuredEntityForExport(entity){const copy=structuredClone(entity);for(const key of["blob","thumb_blob","preview_blob","transparent_blob","has_blob","has_thumb_blob","has_preview_blob","has_transparent_blob","blob_size","thumb_blob_size","preview_blob_size","transparent_blob_size"])delete copy[key];return copy;}
 
-async function exportStructuredJsonFile(){const data={};for(const type of ENTITY_ORDER)data[type]=(state.data[type]||[]).map(structuredEntityForExport);const payload={format:"gargottex-structured-json",version:1,exported_at:nowISO(),app_version:APP_VERSION,contains_media_blobs:false,note:"Données structurées et métadonnées médias uniquement. Les Blobs sont exclus. Utiliser le backup ZIP pour les binaires.",data};downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),`gargottex_structured_${new Date().toISOString().slice(0,10)}.json`);}
+async function exportStructuredJsonFile(){const data={};for(const type of ENTITY_ORDER){const rows=type==="media_assets"?await ensureMediaCatalog():state.data[type]||[];data[type]=rows.map(structuredEntityForExport);}const payload={format:"gargottex-structured-json",version:1,exported_at:nowISO(),app_version:APP_VERSION,contains_media_blobs:false,note:"Données structurées et métadonnées médias uniquement. Les Blobs sont exclus. Utiliser le backup ZIP pour les binaires.",data};downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),`gargottex_structured_${new Date().toISOString().slice(0,10)}.json`);}
 
 function mediaBlobExtension(blob,fallbackMime="application/octet-stream"){const type=String(blob?.type||fallbackMime||"").toLowerCase();if(type.includes("png"))return"png";if(type.includes("jpeg")||type.includes("jpg"))return"jpg";if(type.includes("webp"))return"webp";if(type.includes("gif"))return"gif";return"bin";}
 
 async function exportEntityFile(type) {
-  const rows = toTemplateRows(type, state.data[type] || []);
+  const sourceRows = type === "media_assets" ? await ensureMediaCatalog() : (state.data[type] || []);
+  const rows = toTemplateRows(type, sourceRows);
   const headers = sheetHeaders(type);
   const blob = buildXlsxBlob(ENTITY_SHEETS[type] || getLabel(type), headers, rows);
   downloadBlob(blob, ENTITY_DOWNLOAD_FILES[type] || `${type}.xlsx`);
 }
 
 async function exportAllFile() {
+  const mediaRows = await ensureMediaCatalog();
   const sheets = ENTITY_ORDER.map(type => ({
     sheetName: ENTITY_SHEETS[type] || getLabel(type),
     headers: sheetHeaders(type),
-    rows: toTemplateRows(type, state.data[type] || [])
+    rows: toTemplateRows(type, type === "media_assets" ? mediaRows : (state.data[type] || []))
   }));
   const blob = buildXlsxWorkbookBlob(sheets);
   downloadBlob(blob, `gargottex_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
@@ -6155,15 +6249,16 @@ async function exportAllFile() {
 async function exportFullBackupFile(){
   if(backupBusy)throw new Error("Un export backup est déjà en cours.");backupBusy=true;
   try{
-    const sheets=ENTITY_ORDER.map(type=>({sheetName:ENTITY_SHEETS[type]||getLabel(type),headers:sheetHeaders(type),rows:toTemplateRows(type,state.data[type]||[])})),wb=buildXlsxWorkbookBlob(sheets),wbBytes=new Uint8Array(await wb.arrayBuffer()),structured={};
-    for(const type of ENTITY_ORDER)structured[type]=(state.data[type]||[]).map(structuredEntityForExport);
-    const mediaAssets=state.data.media_assets||[],files=[],mediaManifest=[];
+    const mediaMetadata=await ensureMediaCatalog(),mediaAssets=await mediaRepository.getAllFullAssetsForExplicitBackup();
+    const sheets=ENTITY_ORDER.map(type=>({sheetName:ENTITY_SHEETS[type]||getLabel(type),headers:sheetHeaders(type),rows:toTemplateRows(type,type==="media_assets"?mediaMetadata:(state.data[type]||[]))})),wb=buildXlsxWorkbookBlob(sheets),wbBytes=new Uint8Array(await wb.arrayBuffer()),structured={};
+    for(const type of ENTITY_ORDER)structured[type]=(type==="media_assets"?mediaMetadata:(state.data[type]||[])).map(structuredEntityForExport);
+    const files=[],mediaManifest=[];
     for(const asset of mediaAssets){
       const meta=structuredEntityForExport(asset),variants={},specs=[["original","blob",asset.mime_type||asset.blob?.type],["thumbnail","thumb_blob",asset.thumb_blob?.type||"image/webp"],["preview","preview_blob",asset.preview_blob?.type||"image/webp"],["transparent","transparent_blob",asset.transparent_blob?.type||"image/png"]];
       for(const[label,key,mime]of specs){const blob=asset[key];if(!blob)continue;const ext=mediaBlobExtension(blob,mime),filename=`media/${label}/${asset.id}.${ext}`,digest=await sha256Blob(blob);files.push({name:filename,data:new Uint8Array(await blob.arrayBuffer())});variants[label]={file:filename,size:blob.size,type:blob.type||mime||"",sha256:digest};}
       mediaManifest.push({metadata:meta,variants});if(mediaManifest.length%10===0)await new Promise(r=>setTimeout(r,0));
     }
-    const manifest={format:"gargottex-backup-zip",version:2,exported_at:nowISO(),app_version:APP_VERSION,db_name:DB_NAME,db_version:DB_VERSION,contains_media_blobs:true,structured_exports_contain_media_blobs:false,store_counts:Object.fromEntries(ENTITY_ORDER.map(type=>[type,(state.data[type]||[]).length])),media_count:mediaAssets.length,media_binary_count:mediaManifest.reduce((n,row)=>n+Object.keys(row.variants).length,0)};
+    const manifest={format:"gargottex-backup-zip",version:2,exported_at:nowISO(),app_version:APP_VERSION,db_name:DB_NAME,db_version:DB_VERSION,contains_media_blobs:true,structured_exports_contain_media_blobs:false,store_counts:Object.fromEntries(ENTITY_ORDER.map(type=>[type,type==="media_assets"?mediaMetadata.length:(state.data[type]||[]).length])),media_count:mediaAssets.length,media_binary_count:mediaManifest.reduce((n,row)=>n+Object.keys(row.variants).length,0)};
     files.unshift({name:"manifest.json",data:toBytes(JSON.stringify(manifest,null,2))},{name:"data/export_all.xlsx",data:wbBytes},{name:"data/structured.json",data:toBytes(JSON.stringify({format:"gargottex-structured-json",version:1,exported_at:manifest.exported_at,app_version:APP_VERSION,contains_media_blobs:false,data:structured},null,2))},{name:"data/media_assets.json",data:toBytes(JSON.stringify(mediaManifest,null,2))});
     const zipBytes=makeZip(files),verify=await readZip(zipBytes.buffer.slice(zipBytes.byteOffset,zipBytes.byteOffset+zipBytes.byteLength)),vm=JSON.parse(fromBytes(verify["manifest.json"]||toBytes("{}"))),vs=JSON.parse(fromBytes(verify["data/structured.json"]||toBytes("{}"))),vmedia=JSON.parse(fromBytes(verify["data/media_assets.json"]||toBytes("[]")));
     if(vm.format!=="gargottex-backup-zip"||vm.version!==2)throw new Error("Vérification backup échouée : manifest.");
@@ -6212,8 +6307,9 @@ function copyWithDefaults(type, row, existing) {
 }
 
 function renderMediaListForType(type) {
-  if (type === "gallery") return state.data.media_assets || [];
-  return (state.data.media_assets || []).filter(a => a.entity_type === type);
+  const rows = mediaRepository.getCatalog();
+  if (type === "gallery") return rows;
+  return rows.filter(a => a.entity_type === type);
 }
 
 async function setView(view) {
@@ -6251,10 +6347,12 @@ function bindEvents() {
         case "go-home":
         case "set-view": {
           const nextView = btn.dataset.view || "home";
+          if (nextView !== state.ui.view) resetMediaRuntimeContext();
           clearCodexContext(true);
           state.ui.view = nextView;
           state.ui.codexReturnStack = [];
           if (nextView === "codex") state.ui.codexDetailOpen = false;
+          if (nextView === "media") await ensureMediaCatalog();
           await saveUiState(state.ui);
           render();
           return;
@@ -6264,9 +6362,18 @@ function bindEvents() {
           await saveUiState(state.ui);
           render();
           return;
-        case "open-image":
+        case "open-image": {
+          if (btn.dataset.mediaId) {
+            let asset = mediaRepository.getCachedById(btn.dataset.mediaId);
+            if (!asset) asset = await mediaRepository.loadMetadataById(btn.dataset.mediaId);
+            const src = asset ? await mediaRepository.ensureActiveUrl(asset, relationStore(btn.dataset.mediaType) || asset.entity_type) : "";
+            if (!src) { toast("Visuel actif indisponible.", "warn"); return; }
+            openImageViewer(src, btn.dataset.alt || "");
+            return;
+          }
           openImageViewer(btn.dataset.src, btn.dataset.alt || "");
           return;
+        }
         case "close-image-viewer":
           if (btn.classList.contains("image-viewer-close") || ev.target === btn) {
             closeImageViewer();
@@ -6275,7 +6382,9 @@ function bindEvents() {
         case "set-codex-type":
           clearCodexContext(true);
           state.ui.codexReturnStack = [];
-          state.ui.codexType = btn.dataset.type;
+          const nextCodexType = btn.dataset.type;
+          if (nextCodexType !== state.ui.codexType) resetMediaRuntimeContext();
+          state.ui.codexType = nextCodexType;
           ensureBestiaryUi();
           ensureCodexFamilyUi();
           state.ui.codexSelectedId = state.ui.codexType === "media_assets"
@@ -6284,6 +6393,7 @@ function bindEvents() {
               ? (state.ui.bestiary.selectedId || state.data.creatures?.[0]?.id || "")
               : familyCollectionInitialId(state.ui.codexType);
           state.ui.codexDetailOpen = false;
+          if (state.ui.codexType === "media_assets") await ensureMediaCatalog();
           await saveUiState(state.ui);
           render();
           return;
@@ -6452,6 +6562,7 @@ function bindEvents() {
             return;
           }
           const currentType = state.ui.codexType;
+          if (targetType !== currentType) resetMediaRuntimeContext();
           const currentId = state.ui.codexSelectedId;
           const current = findById(currentType, currentId);
           const stack = ensureCodexReturnStack();
@@ -6777,8 +6888,11 @@ function bindEvents() {
           state.ui.media.selectedId = "";
           await saveUiState(state.ui); render(); return;
         case "media-select": {
-          const asset = findById("media_assets", btn.dataset.id); if (!asset) return;
+          let asset = mediaRepository.getCachedById(btn.dataset.id);
+          if (!asset) asset = await mediaRepository.loadMetadataById(btn.dataset.id);
+          if (!asset) return;
           state.ui.media.selectedId=String(asset.id); state.ui.media.linkType=asset.entity_type||"gallery"; state.ui.media.linkEntityId=asset.entity_id||"";
+          if (mediaRepository.canDisplay(asset, asset.entity_type)) await mediaRepository.ensureActiveUrl(asset, asset.entity_type);
           await saveUiState(state.ui); render(); return;
         }
         case "media-back-library":
@@ -6786,11 +6900,12 @@ function bindEvents() {
         case "media-attach":
           await attachMediaAsset(btn.dataset.id,state.ui.media.linkType||"gallery",state.ui.media.linkEntityId||""); toast("Rattachement média enregistré.","success"); return;
         case "media-download-original": {
-          const asset=await getById("media_assets",btn.dataset.id); if(!asset?.blob){toast("Original local indisponible.","warn");return;}
+          const asset=await mediaRepository.getFullAsset(btn.dataset.id); if(!asset?.blob){toast("Original local indisponible.","warn");return;}
           downloadBlob(asset.blob,asset.file_name||"original"); return;
         }
         case "media-refresh":
-          await refreshData();
+          await ensureMediaCatalog(true);
+          render();
           return;
         case "export-entity":
           await exportEntityFile(btn.dataset.type);toast("XLSX structuré exporté. Aucun Blob média inclus.","info");return;
@@ -7160,6 +7275,9 @@ async function bootstrap() {
   await saveUiState(state.ui);
 
   state.logs = await getLogs(100);
+  if (state.ui.view === "media" || (state.ui.view === "codex" && state.ui.codexType === "media_assets")) {
+    await ensureMediaCatalog();
+  }
   state.ready = true;
   wireGlobalErrors();
   wireWorkshopUnloadGuard();

@@ -1,5 +1,5 @@
 
-const CACHE = "gargottex-v6-codex-toolbar-v1";
+const CACHE = "gargottex-v6-fast-media-runtime-v1";
 const CACHE_PREFIX = "gargottex-";
 const ASSETS = [
   "./",
@@ -12,6 +12,7 @@ const ASSETS = [
   "./src/utils/zip.js",
   "./src/utils/xlsx.js",
   "./src/storage/idb.js",
+  "./src/storage/media-repository.js",
   "./assets/fonts/Inter-Variable.ttf",
   "./assets/fonts/Alegreya-Variable.ttf",
   "./assets/ui-v6/icons/Icone_Entite_HEROS.webp",

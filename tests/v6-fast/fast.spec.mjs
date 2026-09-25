@@ -80,6 +80,129 @@ test("home bootstrap and session actions remain usable", async ({ page }) => {
   await assertNoHorizontalOverflow(page);
 });
 
+test("media runtime stays lazy and enforces active visual rules", async ({ page }) => {
+  await ready(page);
+
+  const initial = await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(initial).toBeTruthy();
+  expect(initial.catalogScans).toBe(0);
+  expect(initial.fullRecordReads).toBe(0);
+  expect(initial.objectUrlsCreated).toBe(0);
+  expect(initial.liveObjectUrls).toBe(0);
+
+  const seeded = await page.evaluate(async () => {
+    const raw = atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+    const bytes = Uint8Array.from(raw, c => c.charCodeAt(0));
+    const transparent = new Blob([bytes], { type: "image/png" });
+    const original = new Blob([bytes], { type: "image/png" });
+    const db = await new Promise((resolve,reject) => {
+      const req = indexedDB.open("gargottex-v5-offline");
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error);
+    });
+    const readAll = storeName => new Promise((resolve,reject) => {
+      const tx=db.transaction(storeName,"readonly");
+      const req=tx.objectStore(storeName).getAll();
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error);
+    });
+    const [npcs,dungeons]=await Promise.all([readAll("npcs"),readAll("dungeons")]);
+    const npc=npcs[0], dungeon=dungeons[0];
+    if(!npc||!dungeon) throw new Error("Fixture métier absente");
+
+    await new Promise((resolve,reject) => {
+      const tx=db.transaction("media_assets","readwrite");
+      const store=tx.objectStore("media_assets");
+      store.put({
+        id:"v6fast-lazy-transparent",
+        label:"Lazy transparent",
+        file_name:"lazy-transparent.png",
+        path:"local-media/npcs/lazy-transparent.png",
+        entity_type:"npcs",
+        entity_id:npc.id,
+        transparent_blob:transparent,
+        transparent_path:"local-media/npcs/transparent/lazy-transparent.png",
+        transparent_review_status:"approved",
+        transparent_audit:{pass:true,has_alpha_channel:true,width:1,height:1}
+      });
+      store.put({
+        id:"v6fast-white-original",
+        label:"Original blanc historique",
+        file_name:"white-original.png",
+        path:"local-media/gallery/white-original.png",
+        mime_type:"image/png",
+        entity_type:"gallery",
+        entity_id:"",
+        blob:original,
+        original_size:original.size
+      });
+      store.put({
+        id:"v6fast-dungeon-original",
+        label:"Original Donjon",
+        file_name:"logo-192.png",
+        path:"assets/images/logo-192.png",
+        mime_type:"image/png",
+        entity_type:"dungeons",
+        entity_id:dungeon.id
+      });
+      tx.oncomplete=resolve;
+      tx.onerror=()=>reject(tx.error);
+      tx.onabort=()=>reject(tx.error);
+    });
+    db.close();
+    return {npcId:npc.id,dungeonId:dungeon.id};
+  });
+
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+
+  const afterReload = await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(afterReload.catalogScans).toBe(0);
+  expect(afterReload.objectUrlsCreated).toBe(0);
+
+  await gotoView(page,"codex");
+  await page.locator('[data-action="set-codex-type"][data-type="npcs"]').first().click();
+  const npcCard=page.locator(`[data-action="select-family-codex"][data-type="npcs"][data-id="${seeded.npcId}"]`).first();
+  await expect(npcCard).toBeVisible();
+  await expect(npcCard.locator("img").first()).toHaveAttribute("src", /^blob:/);
+
+  const targeted = await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(targeted.catalogScans).toBe(0);
+  expect(targeted.entityLookups).toBeGreaterThan(0);
+  expect(targeted.objectUrlsCreated).toBeGreaterThan(0);
+
+  await gotoView(page,"home");
+  const released = await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(released.liveObjectUrls).toBe(0);
+
+  await gotoView(page,"media");
+  const whiteCard=page.locator('[data-action="media-select"][data-id="v6fast-white-original"]');
+  const dungeonCard=page.locator('[data-action="media-select"][data-id="v6fast-dungeon-original"]');
+  await expect(whiteCard).toHaveAttribute("data-card-variant","inactive-original");
+  await expect(whiteCard.locator("img")).toHaveCount(0);
+  await expect(dungeonCard).toHaveAttribute("data-card-variant","dungeon-original");
+  await expect(dungeonCard.locator("img")).toHaveAttribute("src", /assets\/images\/logo-192\.png/);
+
+  await whiteCard.click();
+  await page.locator('[data-action="media-link-type"]').selectOption("dungeons");
+  await page.locator('[data-action="media-link-entity"]').selectOption(seeded.dungeonId);
+  const beforeAttach = await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().refreshDataCalls);
+  await page.locator('[data-action="media-attach"]').click();
+  const afterAttach = await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().refreshDataCalls);
+  expect(afterAttach).toBe(beforeAttach);
+
+  const persisted = await page.evaluate(async id => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction("media_assets","readonly"),req=tx.objectStore("media_assets").get(id);
+    const row=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    db.close();
+    return {entity_type:row.entity_type,entity_id:row.entity_id,blobSize:row.blob?.size||0};
+  },"v6fast-white-original");
+  expect(persisted.entity_type).toBe("dungeons");
+  expect(persisted.entity_id).toBe(seeded.dungeonId);
+  expect(persisted.blobSize).toBeGreaterThan(0);
+});
+
 test("Bestiary filters sorting display mode and persistence remain stable", async ({ page }) => {
   await ready(page);
   await gotoView(page, "codex");
@@ -421,6 +544,7 @@ test("approved cutouts stay active across Media and PNJ Codex", async ({ page })
   await gotoView(page,"media");
   const adminCard=page.locator('[data-action="media-select"][data-id="media-existing-transparent"]');
   await expect(adminCard).toHaveAttribute("data-card-variant","transparent");
+  await expect(adminCard.locator("img")).toHaveAttribute("src", /^blob:/);
   const transparentSrc=await adminCard.locator("img").getAttribute("src");
   expect(transparentSrc).toBeTruthy();
 
@@ -450,9 +574,12 @@ test("approved cutouts stay active across Media and PNJ Codex", async ({ page })
   await page.locator('[data-action="set-codex-type"][data-type="npcs"]').first().click();
   const npcCard=page.locator(`[data-action="select-family-codex"][data-type="npcs"][data-id="${linkedNpc.id}"]`).first();
   await expect(npcCard).toBeVisible();
-  await expect(npcCard.locator("img").first()).toHaveAttribute("src",transparentSrc);
+  await expect(npcCard.locator("img").first()).toHaveAttribute("src", /^blob:/);
+  const npcSrc = await npcCard.locator("img").first().getAttribute("src");
+  expect(npcSrc).toBeTruthy();
+  expect(npcSrc).not.toBe(transparentSrc);
   await npcCard.click();
-  await expect(page.locator(".npc-sheet-v6 .npc-portrait-v6 img").first()).toHaveAttribute("src",transparentSrc);
+  await expect(page.locator(".npc-sheet-v6 .npc-portrait-v6 img").first()).toHaveAttribute("src",npcSrc);
 
   await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
   await expect(page.locator(".codex-media-library-v6")).toBeVisible();
@@ -465,7 +592,7 @@ test("approved cutouts stay active across Media and PNJ Codex", async ({ page })
 
   const codexCard=page.locator(".codex-media-card-v6").filter({hasText:linkedNpc.name});
   await expect(codexCard).toBeVisible();
-  await expect(codexCard.locator("img")).toHaveAttribute("src",transparentSrc);
+  await expect(codexCard.locator("img")).toHaveAttribute("src", /^blob:/);
 });
 
 test("representative phone iPad and desktop layouts remain usable", async ({ page }) => {
