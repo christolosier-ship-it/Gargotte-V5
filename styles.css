@@ -1823,3 +1823,249 @@ body.cinematic-open{overflow:hidden}
   .dungeon-collection-card,.dungeon-collection-media>img,.dungeon-floor-stop,.dungeon-boss-card,.dungeon-linked-preview{transition:none!important}
   .dungeon-sheet-v6.dungeon-sheet-enter-v6,.dungeon-sheet-v6.dungeon-sheet-enter-v6 .dungeon-cover-v6>img{animation:none!important}
 }
+
+
+/* V6-WHAOU · Lot 03 · Créatures */
+.bestiary-gallery-card,.bestiary-list-row{
+  transition:transform var(--whaou-motion-touch) var(--whaou-ease),border-color var(--whaou-motion-touch),box-shadow var(--whaou-motion-touch)
+}
+.bestiary-gallery-media{
+  isolation:isolate;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse at 50% 90%,color-mix(in srgb,var(--cat) 12%,transparent),transparent 38%),
+    radial-gradient(circle at 82% 14%,color-mix(in srgb,var(--dungeon-accent) 22%,transparent),transparent 34%),
+    radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--cat) 12%,transparent),transparent 48%),
+    #0d0907
+}
+.bestiary-card-stage{
+  position:absolute;z-index:0;left:12%;right:12%;bottom:11%;height:18%;
+  border-radius:50%;
+  background:radial-gradient(ellipse,color-mix(in srgb,var(--cat) 17%,rgba(212,164,95,.12)),transparent 68%);
+  filter:blur(5px);pointer-events:none
+}
+.bestiary-card-plinth{
+  position:absolute;z-index:1;left:21%;right:21%;bottom:7%;height:8%;
+  border-radius:50%;
+  background:
+    linear-gradient(180deg,rgba(184,130,72,.38),rgba(37,23,13,.76)),
+    radial-gradient(ellipse,#5d4028,#160f0b 72%);
+  box-shadow:0 7px 12px #0009,inset 0 1px rgba(240,207,147,.18);
+  transform:perspective(90px) rotateX(58deg);
+  pointer-events:none
+}
+.bestiary-gallery-media>img:not(.bestiary-card-sigil){
+  position:relative;z-index:2;
+  width:108%;height:108%;max-width:none;
+  object-position:center bottom;
+  padding:0 2px 6px;
+  filter:saturate(1.05) contrast(1.035) drop-shadow(0 14px 13px #000b);
+  transform:translateY(3px);
+  transition:transform var(--whaou-motion-local) var(--whaou-ease),filter var(--whaou-motion-local)
+}
+.bestiary-card-sigil{
+  z-index:3;right:8px;top:8px;width:50px;height:50px;
+  opacity:.86;
+  filter:drop-shadow(0 4px 8px #000b) drop-shadow(0 0 8px color-mix(in srgb,var(--cat) 20%,transparent))
+}
+.bestiary-gallery-copy{position:relative;z-index:4}
+.bestiary-gallery-card.mini_boss,.bestiary-gallery-card.boss{
+  border-width:1px;
+  background-image:
+    radial-gradient(circle at 82% 8%,color-mix(in srgb,var(--cat) 10%,transparent),transparent 30%),
+    linear-gradient(155deg,color-mix(in srgb,var(--dungeon-accent) 9%,transparent),transparent 48%)
+}
+.bestiary-gallery-card.mini_boss .bestiary-card-sigil,.bestiary-gallery-card.boss .bestiary-card-sigil{
+  width:56px;height:56px;opacity:.96
+}
+.bestiary-gallery-card.boss{box-shadow:inset 0 -3px color-mix(in srgb,var(--game-boss) 30%,transparent)}
+.bestiary-gallery-card.selected{
+  border-color:color-mix(in srgb,var(--cat) 80%,#d4a45f);
+  box-shadow:
+    0 13px 28px color-mix(in srgb,var(--cat) 8%,#000),
+    inset 3px 0 var(--cat),
+    inset 0 -2px color-mix(in srgb,var(--dungeon-accent) 62%,transparent)
+}
+.bestiary-list-thumb{
+  position:relative;
+  background:
+    radial-gradient(ellipse at 50% 88%,color-mix(in srgb,var(--cat) 12%,transparent),transparent 45%),
+    #0d0907
+}
+.bestiary-list-thumb>img{
+  object-position:center bottom;
+  filter:drop-shadow(0 7px 7px #0009)
+}
+.bestiary-list-row.selected{border-color:color-mix(in srgb,var(--cat) 72%,#d4a45f)}
+.bestiary-list-row .bestiary-menace-chip{font-weight:900}
+.bestiary-advanced-filters{
+  transition:border-color var(--whaou-motion-touch),background var(--whaou-motion-touch)
+}
+.bestiary-advanced-filters[open] .bestiary-filter-panel{
+  animation:whaou-filter-open var(--whaou-motion-local) var(--whaou-ease) both
+}
+@keyframes whaou-filter-open{from{opacity:.35;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.bestiary-empty{
+  min-height:210px;border:1px dashed rgba(212,164,95,.22);border-radius:13px;
+  background:
+    radial-gradient(circle at 50% 25%,rgba(212,164,95,.035),transparent 36%),
+    linear-gradient(120deg,rgba(212,164,95,.02),rgba(10,7,5,.22))
+}
+.bestiary-empty:before{
+  content:"";width:66px;height:66px;margin-bottom:4px;opacity:.24;
+  background:url("assets/ui-v6/icons/Sigil_Basique.webp") center/contain no-repeat;
+  filter:grayscale(.35)
+}
+
+.creature-sheet-v6{
+  position:relative;
+  box-shadow:
+    0 22px 54px #0008,
+    0 0 38px color-mix(in srgb,var(--dungeon-accent) 10%,transparent),
+    inset 0 2px 0 color-mix(in srgb,var(--creature-cat) 42%,transparent)
+}
+.creature-art-v6{
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse at 50% 83%,color-mix(in srgb,var(--creature-cat) 12%,transparent),transparent 34%),
+    radial-gradient(circle at 68% 20%,color-mix(in srgb,var(--dungeon-accent) 22%,transparent),transparent 35%),
+    radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--creature-cat) 14%,transparent),transparent 38%),
+    linear-gradient(180deg,rgba(10,6,4,.18),rgba(10,6,4,.88)),
+    url("assets/ui-v6/textures/grain-dark.svg") repeat
+}
+.creature-plinth{
+  z-index:2;left:15%;right:15%;bottom:4.5%;height:10%;
+  background:
+    linear-gradient(180deg,color-mix(in srgb,var(--dungeon-accent) 34%,#a36d3c),rgba(38,23,14,.82)),
+    radial-gradient(ellipse,color-mix(in srgb,var(--creature-cat) 16%,#4b3020),#130d09 72%);
+  box-shadow:0 14px 20px #000a,inset 0 2px color-mix(in srgb,var(--dungeon-accent) 42%,rgba(240,207,147,.2));
+  filter:none;transform:perspective(130px) rotateX(64deg)
+}
+.creature-figure{inset:3% 0 2.5%}
+.creature-figure>img{
+  object-position:center bottom;
+  filter:saturate(1.06) contrast(1.04) drop-shadow(0 22px 20px #000b);
+  animation:creature-figure-enter var(--whaou-motion-editorial) var(--whaou-ease) both
+}
+@keyframes creature-figure-enter{from{opacity:.45;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+.creature-art-frame{opacity:.72}
+.creature-identity-v6{position:relative;isolation:isolate;overflow:hidden}
+.creature-identity-copy,.creature-sigil-v6{position:relative;z-index:2}
+.creature-identity-watermark{
+  position:absolute;z-index:0;right:76px;top:50%;width:180px;height:180px;object-fit:contain;
+  opacity:.045;transform:translateY(-50%) rotate(-7deg);
+  filter:grayscale(.2) drop-shadow(0 0 20px color-mix(in srgb,var(--creature-cat) 20%,transparent));
+  pointer-events:none
+}
+.creature-sigil-v6{
+  border-color:color-mix(in srgb,var(--creature-cat) 72%,var(--color-border-subtle));
+  box-shadow:
+    0 0 32px color-mix(in srgb,var(--creature-cat) 12%,transparent),
+    inset 0 0 0 4px rgba(0,0,0,.13)
+}
+.creature-stat-v6{
+  background:
+    linear-gradient(180deg,color-mix(in srgb,var(--creature-cat) 3%,rgba(29,21,16,.9)),rgba(17,12,9,.9));
+  box-shadow:
+    inset 0 -2px 0 color-mix(in srgb,var(--dungeon-accent) 16%,transparent),
+    inset 0 1px rgba(255,255,255,.025),
+    0 7px 14px #0002
+}
+.creature-ability-v6{
+  min-height:126px;padding-right:116px;
+  border-color:color-mix(in srgb,var(--creature-cat) 34%,rgba(212,164,95,.54));
+  box-shadow:inset 4px 0 var(--creature-cat),0 10px 24px #0003
+}
+.creature-ability-v6.has-noise{padding-bottom:24px}
+.creature-ability-stamp{
+  position:absolute!important;z-index:3!important;right:18px;top:24px;
+  display:inline-flex;padding:8px 10px 6px;
+  border:3px double #a85c49;border-radius:5px;
+  background:rgba(66,22,16,.7);color:#f0a995;
+  font:900 9px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+  transform:rotate(-5deg);
+  box-shadow:0 3px 0 #0007,inset 0 0 0 1px rgba(240,169,149,.13);
+  animation:creature-stamp-hit 220ms var(--whaou-ease) both
+}
+@keyframes creature-stamp-hit{0%{opacity:.3;transform:rotate(-5deg) scale(1.18)}100%{opacity:1;transform:rotate(-5deg) scale(1)}}
+.creature-behavior-v6{
+  background:
+    linear-gradient(110deg,color-mix(in srgb,var(--creature-cat) 4%,rgba(23,17,13,.78)),rgba(23,17,13,.72))
+}
+.creature-target-priority{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;
+  margin:0 0 10px;padding:9px 11px;
+  border:1px solid color-mix(in srgb,var(--creature-cat) 30%,var(--color-border-subtle));
+  border-radius:9px;background:#0002
+}
+.creature-target-priority span{color:var(--color-text-tertiary);font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.creature-target-priority strong{color:#f0ddc5;font:700 15px/1.1 Alegreya,Georgia,serif}
+.creature-behavior-v6>p{padding-top:2px}
+.creature-loot-list{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.creature-loot-item{
+  min-height:92px;display:grid;grid-template-columns:68px minmax(0,1fr);gap:10px;align-items:center;padding:7px 9px
+}
+.creature-loot-thumb{
+  width:68px;height:72px;display:grid;place-items:center;overflow:hidden;
+  border:1px solid rgba(212,164,95,.22);border-radius:8px;background:#0c0806
+}
+.creature-loot-thumb img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 7px 8px #0009)}
+.creature-loot-thumb.fallback img{width:42px;height:42px;opacity:.72}
+.creature-loot-copy{min-width:0;display:grid;gap:2px}
+.creature-loot-copy>strong{font-size:16px}
+.creature-loot-copy>p{margin-top:4px}
+.creature-loot-copy>small{color:#e7c77e}
+.creature-lore-v6{box-shadow:inset 0 0 30px rgba(62,36,17,.13),0 8px 18px #0002}
+.creature-related-card{position:relative;overflow:hidden}
+.creature-related-card:after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:linear-gradient(90deg,var(--creature-cat),transparent);opacity:.18;pointer-events:none
+}
+.creature-related-thumb{background:radial-gradient(circle at 50% 55%,rgba(212,164,95,.05),transparent 60%),#0d0907}
+.creature-related-fallback{width:100%;height:100%;display:grid;place-items:center}
+.creature-related-fallback img{width:38px;height:38px;object-fit:contain;opacity:.72}
+.creature-phase-list{position:relative;counter-reset:whaou-phase}
+.creature-phase-card{position:relative;counter-increment:whaou-phase}
+.creature-phase-card:not(:last-child):after{
+  content:"";position:absolute;z-index:4;right:-8px;top:35px;width:16px;height:2px;
+  background:linear-gradient(90deg,var(--game-boss),rgba(239,75,75,.15));
+  pointer-events:none
+}
+.creature-phase-card.current{
+  box-shadow:inset 4px 0 var(--game-boss),0 0 22px rgba(239,75,75,.055)
+}
+.creature-phase-state{
+  border:1px solid rgba(239,75,75,.22);border-radius:999px;padding:4px 7px
+}
+.creature-phase-card.current .creature-phase-state{color:#f1b0a3;background:rgba(239,75,75,.08)}
+.creature-sheet-v6.mini_boss,.creature-sheet-v6.boss{
+  border-top-color:color-mix(in srgb,var(--creature-cat) 72%,#d4a45f)
+}
+.creature-sheet-v6.boss{
+  box-shadow:
+    0 24px 58px #0009,
+    0 0 42px color-mix(in srgb,var(--game-boss) 8%,transparent),
+    inset 0 3px 0 color-mix(in srgb,var(--game-boss) 55%,transparent)
+}
+
+@media(hover:hover) and (pointer:fine){
+  .bestiary-gallery-card:hover{transform:translateY(-2px)}
+  .bestiary-gallery-card:hover .bestiary-gallery-media>img:not(.bestiary-card-sigil){transform:translateY(-1px) scale(1.035)}
+  .bestiary-list-row:hover{transform:translateX(2px)}
+  .creature-related-card:hover{transform:translateY(-1px)}
+}
+@media(max-width:767px){
+  .creature-identity-watermark{right:42px;width:130px;height:130px}
+  .creature-ability-v6{padding-right:18px;padding-top:18px}
+  .creature-ability-stamp{position:static!important;margin-top:8px;justify-self:start;transform:rotate(-3deg)}
+  .creature-target-priority{grid-template-columns:1fr}
+  .creature-loot-item{grid-template-columns:58px minmax(0,1fr)}
+  .creature-loot-thumb{width:58px;height:62px}
+  .creature-phase-card:not(:last-child):after{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .bestiary-gallery-card,.bestiary-list-row,.bestiary-gallery-media>img:not(.bestiary-card-sigil),
+  .bestiary-advanced-filters,.creature-related-card{transition:none!important}
+  .bestiary-advanced-filters[open] .bestiary-filter-panel,
+  .creature-figure>img,.creature-ability-stamp{animation:none!important}
+}
