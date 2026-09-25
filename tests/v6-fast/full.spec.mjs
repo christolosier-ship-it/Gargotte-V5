@@ -217,6 +217,33 @@ test("reduced motion keeps interactions usable", async ({ page }) => {
     if(preferred) await startDungeon.selectOption(preferred);
     await page.locator('[data-action="session-start"]').click();
   }
+  await gotoView(page, "brouhaha");
+  const plus=page.locator('[data-action="session-brouhaha-plus"]');
+  if(await plus.count()){
+    for(let i=0;i<12;i++) await plus.click();
+    await expect(page.locator(".brouhaha-session-stage.level-12")).toBeVisible();
+    const brouhahaMotion=await page.locator(".brouhaha-session-v6").evaluate(el => {
+      const nodes=[el,...el.querySelectorAll("*")];
+      const parse=value=>value.split(",").map(part=>part.trim()).map(text=>text.endsWith("ms")?parseFloat(text):parseFloat(text)*1000).filter(Number.isFinite);
+      return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
+    });
+    expect(brouhahaMotion).toBeLessThanOrEqual(20);
+  }
+
+  await gotoView(page, "quests");
+  const questDraw=page.locator('[data-action="session-quest-reroll"]');
+  if(await questDraw.count() && await questDraw.isEnabled()){
+    await questDraw.click();
+    await expect(page.locator(".session-quest-card.has-quest")).toBeVisible();
+    const questMotion=await page.locator(".session-quest-card").evaluate(el => {
+      const nodes=[el,...el.querySelectorAll("*")];
+      const parse=value=>value.split(",").map(part=>part.trim()).map(text=>text.endsWith("ms")?parseFloat(text):parseFloat(text)*1000).filter(Number.isFinite);
+      return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
+    });
+    expect(questMotion).toBeLessThanOrEqual(20);
+  }
+
+  await gotoView(page, "generator");
   const generate=page.locator('[data-action="generate-session-encounter"]');
   if(await generate.isEnabled()){
     await generate.click();
