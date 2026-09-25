@@ -96,6 +96,18 @@ test("bootstrap defers seed diagnostics and heavy modules after first install", 
   expect(warm.paths.some(path => path.endsWith("/src/utils/xlsx.js"))).toBe(false);
   expect(warm.paths.some(path => path.endsWith("/src/utils/zip.js"))).toBe(false);
 
+  console.log("[v6fast-bootstrap]", JSON.stringify({
+    coldReadyMs:cold.readyAtMs,
+    warmReadyMs:warm.readyAtMs,
+    coldRenderCalls:cold.renderCalls,
+    warmRenderCalls:warm.renderCalls,
+    warmResourceCount:warm.paths.length,
+    warmSeedLoads:warm.seedLoads,
+    warmDiagnosticRuns:warm.diagnosticRuns,
+    warmXlsxLoads:warm.xlsxModuleLoads,
+    warmZipLoads:warm.zipModuleLoads
+  }));
+
   await gotoView(page, "import");
   await expect(page.locator(".admin-io-v6")).toBeVisible();
   await expect(page.locator(".diagnostic-metrics-v6")).toBeVisible();
