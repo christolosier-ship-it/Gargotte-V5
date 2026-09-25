@@ -110,8 +110,9 @@ test("media runtime stays lazy and enforces active visual rules", async ({ page 
     const npc=npcs[0], dungeon=dungeons[0];
     if(!npc||!dungeon) throw new Error("Fixture métier absente");
 
+    const legacyDungeonPreviewPath="local-media/dungeons/preview/legacy-dungeon.webp";
     await new Promise((resolve,reject) => {
-      const tx=db.transaction("media_assets","readwrite");
+      const tx=db.transaction(["media_assets","dungeons"],"readwrite");
       const store=tx.objectStore("media_assets");
       store.put({
         id:"v6fast-lazy-transparent",
@@ -145,6 +146,19 @@ test("media runtime stays lazy and enforces active visual rules", async ({ page 
         entity_type:"dungeons",
         entity_id:dungeon.id
       });
+      store.put({
+        id:"v6fast-dungeon-legacy-original",
+        label:"Donjon historique original",
+        file_name:"legacy-dungeon.png",
+        path:"local-media/dungeons/original/legacy-dungeon.png",
+        preview_path:legacyDungeonPreviewPath,
+        mime_type:"image/png",
+        entity_type:"dungeons",
+        entity_id:dungeon.id,
+        blob:original,
+        original_size:original.size
+      });
+      tx.objectStore("dungeons").put({...dungeon,image_path:legacyDungeonPreviewPath});
       tx.oncomplete=resolve;
       tx.onerror=()=>reject(tx.error);
       tx.onabort=()=>reject(tx.error);
@@ -161,6 +175,11 @@ test("media runtime stays lazy and enforces active visual rules", async ({ page 
   expect(afterReload.objectUrlsCreated).toBe(0);
 
   await gotoView(page,"codex");
+  await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
+  const dungeonCard=page.locator(`[data-action="select-family-codex"][data-type="dungeons"][data-id="${seeded.dungeonId}"]`).first();
+  await expect(dungeonCard).toBeVisible();
+  await expect(dungeonCard.locator("img").first()).toHaveAttribute("src", /^blob:/);
+
   await page.locator('[data-action="set-codex-type"][data-type="npcs"]').first().click();
   const npcCard=page.locator(`[data-action="select-family-codex"][data-type="npcs"][data-id="${seeded.npcId}"]`).first();
   await expect(npcCard).toBeVisible();
@@ -177,11 +196,11 @@ test("media runtime stays lazy and enforces active visual rules", async ({ page 
 
   await gotoView(page,"media");
   const whiteCard=page.locator('[data-action="media-select"][data-id="v6fast-white-original"]');
-  const dungeonCard=page.locator('[data-action="media-select"][data-id="v6fast-dungeon-original"]');
+  const dungeonMediaCard=page.locator('[data-action="media-select"][data-id="v6fast-dungeon-original"]');
   await expect(whiteCard).toHaveAttribute("data-card-variant","inactive-original");
   await expect(whiteCard.locator("img")).toHaveCount(0);
-  await expect(dungeonCard).toHaveAttribute("data-card-variant","dungeon-original");
-  await expect(dungeonCard.locator("img")).toHaveAttribute("src", /assets\/images\/logo-192\.png/);
+  await expect(dungeonMediaCard).toHaveAttribute("data-card-variant","dungeon-original");
+  await expect(dungeonMediaCard.locator("img")).toHaveAttribute("src", /assets\/images\/logo-192\.png/);
 
   await whiteCard.click();
   await page.locator('[data-action="media-link-type"]').selectOption("dungeons");
