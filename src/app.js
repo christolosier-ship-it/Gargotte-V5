@@ -2951,8 +2951,6 @@ function renderHome() {
   const quest = findById("quests", session.questId);
   const currentBrouhaha = session.brouhaha.current;
   const bertholdAdvice = BERTHOLD_ADVICES[bertholdAdviceIndex] || BERTHOLD_ADVICES[0];
-  const dungeonImage = dungeon ? imageUrlForEntity(dungeon) : "";
-  const heroImage = dungeonImage || "assets/images/logo-source.jpeg";
 
   const editorialHead = `
     <header class="home-editorial-head">
@@ -3005,6 +3003,9 @@ function renderHome() {
       </section>
     `);
   }
+
+  const dungeonImage = dungeon ? imageUrlForEntity(dungeon, "dungeons") : "";
+  const heroImage = dungeonImage || "assets/images/logo-source.jpeg";
 
   return renderShell(`
     <section class="session-home-v6 active-session home-polish-v6">
