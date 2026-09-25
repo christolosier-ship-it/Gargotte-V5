@@ -5298,8 +5298,8 @@ async function saveEntityFromWorkshopForm(type, form, options = {}) {
   state.workshop.editorOpen = true;
   await saveUiState(state.ui);
 
+  if (toastAfter || renderAfter) render();
   if (toastAfter) toast("Enregistré localement", "success");
-  else if (renderAfter) render();
   return entity;
 }
 
