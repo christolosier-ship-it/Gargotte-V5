@@ -150,6 +150,29 @@ test("reduced motion keeps interactions usable", async ({ page }) => {
   await page.locator('[data-action="select-codex"][data-type="creatures"]').first().click();
   await expect(page.locator(".creature-sheet-v6")).toBeVisible();
 
+  await page.locator('[data-action="set-codex-type"][data-type="heroes"]').first().click();
+  await page.locator('[data-action="select-family-codex"][data-type="heroes"]').first().click();
+  await expect(page.locator(".hero-sheet-v6")).toBeVisible();
+  const nextHeroLevel=page.locator('.hero-level-selector-v6 button:not(:disabled)').nth(1);
+  if(await nextHeroLevel.count()) await nextHeroLevel.click();
+  await expect(page.locator(".hero-sheet-v6")).toBeVisible();
+  const heroMotion=await page.locator(".hero-sheet-v6").evaluate(el => {
+    const nodes=[el,...el.querySelectorAll("*")];
+    const parse=value=>value.split(",").map(part=>part.trim()).map(text=>text.endsWith("ms")?parseFloat(text):parseFloat(text)*1000).filter(Number.isFinite);
+    return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
+  });
+  expect(heroMotion).toBeLessThanOrEqual(20);
+
+  await page.locator('[data-action="set-codex-type"][data-type="npcs"]').first().click();
+  await page.locator('[data-action="select-family-codex"][data-type="npcs"]').first().click();
+  await expect(page.locator(".npc-sheet-v6")).toBeVisible();
+  const npcMotion=await page.locator(".npc-sheet-v6").evaluate(el => {
+    const nodes=[el,...el.querySelectorAll("*")];
+    const parse=value=>value.split(",").map(part=>part.trim()).map(text=>text.endsWith("ms")?parseFloat(text):parseFloat(text)*1000).filter(Number.isFinite);
+    return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
+  });
+  expect(npcMotion).toBeLessThanOrEqual(20);
+
   await gotoView(page, "brouhaha");
   const timings = await page.locator("body").evaluate(() => {
     const parse = value => value.split(",").map(part => {
