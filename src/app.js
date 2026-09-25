@@ -3222,7 +3222,9 @@ function renderBestiaryGalleryCard(item) {
   return `
     <button class="bestiary-gallery-card ${meta.key} ${selected ? "selected" : ""}" data-action="select-codex" data-type="creatures" data-id="${escapeHtml(String(item.id || ""))}" aria-label="Ouvrir ${escapeHtml(item.name || "Créature")}" style="--dungeon-accent:${safeCreatureAccent(item)}">
       <div class="bestiary-gallery-media">
+        <span class="bestiary-card-stage" aria-hidden="true"></span>
         ${image ? `<img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(item.name || "la créature")}" loading="lazy">` : `<div class="bestiary-media-fallback"><img src="${V6_ICON_PATH}${meta.sigil}" alt=""><span>Visuel indisponible</span></div>`}
+        <span class="bestiary-card-plinth" aria-hidden="true"></span>
         <img class="bestiary-card-sigil" src="${V6_ICON_PATH}${meta.sigil}" alt="" aria-hidden="true">
       </div>
       <div class="bestiary-gallery-copy">
@@ -3529,9 +3531,24 @@ function renderSafeRelationMedia(image, alt, fallbackText = "Visuel indisponible
   return `<img src="${escapeHtml(image)}" alt="${escapeHtml(alt || "")}" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>${escapeHtml(fallbackText)}</span>`;
 }
 
+function creatureRelationFallbackIcon(type, target) {
+  if (type === "creatures") return creatureCategoryMeta(target?.category).sigil;
+  const icons = {
+    dungeons: "Icone_Gameplay_DONJON.webp",
+    heroes: "Icone_Entite_HEROS.webp",
+    npcs: "Icone_Entite_PNJ.webp",
+    quests: "Icone_Entite_QUETE.webp",
+    loot_items: "Icone_Gameplay_BUTIN.webp",
+    interactables: "Icone_Entite_OBJET_INTERACTIF.webp",
+    brouhaha_effects: "Icone_Entite_OBJET_BROUHAHA.webp"
+  };
+  return icons[type] || "Sigil_Basique.webp";
+}
+
 function renderCreatureRelationCard(type, target, extra = "") {
   const title = codexEntityTitle(type, target);
   const image = codexImageFor(type, target);
+  const fallbackIcon = creatureRelationFallbackIcon(type, target);
   let meta = getLabel(type);
   if (type === "creatures") {
     const cat = creatureCategoryMeta(target.category);
@@ -3542,8 +3559,8 @@ function renderCreatureRelationCard(type, target, extra = "") {
     meta = target.mime_type || "Média";
   }
   return `
-    <button class="creature-related-card" type="button" data-action="open-related" data-type="${escapeHtml(type)}" data-id="${escapeHtml(String(target.id || ""))}">
-      <span class="creature-related-thumb">${renderSafeRelationMedia(image, title)}</span>
+    <button class="creature-related-card creature-related-${escapeHtml(type)}" type="button" data-action="open-related" data-type="${escapeHtml(type)}" data-id="${escapeHtml(String(target.id || ""))}">
+      <span class="creature-related-thumb">${image ? renderSafeRelationMedia(image, title) : `<span class="creature-related-fallback"><img src="${V6_ICON_PATH}${fallbackIcon}" alt="" aria-hidden="true"></span>`}</span>
       <span class="creature-related-copy">
         <strong>${escapeHtml(title)}</strong>
         <small>${escapeHtml(meta)}</small>
@@ -3566,7 +3583,7 @@ function renderBossPhaseStack(item, phaseGroup) {
           const current = String(phase.id || "") === String(item.id || "");
           const image = imageUrlForEntity(phase);
           return `
-            <details class="creature-phase-card ${current ? "current" : ""}" ${phone ? "" : "open"}>
+            <details class="creature-phase-card ${current ? "current" : ""}" data-phase-order="${escapeHtml(String(phaseOrderValue(phase, 0)))}" ${phone ? "" : "open"}>
               <summary>
                 <span class="creature-phase-thumb">${renderSafeRelationMedia(image, phase.name || "Phase", "Image absente")}</span>
                 <span class="creature-phase-title"><strong>${escapeHtml(phase.name || "Boss sans nom")}</strong><small>${phaseExplicitLabel(phase)} · Menace ${escapeHtml(String(phase.menace ?? "—"))}</small></span>
@@ -4770,10 +4787,10 @@ function renderCreatureDetail(item) {
   const relations = getCreatureRelations(item);
   const dungeonTarget = relations.dungeon;
   const behaviorPanel = behavior || target ? `
-          <section class="creature-functional-section">
+          <section class="creature-functional-section creature-behavior-v6">
             <h2><img src="${V6_ICON_PATH}Icone_Gameplay_COMPORTEMENT.webp" alt="" aria-hidden="true">Comportement</h2>
+            ${target ? `<div class="creature-target-priority"><span>Priorité de cible</span><strong>${escapeHtml(target)}</strong></div>` : ""}
             ${behavior ? `<p>${escapeHtml(behavior)}</p>` : ""}
-            ${target ? `<dl><dt>Priorité de cible</dt><dd>${escapeHtml(target)}</dd></dl>` : ""}
           </section>
         ` : "";
   const lootPanel = lootItems.length ? `
@@ -4782,11 +4799,15 @@ function renderCreatureDetail(item) {
             <div class="creature-loot-list">
               ${lootItems.map(loot => {
                 const linked = loot?.id ? findById("loot_items", loot.id) : null;
+                const linkedImage = linked ? imageUrlForEntity(linked) : "";
                 const body = `
-                  <strong>${escapeHtml(loot?.name || "Butin")}</strong>
-                  ${loot?.type ? `<span>${escapeHtml(loot.type)}</span>` : ""}
-                  ${loot?.effect ? `<p>${escapeHtml(loot.effect)}</p>` : ""}
-                  ${loot?.gold_value !== null && loot?.gold_value !== undefined && loot?.gold_value !== "" ? `<small>${escapeHtml(String(loot.gold_value))} or</small>` : ""}
+                  ${linkedImage ? `<span class="creature-loot-thumb">${renderSafeRelationMedia(linkedImage, loot?.name || "Butin", "Visuel indisponible")}</span>` : `<span class="creature-loot-thumb fallback"><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt="" aria-hidden="true"></span>`}
+                  <span class="creature-loot-copy">
+                    <strong>${escapeHtml(loot?.name || "Butin")}</strong>
+                    ${loot?.type ? `<span>${escapeHtml(loot.type)}</span>` : ""}
+                    ${loot?.effect ? `<p>${escapeHtml(loot.effect)}</p>` : ""}
+                    ${loot?.gold_value !== null && loot?.gold_value !== undefined && loot?.gold_value !== "" ? `<small>${escapeHtml(String(loot.gold_value))} or</small>` : ""}
+                  </span>
                 `;
                 return linked
                   ? `<button class="creature-loot-item linked" type="button" data-action="open-related" data-type="loot_items" data-id="${escapeHtml(String(linked.id || ""))}">${body}</button>`
@@ -4831,6 +4852,7 @@ function renderCreatureDetail(item) {
 
       <section class="creature-detail-v6">
         <header class="creature-identity-v6">
+          ${category ? `<img class="creature-identity-watermark" src="${V6_ICON_PATH}${category.sigil}" alt="" aria-hidden="true">` : ""}
           <div class="creature-identity-copy">
             ${dungeonName ? (dungeonTarget
               ? `<button class="creature-dungeon-v6 creature-dungeon-link" type="button" data-action="open-related" data-type="dungeons" data-id="${escapeHtml(String(dungeonTarget.id || ""))}"><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt="" aria-hidden="true"><span>${escapeHtml(dungeonName)}</span></button>`
@@ -4854,10 +4876,10 @@ function renderCreatureDetail(item) {
         </div>
 
         ${abilityName ? `
-          <section class="creature-ability-v6">
+          <section class="creature-ability-v6 ${abilityNoise ? "has-noise" : ""}">
             <div class="creature-section-kicker"><img src="${V6_ICON_PATH}Icone_Gameplay_COMPETENCE.webp" alt="" aria-hidden="true"><span>Compétence</span></div>
             <h2>${escapeHtml(abilityName)}</h2>
-            ${abilityNoise ? `<div class="creature-ability-meta">Brouhaha ${abilityNoise > 0 ? "+" : ""}${escapeHtml(String(abilityNoise))}</div>` : ""}
+            ${abilityNoise ? `<b class="creature-ability-stamp">Brouhaha ${abilityNoise > 0 ? "+" : ""}${escapeHtml(String(abilityNoise))}</b>` : ""}
           </section>
         ` : ""}
 
