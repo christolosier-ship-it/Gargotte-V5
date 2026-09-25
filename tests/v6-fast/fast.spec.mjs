@@ -122,10 +122,18 @@ test("home bootstrap and session actions remain usable", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await ready(page);
   await expect(page.locator(".home-polish-v6")).toBeVisible();
+  await expect(page.locator(".v6-app")).toHaveClass(/whaou-home/);
+
+  const berthold = page.locator('[data-action="home-berthold-refresh"]');
+  const firstAdvice = await berthold.locator("strong").innerText();
+  await berthold.click();
+  await expect(berthold.locator("strong")).not.toHaveText(firstAdvice);
 
   await gotoView(page, "codex");
   await expect(page.locator(".bestiary-v6")).toBeVisible();
+  await expect(page.locator(".v6-app")).toHaveClass(/whaou-codex/);
   await gotoView(page, "home");
+  await expect(page.locator(".v6-app")).toHaveClass(/whaou-home/);
 
   await expect(page.locator('[data-action="session-start"]')).toBeVisible();
   await page.locator('[data-action="session-start"]').click();

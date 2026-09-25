@@ -1454,3 +1454,183 @@ body.cinematic-open{overflow:hidden}
     flex-basis: 100%;
   }
 }
+
+
+/* V6-WHAOU · Lot 01 · Socle émotionnel, shell et Accueil */
+:root{
+  --whaou-motion-touch:140ms;
+  --whaou-motion-local:240ms;
+  --whaou-motion-editorial:380ms;
+  --whaou-ease:cubic-bezier(.2,.72,.2,1);
+  --whaou-figure-shadow:0 18px 34px rgba(0,0,0,.58);
+  --whaou-halo:rgba(212,164,95,.14);
+  --whaou-paper:rgba(231,203,158,.92);
+  --whaou-workbench:rgba(38,25,17,.92);
+  --whaou-active:#d4a45f;
+}
+
+.whaou-page-enter{animation:whaou-page-enter var(--whaou-motion-local) var(--whaou-ease) both}
+@keyframes whaou-page-enter{from{opacity:.58;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+.whaou-shell .v6-main{transition:background-color var(--whaou-motion-local),background-image var(--whaou-motion-local)}
+.whaou-shell.whaou-home .v6-main{
+  background-image:radial-gradient(circle at 72% 0,rgba(155,98,48,.055),transparent 32%)
+}
+.whaou-shell.whaou-codex .v6-main{
+  background-image:radial-gradient(circle at 78% 0,rgba(212,164,95,.045),transparent 30%)
+}
+.whaou-shell.whaou-game .v6-main{
+  background-image:radial-gradient(circle at 50% 0,rgba(168,83,52,.045),transparent 34%)
+}
+.whaou-shell.whaou-admin .v6-main{
+  background-image:radial-gradient(circle at 80% 0,rgba(126,119,106,.04),transparent 30%)
+}
+.whaou-shell .navbtn,.whaou-shell .mobile-nav-item{position:relative}
+.whaou-shell .navbtn.active:after{
+  content:"";position:absolute;right:10px;width:4px;height:4px;border-radius:50%;
+  background:var(--whaou-active);box-shadow:0 0 10px rgba(212,164,95,.68)
+}
+.whaou-shell .navbtn.active .ui-icon,.whaou-shell .mobile-nav-item.active .ui-icon{
+  filter:drop-shadow(0 0 6px rgba(212,164,95,.32));
+  transform:translateY(-1px)
+}
+
+.global-codex-results{
+  overflow:hidden;
+  border-color:rgba(212,164,95,.34);
+  background:
+    linear-gradient(rgba(22,15,11,.97),rgba(13,9,7,.985)),
+    url("assets/ui-v6/textures/paper-warm.svg") center/cover;
+  box-shadow:0 22px 50px #000b,inset 0 1px rgba(240,207,147,.08);
+  animation:whaou-search-open var(--whaou-motion-local) var(--whaou-ease) both
+}
+@keyframes whaou-search-open{from{opacity:.4;transform:translateY(-5px) scale(.995)}to{opacity:1;transform:none}}
+.global-search-summary{
+  background:linear-gradient(90deg,rgba(212,164,95,.09),transparent);
+  border-bottom-color:rgba(212,164,95,.2)
+}
+.global-search-group{position:relative}
+.global-search-group:before{
+  content:"";position:absolute;left:0;top:10px;bottom:10px;width:2px;
+  background:linear-gradient(var(--color-accent-gold),transparent);opacity:.34
+}
+.global-search-group>header{padding-left:13px}
+.global-search-result img{filter:drop-shadow(0 3px 5px #0009)}
+.global-search-empty{
+  position:relative;padding:23px 18px 23px 50px!important;
+  background:linear-gradient(120deg,rgba(212,164,95,.045),transparent)
+}
+.global-search-empty:before{
+  content:"";position:absolute;left:19px;top:50%;width:16px;height:16px;
+  border:1px solid rgba(212,164,95,.34);border-radius:50%;transform:translateY(-50%);
+  box-shadow:8px 8px 0 -7px rgba(212,164,95,.34)
+}
+
+.home-hero-v6{
+  box-shadow:0 24px 58px #0008,inset 0 1px rgba(240,207,147,.06)
+}
+.home-hero-copy:after{
+  content:"";position:absolute;right:-42px;bottom:46px;width:112px;height:112px;border-radius:50%;
+  border:5px solid rgba(203,161,104,.055);
+  box-shadow:0 0 0 2px rgba(60,36,20,.08),inset 0 0 18px rgba(48,27,15,.15);
+  transform:rotate(-12deg);pointer-events:none
+}
+.home-hero-v6:before{
+  background:
+    radial-gradient(circle at 80% 22%,rgba(240,207,147,.18),transparent 19%),
+    radial-gradient(circle at 15% 88%,rgba(126,76,34,.2),transparent 28%),
+    linear-gradient(115deg,transparent 36%,rgba(244,209,148,.025) 50%,transparent 64%)
+}
+.home-berthold-note{
+  appearance:none;text-align:left;cursor:pointer;color:#342014;
+  transition:transform var(--whaou-motion-touch) ease,box-shadow var(--whaou-motion-touch) ease,filter var(--whaou-motion-touch) ease
+}
+.home-berthold-note:after{
+  content:"";position:absolute;right:0;bottom:0;width:25px;height:25px;
+  background:linear-gradient(135deg,transparent 49%,rgba(92,57,31,.15) 50%,rgba(255,240,203,.36) 100%);
+  pointer-events:none
+}
+.home-berthold-note:hover{transform:rotate(-1.4deg) translateY(-2px);box-shadow:0 21px 42px #0009}
+.home-berthold-note:focus-visible{outline:2px solid #f0cf94;outline-offset:3px}
+.home-berthold-note small{opacity:.82}
+
+.home-quick-links>button{--shortcut-accent:#d4a45f}
+.home-quick-links>button:nth-child(1){--shortcut-accent:#c8cdd3}
+.home-quick-links>button:nth-child(2){--shortcut-accent:#5faf72}
+.home-quick-links>button:nth-child(3){--shortcut-accent:#ef4b4b}
+.home-quick-links>button:nth-child(4){--shortcut-accent:#d9a12e}
+.home-quick-links>button{
+  border-bottom:2px solid color-mix(in srgb,var(--shortcut-accent) 48%,transparent);
+  box-shadow:inset 0 -10px 24px color-mix(in srgb,var(--shortcut-accent) 3%,transparent)
+}
+.home-quick-links>button:hover{
+  border-color:color-mix(in srgb,var(--shortcut-accent) 56%,#785734);
+  box-shadow:0 10px 24px #0004,inset 0 -14px 30px color-mix(in srgb,var(--shortcut-accent) 6%,transparent)
+}
+
+.active-session.home-polish-v6 .home-hero-dungeon{
+  border-color:color-mix(in srgb,var(--home-dungeon-accent) 55%,#6b4c31);
+  box-shadow:
+    0 24px 58px #0008,
+    0 0 36px color-mix(in srgb,var(--home-dungeon-accent) 10%,transparent),
+    inset 0 -2px 0 color-mix(in srgb,var(--home-dungeon-accent) 35%,transparent)
+}
+.home-session-kicker{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.home-floor-marker{
+  display:inline-flex;align-items:center;min-height:25px;padding:3px 9px;
+  border:1px solid color-mix(in srgb,var(--home-dungeon-accent) 54%,rgba(212,164,95,.34));
+  border-radius:999px;background:rgba(9,6,4,.44);color:#ead6b5;
+  font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase
+}
+.home-session-board{
+  border-color:color-mix(in srgb,var(--home-dungeon-accent) 30%,var(--color-border-subtle));
+  box-shadow:inset 0 1px color-mix(in srgb,var(--home-dungeon-accent) 14%,transparent)
+}
+.home-session-object.encounter.is-complete{
+  border-color:rgba(95,175,114,.34);
+  background:linear-gradient(90deg,rgba(95,175,114,.08),rgba(9,6,4,.34))
+}
+.home-session-object.quest.is-active{
+  border-color:rgba(217,161,46,.32);
+  background:linear-gradient(100deg,rgba(217,161,46,.07),rgba(9,6,4,.34))
+}
+.home-session-object.noise.rising{border-color:rgba(217,161,46,.26)}
+.home-session-object.noise.hot{border-color:rgba(239,113,75,.32);box-shadow:inset 3px 0 rgba(239,113,75,.18)}
+.home-session-object.noise.critical{
+  border-color:rgba(239,75,75,.46);
+  background:linear-gradient(100deg,rgba(239,75,75,.1),rgba(9,6,4,.34));
+  box-shadow:inset 3px 0 rgba(239,75,75,.28)
+}
+.home-brouhaha-hot .home-session-board,.home-brouhaha-critical .home-session-board{
+  background-image:
+    linear-gradient(rgba(28,18,12,.9),rgba(14,10,7,.97)),
+    linear-gradient(115deg,transparent 58%,rgba(239,75,75,.035)),
+    url("assets/ui-v6/textures/wood-charred.svg")
+}
+.home-brouhaha-critical .home-session-board{
+  border-color:color-mix(in srgb,#ef4b4b 26%,var(--color-border-subtle))
+}
+
+.whaou-empty-state{
+  position:relative;padding:18px;border:1px dashed rgba(212,164,95,.22);
+  border-radius:12px;background:linear-gradient(120deg,rgba(212,164,95,.035),rgba(12,8,6,.18));
+  color:var(--color-text-secondary)
+}
+.whaou-empty-state:before{
+  content:"";display:block;width:28px;height:2px;margin-bottom:10px;
+  background:linear-gradient(90deg,rgba(212,164,95,.5),transparent)
+}
+
+@media(hover:none){
+  .home-berthold-note:hover{transform:rotate(-2deg);box-shadow:0 18px 38px #0008}
+  .whaou-shell .navbtn.active .ui-icon,.whaou-shell .mobile-nav-item.active .ui-icon{transform:none}
+}
+@media(max-width:767px){
+  .home-hero-copy:after{display:none}
+  .home-floor-marker{min-height:24px}
+  .whaou-shell .navbtn.active:after{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .whaou-page-enter,.global-codex-results{animation:none!important}
+  .whaou-shell .v6-main,.home-berthold-note,.whaou-shell .navbtn .ui-icon,.whaou-shell .mobile-nav-item .ui-icon{transition:none!important}
+}
