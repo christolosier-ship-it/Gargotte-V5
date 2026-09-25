@@ -4409,18 +4409,27 @@ function renderMediaCodexCard(asset, mode = "gallery") {
     </article>`;
 }
 
-function renderMediaCodex() {
+function renderMediaCodexBody() {
   ensureCodexFamilyUi();
   const ui = state.ui.codexFamilies.media_assets;
   const items = getMediaCodexCollection();
+  const page = boundedMediaPage(items, ui.page);
+  ui.page = page.page;
+  return `
+    ${renderFamilyToolbar("media_assets", items.length)}
+    <div class="codex-media-grid-v6 ${ui.mode}">
+      ${page.items.map(asset => renderMediaCodexCard(asset, ui.mode)).join("") || `<div class="empty">Aucun média disponible.</div>`}
+    </div>
+    ${renderMediaPager(page, "media-codex-page")}
+  `;
+}
+
+function renderMediaCodex() {
   return renderShell(`
     <section class="panel codex-media-library-v6">
       ${renderCodexReturnBar()}
       ${renderCodexTabs("media_assets")}
-      ${renderFamilyToolbar("media_assets", items.length)}
-      <div class="codex-media-grid-v6 ${ui.mode}">
-        ${items.map(asset => renderMediaCodexCard(asset, ui.mode)).join("") || `<div class="empty">Aucun média disponible.</div>`}
-      </div>
+      <div data-media-codex-body>${renderMediaCodexBody()}</div>
     </section>`);
 }
 
@@ -5622,6 +5631,54 @@ function mediaDerivativeState(asset) {
   return { key: "pending", label: "Contrôle visuel requis", tone: "warn" };
 }
 
+const MEDIA_PAGE_SIZE = 48;
+
+function boundedMediaPage(items, requestedPage, pageSize = MEDIA_PAGE_SIZE) {
+  const total = items.length;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const page = clamp(Math.floor(Number(requestedPage || 0)), 0, pageCount - 1);
+  const start = page * pageSize;
+  return {
+    total,
+    page,
+    pageCount,
+    pageSize,
+    start,
+    end: Math.min(total, start + pageSize),
+    items: items.slice(start, start + pageSize)
+  };
+}
+
+function renderMediaPager(info, action) {
+  if (!info || info.total <= info.pageSize) return "";
+  const first = info.total ? info.start + 1 : 0;
+  return `
+    <nav class="media-pager-v6" aria-label="Pagination des médias">
+      <button type="button" class="secondary" data-action="${action}" data-page="${info.page - 1}" ${info.page <= 0 ? "disabled" : ""}>Précédent</button>
+      <span><strong>${first}–${info.end}</strong> sur ${info.total} · page ${info.page + 1}/${info.pageCount}</span>
+      <button type="button" class="secondary" data-action="${action}" data-page="${info.page + 1}" ${info.page >= info.pageCount - 1 ? "disabled" : ""}>Suivant</button>
+    </nav>`;
+}
+
+function renderMediaSurfaceInPlace(kind) {
+  if (kind === "admin") {
+    const root = app.querySelector("[data-media-admin-body]");
+    const shell = app.querySelector(".media-library-v6");
+    if (!root) return false;
+    root.innerHTML = renderMediaAdminBody();
+    shell?.classList.toggle("detail-open", Boolean(state.ui.media.selectedId));
+  } else if (kind === "codex") {
+    const root = app.querySelector("[data-media-codex-body]");
+    if (!root) return false;
+    root.innerHTML = renderMediaCodexBody();
+  } else {
+    return false;
+  }
+  runtimeMetrics.mediaPartialRenders += 1;
+  wireLazyMediaImages();
+  return true;
+}
+
 function mediaFilteredAssets() {
   const ui = state.ui.media || {};
   const scope = ["all","linked","orphan"].includes(ui.scope) ? ui.scope : "all";
@@ -5658,28 +5715,38 @@ function renderMediaAssetCard(asset, active = false) {
     </button>`;
 }
 
-function renderMedia() {
+function renderMediaAdminBody() {
   const assets = mediaFilteredAssets();
-  const selected = assets.find(asset => String(asset.id) === String(state.ui.media.selectedId || "")) ||
-    (state.ui.media.selectedId ? mediaRepository.getCachedById(state.ui.media.selectedId) : null) || assets[0] || null;
+  const page = boundedMediaPage(assets, state.ui.media.page);
+  state.ui.media.page = page.page;
+  const selected = page.items.find(asset => String(asset.id) === String(state.ui.media.selectedId || "")) ||
+    (state.ui.media.selectedId ? mediaRepository.getCachedById(state.ui.media.selectedId) : null) ||
+    page.items[0] || null;
   const scope = ["all","linked","orphan"].includes(state.ui.media.scope) ? state.ui.media.scope : "all";
+  return `
+    <div class="media-toolbar-v6">
+      <label class="media-search-v6"><span>Recherche</span><input type="search" data-action="media-search" value="${escapeHtml(state.ui.media.search || "")}" placeholder="Rechercher un média…"></label>
+      <div class="segmented" role="group" aria-label="Filtre de bibliothèque">
+        ${[["all","Tous"],["linked","Liés"],["orphan","Orphelins"]].map(([value,label]) => `<button type="button" data-action="media-scope" data-scope="${value}" class="${scope === value ? "active" : ""}" aria-pressed="${scope === value ? "true" : "false"}">${label}</button>`).join("")}
+      </div>
+      <span class="media-count-v6">${assets.length} média${assets.length > 1 ? "s" : ""}</span>
+    </div>
+    <div class="media-library-layout">
+      <section class="media-grid-v6">${page.items.map(asset => renderMediaAssetCard(asset, selected && String(asset.id) === String(selected.id))).join("") || `<div class="panel empty">Aucun média pour ce filtre.</div>`}</section>
+      <aside class="media-detail-pane-v6">${selected ? renderMediaAssetDetail(selected) : `<div class="panel empty">Sélectionne un média.</div>`}</aside>
+    </div>
+    ${renderMediaPager(page, "media-admin-page")}
+  `;
+}
+
+function renderMedia() {
   return renderShell(`
-    <section class="media-library-v6 ${selected && state.ui.media.selectedId ? "detail-open" : ""}">
+    <section class="media-library-v6 ${state.ui.media.selectedId ? "detail-open" : ""}">
       <header class="media-library-head">
         <div><span class="eyebrow">Administration locale</span><h1>Médias</h1><p>Bibliothèque locale, rattachements et visuel actif.</p></div>
         <label class="primary media-add-button">Ajouter<input type="file" accept="image/*" multiple data-action="media-upload" hidden></label>
       </header>
-      <div class="media-toolbar-v6">
-        <label class="media-search-v6"><span>Recherche</span><input type="search" data-action="media-search" value="${escapeHtml(state.ui.media.search || "")}" placeholder="Rechercher un média…"></label>
-        <div class="segmented" role="group" aria-label="Filtre de bibliothèque">
-          ${[["all","Tous"],["linked","Liés"],["orphan","Orphelins"]].map(([value,label]) => `<button type="button" data-action="media-scope" data-scope="${value}" class="${scope === value ? "active" : ""}" aria-pressed="${scope === value ? "true" : "false"}">${label}</button>`).join("")}
-        </div>
-        <span class="media-count-v6">${assets.length} média${assets.length > 1 ? "s" : ""}</span>
-      </div>
-      <div class="media-library-layout">
-        <section class="media-grid-v6">${assets.map(asset => renderMediaAssetCard(asset, selected && String(asset.id) === String(selected.id))).join("") || `<div class="panel empty">Aucun média pour ce filtre.</div>`}</section>
-        <aside class="media-detail-pane-v6">${selected ? renderMediaAssetDetail(selected) : `<div class="panel empty">Sélectionne un média.</div>`}</aside>
-      </div>
+      <div data-media-admin-body>${renderMediaAdminBody()}</div>
     </section>`);
 }
 
