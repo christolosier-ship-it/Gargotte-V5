@@ -373,6 +373,56 @@ test("Codex cross-family navigation remains coherent", async ({ page }) => {
   await expect(page.locator(".hero-sheet-v6")).toBeVisible();
 });
 
+test("Dungeon WHAOU bounds collection markers and preserves a long expedition track", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
+
+  await page.evaluate(async () => {
+    const db = await new Promise((resolve,reject) => {
+      const req = indexedDB.open("gargottex-v5-offline");
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error);
+    });
+    const tx=db.transaction("dungeons","readwrite");
+    const store=tx.objectStore("dungeons");
+    const id="dungeon_le-cabaret-des-joyeuses";
+    const current=await new Promise((resolve,reject) => {
+      const req=store.get(id);
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error);
+    });
+    if(!current) throw new Error("Donjon test absent");
+    store.put({...current,floor_budgets:Array.from({length:100},(_,index)=>(index%9)+1),base_floor_count:100});
+    await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
+    db.close();
+  });
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await gotoView(page, "codex");
+  await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
+
+  const card = page.locator('[data-action="select-family-codex"][data-type="dungeons"][data-id="dungeon_le-cabaret-des-joyeuses"]').first();
+  await expect(card).toBeVisible();
+  await expect(card.locator(".dungeon-card-floor-dots i")).toHaveCount(7);
+  await expect(card.locator(".dungeon-card-floor-more")).toHaveText("+93");
+  expect(await page.locator(".dungeon-card-boss").count()).toBeGreaterThan(0);
+
+  await card.click();
+  const skip = page.locator(".gargotte-cinematic.show .cinematic-skip");
+  await expect(skip).toBeVisible();
+  await skip.click();
+  await expect(page.locator(".dungeon-sheet-v6")).toBeVisible();
+  await expect(page.locator(".dungeon-floor-stop")).toHaveCount(100);
+
+  const track = await page.locator(".dungeon-floor-track").evaluate(el => ({
+    scrollWidth:el.scrollWidth,
+    clientWidth:el.clientWidth
+  }));
+  expect(track.scrollWidth).toBeGreaterThan(track.clientWidth);
+  await assertNoHorizontalOverflow(page);
+});
+
 test("session Generator Brouhaha and Quest flows remain coherent", async ({ page }) => {
   await ready(page);
 
