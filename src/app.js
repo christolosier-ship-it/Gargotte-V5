@@ -1185,15 +1185,25 @@ function ensureDungeonCinematicLayer() {
 function hideDungeonCinematic() {
   const layer = document.getElementById("gargotte-cinematic");
   if (!layer) return;
+  const wasVisible = layer.classList.contains("show");
   layer.classList.remove("show");
   document.body.classList.remove("cinematic-open");
   clearTimeout(showDungeonCinematic.timer);
+  if (wasVisible) queueDungeonDetailReveal();
 }
 
 function queueDungeonCinematic(dungeon) {
   if (!dungeon) return;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) {
+    queueDungeonDetailReveal();
+    return;
+  }
   const key = String(dungeon.id || dungeon.name || "");
-  if (!key || dungeonCinematicSeen.has(key)) return;
+  if (!key) return;
+  if (dungeonCinematicSeen.has(key)) {
+    queueDungeonDetailReveal();
+    return;
+  }
   dungeonCinematicSeen.add(key);
   setTimeout(() => showDungeonCinematic(dungeon), 90);
 }
@@ -1206,6 +1216,17 @@ function queueWhaouPageReveal() {
     void page.offsetWidth;
     page.classList.add("whaou-page-enter");
     page.addEventListener("animationend", () => page.classList.remove("whaou-page-enter"), { once: true });
+  });
+}
+
+function queueDungeonDetailReveal() {
+  requestAnimationFrame(() => {
+    const sheet = document.querySelector(".dungeon-sheet-v6");
+    if (!sheet || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    sheet.classList.remove("dungeon-sheet-enter-v6");
+    void sheet.offsetWidth;
+    sheet.classList.add("dungeon-sheet-enter-v6");
+    sheet.addEventListener("animationend", () => sheet.classList.remove("dungeon-sheet-enter-v6"), { once: true });
   });
 }
 
@@ -3770,6 +3791,16 @@ function renderBestiaryBrowseToolbar(count, total) {
   });
 }
 
+function renderDungeonFloorSummary(floors) {
+  if (!floors.length) return "";
+  const visible = Math.min(floors.length, 7);
+  const remaining = Math.max(0, floors.length - visible);
+  return `<span class="dungeon-card-floor-summary" aria-label="${floors.length} étage${floors.length > 1 ? "s" : ""}">
+    <span class="dungeon-card-floor-dots" aria-hidden="true">${Array.from({ length: visible }, (_, index) => `<i class="${index === 0 ? "start" : ""} ${index === visible - 1 && !remaining ? "last" : ""}"></i>`).join("")}</span>
+    ${remaining ? `<b class="dungeon-card-floor-more">+${remaining}</b>` : ""}
+  </span>`;
+}
+
 function renderDungeonCollectionCard(item, mode = "gallery", active = false) {
   const image = imageUrlForEntity(item);
   const floors = dungeonFloorBudgets(item);
@@ -3782,7 +3813,8 @@ function renderDungeonCollectionCard(item, mode = "gallery", active = false) {
       <span class="dungeon-collection-copy">
         <small>Donjon · ${floors.length ? `${floors.length} étage${floors.length > 1 ? "s" : ""}` : "progression non renseignée"}</small>
         <strong>${escapeHtml(item.name || "Donjon sans nom")}</strong>
-        ${boss.name ? `<em>Boss · ${escapeHtml(boss.name)}</em>` : ""}
+        ${renderDungeonFloorSummary(floors)}
+        ${boss.name ? `<span class="dungeon-card-boss"><img src="${V6_ICON_PATH}Sigil_Boss.webp" alt="" aria-hidden="true"><span><small>Boss</small><b>${escapeHtml(boss.name)}</b></span></span>` : ""}
       </span>
     </button>`;
 }
@@ -3794,10 +3826,12 @@ function renderDungeonRailItem(item, active = false) {
 function renderDungeonFloors(item) {
   const floors = dungeonFloorBudgets(item);
   if (!floors.length) return `<div class="empty small">Progression des étages non renseignée.</div>`;
+  const density = floors.length > 24 ? "very-long" : floors.length > 12 ? "long" : "compact";
   return `
-    <div class="dungeon-floor-track" aria-label="Progression des étages">
+    <div class="dungeon-floor-route-head" aria-hidden="true"><span>Entrée</span><i></i><span>Profondeur ${floors.length}</span></div>
+    <div class="dungeon-floor-track ${density}" aria-label="Progression des ${floors.length} étages">
       ${floors.map((budget, index) => `
-        <div class="dungeon-floor-stop">
+        <div class="dungeon-floor-stop ${index === 0 ? "start" : ""} ${index === floors.length - 1 ? "last" : ""} ${(index + 1) % 5 === 0 ? "milestone" : ""}" data-floor-index="${index + 1}">
           <span>Étage</span>
           <b>${index + 1}</b>
           <small>Budget ${budget === null || budget === undefined || budget === "" ? "—" : escapeHtml(String(budget))}</small>
@@ -3814,7 +3848,7 @@ function dungeonPreviewTitle(type, item) {
 function renderDungeonPreview(type, items, label, icon, dungeon) {
   const preview = items.slice(0, 3);
   return `
-    <section class="dungeon-linked-preview">
+    <section class="dungeon-linked-preview dungeon-linked-${type}">
       <header>
         <div><img src="${V6_ICON_PATH}${icon}" alt="" aria-hidden="true"><strong>${label}</strong></div>
         <div class="dungeon-linked-meta"><span>${items.length}</span>${items.length && dungeon ? `<button class="ghost" type="button" data-action="dungeon-see-all" data-type="${type}" data-dungeon-id="${escapeHtml(String(dungeon.id || ""))}">Voir tout</button>` : ""}</div>
@@ -3824,8 +3858,10 @@ function renderDungeonPreview(type, items, label, icon, dungeon) {
           const image = imageUrlForEntity(item);
           const title = dungeonPreviewTitle(type, item);
           return `
-            <button class="${image ? "has-media" : ""}" type="button" data-action="open-related" data-type="${type}" data-id="${escapeHtml(String(item.id || ""))}">
-              ${image ? `<span class="dungeon-linked-thumb">${renderSafeRelationMedia(image, title, "Visuel indisponible")}</span>` : ""}
+            <button class="dungeon-linked-entry ${image ? "has-media" : "has-fallback"}" type="button" data-action="open-related" data-type="${type}" data-id="${escapeHtml(String(item.id || ""))}">
+              ${image
+                ? `<span class="dungeon-linked-thumb">${renderSafeRelationMedia(image, title, "Visuel indisponible")}</span>`
+                : `<span class="dungeon-linked-thumb fallback"><img src="${V6_ICON_PATH}${icon}" alt="" aria-hidden="true"></span>`}
               <b>${escapeHtml(title)}</b>
             </button>`;
         }).join("") : `<span class="muted small">Aucune entrée liée.</span>`}
@@ -3870,14 +3906,17 @@ function renderDungeonDetailV6(item) {
         </section>
 
         <section class="dungeon-boss-v6">
-          <div class="dungeon-section-head"><div><h2>${escapeHtml(boss.name || "Non renseigné")}</h2></div><img src="${V6_ICON_PATH}Sigil_Boss.webp" alt="" aria-hidden="true"></div>
+          <div class="dungeon-section-head"><div><h2>Boss final</h2></div><img src="${V6_ICON_PATH}Sigil_Boss.webp" alt="" aria-hidden="true"></div>
           ${boss.entity ? `
             <button class="dungeon-boss-card" type="button" data-action="open-related" data-type="creatures" data-id="${escapeHtml(String(boss.entity.id || ""))}">
-              <span>${renderSafeRelationMedia(imageUrlForEntity(boss.entity), boss.entity.name || boss.name, "Illustration absente")}</span>
-              <strong>${escapeHtml(boss.entity.name || boss.name)}</strong>
-              <small>Menace ${escapeHtml(String(boss.entity.menace ?? "—"))}</small>
+              <span class="dungeon-boss-visual">${renderSafeRelationMedia(imageUrlForEntity(boss.entity), boss.entity.name || boss.name, "Illustration absente")}</span>
+              <span class="dungeon-boss-copy">
+                <span class="dungeon-boss-kicker"><img src="${V6_ICON_PATH}Sigil_Boss.webp" alt="" aria-hidden="true"><span>Boss</span></span>
+                <strong>${escapeHtml(boss.entity.name || boss.name)}</strong>
+                <small>Menace ${escapeHtml(String(boss.entity.menace ?? "—"))}</small>
+              </span>
             </button>
-          ` : boss.name ? `<div class="dungeon-boss-unresolved">Nom stocké dans le Donjon, sans relation Créature non ambiguë.</div>` : `<div class="empty small">Aucun Boss final fiable dans les données.</div>`}
+          ` : boss.name ? `<div class="dungeon-boss-unresolved"><b>${escapeHtml(boss.name)}</b><span>Nom stocké dans le Donjon, sans relation Créature non ambiguë.</span></div>` : `<div class="empty small">Aucun Boss final fiable dans les données.</div>`}
         </section>
 
         <section class="dungeon-linked-v6">
