@@ -75,11 +75,23 @@ async function withTx(storeNames, mode, fn) {
   }
 }
 
+async function ensureMetaDefaults() {
+  await withTx(["meta"], "readwrite", async ({ meta }) => {
+    const current = await reqToPromise(meta.get("app_version"));
+    if (!current) meta.put({ key: "app_version", value: "5.0.0" });
+    const ui = await reqToPromise(meta.get("ui_state"));
+    if (!ui) meta.put({ key: "ui_state", value: null });
+  });
+}
+
 export async function initDatabase(seed) {
   await openDatabase();
 
   const dungeonsCount = await withTx(["dungeons"], "readonly", async ({ dungeons }) => reqToPromise(dungeons.count()));
   if (dungeonsCount === 0) {
+    if (seed === undefined || seed === null) {
+      return { needsSeed: true, seeded: false };
+    }
     await withTx(STORE_DEFS.map(s => s.name), "readwrite", async (stores) => {
       for (const def of STORE_DEFS) {
         if (def.name === "meta" || def.name === "logs") continue;
@@ -89,14 +101,11 @@ export async function initDatabase(seed) {
       stores.meta.put({ key: "ui_state", value: null });
       stores.meta.put({ key: "app_version", value: "5.0.0" });
     });
-  } else {
-    await withTx(["meta"], "readwrite", async ({ meta }) => {
-      const current = await reqToPromise(meta.get("app_version"));
-      if (!current) meta.put({ key: "app_version", value: "5.0.0" });
-      const ui = await reqToPromise(meta.get("ui_state"));
-      if (!ui) meta.put({ key: "ui_state", value: null });
-    });
+    return { needsSeed: false, seeded: true };
   }
+
+  await ensureMetaDefaults();
+  return { needsSeed: false, seeded: false };
 }
 
 export async function getAll(storeName) {
