@@ -87,6 +87,18 @@ const ENTITY_SHEETS = {
   media_assets: "Médias"
 };
 
+const ENTITY_DOWNLOAD_FILES = {
+  dungeons: "dungeons.xlsx",
+  creatures: "creatures.xlsx",
+  heroes: "heroes.xlsx",
+  npcs: "npcs.xlsx",
+  quests: "quests.xlsx",
+  loot_items: "loot.xlsx",
+  interactables: "interactables.xlsx",
+  brouhaha_effects: "brouhaha.xlsx",
+  media_assets: "media_assets.xlsx"
+};
+
 const ENTITY_SHEET_ALIASES = {
   interactables: ["Objets"]
 };
