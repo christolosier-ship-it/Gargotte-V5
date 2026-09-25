@@ -898,6 +898,132 @@ test("Encounter WHAOU preserves generation rules while staging the table", async
   expect(mediaDebug.catalogScans).toBe(0);
 });
 
+test("Brouhaha WHAOU stages pressure without coupling level and draw, and Quest stays temporary", async ({ page }) => {
+  await page.setViewportSize({width:834,height:1112});
+  await ready(page);
+
+  await page.evaluate(async () => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(["dungeons","brouhaha_effects","quests","npcs"],"readwrite");
+      const dungeons=tx.objectStore("dungeons"),effects=tx.objectStore("brouhaha_effects"),quests=tx.objectStore("quests"),npcs=tx.objectStore("npcs");
+      dungeons.put({
+        id:"whaou7-dungeon",name:"WHAOU7 Taverne Sous Pression",slug:"whaou7-taverne-sous-pression",
+        description:"Fixture Brouhaha.",floor_budgets:[4],base_floor_count:1,boss_name:"",tags:["whaou7"],image_path:""
+      });
+      npcs.put({id:"whaou7-npc",name:"WHAOU7 Berthold Bis",slug:"whaou7-berthold-bis",race:"Humain",role:"Commanditaire",tone:"Sec",lore:"Fixture",tags:["whaou7"],image_path:""});
+      for(const level of [0,4,7,10,12]){
+        effects.put({
+          id:"whaou7-effect-"+level,level,dungeon_id:"whaou7-dungeon",dungeon_name:"WHAOU7 Taverne Sous Pression",
+          effect_text:"WHAOU7 incident niveau "+level
+        });
+      }
+      for(const index of [1,2]){
+        quests.put({
+          id:"whaou7-quest-"+index,name:"WHAOU7 Quête "+index,slug:"whaou7-quete-"+index,
+          description:"Description temporaire "+index,objective:"Objectif WHAOU7 "+index,reward:"Récompense WHAOU7 "+index,
+          difficulty:index,dungeon_id:"whaou7-dungeon",dungeon_name:"WHAOU7 Taverne Sous Pression",
+          npc_id:"whaou7-npc",npc_name:"WHAOU7 Berthold Bis",tags:["whaou7"],image_path:""
+        });
+      }
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+    db.close();
+  });
+
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await gotoView(page,"brouhaha");
+
+  await page.locator('[data-action="session-start-dungeon"]').selectOption("whaou7-dungeon");
+  await page.locator('[data-action="session-start"]').click();
+  await expect(page.locator(".brouhaha-session-stage.calm")).toHaveAttribute("data-brouhaha-level","0");
+  await expect(page.locator(".brouhaha-current-ticket")).toHaveCount(0);
+  await expect(page.locator(".brouhaha-history-row")).toHaveCount(0);
+
+  const plus=page.locator('[data-action="session-brouhaha-plus"]');
+  const minus=page.locator('[data-action="session-brouhaha-minus"]');
+
+  for(let i=0;i<4;i++) await plus.click();
+  await expect(page.locator(".brouhaha-session-stage.rising")).toHaveAttribute("data-brouhaha-level","4");
+  await expect(page.locator(".brouhaha-current-ticket")).toHaveCount(0);
+
+  for(let i=0;i<3;i++) await plus.click();
+  await expect(page.locator(".brouhaha-session-stage.hot")).toHaveAttribute("data-brouhaha-level","7");
+  await expect(page.locator(".brouhaha-current-ticket")).toHaveCount(0);
+
+  for(let i=0;i<3;i++) await plus.click();
+  await expect(page.locator(".brouhaha-session-stage.critical")).toHaveAttribute("data-brouhaha-level","10");
+  await expect(page.locator(".brouhaha-current-ticket")).toHaveCount(0);
+
+  await page.locator('[data-action="session-brouhaha-draw"]').click();
+  await expect(page.locator(".brouhaha-current-ticket")).toContainText("WHAOU7 incident niveau 10");
+  await expect(page.locator(".brouhaha-current-ticket .brouhaha-ticket-level")).toHaveText("10");
+  await expect(page.locator(".brouhaha-history-row.current")).toHaveCount(1);
+
+  await plus.click();
+  await expect(page.locator(".brouhaha-session-stage.critical")).toHaveAttribute("data-brouhaha-level","11");
+  await expect(page.locator(".brouhaha-current-ticket")).toContainText("WHAOU7 incident niveau 10");
+
+  await page.evaluate(() => {
+    globalThis.__lot7Classes=[];
+    const root=document.querySelector(".brouhaha-session-stage");
+    if(!root)return;
+    const observer=new MutationObserver(records=>{
+      for(const record of records){
+        if(record.type==="attributes"&&record.attributeName==="class") globalThis.__lot7Classes.push(root.className);
+      }
+    });
+    observer.observe(root,{attributes:true,attributeFilter:["class"]});
+    globalThis.__lot7Observer=observer;
+  });
+  await plus.click();
+  await expect(page.locator(".brouhaha-session-stage.critical.level-12")).toHaveAttribute("data-brouhaha-level","12");
+  await expect.poll(async()=>page.evaluate(()=>globalThis.__lot7Classes.some(value=>value.includes("level-12-impact")))).toBe(true);
+  await expect(page.locator(".brouhaha-current-ticket")).toContainText("WHAOU7 incident niveau 10");
+
+  await minus.click();
+  await expect(page.locator(".brouhaha-session-stage.critical")).toHaveAttribute("data-brouhaha-level","11");
+  await expect(page.locator(".brouhaha-session-stage.level-12")).toHaveCount(0);
+
+  await minus.click();
+  await expect(page.locator(".brouhaha-session-stage.critical")).toHaveAttribute("data-brouhaha-level","10");
+  await page.locator('[data-action="session-brouhaha-draw"]').click();
+  await expect(page.locator(".brouhaha-history-row")).toHaveCount(2);
+  await expect(page.locator(".brouhaha-history-row.current")).toHaveCount(1);
+
+  await page.locator('[data-action="session-brouhaha-reset"]').click();
+  await expect(page.locator(".brouhaha-session-stage.calm")).toHaveAttribute("data-brouhaha-level","0");
+  await expect(page.locator(".brouhaha-current-ticket")).toHaveCount(0);
+  await expect(page.locator(".brouhaha-history-row")).toHaveCount(0);
+
+  await gotoView(page,"home");
+  await expect(page.locator(".home-session-object.noise.calm")).toBeVisible();
+
+  await gotoView(page,"quests");
+  await expect(page.locator(".session-quest-card.no-quest")).toBeVisible();
+  await expect(page.locator(".session-quest-card")).toContainText("Aucune quête temporaire");
+
+  await page.evaluate(() => { Math.random=()=>0; });
+  await page.locator('[data-action="session-quest-reroll"]').click();
+  await expect(page.locator(".session-quest-card.has-quest")).toBeVisible();
+  const firstQuest=await page.locator(".session-quest-card h2").innerText();
+  await expect(page.locator(".session-quest-objective")).toContainText("Objectif WHAOU7");
+  await expect(page.locator(".session-quest-reward")).toContainText("Récompense WHAOU7");
+  await expect(page.locator(".session-quest-meta")).toContainText("WHAOU7 Berthold Bis");
+
+  await page.locator('[data-action="session-quest-reroll"]').click();
+  const secondQuest=await page.locator(".session-quest-card h2").innerText();
+  expect(secondQuest).not.toBe(firstQuest);
+
+  await page.locator('[data-action="jump-codex"][data-type="quests"]').click();
+  await expect(page.locator(".quest-sheet-v6")).toBeVisible();
+  await expect(page.locator(".quest-sheet-v6")).toContainText(secondQuest);
+
+  await page.setViewportSize({width:390,height:844});
+  await assertNoHorizontalOverflow(page);
+});
+
 test("session Generator Brouhaha and Quest flows remain coherent", async ({ page }) => {
   await ready(page);
 
