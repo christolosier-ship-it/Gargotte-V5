@@ -447,7 +447,7 @@ test("Creature WHAOU keeps tabletop staging lazy and readable", async ({ page })
         id:"whaou-category-"+category,name:"WHAOU "+category,category,menace:index+1,
         dungeon_id:dungeon.id,dungeon_name:dungeon.name,pv:4,atk:2,def:1,zone:1,actions:2,tags:["whaou"]
       }));
-      loot.put({id:"whaou-loot",name:"Trophée WHAOU",type:"Trophée",effect:"Test visuel",gold_value:12,tags:[]});
+      loot.put({id:"whaou-loot",creature_id:"whaou-boss-1",creature_name:"Boss WHAOU phase 1",name:"Trophée WHAOU",type:"Trophée",effect:"Test visuel",gold_value:12,tags:[]});
       const bossBase={
         category:"boss",menace:6,dungeon_id:dungeon.id,dungeon_name:dungeon.name,
         pv:30,atk:6,def:4,zone:2,actions:3,tags:["whaou"]
