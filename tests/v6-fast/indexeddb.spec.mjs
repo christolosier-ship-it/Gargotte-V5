@@ -116,6 +116,26 @@ test("IndexedDB v1 -> V6 v2 preserves IDs, unknown fields, relations and Blobs t
   expect(beforeTools.xlsxModuleLoads).toBe(0);
   expect(beforeTools.zipModuleLoads).toBe(0);
 
+  const offlineTools=await page.evaluate(async () => {
+    const [xlsxCached,zipCached]=await Promise.all([
+      caches.match("./src/utils/xlsx.js",{ignoreSearch:true}),
+      caches.match("./src/utils/zip.js",{ignoreSearch:true})
+    ]);
+    const [xlsx,zip]=await Promise.all([
+      import("./src/utils/xlsx.js"),
+      import("./src/utils/zip.js")
+    ]);
+    return {
+      xlsxCached:Boolean(xlsxCached),
+      zipCached:Boolean(zipCached),
+      xlsxReady:typeof xlsx.buildXlsxBlob==="function" && typeof xlsx.buildXlsxWorkbookBlob==="function",
+      zipReady:typeof zip.makeZip==="function" && typeof zip.readZip==="function"
+    };
+  });
+  expect(offlineTools).toEqual({xlsxCached:true,zipCached:true,xlsxReady:true,zipReady:true});
+
+  await context.setOffline(false);
+
   const xlsxDownloadPromise = page.waitForEvent("download");
   await page.locator('[data-action="export-entity"][data-type="creatures"]').click();
   const xlsxDownload = await xlsxDownloadPromise;
@@ -138,8 +158,6 @@ test("IndexedDB v1 -> V6 v2 preserves IDs, unknown fields, relations and Blobs t
   await page.locator('[data-action="export-structured-json"]').click();
   const jsonDownload = await jsonDownloadPromise;
   expect(jsonDownload.suggestedFilename()).toMatch(/gargottex_structured_.*\.json$/);
-
-  await context.setOffline(false);
 });
 
 test("old incomplete records and broken relations render without rewriting them", async ({ page }) => {
