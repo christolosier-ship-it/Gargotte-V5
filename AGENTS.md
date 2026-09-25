@@ -1,6 +1,10 @@
 # AGENTS.md - Gargottex V6
 
 ## Documents actifs
+Le chantier V6-WHAOU est actif pour l'évolution visuelle et émotionnelle de Gargottex V6.
+Pour V6-WHAOU, lire d'abord `docs/V6-WHAOU.md`, puis uniquement le document du lot demandé.
+V6-WHAOU est strictement visuel et interactionnel : il ne doit pas modifier le modèle de données, anticiper la migration V7 ni annuler les invariants V6-Fast.
+
 Le chantier V6-Fast est clos. Son historique documentaire est archivé dans `docs/archive/v6-fast`.
 Les documents UI-1 à UI-6 sont archivés dans `docs/archive/v6-ui-ux`.
 La maquette V3 et le cahier des vues sont historiques : ils ne sont plus une baseline obligatoire et aucun comparatif V3 ne doit être ajouté à la CI.
@@ -8,6 +12,7 @@ La maquette V3 et le cahier des vues sont historiques : ils ne sont plus une bas
 Les invariants runtime issus de V6-Fast restent applicables tant que l'architecture V6 correspondante est en production.
 
 Pour un chantier V7, lire `docs/V7-CLOUDFLARE-BACKEND.md` puis uniquement le lot V7 concerné.
+V6-WHAOU et V7 sont deux chantiers séparés : un lot V6-WHAOU ne doit pas engager de changement backend ou de migration V7.
 
 ## Données de production
 L'application actuelle contient des données IndexedDB de production à considérer comme irremplaçables jusqu'à validation de V7.
