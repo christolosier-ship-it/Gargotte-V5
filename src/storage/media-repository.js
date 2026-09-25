@@ -16,7 +16,10 @@ function entityKey(type, id) {
 
 function isStaticPath(path) {
   const value = String(path || "").trim();
-  return Boolean(value) && !value.startsWith("local-media/");
+  if (!value) return false;
+  if (/^(?:blob:|data:image\/|https?:\/\/)/i.test(value)) return true;
+  const normalized = value.replace(/^\.\//, "");
+  return /^assets\/images\/[^/]+$/i.test(normalized);
 }
 
 function metadataFromRecord(record) {
