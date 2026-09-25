@@ -139,7 +139,16 @@ Résultat :
 ### Lot 3 — Rendu média et overlays
 docs/V6-FAST-LOT-3-RENDU-MEDIA.md
 
-Objectif : borner le DOM et la mémoire, isoler viewer/toasts/overlays du renderer global.
+**Statut : IMPLÉMENTÉ — Gate automatisée validée le 25/09/2026. Smoke iPad physique restant.**
+
+Résultat :
+- pagination bornée à 48 cartes en Administration Média et Codex Média ;
+- recherches, filtres, pagination, sélection et rattachement sur rendu local ;
+- viewer, toasts et Journal sortis de `#app` ;
+- viewer sans `render()` global et sans perte de grille/scroll ;
+- Object URLs vivantes <= 48 dans le stress ;
+- stress Full avec 420 vrais médias transparents ;
+- Fast 12/12 et Full 22/22.
 
 ### Lot 4 — Bootstrap, PWA et modules
 docs/V6-FAST-LOT-4-BOOTSTRAP-PWA.md
