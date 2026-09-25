@@ -5895,7 +5895,7 @@ const OVERLAY_FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled])
 function focusDescriptor(element) {
   if (!(element instanceof HTMLElement) || !app.contains(element)) return null;
   const dataset = {};
-  for (const key of ["action","view","type","id","base","level","src"]) {
+  for (const key of ["action","view","type","id","base","level","src","mediaId","mediaType"]) {
     if (element.dataset?.[key]) dataset[key] = element.dataset[key];
   }
   return {
