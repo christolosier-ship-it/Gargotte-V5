@@ -173,6 +173,24 @@ test("reduced motion keeps interactions usable", async ({ page }) => {
   });
   expect(npcMotion).toBeLessThanOrEqual(20);
 
+  for (const [type, root] of [
+    ["quests",".quest-sheet-v6"],
+    ["loot_items",".loot-sheet-v6"],
+    ["interactables",".interactable-sheet-v6"],
+    ["brouhaha_effects",".brouhaha-reference-sheet-v6"]
+  ]) {
+    await page.locator('[data-action="set-codex-type"][data-type="'+type+'"]').first().click();
+    await page.locator('[data-action="select-family-codex"][data-type="'+type+'"]').first().click();
+    await expect(page.locator(root)).toBeVisible();
+    const maxMotion=await page.locator(root).evaluate(el => {
+      const nodes=[el,...el.querySelectorAll("*")];
+      const parse=value=>value.split(",").map(part=>part.trim()).map(text=>text.endsWith("ms")?parseFloat(text):parseFloat(text)*1000).filter(Number.isFinite);
+      return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
+    });
+    expect(maxMotion).toBeLessThanOrEqual(20);
+    await page.locator('[data-action="codex-family-back"][data-type="'+type+'"]').click();
+  }
+
   await gotoView(page, "brouhaha");
   const timings = await page.locator("body").evaluate(() => {
     const parse = value => value.split(",").map(part => {
