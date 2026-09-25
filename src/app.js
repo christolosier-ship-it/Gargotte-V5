@@ -1900,6 +1900,42 @@ function queueMediaPathLoad(path, type = "dungeons") {
   pendingMediaLoads.set(key, promise);
 }
 
+function mediaAssetMatchesStoredPath(asset, path) {
+  const clean = String(path || "").trim();
+  if (!asset || !clean) return false;
+  return ["path", "preview_path", "thumb_path", "transparent_path"]
+    .some(field => String(asset[field] || "").trim() === clean);
+}
+
+function queueDungeonMediaLoad(entity, path) {
+  const dungeonId = String(entity?.id || "");
+  const clean = String(path || "").trim();
+  if (!dungeonId || !clean || isStaticMediaPath(clean)) return;
+  const key = `dungeon:${dungeonId}:${clean}`;
+  if (pendingMediaLoads.has(key)) return;
+  const generation = mediaContextGeneration;
+
+  const promise = (async () => {
+    let asset = await mediaRepository.loadMetadataByPath(clean);
+    if (generation !== mediaContextGeneration) return;
+
+    if (!asset) {
+      const linked = await mediaRepository.loadMetadataForEntity("dungeons", dungeonId);
+      if (generation !== mediaContextGeneration) return;
+      asset = linked.find(candidate => mediaAssetMatchesStoredPath(candidate, clean))
+        || linked.find(candidate => mediaRepository.canDisplay(candidate, "dungeons"))
+        || null;
+    }
+
+    if (asset) await mediaRepository.ensureActiveUrl(asset, "dungeons");
+    if (generation === mediaContextGeneration) scheduleMediaRender();
+  })()
+    .catch(error => console.warn("[Gargottex] Chargement image Donjon impossible.", error))
+    .finally(() => pendingMediaLoads.delete(key));
+
+  pendingMediaLoads.set(key, promise);
+}
+
 async function ensureMediaCatalog(force = false) {
   return mediaRepository.loadCatalogMetadata({ force });
 }
@@ -1935,12 +1971,20 @@ function imageUrlForEntity(entity, typeHint = "") {
   if (type === "dungeons") {
     if (!imagePath) return "";
     if (isStaticMediaPath(imagePath)) return imagePath;
-    const asset = mediaRepository.getCachedByPath(imagePath);
+
+    const linked = mediaRepository.getCachedForEntity("dungeons", entity.id);
+    const asset = mediaRepository.getCachedByPath(imagePath)
+      || linked.find(candidate => mediaAssetMatchesStoredPath(candidate, imagePath))
+      || (mediaRepository.isEntityLoaded("dungeons", entity.id)
+        ? linked.find(candidate => mediaRepository.canDisplay(candidate, "dungeons"))
+        : null);
+
     if (asset) {
       const url = mediaRepository.cachedActiveUrl(asset, "dungeons");
       if (url) return url;
     }
-    queueMediaPathLoad(imagePath, "dungeons");
+
+    queueDungeonMediaLoad(entity, imagePath);
     return "";
   }
 
