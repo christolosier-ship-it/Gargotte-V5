@@ -2,7 +2,7 @@
 
 ## Statut
 
-ACTIF — DOCUMENT MAÎTRE DU CHANTIER V6-WHAOU.
+CLOS — CHANTIER VALIDÉ ET FUSIONNÉ PAR LOTS. DOCUMENT MAÎTRE HISTORIQUE.
 
 V6-WHAOU est une évolution visuelle et interactionnelle de Gargottex V6. Il ne remplace ni les invariants runtime V6-Fast, ni le chantier V7 backend.
 
@@ -201,7 +201,7 @@ Chaque lot est dimensionné pour une passe ChatGPT GPT-5.6 Sol en effort Élevé
 ## Lot 1 — Socle émotionnel, shell et Accueil
 
 Document :
-docs/V6-WHAOU-LOT-01-SOCLE-ACCUEIL.md
+docs/archive/v6-whaou/V6-WHAOU-LOT-01-SOCLE-ACCUEIL.md
 
 Couvre :
 - tokens et helpers visuels ;
@@ -215,7 +215,7 @@ Couvre :
 ## Lot 2 — Donjons
 
 Document :
-docs/V6-WHAOU-LOT-02-DONJONS.md
+docs/archive/v6-whaou/V6-WHAOU-LOT-02-DONJONS.md
 
 Couvre :
 - collection Donjons ;
@@ -229,7 +229,7 @@ Couvre :
 ## Lot 3 — Créatures
 
 Document :
-docs/V6-WHAOU-LOT-03-CREATURES.md
+docs/archive/v6-whaou/V6-WHAOU-LOT-03-CREATURES.md
 
 Couvre :
 - Bestiaire galerie/liste ;
@@ -245,7 +245,7 @@ Couvre :
 ## Lot 4 — Héros et PNJ
 
 Document :
-docs/V6-WHAOU-LOT-04-HEROS-PNJ.md
+docs/archive/v6-whaou/V6-WHAOU-LOT-04-HEROS-PNJ.md
 
 Couvre :
 - collection Héros ;
@@ -259,7 +259,7 @@ Couvre :
 ## Lot 5 — Codex secondaire
 
 Document :
-docs/V6-WHAOU-LOT-05-CODEX-SECONDAIRE.md
+docs/archive/v6-whaou/V6-WHAOU-LOT-05-CODEX-SECONDAIRE.md
 
 Couvre :
 - Quêtes Codex ;
@@ -271,7 +271,7 @@ Couvre :
 ## Lot 6 — Générateur et Rencontre
 
 Document :
-docs/V6-WHAOU-LOT-06-GENERATEUR-RENCONTRE.md
+docs/archive/v6-whaou/V6-WHAOU-LOT-06-GENERATEUR-RENCONTRE.md
 
 Couvre :
 - préparation ;
@@ -286,7 +286,7 @@ Couvre :
 ## Lot 7 — Brouhaha et Quête de session
 
 Document :
-docs/V6-WHAOU-LOT-07-BROUHAHA-QUETE-SESSION.md
+docs/archive/v6-whaou/V6-WHAOU-LOT-07-BROUHAHA-QUETE-SESSION.md
 
 Couvre :
 - intensités Brouhaha ;
@@ -300,7 +300,7 @@ Couvre :
 ## Lot 8 — Médias et viewer
 
 Document :
-docs/V6-WHAOU-LOT-08-MEDIAS-VIEWER.md
+docs/archive/v6-whaou/V6-WHAOU-LOT-08-MEDIAS-VIEWER.md
 
 Couvre :
 - Médias du Codex ;
@@ -313,7 +313,7 @@ Couvre :
 ## Lot 9 — Administration
 
 Document :
-docs/V6-WHAOU-LOT-09-ADMINISTRATION.md
+docs/archive/v6-whaou/V6-WHAOU-LOT-09-ADMINISTRATION.md
 
 Couvre :
 - Atelier liste ;
@@ -328,7 +328,7 @@ Couvre :
 ## Lot 10 — Polish transversal et Gate finale
 
 Document :
-docs/V6-WHAOU-LOT-10-POLISH-GATE.md
+docs/archive/v6-whaou/V6-WHAOU-LOT-10-POLISH-GATE.md
 
 Couvre :
 - responsive ;
@@ -440,3 +440,61 @@ V6-WHAOU est réussi lorsque :
 - nouveau design system remplaçant V6.
 
 V6-WHAOU est une couche d'ambition, pas une nouvelle application.
+
+
+---
+
+# 13. Clôture V6-WHAOU
+
+Statut final : **CLOS**.
+
+Version applicative de clôture : **5.6.5**.  
+Cache PWA final : `gargottex-v6-whaou-final-v1`.
+
+Les Lots 01 à 09 ont été fusionnés dans `V5.3` avant la Gate finale. Le Lot 10 a validé l'ensemble transversalement.
+
+## Gate finale validée
+
+Validations automatiques finales :
+- Fast CI complète ;
+- Full CI Chromium ;
+- Full WebKit iPad ;
+- matrice responsive téléphone, iPad portrait, iPad paysage et desktop ;
+- axe/accessibilité ;
+- focus clavier, Escape et overlays ;
+- prefers-reduced-motion sur les familles principales ;
+- session Générateur -> Brouhaha -> Quête ;
+- Atelier dirty/save/delete guard ;
+- Import JSON et XLSX ;
+- Export XLSX, JSON et backup ZIP vérifié ;
+- stress Média avec 420 médias, pagination bornée à 48 et Object URLs bornées ;
+- viewer local et WebKit iPad ;
+- mise à jour Service Worker sans perte de données ;
+- **réouverture réelle avec le réseau coupé depuis le cache final** ;
+- vérification du précache des assets CSS locaux ;
+- absence de dépendance visuelle réseau externe.
+
+## Décisions finales
+
+- aucun changement de modèle de données ni migration IndexedDB ;
+- aucun nettoyage ni suppression de Blob média ;
+- dérivé transparent validé prioritaire ; image Donjon originale active ;
+- bootstrap sans chargement global des Blobs média ;
+- viewer, toasts et petites interactions restent locaux ;
+- PWA/offline demeure une cible de premier ordre ;
+- le pulse permanent du voyant local de l'Accueil a été retiré ;
+- animations infinies restantes limitées aux états temporaires justifiés : skeleton de chargement et étincelles de la cinématique Donjon ;
+- Administration reste volontairement plus calme que Codex, Partie et Brouhaha.
+
+## Reports
+
+**Aucun report bloquant V6-WHAOU.**
+
+Les évolutions backend et la migration média restent du ressort du chantier V7 et ne font pas partie de cette clôture.
+
+## Archive
+
+Les cahiers des Lots 01 à 10 sont archivés dans :
+`docs/archive/v6-whaou/`.
+
+Ce document maître reste à son emplacement afin de fournir le contexte historique et la synthèse de clôture.
