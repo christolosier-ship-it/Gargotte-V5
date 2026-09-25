@@ -5185,6 +5185,44 @@ function renderEncounterMiniPanel() {
   return "";
 }
 
+function queueBrouhahaLevelFeedback(previousLevel, nextLevel) {
+  requestAnimationFrame(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    const stage = app.querySelector(".brouhaha-session-stage");
+    const number = app.querySelector(".brouhaha-session-core>strong");
+    if (!stage || !number || previousLevel === nextLevel) return;
+    const rising = nextLevel > previousLevel;
+    number.classList.add(rising ? "level-impact-up" : "level-impact-down");
+    number.addEventListener("animationend", () => {
+      number.classList.remove("level-impact-up","level-impact-down");
+    }, { once: true });
+    if (previousLevel === 11 && nextLevel === 12) {
+      stage.classList.add("level-12-impact");
+      stage.addEventListener("animationend", () => stage.classList.remove("level-12-impact"), { once: true });
+    }
+  });
+}
+
+function queueBrouhahaTicketReveal() {
+  requestAnimationFrame(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    const ticket = app.querySelector(".brouhaha-current-ticket");
+    if (!ticket) return;
+    ticket.classList.add("ticket-enter-v6");
+    ticket.addEventListener("animationend", () => ticket.classList.remove("ticket-enter-v6"), { once: true });
+  });
+}
+
+function queueSessionQuestReveal() {
+  requestAnimationFrame(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    const card = app.querySelector(".session-quest-card.has-quest");
+    if (!card) return;
+    card.classList.add("quest-enter-v6");
+    card.addEventListener("animationend", () => card.classList.remove("quest-enter-v6"), { once: true });
+  });
+}
+
 function renderBrouhaha() {
   const session = ensureSessionContext();
   if (!session.active) return renderShell(`<section class="session-tool-page">${renderSessionStartCard("Brouhaha")}</section>`);
@@ -5195,7 +5233,7 @@ function renderBrouhaha() {
   return renderShell(`
     <section class="session-tool-page brouhaha-session-v6">
       ${renderSessionToolHeader("brouhaha")}
-      <section class="brouhaha-session-stage ${intensity}">
+      <section class="brouhaha-session-stage ${intensity} ${level === 12 ? "level-12" : ""}" data-brouhaha-level="${level}">
         <div class="brouhaha-fractures" aria-hidden="true"></div>
         <div class="brouhaha-session-side left">
           <button type="button" data-action="session-brouhaha-minus" aria-label="Baisser le Brouhaha de 1">−1</button>
@@ -5214,13 +5252,13 @@ function renderBrouhaha() {
 
       <section class="brouhaha-current-v6 panel">
         <div class="session-section-title"><h2>Effet courant</h2><span>${current ? `Niveau ${current.level}` : "Aucun tirage"}</span></div>
-        ${current ? `<div class="brouhaha-current-ticket"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt=""><p>${escapeHtml(current.text || "Effet sans texte.")}</p></div>` : `<div class="empty">Changer le niveau ne tire aucun effet. Utilise « Tirer un effet » quand tu le souhaites.</div>`}
+        ${current ? `<div class="brouhaha-current-ticket" data-level="${escapeHtml(String(current.level))}"><span class="brouhaha-ticket-level">${escapeHtml(String(current.level))}</span><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt=""><p>${escapeHtml(current.text || "Effet sans texte.")}</p></div>` : `<div class="empty">Changer le niveau ne tire aucun effet. Utilise « Tirer un effet » quand tu le souhaites.</div>`}
       </section>
 
       <section class="brouhaha-history-v6 panel">
         <div class="session-section-title"><h2>Historique</h2><button class="ghost" type="button" data-action="session-brouhaha-reset" ${history.length || current || level ? "" : "disabled"}>Réinitialiser</button></div>
         <div class="brouhaha-history-list">
-          ${history.length ? history.map((entry,index)=>`<div class="brouhaha-history-row"><b>${entry.level}</b><span>${escapeHtml(entry.text || "Effet sans texte.")}</span><small>${index===0?"courant":""}</small></div>`).join("") : `<div class="empty small">Aucun effet tiré pendant cette partie.</div>`}
+          ${history.length ? history.map((entry,index)=>`<div class="brouhaha-history-row ${index===0?"current":""}"><b>${entry.level}</b><span>${escapeHtml(entry.text || "Effet sans texte.")}</span><small>${index===0?"courant":""}</small></div>`).join("") : `<div class="empty small">Aucun effet tiré pendant cette partie.</div>`}
         </div>
       </section>
     </section>
@@ -5237,7 +5275,7 @@ function renderQuests() {
   return renderShell(`
     <section class="session-tool-page session-quest-v6">
       ${renderSessionToolHeader("quests")}
-      <section class="session-quest-card panel">
+      <section class="session-quest-card panel ${quest ? "has-quest" : "no-quest"}">
         <div class="session-section-title"><div><span class="eyebrow">Quête de session</span><h2>${quest ? escapeHtml(quest.name || "Quête sans nom") : "Aucune quête tirée"}</h2></div><span>${candidates.length} disponible${candidates.length>1?"s":""}</span></div>
         ${quest ? `
           <div class="session-quest-meta">
@@ -7308,18 +7346,22 @@ function bindEvents() {
         }
         case "session-brouhaha-plus": {
           const session = ensureSessionContext();
-          session.brouhaha.level = clamp(Number(session.brouhaha.level || 0) + 1, 0, 12);
+          const previousLevel = clamp(Number(session.brouhaha.level || 0), 0, 12);
+          session.brouhaha.level = clamp(previousLevel + 1, 0, 12);
           session.updatedAt = nowISO();
           await saveUiState(state.ui);
           render();
+          queueBrouhahaLevelFeedback(previousLevel, session.brouhaha.level);
           return;
         }
         case "session-brouhaha-minus": {
           const session = ensureSessionContext();
-          session.brouhaha.level = clamp(Number(session.brouhaha.level || 0) - 1, 0, 12);
+          const previousLevel = clamp(Number(session.brouhaha.level || 0), 0, 12);
+          session.brouhaha.level = clamp(previousLevel - 1, 0, 12);
           session.updatedAt = nowISO();
           await saveUiState(state.ui);
           render();
+          queueBrouhahaLevelFeedback(previousLevel, session.brouhaha.level);
           return;
         }
         case "session-brouhaha-draw": {
@@ -7330,6 +7372,7 @@ function bindEvents() {
           }
           await saveUiState(state.ui);
           render();
+          queueBrouhahaTicketReveal();
           toast("Effet Brouhaha tiré", "success");
           return;
         }
@@ -7350,6 +7393,7 @@ function bindEvents() {
           }
           await saveUiState(state.ui);
           render();
+          queueSessionQuestReveal();
           toast(`Quête : ${quest.name || "tirée"}`, "success");
           return;
         }
