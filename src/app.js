@@ -4413,7 +4413,7 @@ function renderBrouhahaCollectionCard(item, mode = "cards", active = false) {
   const intensity = brouhahaIntensityClass(item.level);
   return `
     <button class="brouhaha-ref-card ${mode} ${intensity} ${Number(item.level) === 12 ? "level-12" : ""} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="brouhaha_effects" data-id="${escapeHtml(String(item.id || ""))}">
-      <span class="brouhaha-ref-level"><small>Niveau</small><b>${escapeHtml(level)}</b></span>
+      <span class="brouhaha-ref-level" data-level="${escapeHtml(level)}"><small>Niveau</small><b>${escapeHtml(level)}</b></span>
       <span class="brouhaha-ref-copy">
         <strong>${escapeHtml(brouhahaReferenceLabel(item))}</strong>
         <small>${escapeHtml(scope.label)}</small>
