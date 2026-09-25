@@ -6,9 +6,11 @@ on:
     branches: [V5.3]
     paths:
       - ".github/workflows/v6-full-validation.yml"
+      - "tests/v6-fast/fast.spec.mjs"
       - "tests/v6-fast/full.spec.mjs"
       - "tests/v6-fast/indexeddb.spec.mjs"
       - "tests/v6-fast/fixtures/**"
+      - "src/app.js"
       - "src/storage/idb.js"
       - "src/storage/media-repository.js"
       - "service-worker.js"
