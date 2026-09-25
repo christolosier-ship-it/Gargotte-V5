@@ -1198,6 +1198,17 @@ function queueDungeonCinematic(dungeon) {
   setTimeout(() => showDungeonCinematic(dungeon), 90);
 }
 
+function queueWhaouPageReveal() {
+  requestAnimationFrame(() => {
+    const page = document.querySelector(".v6-main");
+    if (!page || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    page.classList.remove("whaou-page-enter");
+    void page.offsetWidth;
+    page.classList.add("whaou-page-enter");
+    page.addEventListener("animationend", () => page.classList.remove("whaou-page-enter"), { once: true });
+  });
+}
+
 function queueHeroDetailReveal() {
   requestAnimationFrame(() => {
     const sheet = document.querySelector(".hero-sheet-v6");
@@ -2831,8 +2842,15 @@ function mobileNavButton(view,label,iconHtml){
 function renderShell(content){
   const gameActive=["generator","brouhaha"].includes(state.ui.view);
   const moreActive=["atelier","media","import"].includes(state.ui.view);
+  const shellMood = state.ui.view === "home"
+    ? "home"
+    : ["generator","brouhaha","quests"].includes(state.ui.view)
+      ? "game"
+      : ["atelier","media","import"].includes(state.ui.view)
+        ? "admin"
+        : "codex";
   return [
-    '<div class="v6-app">',
+    '<div class="v6-app whaou-shell whaou-'+shellMood+'">',
       '<aside class="v6-sidebar" aria-label="Navigation principale">',
         '<button class="brand v6-brand" data-action="go-home" data-view="home" title="Accueil Gargottex"><img src="assets/images/logo-512.png" alt=""><div class="brand-copy"><b>Gargottex</b><span>Codex & outils de partie</span></div></button>',
         '<div class="nav-title">Principal</div><nav class="v6-nav">',
@@ -2851,7 +2869,7 @@ function renderShell(content){
         '<button class="mobile-brand" data-action="go-home" data-view="home" aria-label="Accueil Gargottex"><img src="assets/images/logo-192.png" alt=""></button>',
         '<div class="search-wrap" role="search"><span class="search-leading">'+shellIcon("search")+'</span><input class="search" data-action="search" type="search" role="searchbox" aria-label="Recherche globale" autocomplete="off" placeholder="Rechercher dans le Codex…" value="'+escapeHtml(state.ui.globalSearch)+'">'+(state.ui.globalSearch?renderSearchResults():"")+'</div>',
         '<div class="topbar-right"><span class="offline-badge" title="Données locales disponibles">'+shellIcon("wifi")+'<span>Local</span></span><button class="ghost topbar-action" data-action="toggle-journal" aria-label="Ouvrir le journal">'+shellIcon("journal")+'<span>Journal</span></button></div>',
-      '</header><main class="page v6-main" id="main-content">'+content+'</main>',
+      '</header><main class="page v6-main whaou-page" id="main-content">'+content+'</main>',
       '<nav class="mobile-bottom" aria-label="Navigation téléphone">',
         mobileNavButton("home","Accueil",shellIcon("home")),
         mobileNavButton("codex","Codex",shellIcon("book")),
@@ -3032,6 +3050,9 @@ function renderHome() {
   const remainingOccurrences = groups.reduce((sum, group) => sum + group.remaining, 0);
   const quest = findById("quests", session.questId);
   const currentBrouhaha = session.brouhaha.current;
+  const homeBrouhahaLevel = clamp(Number(session.brouhaha.level || 0), 0, 12);
+  const homeBrouhahaIntensity = homeBrouhahaLevel >= 10 ? "critical" : homeBrouhahaLevel >= 7 ? "hot" : homeBrouhahaLevel >= 4 ? "rising" : "calm";
+  const homeEncounterState = encounter ? (remainingOccurrences ? "is-active" : "is-complete") : "is-empty";
   const bertholdAdvice = BERTHOLD_ADVICES[bertholdAdviceIndex] || BERTHOLD_ADVICES[0];
 
   const editorialHead = `
@@ -3041,11 +3062,11 @@ function renderHome() {
   `;
 
   const bertholdNote = `
-    <aside class="home-berthold-note" aria-label="Le conseil de Berthold">
+    <button class="home-berthold-note" type="button" data-action="home-berthold-refresh" aria-label="Demander un autre conseil à Berthold" title="Un autre conseil de Berthold">
       <span>Le conseil de Berthold</span>
       <strong>${escapeHtml(bertholdAdvice)}</strong>
-      <small>Berthold · La Chope qui colle</small>
-    </aside>
+      <small>Berthold · La Chope qui colle · toucher pour un autre</small>
+    </button>
   `;
 
   if (!session.active) {
@@ -3090,14 +3111,14 @@ function renderHome() {
   const heroImage = dungeonImage || "assets/images/logo-source.jpeg";
 
   return renderShell(`
-    <section class="session-home-v6 active-session home-polish-v6">
+    <section class="session-home-v6 active-session home-polish-v6 home-brouhaha-${homeBrouhahaIntensity}" style="--home-dungeon-accent:${dungeon ? dungeonAccent(dungeon) : "#8A5E31"}">
       ${editorialHead}
       <div class="home-polish-grid active">
         <article class="home-hero-v6 home-hero-dungeon">
           <img class="home-hero-backdrop" src="${escapeHtml(heroImage)}" alt="" aria-hidden="true">
           <div class="home-hero-shade" aria-hidden="true"></div>
           <div class="home-hero-copy">
-            <span class="eyebrow">Partie en cours</span>
+            <div class="home-session-kicker"><span class="eyebrow">Partie en cours</span><span class="home-floor-marker">Étage ${session.floorIndex + 1}</span></div>
             <h2>${escapeHtml(dungeon?.name || "Donjon indisponible")}</h2>
             <p>Étage ${session.floorIndex + 1}${budget === null ? "" : ` · budget ${escapeHtml(String(budget))}`} · mode ${escapeHtml(sessionModeLabel(session.mode))}</p>
             <div class="home-hero-actions">
@@ -3109,21 +3130,21 @@ function renderHome() {
         </article>
 
         <aside class="home-side-v6">
-          <section class="home-session-board panel">
+          <section class="home-session-board panel ${homeBrouhahaIntensity}">
             <span class="eyebrow">Plateau de table</span>
             <h2>${escapeHtml(dungeon?.name || "Partie en cours")}</h2>
             <p class="home-session-meta">Étage ${session.floorIndex + 1}${budget === null ? "" : ` · Budget ${escapeHtml(String(budget))}`} · ${escapeHtml(sessionModeLabel(session.mode))}</p>
 
             <div class="session-dashboard-v6 home-session-objects">
-              <button class="session-dashboard-card encounter home-session-object" type="button" data-action="set-view" data-view="generator">
+              <button class="session-dashboard-card encounter home-session-object ${homeEncounterState}" type="button" data-action="set-view" data-view="generator">
                 <img src="${V6_ICON_PATH}Icone_Gameplay_MENACE.webp" alt="" aria-hidden="true">
                 <span><b>Rencontre</b><small>${encounter ? (remainingOccurrences ? `${remainingOccurrences} occurrence(s) restante(s)` : "Rencontre terminée") : "Aucune rencontre active"}</small></span>
               </button>
-              <button class="session-dashboard-card noise home-session-object" type="button" data-action="set-view" data-view="brouhaha">
+              <button class="session-dashboard-card noise home-session-object ${homeBrouhahaIntensity}" type="button" data-action="set-view" data-view="brouhaha">
                 <img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt="" aria-hidden="true">
                 <span><b>Brouhaha ${escapeHtml(String(session.brouhaha.level))} / 12</b><small>${currentBrouhaha ? escapeHtml(currentBrouhaha.text) : "Aucun effet courant"}</small></span>
               </button>
-              <button class="session-dashboard-card quest home-session-object" type="button" data-action="set-view" data-view="quests">
+              <button class="session-dashboard-card quest home-session-object ${quest ? "is-active" : "is-empty"}" type="button" data-action="set-view" data-view="quests">
                 <img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt="" aria-hidden="true">
                 <span><b>Quête ${quest ? "active" : "de session"}</b><small>${escapeHtml(quest?.name || "Aucune quête tirée")}</small></span>
               </button>
@@ -6622,6 +6643,7 @@ function bindEvents() {
           if (nextView === "media") await ensureMediaCatalog();
           await saveUiState(state.ui);
           render();
+          queueWhaouPageReveal();
           if (nextView === "import" && !state.diagnostic) {
             void refreshDiagnostic(true).catch(err => reportError(err, "diagnostic:open"));
           }
@@ -6629,6 +6651,10 @@ function bindEvents() {
         }
         case "toggle-journal":
           await toggleJournalOverlay();
+          return;
+        case "home-berthold-refresh":
+          bertholdAdviceIndex = (bertholdAdviceIndex + 1) % BERTHOLD_ADVICES.length;
+          render();
           return;
         case "open-image": {
           if (btn.dataset.mediaId) {
@@ -7072,6 +7098,7 @@ function bindEvents() {
           state.ui.view = "home";
           await saveUiState(state.ui);
           render();
+          queueWhaouPageReveal();
           toast("Partie terminée", "info");
           return;
         case "session-set-mode": {
