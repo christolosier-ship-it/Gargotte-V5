@@ -295,8 +295,8 @@ const WORKSHOP_REQUIRED_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
-const APP_VERSION = "5.6.4";
-const PWA_CACHE_NAME = "gargottex-v6-fast-bootstrap-v1";
+const APP_VERSION = "5.6.5";
+const PWA_CACHE_NAME = "gargottex-v6-whaou-final-v1";
 const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js","./src/storage/media-repository.js"];
 
 const HOME_TAGLINE = "Ici, même les habitués ne savent plus pourquoi ils sont venus.";
