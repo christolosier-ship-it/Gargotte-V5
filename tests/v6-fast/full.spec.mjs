@@ -343,6 +343,27 @@ test("large transparent Blob library keeps DOM URLs and viewer renders bounded",
   await assertNoHorizontalOverflow(page);
 });
 
+test("log reads stay truly limited and newest-first", async ({ page }) => {
+  await ready(page);
+  const result=await page.evaluate(async () => {
+    const idb=await import("./src/storage/idb.js");
+    for(let i=0;i<40;i++){
+      await idb.appendLog({
+        id:`v6fast-log-${String(i).padStart(2,"0")}`,
+        level:i%3===0?"error":"info",
+        message:`Log ${i}`,
+        created_at:new Date(Date.UTC(2026,8,25,6,0,i)).toISOString()
+      });
+    }
+    const rows=await idb.getLogs(7);
+    return rows.map(row=>({id:row.id,message:row.message,created_at:row.created_at}));
+  });
+
+  expect(result).toHaveLength(7);
+  expect(result.map(row=>row.message)).toEqual(["Log 39","Log 38","Log 37","Log 36","Log 35","Log 34","Log 33"]);
+  expect(result.every((row,index,array)=>index===0 || array[index-1].created_at >= row.created_at)).toBe(true);
+});
+
 test("Service Worker update preserves local data and core cache", async ({ page }) => {
   await ready(page);
   const controlled = await page.evaluate(async () => {
