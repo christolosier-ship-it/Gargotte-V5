@@ -3215,4 +3215,5 @@ body.cinematic-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){
   .codex-media-card-v6,.media-card-v6{transition:none!important}
   .image-viewer-overlay,.image-viewer-panel{animation:none!important}
+  .image-viewer-overlay *{animation:none!important;transition:none!important}
 }
