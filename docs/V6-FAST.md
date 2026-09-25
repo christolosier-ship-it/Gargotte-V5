@@ -1,7 +1,9 @@
 # Gargottex V6-Fast — Optimisation runtime et CI
 
 ## Statut
-DOCUMENT MAÎTRE — chantier actif.
+CHANTIER TECHNIQUE CLOS — Gates Lots 1 à 4 validées le 25/09/2026.
+
+Le Lot 4 est prêt dans la PR #39. La fusion dans V5.3 reste soumise à la validation finale du chantier.
 
 ## Objectif
 V6-Fast optimise Gargottex V6 sans refonte visuelle et sans changement fonctionnel volontaire.
@@ -139,7 +141,7 @@ Résultat :
 ### Lot 3 — Rendu média et overlays
 docs/V6-FAST-LOT-3-RENDU-MEDIA.md
 
-**Statut : IMPLÉMENTÉ — Gate automatisée validée le 25/09/2026. Smoke iPad physique restant.**
+**Statut : CLOS — Gate validée par l'utilisateur le 25/09/2026.**
 
 Résultat :
 - pagination bornée à 48 cartes en Administration Média et Codex Média ;
@@ -153,7 +155,27 @@ Résultat :
 ### Lot 4 — Bootstrap, PWA et modules
 docs/V6-FAST-LOT-4-BOOTSTRAP-PWA.md
 
-Objectif : alléger le chemin critique de démarrage et le chargement des modules.
+**Statut : CLOS SUR PR #39 — Gate automatisée validée le 25/09/2026.**
+
+Résultat :
+- `gargottexReady` passe après le premier rendu stable ;
+- un seul rendu global jusqu'à `ready` sur première installation et redémarrage chaud ;
+- diagnostic, logs et enregistrement Service Worker sortis du chemin critique ;
+- diagnostic Import/Export mis à jour localement sans remplacer le formulaire ;
+- `seed-data.js` chargé uniquement si IndexedDB est réellement vide ;
+- XLSX et ZIP chargés dynamiquement à la première action spécialisée ;
+- XLSX/ZIP conservés dans le cache PWA et importables hors ligne ;
+- Service Worker en cache immédiat avec revalidation réseau en arrière-plan ;
+- `getLogs(limit)` était déjà borné par index/cursor : comportement conservé et verrouillé par test ;
+- bug latent d'export XLSX corrigé : `ENTITY_DOWNLOAD_FILES` manquant ;
+- application 5.6.4, cache `gargottex-v6-fast-bootstrap-v1` ;
+- mesure CI indicative : cold ready ~87,1 ms, warm ready ~51,9 ms, 1 rendu dans les deux cas ;
+- redémarrage chaud : 0 seed, 0 diagnostic, 0 XLSX, 0 ZIP avant `ready` ;
+- Fast CI : 13/13 en 39,4 s ;
+- Full Chromium + WebKit iPad : 24/24 en 1,2 min ;
+- migration IndexedDB, exports, offline, update Service Worker, stress Média et smoke WebKit iPad validés.
+
+Les temps `ready` sont des mesures du runner CI destinées à comparer l'architecture. Ils ne constituent pas un benchmark matériel iPad.
 
 ## Ordre obligatoire
 Exécuter 1 → 2 → 3 → 4.
@@ -207,3 +229,21 @@ Le chantier est clos lorsque :
 - PWA/offline restent fonctionnels ;
 - les données IndexedDB existantes sont intactes ;
 - le contrat V7 reste compatible avec la nouvelle couche d'accès média.
+
+
+## Bilan de clôture V6-Fast
+
+Au 25/09/2026, les critères techniques du chantier sont satisfaits sur la PR #39 :
+- CI quotidienne recentrée sur les risques actuels ;
+- aucun Blob média global requis au démarrage ;
+- lecture média lazy et URLs bornées ;
+- vues Média paginées et viewer local ;
+- petites écritures Média sans refresh global ;
+- bootstrap réduit à un rendu stable avant les tâches secondaires ;
+- diagnostic et outils XLSX/ZIP retirés du chemin critique ;
+- seed conditionnel ;
+- app-shell servi depuis le cache valide puis revalidé en arrière-plan ;
+- offline, update PWA et IndexedDB validés automatiquement ;
+- contrat V7 compatible avec la couche média introduite en V6-Fast.
+
+La fusion de la PR #39 dans V5.3 constitue la dernière opération d'intégration de V6-Fast.
