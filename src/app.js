@@ -5438,10 +5438,10 @@ function workshopStatusLabel() {
 }
 
 function syncWorkshopDirtyIndicators() {
-  const status = app.querySelector("[data-workshop-status]");
-  if (status) {
+  const stateName = state.workshop.dirty ? "dirty" : state.workshop.status;
+  for (const status of app.querySelectorAll("[data-workshop-status]")) {
     status.textContent = workshopStatusLabel();
-    status.dataset.state = state.workshop.dirty ? "dirty" : state.workshop.status;
+    status.dataset.state = stateName;
   }
   const save = app.querySelector("[data-workshop-save]");
   if (save) save.disabled = !state.workshop.dirty && !state.workshop.isNew;
@@ -5796,9 +5796,10 @@ function renderAtelier() {
       </header>
 
       <nav class="workshop-family-menu" aria-label="Familles éditables">
-        ${WORKSHOP_TYPES.map(family => `<button type="button" class="${family === type ? "active" : ""}" data-action="set-workshop-type" data-type="${family}">
+        ${WORKSHOP_TYPES.map(family => `<button type="button" class="${family === type ? "active" : ""}" data-action="set-workshop-type" data-type="${family}" aria-pressed="${family === type ? "true" : "false"}">
           <img src="${V6_ICON_PATH}${workshopFamilyIcon(family)}" alt="">
           <span>${escapeHtml(getLabel(family))}</span>
+          <small>${family === type ? "Tiroir actif" : "Ouvrir"}</small>
         </button>`).join("")}
       </nav>
 
@@ -5830,15 +5831,29 @@ function renderAtelier() {
   `);
 }
 
+function workshopCardCompleteness(type, item) {
+  if (!item) return { incomplete: false, label: "" };
+  const missing = (WORKSHOP_REQUIRED_FIELDS[type] || []).filter(name => {
+    if (name === "level") return item[name] == null || item[name] === "";
+    return String(item[name] ?? "").trim() === "";
+  });
+  if (type === "creatures" && !codexImageFor(type, item)) missing.push("image");
+  return {
+    incomplete: missing.length > 0,
+    label: missing.length ? `${missing.length} point${missing.length > 1 ? "s" : ""} à compléter` : ""
+  };
+}
+
 function renderWorkshopCard(type, item, active, draft = false) {
   const title = item.name || item.title || item.hero_base_name || item.label || (draft ? "Nouveau brouillon" : item.id || "Sans nom");
   const subtitle = draft ? "Non enregistré" : codexSubtitle(type, item);
   const image = codexImageFor(type, item);
+  const completeness = draft ? { incomplete: true, label: "Brouillon non enregistré" } : workshopCardCompleteness(type, item);
   return `
-    <button class="workshop-list-card ${active ? "active" : ""} ${draft ? "draft" : ""}" type="button" data-action="select-workshop" data-type="${type}" data-id="${escapeHtml(String(item.id || ""))}">
+    <button class="workshop-list-card ${active ? "active" : ""} ${draft ? "draft" : ""} ${completeness.incomplete ? "incomplete" : "complete"}" type="button" data-action="select-workshop" data-type="${type}" data-id="${escapeHtml(String(item.id || ""))}">
       <div class="workshop-list-thumb">${image ? `<img src="${escapeHtml(image)}" alt="">` : `<img src="${V6_ICON_PATH}${workshopFamilyIcon(type)}" alt="">`}</div>
       <span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(subtitle || getLabel(type))}</small></span>
-      ${draft ? `<em>Brouillon</em>` : ""}
+      ${draft ? `<em>Brouillon</em>` : completeness.incomplete ? `<em class="workshop-incomplete-state">${escapeHtml(completeness.label)}</em>` : `<i class="workshop-complete-mark" aria-label="Fiche complète">✓</i>`}
     </button>
   `;
 }
@@ -5854,8 +5869,8 @@ function renderWorkshopEditor(type, item, isDraft = false) {
         ${renderWorkshopStatus()}
       </header>
 
-      <div class="workshop-sections-v6">
-        ${sections.map(section => renderWorkshopSection(type, section, item)).join("")}
+      <div class="workshop-sections-v6" aria-label="Sections de la fiche">
+        ${sections.map((section,index) => `<div class="workshop-section-wrap" data-section-index="${index + 1}">${renderWorkshopSection(type, section, item)}</div>`).join("")}
       </div>
 
       <section class="workshop-danger-zone">
@@ -6155,35 +6170,36 @@ async function promptPwaInstall(){const prompt=state.pwaInstallPrompt;if(!prompt
 function wirePwaInstallPrompt(){window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();state.pwaInstallPrompt=event;if(state.ui?.view==="import")refreshDiagnostic().catch(()=>{});});window.addEventListener("appinstalled",()=>{state.pwaInstallPrompt=null;if(state.ui?.view==="import")refreshDiagnostic().catch(()=>{});});}
 
 function renderDiagnosticPanel(){
-  const d=state.diagnostic;if(!d)return`<section class="diagnostic-v6 panel"><div class="panel-title compact"><h3>Diagnostic local</h3></div><div class="empty">Diagnostic en cours…</div></section>`;
+  const d=state.diagnostic;if(!d)return`<section class="diagnostic-v6 panel"><div class="panel-title compact"><h3>Diagnostic local</h3></div><div class="empty diagnostic-loading">Diagnostic en cours…</div></section>`;
   const countRows=STORE_DEFS.map(def=>`<div><span>${escapeHtml(def.name)}</span><b>${d.indexeddb.counts[def.name]??"?"}</b></div>`).join(""),coreReady=Object.values(d.pwa.cached_core||{}).filter(Boolean).length;
-  return`<section class="diagnostic-v6 panel"><header class="diagnostic-head-v6"><div><span class="eyebrow">État local</span><h3>Diagnostic</h3></div><span class="${d.pwa.offline_core_ready?"ok":"warn"}">${d.pwa.offline_core_ready?"Cache offline prêt":"Cache offline incomplet"}</span></header><div class="diagnostic-metrics-v6"><div><span>Version PWA</span><b>${escapeHtml(d.app_version)}</b></div><div><span>IndexedDB</span><b>v${d.indexeddb.version}</b><small>${escapeHtml(d.indexeddb.name)}</small></div><div><span>Service Worker</span><b>${escapeHtml(d.pwa.service_worker_state)}</b><small>${d.pwa.controller?"contrôle la page":"sans contrôleur"}</small></div><div><span>Cache V6</span><b>${coreReady}/${PWA_OFFLINE_CORE.length}</b><small>${escapeHtml(d.pwa.cache_name)}</small></div></div><div class="diagnostic-columns-v6"><div class="diagnostic-box"><strong>Stores & compteurs</strong><div class="diagnostic-store-grid">${countRows}</div></div><div class="diagnostic-box"><strong>PWA / offline</strong><p>Affichage : ${escapeHtml(d.pwa.display_mode)} · réseau : ${d.pwa.online?"en ligne":"hors ligne"}</p><p>Installation : ${d.pwa.display_mode==="standalone"?"installée":d.pwa.install_prompt_available?"prompt disponible":"via navigateur"}</p><p>Réouverture offline : ${d.pwa.offline_core_ready?"assets cœur disponibles en cache":"à revalider après mise à jour du cache"}</p>${d.storage?`<p>Stockage : ${mediaBytes(d.storage.usage)} / ${mediaBytes(d.storage.quota)}${d.storage.persisted===true?" · persistant":""}</p>`:""}</div><div class="diagnostic-box wide"><strong>Dernière erreur locale</strong>${d.last_error?`<p>${escapeHtml(d.last_error.message)}</p><small>${escapeHtml(d.last_error.created_at)}</small>`:`<p>Aucune erreur dans le journal chargé.</p>`}</div></div><div class="diagnostic-actions-v6"><button class="secondary" type="button" data-action="diagnostic-refresh">Actualiser</button><button class="secondary" type="button" data-action="diagnostic-copy">Copier diagnostic</button><button class="secondary" type="button" data-action="diagnostic-export">Exporter diagnostic</button><button class="secondary" type="button" data-action="pwa-install">Installer la PWA</button><button class="secondary" type="button" data-action="pwa-update">Vérifier la mise à jour</button><button class="danger ghost" type="button" data-action="diagnostic-clear-logs">Vider uniquement les logs</button></div></section>`;
+  const swReady=Boolean(d.pwa.controller),cacheReady=Boolean(d.pwa.offline_core_ready),networkLabel=d.pwa.online?"En ligne":"Hors ligne";
+  return`<section class="diagnostic-v6 panel"><header class="diagnostic-head-v6"><div><span class="eyebrow">Instrumentation locale</span><h3>Diagnostic</h3><p>État lisible de la PWA, du cache et du stockage local.</p></div><span class="diagnostic-status-pill ${cacheReady?"ok":"warn"}"><i aria-hidden="true"></i>${cacheReady?"Cache offline prêt":"Cache offline incomplet"}</span></header><div class="diagnostic-metrics-v6"><div class="instrument"><span>Version PWA</span><b>${escapeHtml(d.app_version)}</b><small>application</small></div><div class="instrument"><span>IndexedDB</span><b>v${d.indexeddb.version}</b><small>${escapeHtml(d.indexeddb.name)}</small></div><div class="instrument ${swReady?"ok":"warn"}"><span>Service Worker</span><b>${escapeHtml(d.pwa.service_worker_state)}</b><small>${swReady?"Contrôle actif":"Sans contrôleur"}</small></div><div class="instrument ${cacheReady?"ok":"warn"}"><span>Cache V6</span><b>${coreReady}/${PWA_OFFLINE_CORE.length}</b><small>${cacheReady?"Cœur offline disponible":escapeHtml(d.pwa.cache_name)}</small></div></div><div class="diagnostic-columns-v6"><div class="diagnostic-box"><strong>Stores & compteurs</strong><div class="diagnostic-store-grid">${countRows}</div></div><div class="diagnostic-box"><strong>PWA / offline</strong><div class="diagnostic-line"><i class="${d.pwa.online?"ok":"offline"}"></i><span>Réseau</span><b>${networkLabel}</b></div><div class="diagnostic-line"><i class="${d.pwa.display_mode==="standalone"?"ok":"neutral"}"></i><span>Installation</span><b>${d.pwa.display_mode==="standalone"?"Installée":d.pwa.install_prompt_available?"Prompt disponible":"Via navigateur"}</b></div><div class="diagnostic-line"><i class="${cacheReady?"ok":"warn"}"></i><span>Réouverture offline</span><b>${cacheReady?"Prête":"À revalider"}</b></div>${d.storage?`<div class="diagnostic-line"><i class="${d.storage.persisted===true?"ok":"neutral"}"></i><span>Stockage</span><b>${mediaBytes(d.storage.usage)} / ${mediaBytes(d.storage.quota)}${d.storage.persisted===true?" · persistant":""}</b></div>`:""}</div><div class="diagnostic-box wide diagnostic-last-error"><strong>Dernière erreur locale</strong>${d.last_error?`<p>${escapeHtml(d.last_error.message)}</p><small>${escapeHtml(d.last_error.created_at)}</small>`:`<p>Aucune erreur dans le journal chargé.</p>`}</div></div><div class="diagnostic-actions-v6"><button class="secondary" type="button" data-action="diagnostic-refresh">Actualiser</button><button class="secondary" type="button" data-action="diagnostic-copy">Copier diagnostic</button><button class="secondary" type="button" data-action="diagnostic-export">Exporter diagnostic</button><button class="secondary" type="button" data-action="pwa-install">Installer la PWA</button><button class="secondary" type="button" data-action="pwa-update">Vérifier la mise à jour</button><button class="danger ghost" type="button" data-action="diagnostic-clear-logs">Vider uniquement les logs</button></div></section>`;
 }
 
 function renderImportExport(){
-  const preview=state.importRuntime.preview,last=state.importRuntime.lastResult;
-  return renderShell(`<section class="admin-io-v6"><header class="admin-io-head"><div><span class="eyebrow">Administration locale</span><h1>Import / Export</h1><p>Prévisualiser, confirmer, sauvegarder. Aucun backend distant.</p></div></header><section class="panel import-v6"><div class="panel-title"><h2>Import structuré</h2><div class="muted">JSON et XLSX utilisent deux entrées distinctes. Les médias binaires ne s'importent pas par ce formulaire.</div></div><label class="import-family-select"><span>Famille</span><select data-action="import-type">${IMPORT_TYPES.map(t=>`<option value="${t}" ${t===state.ui.import.type?"selected":""}>${escapeHtml(getLabel(t))}</option>`).join("")}</select></label><div class="import-format-grid"><label class="import-format-card"><span class="eyebrow">JSON</span><strong>Importer JSON</strong><small>Tableau, objet <code>rows</code> ou export structuré Gargottex.</small><input type="file" accept=".json,application/json" data-action="import-json-file"></label><label class="import-format-card"><span class="eyebrow">XLSX</span><strong>Importer XLSX</strong><small>La feuille correspondant à la famille sélectionnée est utilisée.</small><input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-action="import-xlsx-file"></label></div>${preview?renderImportPreview(preview):`<div class="import-preview-empty">Charge un JSON ou XLSX : le preview est calculé en mémoire, sans write métier.</div>`}${last?`<div class="import-final-report"><strong>Dernier bilan</strong><span>${last.written} écriture(s) · ${last.created} création(s) · ${last.updated} mise(s) à jour · ${last.excluded} exclue(s)</span><small>${escapeHtml(last.fileName)} · ${escapeHtml(String(last.format).toUpperCase())}</small></div>`:""}</section><section class="panel export-v6"><div class="panel-title"><h2>Export</h2><div class="muted">Les exports XLSX/JSON structurés <strong>ne contiennent aucun Blob média</strong>. Le backup ZIP est le format de sécurité avec binaires.</div></div><div class="export-safety-grid"><article><span>XLSX existants</span><strong>Données structurées</strong><p>Format historique conservé. Aucun Blob.</p><div class="export-buttons">${ENTITY_ORDER.map(t=>`<button class="secondary" data-action="export-entity" data-type="${t}">Exporter ${escapeHtml(getLabel(t))}</button>`).join("")}<button class="primary" data-action="export-all">Exporter tout XLSX</button></div></article><article><span>JSON</span><strong>Snapshot structuré</strong><p>Préserve les propriétés sérialisables et les métadonnées médias. Aucun Blob.</p><button class="primary" data-action="export-structured-json">Exporter JSON structuré</button></article><article class="backup-card-v6"><span>Sauvegarde de sécurité</span><strong>Backup ZIP complet</strong><p>Contient XLSX, JSON structuré, métadonnées et Blobs média disponibles : originaux, thumbnails, aperçus et dérivés transparents. Le ZIP est relu et vérifié avant téléchargement.</p><button class="primary" data-action="export-backup">Exporter et vérifier le backup ZIP</button></article></div><div class="backup-restore-note">La restauration ZIP destructive historique est désactivée. Toute restauration métier passe par un import avec preview et confirmation.</div></section>${`<div data-diagnostic-panel>${renderDiagnosticPanel()}</div>`}</section>`);
+  const preview=state.importRuntime.preview,last=state.importRuntime.lastResult,activeType=state.ui.import.type;
+  return renderShell(`<section class="admin-io-v6"><header class="admin-io-head"><div><span class="eyebrow">Administration locale</span><h1>Import / Export</h1><p>Prévisualiser, confirmer, sauvegarder. Aucun backend distant.</p></div></header><section class="panel import-v6"><div class="panel-title"><h2>Import structuré</h2><div class="muted">JSON et XLSX utilisent deux entrées distinctes. Les médias binaires ne s'importent pas par ce formulaire.</div></div><div class="import-family-band"><img src="${V6_ICON_PATH}${workshopFamilyIcon(activeType)}" alt=""><label class="import-family-select"><span>Famille active</span><select data-action="import-type">${IMPORT_TYPES.map(t=>`<option value="${t}" ${t===activeType?"selected":""}>${escapeHtml(getLabel(t))}</option>`).join("")}</select></label><strong>${escapeHtml(getLabel(activeType))}</strong></div><div class="import-format-grid"><label class="import-format-card json"><span class="eyebrow">JSON</span><strong>Importer JSON</strong><small>Tableau, objet <code>rows</code> ou export structuré Gargottex.</small><input type="file" accept=".json,application/json" data-action="import-json-file"></label><label class="import-format-card xlsx"><span class="eyebrow">XLSX</span><strong>Importer XLSX</strong><small>La feuille correspondant à la famille sélectionnée est utilisée.</small><input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-action="import-xlsx-file"></label></div>${preview?renderImportPreview(preview):`<div class="import-preview-empty"><strong>Aucune écriture avant confirmation</strong><span>Charge un JSON ou XLSX. Le preview est calculé en mémoire et les erreurs bloquantes restent exclues.</span></div>`}${last?`<div class="import-final-report"><span class="import-final-seal" aria-hidden="true">✓</span><div><strong>Import terminé</strong><span>${last.written} écriture(s) · ${last.created} création(s) · ${last.updated} mise(s) à jour · ${last.excluded} exclue(s)</span><small>${escapeHtml(last.fileName)} · ${escapeHtml(String(last.format).toUpperCase())}</small></div></div>`:""}</section><section class="panel export-v6"><div class="panel-title"><h2>Export</h2><div class="muted">Trois niveaux de sauvegarde. Les exports structurés <strong>ne contiennent aucun Blob média</strong>.</div></div><div class="export-safety-grid"><article class="export-level structured"><span>Niveau 1 · XLSX</span><strong>Données structurées</strong><p>Format historique conservé. <b>Aucun Blob média.</b></p><div class="export-buttons">${ENTITY_ORDER.map(t=>`<button class="secondary" data-action="export-entity" data-type="${t}">Exporter ${escapeHtml(getLabel(t))}</button>`).join("")}<button class="primary" data-action="export-all">Exporter tout XLSX</button></div></article><article class="export-level structured"><span>Niveau 2 · JSON</span><strong>Snapshot structuré</strong><p>Préserve les propriétés sérialisables et les métadonnées médias. <b>Aucun Blob média.</b></p><button class="primary" data-action="export-structured-json">Exporter JSON structuré</button></article><article class="backup-card-v6 export-level safety" data-backup-card data-state="idle"><span>Niveau 3 · Sauvegarde de sécurité</span><strong>Backup ZIP complet</strong><p>Contient XLSX, JSON structuré, métadonnées et Blobs média disponibles. Le ZIP est relu et vérifié avant téléchargement.</p><div class="backup-state-v6" role="status" aria-live="polite"><i></i><span data-backup-state-label>Prêt à préparer</span></div><button class="primary" data-action="export-backup">Exporter et vérifier le backup ZIP</button></article></div><div class="backup-restore-note">La restauration ZIP destructive historique est désactivée. Toute restauration métier passe par un import avec preview et confirmation.</div></section><div data-diagnostic-panel>${renderDiagnosticPanel()}</div></section>`);
 }
 
 function renderImportPreview(preview){
   const s=preview.summary;
   return`<section class="import-preview-v6" aria-live="polite" aria-atomic="false"><header><div><span class="eyebrow">Preview obligatoire</span><h3>${escapeHtml(preview.fileName||"Fichier")}</h3><p>${escapeHtml(String(preview.format||"").toUpperCase())} · ${escapeHtml(getLabel(preview.type))}</p></div><span class="import-no-write">Aucune donnée métier écrite</span></header>
-  <div class="metric-grid import-metrics-v6"><div class="metric"><span>Total</span><b>${s.total}</b></div><div class="metric ok"><span>Valides</span><b>${s.valid}</b></div><div class="metric warn"><span>Warnings</span><b>${s.warningRows}</b><small>${s.warnings} message(s)</small></div><div class="metric err"><span>Erreurs</span><b>${s.errorRows}</b><small>${s.errors} bloquante(s)</small></div></div>
-  <div class="import-effect-plan"><strong>Effet prévu</strong><span>${s.create} création(s) · ${s.update} mise(s) à jour · ${s.exclude} exclue(s)</span></div>
-  <div class="import-plan-table">${preview.rows.slice(0,60).map(row=>`<article class="import-plan-row ${row.effect}"><span class="import-row-index">#${row.index}</span><div><strong>${escapeHtml(row.label)}</strong>${row.warnings.map(m=>`<small class="warning">⚠ ${escapeHtml(m)}</small>`).join("")}${row.errors.map(m=>`<small class="error">✕ ${escapeHtml(m)}</small>`).join("")}</div><span class="import-effect-badge">${row.effect==="create"?"Créer":row.effect==="update"?"Mettre à jour":"Exclure"}</span></article>`).join("")}</div>
+  <div class="metric-grid import-metrics-v6"><div class="metric neutral"><span>Total inspecté</span><b>${s.total}</b><small>lignes</small></div><div class="metric ok"><span>Valides</span><b>${s.valid}</b><small>importables</small></div><div class="metric warn"><span>Warnings</span><b>${s.warningRows}</b><small>${s.warnings} message(s)</small></div><div class="metric err"><span>Erreurs</span><b>${s.errorRows}</b><small>${s.errors} bloquante(s)</small></div></div>
+  <div class="import-effect-plan"><div><span>Effet prévu</span><strong>${s.valid} écriture(s) autorisée(s)</strong></div><span>${s.create} création(s) · ${s.update} mise(s) à jour · ${s.exclude} exclue(s)</span></div>
+  <div class="import-plan-table">${preview.rows.slice(0,60).map(row=>`<article class="import-plan-row ${row.effect}"><span class="import-row-index">#${row.index}</span><div><strong>${escapeHtml(row.label)}</strong>${row.warnings.map(m=>`<small class="warning">⚠ Warning · ${escapeHtml(m)}</small>`).join("")}${row.errors.map(m=>`<small class="error">✕ Erreur bloquante · ${escapeHtml(m)}</small>`).join("")}</div><span class="import-effect-badge">${row.effect==="create"?"Créer":row.effect==="update"?"Mettre à jour":"Exclure"}</span></article>`).join("")}</div>
   ${preview.rows.length>60?`<p class="muted small">${preview.rows.length-60} ligne(s) supplémentaires non affichées, incluses dans les métriques.</p>`:""}<div class="form-actions"><button class="primary" type="button" data-action="import-apply" ${s.valid?"":"disabled"}>Confirmer ${s.valid} écriture(s)</button><button class="secondary" type="button" data-action="import-clear">Annuler le preview</button></div></section>`;
 }
 
 function renderJournalDrawer() {
   return `
     <div class="drawer-overlay">
-      <div class="drawer journal" role="dialog" aria-modal="true" aria-labelledby="journal-title" tabindex="-1">
-        <div class="panel-title">
-          <h2 id="journal-title">Journal d'erreurs</h2>
+      <div class="drawer journal journal-v6" role="dialog" aria-modal="true" aria-labelledby="journal-title" tabindex="-1">
+        <div class="panel-title journal-head-v6">
+          <div><span class="eyebrow">Registre technique</span><h2 id="journal-title">Journal d'erreurs</h2><small>${state.logs.length} entrée${state.logs.length > 1 ? "s" : ""} chargée${state.logs.length > 1 ? "s" : ""}</small></div>
           <button class="ghost" type="button" data-action="toggle-journal" aria-label="Fermer le journal">✕</button>
         </div>
-        <div class="history-list">
-          ${state.logs.length ? state.logs.map(log => `<div class="history-row ${escapeHtml(log.level)}"><strong>${escapeHtml(log.level)}</strong><span>${escapeHtml(log.message)}</span><small>${escapeHtml(log.created_at)}</small></div>`).join("") : `<div class="empty">Aucun journal.</div>`}
+        <div class="history-list journal-list-v6">
+          ${state.logs.length ? state.logs.map(log => `<article class="history-row journal-row-v6 ${escapeHtml(log.level)}" data-level="${escapeHtml(log.level)}"><strong>${escapeHtml(log.level)}</strong><span>${escapeHtml(log.message)}</span><small>${escapeHtml(log.created_at)}</small></article>`).join("") : `<div class="empty">Aucun journal.</div>`}
         </div>
       </div>
     </div>
@@ -7551,7 +7567,25 @@ function bindEvents() {
         case "export-structured-json":
           await exportStructuredJsonFile();toast("JSON structuré exporté. Aucun Blob média inclus.","info");return;
         case "export-backup": {
-          const check=await exportFullBackupFile();toast(`Backup ZIP vérifié : ${check.mediaCount} média(s), ${check.binaryCount} Blob(s).`,"success");return;
+          const card=app.querySelector("[data-backup-card]");
+          const button=card?.querySelector('[data-action="export-backup"]');
+          const label=card?.querySelector("[data-backup-state-label]");
+          if (card) card.dataset.state="preparing";
+          if (label) label.textContent="Préparation du backup…";
+          if (button) button.disabled=true;
+          try{
+            requestAnimationFrame(()=>{
+              if(card) card.dataset.state="verifying";
+              if(label) label.textContent="Préparation et vérification…";
+            });
+            const check=await exportFullBackupFile();
+            if(card) card.dataset.state="ready";
+            if(label) label.textContent=`Vérifié · ${check.mediaCount} média(s) · ${check.binaryCount} Blob(s)`;
+            toast(`Backup ZIP vérifié : ${check.mediaCount} média(s), ${check.binaryCount} Blob(s).`,"success");
+          }finally{
+            if(button) button.disabled=false;
+          }
+          return;
         }
         case "import-clear":
           state.importRuntime.preview=null;render();return;

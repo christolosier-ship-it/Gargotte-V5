@@ -3217,3 +3217,286 @@ body.cinematic-open{overflow:hidden}
   .image-viewer-overlay,.image-viewer-panel{animation:none!important}
   .image-viewer-overlay *{animation:none!important;transition:none!important}
 }
+
+
+/* V6-WHAOU · Lot 09 · Administration */
+/* Administration : établi sobre, précis, sans surjeu narratif. */
+.workshop-head-v6,
+.admin-io-head{
+  position:relative;isolation:isolate;
+  box-shadow:0 16px 34px #0004,inset 0 1px rgba(255,255,255,.025)
+}
+.workshop-head-v6:after,
+.admin-io-head:after{
+  content:"";position:absolute;pointer-events:none;inset:auto 18px 0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,164,95,.22),transparent)
+}
+
+/* Familles = plaques / tiroirs. */
+.workshop-family-menu{gap:7px}
+.workshop-family-menu button{
+  position:relative;overflow:hidden;min-height:92px;
+  border-color:#3e2e23;
+  background:linear-gradient(180deg,#211711,#17100c 74%);
+  box-shadow:inset 0 1px rgba(255,255,255,.025),0 5px 12px #0002;
+  transition:transform var(--whaou-motion-touch) var(--whaou-ease),border-color var(--whaou-motion-touch),background var(--whaou-motion-touch),box-shadow var(--whaou-motion-touch)
+}
+.workshop-family-menu button:before{
+  content:"";position:absolute;left:9px;right:9px;bottom:7px;height:2px;border-radius:2px;
+  background:rgba(212,164,95,.08)
+}
+.workshop-family-menu button small{
+  color:var(--color-text-tertiary);font:700 6px/1 Inter,sans-serif;
+  text-transform:uppercase;letter-spacing:.08em
+}
+.workshop-family-menu button.active{
+  transform:translateY(1px);
+  border-color:#8c6639;
+  background:linear-gradient(180deg,#382719,#21160f 76%);
+  box-shadow:inset 0 3px 10px #0006,inset 0 0 0 1px rgba(212,164,95,.13)
+}
+.workshop-family-menu button.active small{color:#caa873}
+.workshop-family-menu button.active:before{background:#b88647}
+
+/* Liste : état complet/incomplet lisible sans devenir une alarme. */
+.workshop-list-card{
+  position:relative;
+  transition:border-color var(--whaou-motion-touch),background var(--whaou-motion-touch),box-shadow var(--whaou-motion-touch),transform var(--whaou-motion-touch)
+}
+.workshop-list-card.active{
+  transform:translateX(2px);
+  box-shadow:inset 3px 0 #a97a3e,inset 0 0 0 1px rgba(169,122,62,.08)
+}
+.workshop-list-card.incomplete:not(.draft){border-right:2px solid rgba(217,161,46,.38)}
+.workshop-incomplete-state{
+  max-width:88px;text-align:right;color:#d1aa68!important;line-height:1.15
+}
+.workshop-complete-mark{
+  display:grid;place-items:center;width:22px;height:22px;border-radius:50%;
+  border:1px solid rgba(111,165,119,.22);color:#91b596;background:#142018;
+  font:800 10px/1 Inter,sans-serif
+}
+
+/* Éditeur : formulaire neutre, sections mieux hiérarchisées. */
+.workshop-section-wrap{position:relative}
+.workshop-section-wrap:before{
+  content:attr(data-section-index);position:absolute;z-index:2;left:11px;top:-6px;
+  display:grid;place-items:center;width:18px;height:18px;border-radius:50%;
+  border:1px solid #5b4230;background:#17100c;color:#a98a65;
+  font:800 7px/1 Inter,sans-serif
+}
+.workshop-form-section{
+  padding-top:16px;
+  background:linear-gradient(145deg,#1e1510,#15100c);
+  box-shadow:inset 0 1px rgba(255,255,255,.018)
+}
+.workshop-form-section legend{padding-left:17px}
+.workshop-image-row>.field-preview{
+  box-shadow:inset 0 0 24px #0004
+}
+.workshop-image-row>.field-preview img{filter:drop-shadow(0 8px 8px rgba(0,0,0,.4))}
+
+/* Dirty / saving / saved : le badge porte tout le feedback. */
+.workshop-save-state{
+  position:relative;isolation:isolate;
+  min-height:30px;padding-left:25px
+}
+.workshop-save-state:before{
+  content:"";position:absolute;left:10px;top:50%;width:7px;height:7px;border-radius:50%;
+  transform:translateY(-50%);background:#777
+}
+.workshop-save-state[data-state="dirty"]:before{background:#d9a12e}
+.workshop-save-state[data-state="saving"]:before{background:#8b94a3}
+.workshop-save-state[data-state="saved"]:before{background:#78a67f}
+.workshop-save-state[data-state="error"]:before{background:#ef4b4b}
+.workshop-save-state[data-state="saved"]{animation:workshop-saved-badge 260ms var(--whaou-ease) both}
+@keyframes workshop-saved-badge{
+  0%{transform:scale(.96);box-shadow:0 0 0 rgba(111,165,119,0)}
+  48%{transform:scale(1.025);box-shadow:0 0 0 5px rgba(111,165,119,.07)}
+  100%{transform:none;box-shadow:none}
+}
+.workshop-v6.is-dirty .workshop-savebar{
+  border-color:#956a31;
+  box-shadow:0 12px 30px #0008,inset 0 -2px rgba(217,161,46,.08)
+}
+.workshop-danger-zone{
+  border-width:1px;
+  box-shadow:inset 4px 0 rgba(239,75,75,.16)
+}
+
+/* Import : réception puis inspection. */
+.import-v6,.export-v6,.diagnostic-v6{box-shadow:0 10px 24px #0002}
+.import-family-band{
+  display:grid;grid-template-columns:48px minmax(180px,320px) 1fr;
+  gap:10px;align-items:center;padding:10px 12px;
+  border:1px solid var(--color-border-subtle);border-radius:12px;
+  background:#16100c
+}
+.import-family-band>img{
+  width:42px;height:42px;object-fit:contain;filter:saturate(.75) drop-shadow(0 5px 6px #0005)
+}
+.import-family-band>strong{
+  justify-self:end;color:#c6aa83;font:700 18px/1 Alegreya,Georgia,serif
+}
+.import-family-select{margin:0}
+.import-family-select>span{color:#c8b49a}
+.import-format-card{
+  position:relative;overflow:hidden;min-height:142px;
+  border-color:#463326;background:linear-gradient(150deg,#1c140f,#130e0b);
+  box-shadow:inset 0 1px rgba(255,255,255,.02)
+}
+.import-format-card:before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#6e5137
+}
+.import-format-card input{position:relative;z-index:1}
+.import-preview-empty{
+  display:grid;gap:4px;padding:14px 16px;
+  border:1px dashed #5a4533;border-radius:12px;background:#130e0b
+}
+.import-preview-empty strong{color:#d6bc98}
+.import-preview-empty span{color:var(--color-text-secondary);font-size:9px}
+.import-preview-v6{
+  border-color:#57402d;
+  box-shadow:inset 0 1px rgba(255,255,255,.02)
+}
+.import-no-write{
+  border-color:#6f5639!important;background:#1f170f!important;color:#e1c28f!important;
+  font-weight:800
+}
+.import-metrics-v6 .metric{
+  position:relative;overflow:hidden;border-top:3px solid #67513d
+}
+.import-metrics-v6 .metric.ok{border-top-color:#5f9468}
+.import-metrics-v6 .metric.warn{border-top-color:#d9a12e}
+.import-metrics-v6 .metric.err{border-top-color:#d95b50}
+.import-metrics-v6 .metric b{font-size:25px}
+.import-effect-plan{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:11px 13px;border:1px solid #5a422e;border-radius:11px;
+  background:linear-gradient(90deg,#21170f,#17100c)
+}
+.import-effect-plan>div{display:grid;gap:2px}
+.import-effect-plan>div>span{color:var(--color-text-tertiary);font-size:7px;text-transform:uppercase;letter-spacing:.08em}
+.import-effect-plan>div>strong{font:700 16px/1.1 Alegreya,Georgia,serif}
+.import-plan-row{border-left:4px solid #65513f}
+.import-plan-row.create{border-left-color:#668e6b}
+.import-plan-row.update{border-left-color:#b68a4d}
+.import-plan-row.exclude{border-left-color:#b85c50}
+.import-plan-row .warning,.import-plan-row .error{font-weight:700}
+.import-final-report{
+  display:flex!important;align-items:center;gap:12px;
+  border-color:#45684d!important;background:linear-gradient(90deg,#132018,#17100c)!important
+}
+.import-final-report>div{display:grid;gap:3px}
+.import-final-seal{
+  display:grid;place-items:center;flex:0 0 auto;width:38px;height:38px;border-radius:50%;
+  border:1px solid #5d8564;color:#9ac5a1;background:#102016;font:900 18px/1 Inter,sans-serif
+}
+
+/* Export : trois niveaux clairement hiérarchisés. */
+.export-safety-grid{align-items:stretch}
+.export-level{
+  position:relative;display:grid;align-content:start;
+  border-top:3px solid #5b4634!important
+}
+.export-level>span:first-child{
+  color:#a99070!important;font-size:7px!important;text-transform:uppercase;letter-spacing:.08em
+}
+.export-level.structured{background:linear-gradient(145deg,#18110d,#120d0a)}
+.backup-card-v6.export-level.safety{
+  border-color:#81623d!important;border-top-color:#d4a45f!important;
+  background:
+    radial-gradient(circle at 82% 18%,rgba(212,164,95,.09),transparent 30%),
+    linear-gradient(145deg,#2a1c11,#17100c)
+}
+.backup-state-v6{
+  display:flex;align-items:center;gap:7px;min-height:30px;padding:6px 9px;
+  border:1px solid #4b3b2d;border-radius:9px;background:#130e0b;color:#b6a28a;font-size:8px
+}
+.backup-state-v6 i{width:8px;height:8px;border-radius:50%;background:#7b6c5b}
+[data-backup-card][data-state="preparing"] .backup-state-v6 i,
+[data-backup-card][data-state="verifying"] .backup-state-v6 i{background:#d9a12e}
+[data-backup-card][data-state="ready"] .backup-state-v6{border-color:#45684d;color:#9fc1a4}
+[data-backup-card][data-state="ready"] .backup-state-v6 i{background:#6fa577}
+[data-backup-card][data-state="preparing"],
+[data-backup-card][data-state="verifying"]{box-shadow:inset 0 0 0 1px rgba(217,161,46,.08)}
+.backup-restore-note{
+  border-left:3px solid #6d5842;padding-left:11px
+}
+
+/* Diagnostic : instrumentation, texte toujours prioritaire. */
+.diagnostic-head-v6 p{
+  margin:4px 0 0;color:var(--color-text-tertiary);font-size:8px
+}
+.diagnostic-status-pill{
+  display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid var(--color-border-subtle);border-radius:999px;
+  font-size:8px;font-weight:800
+}
+.diagnostic-status-pill i{width:8px;height:8px;border-radius:50%;background:#777}
+.diagnostic-status-pill.ok{color:#a8c9ad;border-color:#47694d}
+.diagnostic-status-pill.ok i{background:#6fa577}
+.diagnostic-status-pill.warn{color:#dfba78;border-color:#7d6236}
+.diagnostic-status-pill.warn i{background:#d9a12e}
+.diagnostic-metrics-v6 .instrument{
+  border-top:3px solid #5b4634;
+  background:linear-gradient(150deg,#18110d,#120d0a)
+}
+.diagnostic-metrics-v6 .instrument.ok{border-top-color:#648e69}
+.diagnostic-metrics-v6 .instrument.warn{border-top-color:#bd8842}
+.diagnostic-line{
+  display:grid;grid-template-columns:9px 105px minmax(0,1fr);gap:7px;align-items:center;
+  padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)
+}
+.diagnostic-line:last-child{border-bottom:0}
+.diagnostic-line i{width:8px;height:8px;border-radius:50%;background:#74695d}
+.diagnostic-line i.ok{background:#6fa577}
+.diagnostic-line i.warn{background:#d9a12e}
+.diagnostic-line i.offline{background:#70859a}
+.diagnostic-line span{color:#c3ad91;font-size:8px}
+.diagnostic-line b{font-size:8px;overflow-wrap:anywhere}
+.diagnostic-last-error{
+  box-shadow:inset 3px 0 rgba(239,75,75,.11)
+}
+.diagnostic-loading{min-height:90px}
+
+/* Journal : registre technique, zéro plaisanterie. */
+.journal-v6{background:linear-gradient(180deg,#1a130f,#100c09)}
+.journal-head-v6{align-items:flex-start}
+.journal-head-v6>div{display:grid;gap:3px}
+.journal-head-v6 h2{margin:0}
+.journal-head-v6 small{color:var(--color-text-tertiary);font-size:8px}
+.journal-list-v6{display:grid;gap:6px}
+.journal-row-v6{
+  position:relative;display:grid;grid-template-columns:72px minmax(0,1fr) auto;
+  gap:10px;align-items:start;padding:10px 11px;
+  border:1px solid var(--color-border-subtle);border-left:4px solid #6d6256;border-radius:9px;background:#15100d
+}
+.journal-row-v6.error{border-left-color:#d35d53}
+.journal-row-v6.warn,.journal-row-v6.warning{border-left-color:#d9a12e}
+.journal-row-v6.info{border-left-color:#70859a}
+.journal-row-v6>strong{
+  color:#c8b49a;font:800 8px/1 Inter,sans-serif;text-transform:uppercase;letter-spacing:.06em
+}
+.journal-row-v6>span{white-space:pre-wrap;overflow-wrap:anywhere;font-size:9px;line-height:1.45}
+.journal-row-v6>small{color:var(--color-text-tertiary);font-size:7px;white-space:nowrap}
+
+/* Responsive / tactile */
+@media(max-width:900px){
+  .workshop-family-menu button small{display:none}
+  .import-family-band{grid-template-columns:42px minmax(0,1fr)}
+  .import-family-band>strong{display:none}
+  .export-safety-grid{grid-template-columns:1fr}
+}
+@media(max-width:767px){
+  .workshop-list-card.active{transform:none}
+  .workshop-incomplete-state{max-width:70px}
+  .import-family-band{grid-template-columns:38px minmax(0,1fr);padding:9px}
+  .import-family-band>img{width:34px;height:34px}
+  .import-effect-plan{align-items:flex-start;flex-direction:column}
+  .journal-row-v6{grid-template-columns:64px minmax(0,1fr)}
+  .journal-row-v6>small{grid-column:2}
+}
+@media(prefers-reduced-motion:reduce){
+  .workshop-family-menu button,.workshop-list-card{transition:none!important}
+  .workshop-save-state[data-state="saved"]{animation:none!important}
+}
