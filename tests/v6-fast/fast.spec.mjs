@@ -423,6 +423,83 @@ test("Dungeon WHAOU bounds collection markers and preserves a long expedition tr
   await assertNoHorizontalOverflow(page);
 });
 
+test("Creature WHAOU keeps tabletop staging lazy and readable", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
+
+  const fixture = await page.evaluate(async () => {
+    const pngRaw=atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+    const bytes=Uint8Array.from(pngRaw,c=>c.charCodeAt(0));
+    const transparent=new Blob([bytes],{type:"image/png"});
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const dungeon=await new Promise((resolve,reject)=>{
+      const tx=db.transaction("dungeons","readonly"),req=tx.objectStore("dungeons").openCursor();
+      req.onsuccess=()=>resolve(req.result?.value||null);req.onerror=()=>reject(req.error);
+    });
+    if(!dungeon){db.close();throw new Error("Donjon fixture absent");}
+    const categories=["basique","tactique","speciale","brute","mini_boss"];
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(["creatures","loot_items","media_assets"],"readwrite");
+      const creatures=tx.objectStore("creatures");
+      const loot=tx.objectStore("loot_items");
+      const media=tx.objectStore("media_assets");
+      categories.forEach((category,index)=>creatures.put({
+        id:"whaou-category-"+category,name:"WHAOU "+category,category,menace:index+1,
+        dungeon_id:dungeon.id,dungeon_name:dungeon.name,pv:4,atk:2,def:1,zone:1,actions:2,tags:["whaou"]
+      }));
+      loot.put({id:"whaou-loot",name:"Trophée WHAOU",type:"Trophée",effect:"Test visuel",gold_value:12,tags:[]});
+      const bossBase={
+        category:"boss",menace:6,dungeon_id:dungeon.id,dungeon_name:dungeon.name,
+        pv:30,atk:6,def:4,zone:2,actions:3,tags:["whaou"]
+      };
+      creatures.put({...bossBase,id:"whaou-boss-1",name:"Boss WHAOU phase 1",phase_number:1,phase_ids:["whaou-boss-2","whaou-boss-3"],special_attack_name:"Grand Fracas",special_attack_noise:3,ai_behavior:"Charge la cible la plus bruyante.",ai_target_priority:"Héros avec le plus de Brouhaha",loot_items:[{id:"whaou-loot",name:"Trophée WHAOU",type:"Trophée",effect:"Test visuel",gold_value:12}]});
+      creatures.put({...bossBase,id:"whaou-boss-2",name:"Boss WHAOU phase 2",phase_number:2});
+      creatures.put({...bossBase,id:"whaou-boss-3",name:"Boss WHAOU phase 3",phase_number:3});
+      for(const [id,type,entityId] of [["whaou-creature-media","creatures","whaou-boss-1"],["whaou-loot-media","loot_items","whaou-loot"]]){
+        media.put({
+          id,label:id,file_name:id+".png",path:"local-media/"+type+"/"+id+".png",entity_type:type,entity_id:entityId,
+          transparent_blob:transparent,transparent_path:"local-media/"+type+"/transparent/"+id+".png",
+          transparent_review_status:"approved",transparent_audit:{pass:true,has_alpha_channel:true,width:1,height:1}
+        });
+      }
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+    db.close();
+    return {bossId:"whaou-boss-1"};
+  });
+
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await gotoView(page,"codex");
+
+  for (const category of ["basique","tactique","speciale","brute","mini_boss","boss"]) {
+    await expect(page.locator(".bestiary-gallery-card."+category).first()).toBeVisible();
+  }
+
+  const bossCard=page.locator('[data-action="select-codex"][data-type="creatures"][data-id="'+fixture.bossId+'"]').first();
+  await expect(bossCard.locator("img").first()).toHaveAttribute("src",/^blob:/);
+  await expect(bossCard.locator(".bestiary-card-plinth")).toBeVisible();
+  await bossCard.click();
+
+  await expect(page.locator(".creature-sheet-v6.boss")).toBeVisible();
+  await expect(page.locator(".creature-figure>img")).toHaveAttribute("src",/^blob:/);
+  await expect(page.locator(".creature-identity-watermark")).toBeVisible();
+  await expect(page.locator(".creature-ability-stamp")).toHaveText("Brouhaha +3");
+  await expect(page.locator(".creature-target-priority")).toContainText("Héros avec le plus de Brouhaha");
+  await expect(page.locator(".creature-loot-thumb img")).toHaveAttribute("src",/^blob:/);
+  await expect(page.locator(".creature-phase-card")).toHaveCount(3);
+  await expect(page.locator(".creature-phase-card.current")).toHaveCount(1);
+
+  const mediaDebug=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(mediaDebug.catalogScans).toBe(0);
+
+  await page.locator('[data-action="codex-back"]').first().click();
+  await page.locator('[data-action="bestiary-mode"][data-mode="list"]').click();
+  await expect(page.locator(".bestiary-results.list")).toBeVisible();
+  await expect(page.locator(".bestiary-list-row.boss").first()).toBeVisible();
+  await assertNoHorizontalOverflow(page);
+});
+
 test("session Generator Brouhaha and Quest flows remain coherent", async ({ page }) => {
   await ready(page);
 
