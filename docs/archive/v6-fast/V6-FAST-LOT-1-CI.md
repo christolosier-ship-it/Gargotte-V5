@@ -1,3 +1,7 @@
+> **ARCHIVE — chantier V6-Fast clos et fusionné dans V5.3 le 25/09/2026.**
+>
+> Historique technique uniquement. Ce document n'est plus normatif pour les travaux courants.
+
 # V6-Fast Lot 1 — CI légère et fermeture UI-6
 
 ## Statut
@@ -10,7 +14,7 @@ Remplacer la recette finale UI-6 par une validation V6-Fast adaptée aux risques
 Ce lot ne modifie pas le comportement de production.
 
 ## Préconditions
-- Lire docs/V6-FAST.md.
+- Lire docs/archive/v6-fast/V6-FAST.md.
 - UI-6 est considéré comme clos.
 - Ne pas utiliser la maquette V3 comme oracle de validation.
 

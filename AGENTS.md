@@ -1,15 +1,13 @@
 # AGENTS.md - Gargottex V6
 
 ## Documents actifs
-Pour tout chantier d'optimisation V6-Fast :
-1. lire docs/V6-FAST.md ;
-2. lire uniquement le fichier du lot demandé ;
-3. inspecter le code réellement concerné.
-
-Les documents UI-1 à UI-6 sont archivés dans docs/archive/v6-ui-ux.
+Le chantier V6-Fast est clos. Son historique documentaire est archivé dans `docs/archive/v6-fast`.
+Les documents UI-1 à UI-6 sont archivés dans `docs/archive/v6-ui-ux`.
 La maquette V3 et le cahier des vues sont historiques : ils ne sont plus une baseline obligatoire et aucun comparatif V3 ne doit être ajouté à la CI.
 
-Pour un chantier V7, lire docs/V7-CLOUDFLARE-BACKEND.md puis uniquement le lot V7 concerné.
+Les invariants runtime issus de V6-Fast restent applicables tant que l'architecture V6 correspondante est en production.
+
+Pour un chantier V7, lire `docs/V7-CLOUDFLARE-BACKEND.md` puis uniquement le lot V7 concerné.
 
 ## Données de production
 L'application actuelle contient des données IndexedDB de production à considérer comme irremplaçables jusqu'à validation de V7.
@@ -31,14 +29,14 @@ Pour l'affichage :
 - un dérivé transparent validé est prioritaire ;
 - les images de Donjons sont les seules images actives non détourées ;
 - les anciens originaux à fond blanc, thumbnails et previews issus de ces originaux ne doivent plus servir de fallback normal ;
-- V6-Fast ne supprime pas ces anciens Blobs : il les sort du chemin runtime.
+- la V6 actuelle ne supprime pas ces anciens Blobs : ils restent hors du chemin runtime.
 
 Pour V7 :
 - migrer uniquement les détourages actifs et les images de Donjons ;
 - ne pas migrer les anciens originaux blancs, thumbnails ou previews ;
 - les originaux de sécurité sont conservés hors application sur Google Drive.
 
-## V6-Fast
+## Invariants V6 issus de V6-Fast
 Principes obligatoires :
 - aucun chargement global de Blobs média au bootstrap ;
 - lectures IndexedDB ciblées via les index existants ;

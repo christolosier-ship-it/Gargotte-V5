@@ -1,3 +1,7 @@
+> **ARCHIVE — chantier V6-Fast clos et fusionné dans V5.3 le 25/09/2026.**
+>
+> Historique technique uniquement. Ce document n'est plus normatif pour les travaux courants.
+
 # V6-Fast Lot 4 — Bootstrap, PWA et modules
 
 ## Statut
@@ -7,7 +11,7 @@ CLOS SUR PR #39 — Gate automatisée validée le 25/09/2026.
 Alléger le reste du chemin critique de démarrage après stabilisation du runtime média.
 
 ## Préconditions
-- Lire docs/V6-FAST.md.
+- Lire docs/archive/v6-fast/V6-FAST.md.
 - Lots 1 à 3 validés.
 - Mesurer à nouveau le démarrage avant de modifier le bootstrap.
 
@@ -157,4 +161,4 @@ Le lot est validé si :
 - Fast CI et Full ciblée passent.
 
 ## Clôture
-Gate franchie le 25/09/2026. `docs/V6-FAST.md` est mis à jour avec le bilan réel. V6-Fast est techniquement clos sur la PR #39, en attente de fusion dans V5.3.
+Gate franchie le 25/09/2026. `docs/archive/v6-fast/V6-FAST.md` est mis à jour avec le bilan réel. V6-Fast est clos ; la PR #39 a été fusionnée dans V5.3 le 25/09/2026.
