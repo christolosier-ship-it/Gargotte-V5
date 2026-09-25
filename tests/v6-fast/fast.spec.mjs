@@ -1005,7 +1005,7 @@ test("Media WHAOU keeps active visuals lazy while comparison stays explicitly bo
   await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
   const codexSearch=page.locator('[data-action="family-search"][data-type="media_assets"]');
   await codexSearch.fill("WHAOU8 Compare");
-  const codexCard=page.locator(".codex-media-card-v6.variant-transparent");
+  const codexCard=page.locator('.codex-media-card-v6.variant-transparent').filter({has:page.locator('[data-media-id="whaou8-compare"]')});
   await expect(codexCard).toBeVisible();
   await expect(codexCard.locator(".codex-media-active-mark")).toHaveText("Actif");
   const renderBeforeViewer=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().renderCalls);
@@ -1017,7 +1017,7 @@ test("Media WHAOU keeps active visuals lazy while comparison stays explicitly bo
   expect(await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().renderCalls)).toBe(renderBeforeViewer);
 
   await codexSearch.fill("WHAOU8 Donjon");
-  const dungeonCard=page.locator(".codex-media-card-v6.variant-dungeon");
+  const dungeonCard=page.locator('.codex-media-card-v6.variant-dungeon').filter({has:page.locator('[data-media-id="whaou8-dungeon"]')});
   await expect(dungeonCard).toBeVisible();
   await dungeonCard.locator(".codex-media-open-v6").click();
   await expect(page.locator(".image-viewer-overlay.viewer-dungeon")).toBeVisible();
