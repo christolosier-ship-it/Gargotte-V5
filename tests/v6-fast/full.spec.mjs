@@ -146,6 +146,10 @@ test("reduced motion keeps interactions usable", async ({ page }) => {
   await expect(page.locator(".dungeon-sheet-v6")).toBeVisible();
   await expect(page.locator(".gargotte-cinematic.show")).toHaveCount(0);
 
+  await page.locator('[data-action="set-codex-type"][data-type="creatures"]').first().click();
+  await page.locator('[data-action="select-codex"][data-type="creatures"]').first().click();
+  await expect(page.locator(".creature-sheet-v6")).toBeVisible();
+
   await gotoView(page, "brouhaha");
   const timings = await page.locator("body").evaluate(() => {
     const parse = value => value.split(",").map(part => {
