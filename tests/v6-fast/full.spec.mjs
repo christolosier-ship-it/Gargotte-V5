@@ -369,6 +369,7 @@ test("large transparent Blob library keeps DOM URLs and viewer renders bounded",
           mime_type:"image/png",
           entity_type:"gallery",
           entity_id:"",
+          blob:i===0?blob:null,
           transparent_blob:blob,
           transparent_path:`local-media/gallery/transparent/bounded-${i}.png`,
           transparent_mime_type:"image/png",
@@ -447,6 +448,21 @@ test("large transparent Blob library keeps DOM URLs and viewer renders bounded",
   expect(after.partial).toBe(before.partial);
   expect(after.mounted).toBeLessThanOrEqual(48);
   expect(after.live).toBeLessThanOrEqual(48);
+
+  await gotoView(page,"media");
+  const adminSearch=page.locator('[data-action="media-search"]');
+  await adminSearch.fill("Bounded transparent 000");
+  await expect(page.locator(".media-card-v6")).toHaveCount(1);
+  await page.locator(".media-card-v6").click();
+  const activeBound=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().liveObjectUrls);
+  expect(activeBound).toBeLessThanOrEqual(48);
+  await page.locator('[data-action="media-detail-preview"][data-media-preview-mode="original"]').click();
+  await expect(page.locator('[data-media-detail-preview][data-preview-mode="original"]')).toBeVisible();
+  const comparedBound=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().liveObjectUrls);
+  expect(comparedBound).toBeLessThanOrEqual(activeBound+1);
+  expect(comparedBound).toBeLessThanOrEqual(49);
+  await page.locator('[data-action="media-detail-preview"][data-media-preview-mode="active"]').click();
+  await expect.poll(async()=>page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().liveObjectUrls)).toBeLessThanOrEqual(activeBound);
   await assertNoHorizontalOverflow(page);
 });
 
@@ -557,10 +573,23 @@ test("iPad WebKit media fullscreen smoke @webkit", async ({ page }) => {
   await expect(open.locator("img")).toHaveAttribute("src", /assets\/images\/logo-192\.png/);
   for (let i=0;i<3;i++) {
     await open.click();
-    await expect(page.locator(".image-viewer-overlay")).toBeVisible();
+    await expect(page.locator(".image-viewer-overlay.viewer-dungeon")).toBeVisible();
     await expect(page.locator(".image-viewer-panel img")).toBeVisible();
+    await expect(page.locator("#app .image-viewer-overlay")).toHaveCount(0);
     await page.locator(".image-viewer-close").click();
     await expect(page.locator(".image-viewer-overlay")).toHaveCount(0);
   }
+
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await open.click();
+  await expect(page.locator(".image-viewer-overlay")).toBeVisible();
+  const reducedViewerMotion=await page.locator(".image-viewer-overlay").evaluate(el=>{
+    const nodes=[el,...el.querySelectorAll("*")];
+    const parse=value=>value.split(",").map(part=>part.trim()).map(text=>text.endsWith("ms")?parseFloat(text):parseFloat(text)*1000).filter(Number.isFinite);
+    return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
+  });
+  expect(reducedViewerMotion).toBeLessThanOrEqual(20);
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".image-viewer-overlay")).toHaveCount(0);
   await assertNoHorizontalOverflow(page);
 });
