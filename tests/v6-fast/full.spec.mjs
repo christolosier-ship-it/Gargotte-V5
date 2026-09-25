@@ -610,7 +610,8 @@ test("V6-WHAOU reopens from the final cache with the network offline", async ({ 
     await page.reload({waitUntil:"domcontentloaded"});
     await expect(page.locator(".v6-app")).toBeVisible();
     await page.waitForFunction(()=>document.documentElement.dataset.gargottexReady==="true");
-    await expect(page.locator(".offline-badge")).toContainText(/hors ligne|offline/i);
+    expect(await page.evaluate(()=>navigator.onLine)).toBe(false);
+    await expect(page.locator(".offline-badge")).toContainText("Local");
 
     await gotoView(page,"codex");
     await expect(page.locator(".bestiary-v6")).toBeVisible();
