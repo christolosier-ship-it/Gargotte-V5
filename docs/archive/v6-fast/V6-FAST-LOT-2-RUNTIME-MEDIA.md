@@ -1,3 +1,7 @@
+> **ARCHIVE — chantier V6-Fast clos et fusionné dans V5.3 le 25/09/2026.**
+>
+> Historique technique uniquement. Ce document n'est plus normatif pour les travaux courants.
+
 # V6-Fast Lot 2 — Runtime média lazy
 
 ## Statut
@@ -8,7 +12,7 @@
 Supprimer le chargement global des médias et mettre en place une couche d'accès média à la demande, compatible avec le futur backend V7.
 
 ## Préconditions
-- Lire docs/V6-FAST.md.
+- Lire docs/archive/v6-fast/V6-FAST.md.
 - Lot 1 validé.
 - Inspecter src/storage/idb.js et src/app.js dans leur état réel.
 

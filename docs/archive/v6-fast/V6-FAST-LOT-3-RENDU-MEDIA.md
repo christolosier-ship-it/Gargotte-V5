@@ -1,3 +1,7 @@
+> **ARCHIVE — chantier V6-Fast clos et fusionné dans V5.3 le 25/09/2026.**
+>
+> Historique technique uniquement. Ce document n'est plus normatif pour les travaux courants.
+
 # V6-Fast Lot 3 — Rendu média, mémoire et overlays
 
 ## Statut
@@ -10,7 +14,7 @@
 Borner la consommation DOM/mémoire des vues Média et supprimer les reconstructions globales provoquées par le viewer, les toasts et les overlays.
 
 ## Préconditions
-- Lire docs/V6-FAST.md.
+- Lire docs/archive/v6-fast/V6-FAST.md.
 - Lot 2 validé.
 - Utiliser le MediaRepository créé au Lot 2.
 

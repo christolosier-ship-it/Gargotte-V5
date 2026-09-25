@@ -3,7 +3,7 @@
 > Ce document est conservé uniquement comme historique de la refactorisation UI V6.
 > Il n'est plus normatif pour les travaux courants.
 > La maquette V3 et le comparatif visuel V3 ne font plus partie de la validation active.
-> Pour le chantier d'optimisation courant, utiliser docs/V6-FAST.md.
+> Le chantier V6-Fast est lui aussi clos ; son historique est archivé dans `docs/archive/v6-fast/V6-FAST.md`.
 
 # Gargottex V6 - UI-6 Polish, Accessibilité & Validation finale
 

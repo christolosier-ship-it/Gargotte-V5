@@ -1,9 +1,11 @@
+> **ARCHIVE — chantier V6-Fast clos et fusionné dans V5.3 le 25/09/2026.**
+>
+> Historique technique uniquement. Ce document n'est plus normatif pour les travaux courants.
+
 # Gargottex V6-Fast — Optimisation runtime et CI
 
 ## Statut
-CHANTIER TECHNIQUE CLOS — Gates Lots 1 à 4 validées le 25/09/2026.
-
-Le Lot 4 est prêt dans la PR #39. La fusion dans V5.3 reste soumise à la validation finale du chantier.
+CHANTIER TECHNIQUE CLOS ET ARCHIVÉ — Gates Lots 1 à 4 validées et PR #39 fusionnée dans V5.3 le 25/09/2026.
 
 ## Objectif
 V6-Fast optimise Gargottex V6 sans refonte visuelle et sans changement fonctionnel volontaire.
@@ -113,7 +115,7 @@ Les seuils arbitraires de pixels ou de timing ne doivent pas devenir des sources
 ## Découpage
 
 ### Lot 1 — CI V6-Fast
-docs/V6-FAST-LOT-1-CI.md
+docs/archive/v6-fast/V6-FAST-LOT-1-CI.md
 
 **Statut : CLOS — Gate validée le 24/09/2026.**
 
@@ -125,7 +127,7 @@ Résultat :
 - stress réel Blob transparent ajouté à la Full.
 
 ### Lot 2 — Runtime média
-docs/V6-FAST-LOT-2-RUNTIME-MEDIA.md
+docs/archive/v6-fast/V6-FAST-LOT-2-RUNTIME-MEDIA.md
 
 **Statut : CLOS — Gate validée le 24/09/2026.**
 
@@ -139,7 +141,7 @@ Résultat :
 - Fast 12/12 et Full 22/22.
 
 ### Lot 3 — Rendu média et overlays
-docs/V6-FAST-LOT-3-RENDU-MEDIA.md
+docs/archive/v6-fast/V6-FAST-LOT-3-RENDU-MEDIA.md
 
 **Statut : CLOS — Gate validée par l'utilisateur le 25/09/2026.**
 
@@ -153,9 +155,9 @@ Résultat :
 - Fast 12/12 et Full 22/22.
 
 ### Lot 4 — Bootstrap, PWA et modules
-docs/V6-FAST-LOT-4-BOOTSTRAP-PWA.md
+docs/archive/v6-fast/V6-FAST-LOT-4-BOOTSTRAP-PWA.md
 
-**Statut : CLOS SUR PR #39 — Gate automatisée validée le 25/09/2026.**
+**Statut : CLOS — Gate validée et PR #39 fusionnée dans V5.3 le 25/09/2026.**
 
 Résultat :
 - `gargottexReady` passe après le premier rendu stable ;
@@ -246,4 +248,4 @@ Au 25/09/2026, les critères techniques du chantier sont satisfaits sur la PR #3
 - offline, update PWA et IndexedDB validés automatiquement ;
 - contrat V7 compatible avec la couche média introduite en V6-Fast.
 
-La fusion de la PR #39 dans V5.3 constitue la dernière opération d'intégration de V6-Fast.
+La fusion de la PR #39 dans V5.3 a constitué la dernière opération d'intégration de V6-Fast.
