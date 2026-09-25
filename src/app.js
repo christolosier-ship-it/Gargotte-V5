@@ -45,6 +45,19 @@ import {
   isStaticPath as isStaticMediaPath
 } from "./storage/media-repository.js";
 
+function ensureLayerRoot(id) {
+  let root = document.getElementById(id);
+  if (root) return root;
+  root = document.createElement("div");
+  root.id = id;
+  document.body.appendChild(root);
+  return root;
+}
+
+const app = document.getElementById("app");
+const toastRoot = ensureLayerRoot("toast-root");
+const overlayRoot = ensureLayerRoot("overlay-root");
+
 const ENTITY_ORDER = [
   "dungeons",
   "creatures",
@@ -395,7 +408,7 @@ const state = {
     questsResult: null,
     questDungeonId: "",
     import: { type: "creatures", fileName: "" },
-    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "" },
+    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "", page: 0 },
     journalOpen: false,
     globalSearch: ""
   },
@@ -404,10 +417,13 @@ const state = {
 };
 
 const mediaRepository = new MediaRepository();
-const runtimeMetrics = { refreshDataCalls: 0 };
+const runtimeMetrics = { refreshDataCalls: 0, renderCalls: 0, mediaPartialRenders: 0 };
 globalThis.__GARGOTTEX_MEDIA_DEBUG__ = () => ({
   ...mediaRepository.debugSnapshot(),
-  refreshDataCalls: runtimeMetrics.refreshDataCalls
+  refreshDataCalls: runtimeMetrics.refreshDataCalls,
+  renderCalls: runtimeMetrics.renderCalls,
+  mediaPartialRenders: runtimeMetrics.mediaPartialRenders,
+  mountedMediaCards: document.querySelectorAll(".media-card-v6, .codex-media-card-v6").length
 });
 
 function defaultBlankUi() {
@@ -443,7 +459,7 @@ function defaultBlankUi() {
     questsResult: null,
     questDungeonId: "",
     import: { type: "creatures", fileName: "" },
-    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "" },
+    media: { filterType: "gallery", filterEntity: "", fileQueueName: "", scope: "all", search: "", selectedId: "", linkType: "gallery", linkEntityId: "", page: 0 },
     journalOpen: false,
     globalSearch: ""
   };
@@ -907,7 +923,7 @@ function defaultCodexFamiliesUi() {
     loot_items: { mode: "gallery", search: "", scrollTop: 0, selectedId: "" },
     interactables: { mode: "gallery", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
     brouhaha_effects: { mode: "gallery", search: "", scrollTop: 0, selectedId: "", dungeonId: "" },
-    media_assets: { mode: "gallery", search: "", scrollTop: 0 }
+    media_assets: { mode: "gallery", search: "", scrollTop: 0, page: 0 }
   };
 }
 
@@ -922,6 +938,9 @@ function ensureCodexFamilyUi() {
     if (!["gallery", "list"].includes(state.ui.codexFamilies[type].mode)) state.ui.codexFamilies[type].mode = defaults[type].mode;
     state.ui.codexFamilies[type].search = String(state.ui.codexFamilies[type].search || "");
     state.ui.codexFamilies[type].scrollTop = Math.max(0, Number(state.ui.codexFamilies[type].scrollTop || 0));
+    if (type === "media_assets") {
+      state.ui.codexFamilies[type].page = Math.max(0, Math.floor(Number(state.ui.codexFamilies[type].page || 0)));
+    }
     if (Object.prototype.hasOwnProperty.call(defaults[type], "dungeonId")) {
       state.ui.codexFamilies[type].dungeonId = String(state.ui.codexFamilies[type].dungeonId || "");
     }
