@@ -4645,11 +4645,17 @@ function renderMediaCodexCard(asset, mode = "gallery") {
     : String(asset.entity_type || "") === "dungeons"
       ? "Visuel Donjon"
       : "Visuel historique non affiché";
+  const cardVariant = mediaHasApprovedTransparent(asset)
+    ? "transparent"
+    : String(asset.entity_type || "") === "dungeons"
+      ? "dungeon"
+      : "inactive";
   return `
-    <article class="codex-media-card-v6 ${mode}">
+    <article class="codex-media-card-v6 ${mode} variant-${cardVariant}">
       <button class="codex-media-open-v6" type="button" data-action="open-image" data-media-id="${escapeHtml(String(asset.id || ""))}" data-media-type="${escapeHtml(String(asset.entity_type || ""))}" data-alt="${escapeHtml(title)}" ${canDisplay ? "" : "disabled"}>
-        <span class="codex-media-visual-v6 ${mediaHasApprovedTransparent(asset) ? "transparent" : ""}">
+        <span class="codex-media-visual-v6 ${cardVariant}">
           ${visual || `<span>Visuel indisponible</span>`}
+          ${canDisplay ? `<i class="codex-media-active-mark">Actif</i>` : ""}
         </span>
       </button>
       <div class="codex-media-copy-v6">
@@ -6066,7 +6072,7 @@ function renderMediaAssetCard(asset, active = false) {
   const attachment = mediaAttachment(asset);
   const derivative = mediaDerivativeState(asset);
   return `
-    <button class="media-card-v6 ${active ? "active" : ""}" type="button" data-action="media-select" data-id="${escapeHtml(String(asset.id || ""))}" data-card-variant="${hasApprovedTransparent ? "transparent" : String(asset.entity_type || "") === "dungeons" ? "dungeon-original" : "inactive-original"}">
+    <button class="media-card-v6 ${active ? "active" : ""} ${attachment ? "linked" : "orphan"}" type="button" data-action="media-select" data-id="${escapeHtml(String(asset.id || ""))}" data-card-variant="${hasApprovedTransparent ? "transparent" : String(asset.entity_type || "") === "dungeons" ? "dungeon-original" : "inactive-original"}">
       <div class="media-card-visual ${hasApprovedTransparent ? "transparent" : ""}">${visual || `<div class="media-empty-visual">Visuel actif indisponible</div>`}</div>
       <div class="media-card-copy-v6">
         <div class="media-card-kicker"><span class="media-local-dot"></span><span>Stockage local</span></div>
