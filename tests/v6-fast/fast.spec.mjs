@@ -1316,7 +1316,8 @@ test("structured import preview stays write-free until confirmation", async ({ p
   await expect(metrics.nth(1).locator("b")).toHaveText("1");
   await expect(metrics.nth(2).locator("b")).toHaveText("2");
   await expect(metrics.nth(3).locator("b")).toHaveText("1");
-  await expect(page.locator(".import-plan-row .warning")).toContainText("Warning");
+  await expect(page.locator(".import-plan-row .warning").first()).toContainText("Warning");
+  await expect(page.locator(".import-plan-row .warning")).toHaveCount(2);
   await expect(page.locator(".import-plan-row .error").first()).toContainText("Erreur bloquante");
   await expect(page.locator(".import-effect-plan")).toContainText("1 écriture(s) autorisée(s)");
 
