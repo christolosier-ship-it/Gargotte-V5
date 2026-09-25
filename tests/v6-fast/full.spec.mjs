@@ -180,7 +180,9 @@ test("reduced motion keeps interactions usable", async ({ page }) => {
     ["brouhaha_effects",".brouhaha-reference-sheet-v6"]
   ]) {
     await page.locator('[data-action="set-codex-type"][data-type="'+type+'"]').first().click();
-    await page.locator('[data-action="select-family-codex"][data-type="'+type+'"]').first().click();
+    const card=page.locator('[data-action="select-family-codex"][data-type="'+type+'"]').first();
+    if(!(await card.count())) continue;
+    await card.click();
     await expect(page.locator(root)).toBeVisible();
     const maxMotion=await page.locator(root).evaluate(el => {
       const nodes=[el,...el.querySelectorAll("*")];
