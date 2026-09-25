@@ -140,6 +140,14 @@ test("reduced motion keeps interactions usable", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await ready(page);
 
+  await gotoView(page, "home");
+  const homeMotion=await page.locator(".home-polish-v6").evaluate(el => {
+    const nodes=[el,...el.querySelectorAll("*")];
+    const parse=value=>value.split(",").map(part=>part.trim()).map(text=>text.endsWith("ms")?parseFloat(text):parseFloat(text)*1000).filter(Number.isFinite);
+    return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
+  });
+  expect(homeMotion).toBeLessThanOrEqual(20);
+
   await gotoView(page, "codex");
   await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
   await page.locator('[data-action="select-family-codex"][data-type="dungeons"]').first().click();
