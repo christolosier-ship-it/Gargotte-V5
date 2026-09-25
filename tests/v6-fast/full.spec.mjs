@@ -310,18 +310,21 @@ test("large transparent Blob library keeps DOM URLs and viewer renders bounded",
     globalThis.__v6fastMediaGridNode=document.querySelector(".codex-media-grid-v6");
     return {
       renderCalls:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().renderCalls,
-      partial:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().mediaPartialRenders,
-      scrollY:window.scrollY
+      partial:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().mediaPartialRenders
     };
   });
 
   for (let i=0;i<12;i++) {
     const card=page.locator(".codex-media-card-v6").nth(i % 12);
+    await card.scrollIntoViewIfNeeded();
+    const scrollBeforeViewer=await page.evaluate(() => window.scrollY);
     await card.locator(".codex-media-open-v6").click();
     await expect(page.locator(".image-viewer-overlay")).toBeVisible();
     await expect(page.locator(".image-viewer-panel img")).toHaveAttribute("src", /^blob:/);
     await page.locator(".image-viewer-close").click();
     await expect(page.locator(".image-viewer-overlay")).toHaveCount(0);
+    const scrollAfterViewer=await page.evaluate(() => window.scrollY);
+    expect(Math.abs(scrollAfterViewer-scrollBeforeViewer)).toBeLessThanOrEqual(2);
   }
 
   const after=await page.evaluate(() => ({
@@ -329,8 +332,7 @@ test("large transparent Blob library keeps DOM URLs and viewer renders bounded",
     renderCalls:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().renderCalls,
     partial:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().mediaPartialRenders,
     mounted:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().mountedMediaCards,
-    live:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().liveObjectUrls,
-    scrollY:window.scrollY
+    live:globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().liveObjectUrls
   }));
 
   expect(after.sameGrid).toBe(true);
@@ -338,7 +340,6 @@ test("large transparent Blob library keeps DOM URLs and viewer renders bounded",
   expect(after.partial).toBe(before.partial);
   expect(after.mounted).toBeLessThanOrEqual(48);
   expect(after.live).toBeLessThanOrEqual(48);
-  expect(Math.abs(after.scrollY-before.scrollY)).toBeLessThanOrEqual(2);
   await assertNoHorizontalOverflow(page);
 });
 
