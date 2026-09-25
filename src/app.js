@@ -5438,10 +5438,10 @@ function workshopStatusLabel() {
 }
 
 function syncWorkshopDirtyIndicators() {
-  const status = app.querySelector("[data-workshop-status]");
-  if (status) {
+  const stateName = state.workshop.dirty ? "dirty" : state.workshop.status;
+  for (const status of app.querySelectorAll("[data-workshop-status]")) {
     status.textContent = workshopStatusLabel();
-    status.dataset.state = state.workshop.dirty ? "dirty" : state.workshop.status;
+    status.dataset.state = stateName;
   }
   const save = app.querySelector("[data-workshop-save]");
   if (save) save.disabled = !state.workshop.dirty && !state.workshop.isNew;
@@ -7567,7 +7567,25 @@ function bindEvents() {
         case "export-structured-json":
           await exportStructuredJsonFile();toast("JSON structuré exporté. Aucun Blob média inclus.","info");return;
         case "export-backup": {
-          const check=await exportFullBackupFile();toast(`Backup ZIP vérifié : ${check.mediaCount} média(s), ${check.binaryCount} Blob(s).`,"success");return;
+          const card=app.querySelector("[data-backup-card]");
+          const button=card?.querySelector('[data-action="export-backup"]');
+          const label=card?.querySelector("[data-backup-state-label]");
+          if (card) card.dataset.state="preparing";
+          if (label) label.textContent="Préparation du backup…";
+          if (button) button.disabled=true;
+          try{
+            requestAnimationFrame(()=>{
+              if(card) card.dataset.state="verifying";
+              if(label) label.textContent="Préparation et vérification…";
+            });
+            const check=await exportFullBackupFile();
+            if(card) card.dataset.state="ready";
+            if(label) label.textContent=`Vérifié · ${check.mediaCount} média(s) · ${check.binaryCount} Blob(s)`;
+            toast(`Backup ZIP vérifié : ${check.mediaCount} média(s), ${check.binaryCount} Blob(s).`,"success");
+          }finally{
+            if(button) button.disabled=false;
+          }
+          return;
         }
         case "import-clear":
           state.importRuntime.preview=null;render();return;
