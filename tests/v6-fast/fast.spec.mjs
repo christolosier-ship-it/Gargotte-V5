@@ -898,6 +898,136 @@ test("Encounter WHAOU preserves generation rules while staging the table", async
   expect(mediaDebug.catalogScans).toBe(0);
 });
 
+test("Media WHAOU keeps active visuals lazy while comparison stays explicitly bounded", async ({ page }) => {
+  await page.setViewportSize({width:834,height:1112});
+  await ready(page);
+
+  const seeded=await page.evaluate(async()=>{
+    const raw=atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+    const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));
+    const original=new Blob([bytes],{type:"image/png"});
+    const transparent=new Blob([bytes],{type:"image/png"});
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const readFirst=storeName=>new Promise((resolve,reject)=>{
+      const tx=db.transaction(storeName,"readonly"),req=tx.objectStore(storeName).openCursor();
+      req.onsuccess=()=>resolve(req.result?.value||null);req.onerror=()=>reject(req.error);
+    });
+    const npc=await readFirst("npcs"),dungeon=await readFirst("dungeons");
+    if(!npc||!dungeon){db.close();throw new Error("Fixtures média absentes");}
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction("media_assets","readwrite"),store=tx.objectStore("media_assets");
+      store.put({
+        id:"whaou8-compare",label:"WHAOU8 Compare",file_name:"whaou8-compare.png",
+        path:"local-media/gallery/whaou8-compare.png",mime_type:"image/png",entity_type:"gallery",entity_id:"",
+        blob:original,transparent_blob:transparent,transparent_path:"local-media/gallery/transparent/whaou8-compare.png",
+        transparent_review_status:"approved",transparent_audit:{pass:true,has_alpha_channel:true,width:1,height:1}
+      });
+      store.put({
+        id:"whaou8-no-original",label:"WHAOU8 Sans Original",file_name:"whaou8-no-original.png",
+        path:"local-media/gallery/whaou8-no-original.png",mime_type:"image/png",entity_type:"gallery",entity_id:"",
+        transparent_blob:transparent,transparent_path:"local-media/gallery/transparent/whaou8-no-original.png",
+        transparent_review_status:"approved",transparent_audit:{pass:true,has_alpha_channel:true,width:1,height:1}
+      });
+      store.put({
+        id:"whaou8-dungeon",label:"WHAOU8 Donjon",file_name:"logo-192.png",
+        path:"assets/images/logo-192.png",mime_type:"image/png",entity_type:"dungeons",entity_id:dungeon.id
+      });
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+    db.close();
+    return{npcId:npc.id,dungeonId:dungeon.id};
+  });
+
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(()=>document.documentElement.dataset.gargottexReady==="true");
+  let debug=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(debug.catalogScans).toBe(0);
+
+  await gotoView(page,"media");
+  const search=page.locator('[data-action="media-search"]');
+  await search.fill("WHAOU8");
+  await expect(page.locator(".media-card-v6")).toHaveCount(3);
+  await expect(page.locator(".media-count-v6")).toContainText("3 média");
+
+  await page.locator('[data-action="media-scope"][data-scope="orphan"]').click();
+  await expect(page.locator(".media-card-v6.orphan")).toHaveCount(2);
+  await page.locator('[data-action="media-scope"][data-scope="linked"]').click();
+  await expect(page.locator('.media-card-v6[data-id="whaou8-dungeon"]')).toBeVisible();
+  await page.locator('[data-action="media-scope"][data-scope="all"]').click();
+
+  const compareCard=page.locator('.media-card-v6[data-id="whaou8-compare"]');
+  await compareCard.click();
+  await expect(page.locator(".media-detail-v6")).toContainText("WHAOU8 Compare");
+  await expect(page.locator('.media-preview-switch-v6 [data-media-preview-mode="active"]')).toHaveAttribute("aria-pressed","true");
+  await expect(page.locator('.media-preview-switch-v6 [data-media-preview-mode="original"]')).toBeEnabled();
+  const activeSrc=await page.locator("[data-media-detail-preview] img").getAttribute("src");
+  expect(activeSrc).toMatch(/^blob:/);
+
+  const beforeCompare=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  await page.locator('[data-action="media-detail-preview"][data-media-preview-mode="original"]').click();
+  await expect(page.locator('[data-media-detail-preview][data-preview-mode="original"]')).toBeVisible();
+  const originalSrc=await page.locator("[data-media-detail-preview] img").getAttribute("src");
+  expect(originalSrc).toMatch(/^blob:/);
+  expect(originalSrc).not.toBe(activeSrc);
+  const duringCompare=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(duringCompare.fullRecordReads).toBe(beforeCompare.fullRecordReads+1);
+  expect(duringCompare.liveObjectUrls).toBe(beforeCompare.liveObjectUrls+1);
+  expect(duringCompare.renderCalls).toBe(beforeCompare.renderCalls);
+  expect(duringCompare.mediaPartialRenders).toBe(beforeCompare.mediaPartialRenders);
+
+  await page.locator('[data-action="media-detail-preview"][data-media-preview-mode="original"]').click();
+  const repeated=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(repeated.fullRecordReads).toBe(duringCompare.fullRecordReads);
+  expect(repeated.liveObjectUrls).toBe(duringCompare.liveObjectUrls);
+
+  await page.locator('[data-action="media-detail-preview"][data-media-preview-mode="active"]').click();
+  await expect(page.locator('[data-media-detail-preview][data-preview-mode="active"]')).toBeVisible();
+  await expect(page.locator("[data-media-detail-preview] img")).toHaveAttribute("src",activeSrc);
+  const afterActive=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(afterActive.liveObjectUrls).toBe(beforeCompare.liveObjectUrls);
+  expect(afterActive.renderCalls).toBe(beforeCompare.renderCalls);
+
+  await page.locator('.media-card-v6[data-id="whaou8-no-original"]').click();
+  await expect(page.locator('.media-preview-switch-v6 [data-media-preview-mode="original"]')).toBeDisabled();
+
+  await page.locator('.media-card-v6[data-id="whaou8-dungeon"]').click();
+  await expect(page.locator(".media-preview-note-v6")).toContainText("original du Donjon");
+  await expect(page.locator(".media-preview-switch-v6")).toHaveCount(0);
+
+  await page.locator('.media-card-v6[data-id="whaou8-compare"]').click();
+  await page.locator('[data-action="media-link-type"]').selectOption("npcs");
+  await page.locator('[data-action="media-link-entity"]').selectOption(seeded.npcId);
+  await page.locator('[data-action="media-attach"]').click();
+  await expect(page.locator(".media-detail-head-v6")).toContainText("PNJ");
+  await expect(page.locator('.media-card-v6[data-id="whaou8-compare"]')).toHaveClass(/linked/);
+
+  await gotoView(page,"codex");
+  await page.locator('[data-action="set-codex-type"][data-type="media_assets"]').first().click();
+  const codexSearch=page.locator('[data-action="family-search"][data-type="media_assets"]');
+  await codexSearch.fill("WHAOU8 Compare");
+  const codexCard=page.locator(".codex-media-card-v6.variant-transparent");
+  await expect(codexCard).toBeVisible();
+  await expect(codexCard.locator(".codex-media-active-mark")).toHaveText("Actif");
+  const renderBeforeViewer=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().renderCalls);
+  await codexCard.locator(".codex-media-open-v6").click();
+  await expect(page.locator(".image-viewer-overlay.viewer-transparent")).toBeVisible();
+  await expect(page.locator(".image-viewer-stage img")).toHaveAttribute("src",/^blob:/);
+  await page.locator(".image-viewer-close").click();
+  await expect(page.locator(".image-viewer-overlay")).toHaveCount(0);
+  expect(await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().renderCalls)).toBe(renderBeforeViewer);
+
+  await codexSearch.fill("WHAOU8 Donjon");
+  const dungeonCard=page.locator(".codex-media-card-v6.variant-dungeon");
+  await expect(dungeonCard).toBeVisible();
+  await dungeonCard.locator(".codex-media-open-v6").click();
+  await expect(page.locator(".image-viewer-overlay.viewer-dungeon")).toBeVisible();
+  await page.locator(".image-viewer-overlay").click({position:{x:5,y:5}});
+  await expect(page.locator(".image-viewer-overlay")).toHaveCount(0);
+
+  await page.setViewportSize({width:390,height:844});
+  await assertNoHorizontalOverflow(page);
+});
+
 test("Brouhaha WHAOU stages pressure without coupling level and draw, and Quest stays temporary", async ({ page }) => {
   await page.setViewportSize({width:834,height:1112});
   await ready(page);
