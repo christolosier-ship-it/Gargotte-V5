@@ -1205,8 +1205,18 @@ test("Atelier saves an edit and restores it after reload", async ({ page }) => {
   const original = await nameInput.inputValue();
   const changed = original + " V6Fast";
   await nameInput.fill(changed);
+  const dirtyBadges=page.locator("[data-workshop-status]");
+  await expect(dirtyBadges).toHaveCount(2);
+  await expect(dirtyBadges.nth(0)).toHaveAttribute("data-state","dirty");
+  await expect(dirtyBadges.nth(1)).toHaveAttribute("data-state","dirty");
+  await expect(dirtyBadges.nth(0)).toContainText("Modifications non enregistrées");
+  await expect(dirtyBadges.nth(1)).toContainText("Modifications non enregistrées");
   await form.locator("[data-workshop-save]").click();
-  await expect(form.locator("[data-workshop-status]").last()).toContainText("Enregistré localement");
+  await expect(page.locator("[data-workshop-status]")).toHaveCount(2);
+  await expect(page.locator("[data-workshop-status]").nth(0)).toHaveAttribute("data-state","saved");
+  await expect(page.locator("[data-workshop-status]").nth(1)).toHaveAttribute("data-state","saved");
+  await expect(page.locator("[data-workshop-status]").nth(0)).toContainText("Enregistré localement");
+  await expect(page.locator("[data-workshop-status]").nth(1)).toContainText("Enregistré localement");
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
@@ -1265,6 +1275,10 @@ test("keyboard focus, Escape and modal focus restoration stay intact", async ({ 
 test("structured import preview stays write-free until confirmation", async ({ page }) => {
   await ready(page);
   await gotoView(page, "import");
+  await expect(page.locator(".import-family-band")).toBeVisible();
+  await expect(page.locator(".import-preview-empty")).toContainText("Aucune écriture avant confirmation");
+  await expect(page.locator(".export-level")).toHaveCount(3);
+  await expect(page.locator(".backup-card-v6")).toContainText("Backup ZIP complet");
 
   const before = await page.evaluate(async () => {
     const db = await new Promise((resolve, reject) => {
@@ -1285,11 +1299,23 @@ test("structured import preview stays write-free until confirmation", async ({ p
   await page.locator('[data-action="import-json-file"]').setInputFiles({
     name: "v6fast-import.json",
     mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify([{ name: "Créature V6Fast", dungeon_name: "" }]))
+    buffer: Buffer.from(JSON.stringify([
+      { name: "Créature V6Fast", dungeon_name: "" },
+      { name: "", dungeon_name: "", category: "categorie-inconnue" }
+    ]))
   });
 
   await expect(page.locator(".import-preview-v6")).toBeVisible();
   await expect(page.getByText("Aucune donnée métier écrite")).toBeVisible();
+  const metrics=page.locator(".import-metrics-v6 .metric");
+  await expect(metrics).toHaveCount(4);
+  await expect(metrics.nth(0)).toContainText("2");
+  await expect(metrics.nth(1)).toContainText("1");
+  await expect(metrics.nth(2)).toContainText("1");
+  await expect(metrics.nth(3)).toContainText("1");
+  await expect(page.locator(".import-plan-row .warning")).toContainText("Warning");
+  await expect(page.locator(".import-plan-row .error").first()).toContainText("Erreur bloquante");
+  await expect(page.locator(".import-effect-plan")).toContainText("1 écriture(s) autorisée(s)");
 
   const during = await page.evaluate(async () => {
     const db = await new Promise((resolve, reject) => {
@@ -1327,6 +1353,8 @@ test("structured import preview stays write-free until confirmation", async ({ p
     return count;
   });
   expect(after).toBe(before + 1);
+  await expect(page.locator(".import-final-report")).toContainText("Import terminé");
+  await expect(page.locator(".import-final-seal")).toHaveText("✓");
 });
 
 test("Media admin inspection keeps the selected Blob unchanged", async ({ page }) => {
