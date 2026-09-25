@@ -500,6 +500,131 @@ test("Creature WHAOU keeps tabletop staging lazy and readable", async ({ page })
   await assertNoHorizontalOverflow(page);
 });
 
+test("Hero progression and NPC dossiers stay lazy distinct and complete", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
+
+  await page.evaluate(async () => {
+    const raw=atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+    const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));
+    const transparent=new Blob([bytes],{type:"image/png"});
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const dungeon=await new Promise((resolve,reject)=>{
+      const tx=db.transaction("dungeons","readonly"),req=tx.objectStore("dungeons").openCursor();
+      req.onsuccess=()=>resolve(req.result?.value||null);req.onerror=()=>reject(req.error);
+    });
+    if(!dungeon){db.close();throw new Error("Donjon fixture absent");}
+
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(["heroes","npcs","quests","media_assets"],"readwrite");
+      const heroes=tx.objectStore("heroes"),npcs=tx.objectStore("npcs"),quests=tx.objectStore("quests"),media=tx.objectStore("media_assets");
+
+      for(let level=1;level<=4;level++){
+        const id="whaou-hero-complet-"+level;
+        heroes.put({
+          id,hero_base_name:"WHAOU Héros complet",level,name:"WHAOU Héros complet N"+level,
+          role:"Franc-tireur",title:"Titre N"+level,pv:5+level,atk:level+1,def:level,zone:1+level,actions:3,
+          ability_text:"Compétence WHAOU N"+level,effect_text:"Effet cumulé niveau "+level,brouhaha:String(level),tags:["whaou"]
+        });
+        media.put({
+          id:"media-"+id,label:id,file_name:id+".png",path:"local-media/heroes/"+id+".png",entity_type:"heroes",entity_id:id,
+          transparent_blob:transparent,transparent_path:"local-media/heroes/transparent/"+id+".png",
+          transparent_review_status:"approved",transparent_audit:{pass:true,has_alpha_channel:true,width:1,height:1}
+        });
+      }
+      for(const level of [1,3]){
+        heroes.put({
+          id:"whaou-hero-incomplet-"+level,hero_base_name:"WHAOU Héros incomplet",level,
+          name:"WHAOU Héros incomplet N"+level,role:"Éclaireur",title:"Trou dans la progression",
+          pv:4+level,atk:level,def:1,zone:2,actions:3,ability_text:"Compétence incomplète N"+level,
+          effect_text:"Test niveau manquant",brouhaha:"",tags:["whaou"]
+        });
+      }
+
+      npcs.put({
+        id:"whaou-npc-complet",name:"WHAOU Mirette du Comptoir",slug:"whaou-mirette-du-comptoir",
+        race:"Halfeline",role:"Tenancière suppléante",tone:"Aimable jusqu'au troisième pichet",
+        lore:"Elle connaît chaque dette, chaque rumeur et la moitié des mensonges de la salle.",tags:["whaou"]
+      });
+      npcs.put({
+        id:"whaou-npc-minimal",name:"WHAOU Silhouette Sans Dossier",slug:"whaou-silhouette-sans-dossier",
+        race:"Humain",role:"Passant",tone:"",lore:"",tags:["whaou"]
+      });
+      quests.put({
+        id:"whaou-quest-npc",name:"WHAOU Le Tonneau Disparu",slug:"whaou-le-tonneau-disparu",
+        difficulty:4,npc_id:"whaou-npc-complet",npc_name:"WHAOU Mirette du Comptoir",
+        dungeon_id:dungeon.id,dungeon_name:dungeon.name,objective:"Retrouver le tonneau avant Berthold.",reward:"Une tournée.",tags:["whaou"]
+      });
+      media.put({
+        id:"media-whaou-npc",label:"whaou-npc",file_name:"whaou-npc.png",path:"local-media/npcs/whaou-npc.png",
+        entity_type:"npcs",entity_id:"whaou-npc-complet",
+        transparent_blob:transparent,transparent_path:"local-media/npcs/transparent/whaou-npc.png",
+        transparent_review_status:"approved",transparent_audit:{pass:true,has_alpha_channel:true,width:1,height:1}
+      });
+
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+    db.close();
+  });
+
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await gotoView(page,"codex");
+
+  await page.locator('[data-action="set-codex-type"][data-type="heroes"]').first().click();
+  const completeCard=page.locator(".hero-collection-card").filter({hasText:"WHAOU Héros complet"}).first();
+  await expect(completeCard).toBeVisible();
+  await expect(completeCard.locator(".hero-card-level")).toHaveText("N1");
+  await expect(completeCard.locator("img").first()).toHaveAttribute("src",/^blob:/);
+  await completeCard.click();
+
+  const counts=[];
+  for(const level of [1,2,3,4]){
+    const button=page.locator('[data-action="hero-level"][data-level="'+level+'"]');
+    await expect(button).toBeEnabled();
+    await button.click();
+    await expect(button).toHaveAttribute("aria-pressed","true");
+    await expect(page.locator(".hero-portrait-level")).toHaveText("N"+level);
+    await expect(page.locator(".hero-portrait-v6>img")).toHaveAttribute("src",/^blob:/);
+    counts.push(await page.locator(".hero-skill-v6").count());
+  }
+  expect(counts).toEqual([1,2,3,4]);
+  await expect(page.locator(".hero-skill-v6.current .hero-brouhaha-stamp")).toHaveText("Brouhaha +4");
+
+  await page.locator('[data-action="codex-family-back"][data-type="heroes"]').click();
+  const incompleteCard=page.locator(".hero-collection-card").filter({hasText:"WHAOU Héros incomplet"}).first();
+  await incompleteCard.click();
+  await expect(page.locator('[data-action="hero-level"][data-level="1"]')).toBeEnabled();
+  await expect(page.locator('[data-action="hero-level"][data-level="2"]')).toBeDisabled();
+  await expect(page.locator('[data-action="hero-level"][data-level="3"]')).toBeEnabled();
+  await expect(page.locator('[data-action="hero-level"][data-level="4"]')).toBeDisabled();
+  await page.locator('[data-action="hero-level"][data-level="3"]').click();
+  await expect(page.locator(".hero-portrait-level")).toHaveText("N3");
+
+  await page.locator('[data-action="set-codex-type"][data-type="npcs"]').first().click();
+  const npcCard=page.locator('.npc-collection-card[data-id="whaou-npc-complet"]');
+  await expect(npcCard).toBeVisible();
+  await expect(npcCard.locator("img").first()).toHaveAttribute("src",/^blob:/);
+  await npcCard.click();
+
+  await expect(page.locator(".npc-sheet-v6")).toBeVisible();
+  await expect(page.locator(".npc-tone-note")).toContainText("Aimable jusqu'au troisième pichet");
+  await expect(page.locator(".npc-lore-v6")).toContainText("chaque dette");
+  await expect(page.locator(".npc-quest-contract")).toHaveCount(1);
+  await expect(page.locator(".npc-quest-contract")).toContainText("Difficile");
+  await expect(page.locator(".npc-sheet-v6 .hero-stats-v6")).toHaveCount(0);
+
+  await page.locator('[data-action="codex-family-back"][data-type="npcs"]').click();
+  await page.locator('.npc-collection-card[data-id="whaou-npc-minimal"]').click();
+  await expect(page.locator(".npc-media-fallback.large")).toBeVisible();
+  await expect(page.locator(".npc-tone-note")).toHaveCount(0);
+  await expect(page.locator(".npc-lore-v6")).toHaveCount(0);
+
+  const mediaDebug=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(mediaDebug.catalogScans).toBe(0);
+  await assertNoHorizontalOverflow(page);
+});
+
 test("session Generator Brouhaha and Quest flows remain coherent", async ({ page }) => {
   await ready(page);
 

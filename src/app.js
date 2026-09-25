@@ -1230,14 +1230,15 @@ function queueDungeonDetailReveal() {
   });
 }
 
-function queueHeroDetailReveal() {
+function queueHeroDetailReveal(mode = "detail") {
   requestAnimationFrame(() => {
     const sheet = document.querySelector(".hero-sheet-v6");
     if (!sheet || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
-    sheet.classList.remove("hero-sheet-enter-v6");
+    const className = mode === "level" ? "hero-level-change-v6" : "hero-sheet-enter-v6";
+    sheet.classList.remove("hero-sheet-enter-v6", "hero-level-change-v6");
     void sheet.offsetWidth;
-    sheet.classList.add("hero-sheet-enter-v6");
-    sheet.addEventListener("animationend", () => sheet.classList.remove("hero-sheet-enter-v6"), { once: true });
+    sheet.classList.add(className);
+    sheet.addEventListener("animationend", () => sheet.classList.remove(className), { once: true });
   });
 }
 
@@ -3995,13 +3996,16 @@ function renderHeroCollectionCard(group, mode = "gallery", active = false) {
   return `
     <button class="hero-collection-card ${mode} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="heroes" data-base="${escapeHtml(group.key)}">
       <span class="hero-collection-media">
+        <span class="hero-card-stage" aria-hidden="true"></span>
         ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>Illustration indisponible</span>` : `<span class="hero-media-fallback"><img src="${V6_ICON_PATH}Icone_Entite_HEROS.webp" alt=""></span>`}
+        <span class="hero-card-plinth" aria-hidden="true"></span>
+        ${level ? `<b class="hero-card-level">N${escapeHtml(String(level.level ?? "—"))}</b>` : ""}
       </span>
       <span class="hero-collection-copy">
         <small>Héros · ${group.levels.length} niveau${group.levels.length > 1 ? "x" : ""}</small>
         <strong>${escapeHtml(group.baseName)}</strong>
         ${role ? `<em>${escapeHtml(role)}</em>` : ""}
-        ${level ? `<span>N${escapeHtml(String(level.level ?? "—"))} consulté</span>` : ""}
+        ${level ? `<span class="hero-level-copy">N${escapeHtml(String(level.level ?? "—"))} consulté</span>` : ""}
       </span>
     </button>`;
 }
@@ -4022,6 +4026,9 @@ function renderHeroDetailV6(group) {
     <article class="hero-sheet-v6">
       <aside class="hero-identity-v6">
         <div class="hero-portrait-v6 level-${escapeHtml(String(current.level ?? 1))}">
+          <span class="hero-portrait-stage" aria-hidden="true"></span>
+          <span class="hero-portrait-plinth" aria-hidden="true"></span>
+          <b class="hero-portrait-level">N${escapeHtml(String(current.level ?? "—"))}</b>
           ${image ? `
             <img src="${escapeHtml(image)}" alt="Illustration niveau ${escapeHtml(String(current.level ?? "—"))} de ${escapeHtml(group.baseName)}" data-safe-media>
             <span class="relation-media-fallback" hidden>Illustration indisponible</span>
@@ -4121,7 +4128,9 @@ function renderNpcCollectionCard(item, mode = "gallery", active = false) {
   return `
     <button class="npc-collection-card ${mode} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="npcs" data-id="${escapeHtml(String(item.id || ""))}">
       <span class="npc-collection-media">
+        <span class="npc-card-register" aria-hidden="true"></span>
         ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>Portrait indisponible</span>` : `<span class="npc-media-fallback"><img src="${V6_ICON_PATH}Icone_Entite_PNJ.webp" alt=""></span>`}
+        <span class="npc-card-plinth" aria-hidden="true"></span>
       </span>
       <span class="npc-collection-copy">
         <small>PNJ${item.race ? ` · ${escapeHtml(item.race)}` : ""}</small>
@@ -4129,6 +4138,18 @@ function renderNpcCollectionCard(item, mode = "gallery", active = false) {
         ${item.role ? `<em>${escapeHtml(item.role)}</em>` : ""}
       </span>
     </button>`;
+}
+
+function renderNpcQuestContract(quest) {
+  const difficulty = questDifficultyMeta(quest?.difficulty);
+  const tier = difficulty?.key || "unknown";
+  return `<button class="npc-quest-contract ${escapeHtml(tier)}" type="button" data-action="open-related" data-type="quests" data-id="${escapeHtml(String(quest?.id || ""))}">
+    <span class="npc-quest-contract-mark"><img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt="" aria-hidden="true"></span>
+    <span class="npc-quest-contract-copy">
+      <b>${escapeHtml(quest?.name || "Quête")}</b>
+      <small>${escapeHtml(difficulty?.label || "Difficulté non renseignée")}</small>
+    </span>
+  </button>`;
 }
 
 function renderNpcDetailV6(item) {
@@ -4140,6 +4161,8 @@ function renderNpcDetailV6(item) {
   return `
     <article class="npc-sheet-v6">
       <section class="npc-portrait-v6">
+        <span class="npc-portrait-stage" aria-hidden="true"></span>
+        <span class="npc-portrait-plinth" aria-hidden="true"></span>
         ${image ? `
           <img src="${escapeHtml(image)}" alt="Portrait de ${escapeHtml(name)}" data-safe-media>
           <span class="relation-media-fallback" hidden>Portrait indisponible</span>
@@ -4154,7 +4177,7 @@ function renderNpcDetailV6(item) {
         <div class="npc-facts-v6">
           ${item.race ? `<div><span>Race</span><b>${escapeHtml(item.race)}</b></div>` : ""}
           ${item.role ? `<div><span>Rôle</span><b>${escapeHtml(item.role)}</b></div>` : ""}
-          ${item.tone ? `<div><span>Ton</span><b>${escapeHtml(item.tone)}</b></div>` : ""}
+          ${item.tone ? `<div class="npc-tone-note"><span>Ton</span><b>${escapeHtml(item.tone)}</b></div>` : ""}
         </div>
         ${item.lore ? `
           <section class="npc-lore-v6">
@@ -4165,7 +4188,7 @@ function renderNpcDetailV6(item) {
         <section class="npc-quests-v6">
           <div class="npc-section-head"><div><img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt="" aria-hidden="true"><strong>Quêtes associées</strong></div><span>${quests.length}</span></div>
           <div class="npc-quest-links">
-            ${quests.length ? quests.map(quest => `<button type="button" data-action="open-related" data-type="quests" data-id="${escapeHtml(String(quest.id || ""))}"><b>${escapeHtml(quest.name || "Quête")}</b><small>${escapeHtml(questDifficultyMeta(quest.difficulty)?.label || "Difficulté non renseignée")}</small></button>`).join("") : `<span class="muted small">Aucune Quête reliée de façon fiable.</span>`}
+            ${quests.length ? quests.map(renderNpcQuestContract).join("") : `<span class="muted small">Aucune Quête reliée de façon fiable.</span>`}
           </div>
         </section>
         ${tags.length ? `<div class="npc-tags-v6">${tags.map(tag=>`<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
@@ -6824,6 +6847,7 @@ function bindEvents() {
           state.ui.codexSelectedId = level.id;
           await saveUiState(state.ui);
           render();
+          queueHeroDetailReveal("level");
           return;
         }
         case "select-codex": {
