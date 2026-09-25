@@ -1015,8 +1015,8 @@ test("Brouhaha WHAOU stages pressure without coupling level and draw, and Quest 
   await expect(page.locator(".session-quest-meta")).toContainText("WHAOU7 Berthold Bis");
 
   await page.locator('[data-action="session-quest-reroll"]').click();
+  await expect.poll(async()=>page.locator(".session-quest-card h2").innerText()).not.toBe(firstQuest);
   const secondQuest=await page.locator(".session-quest-card h2").innerText();
-  expect(secondQuest).not.toBe(firstQuest);
 
   await page.locator('[data-action="jump-codex"][data-type="quests"]').click();
   await expect(page.locator(".quest-sheet-v6")).toBeVisible();
