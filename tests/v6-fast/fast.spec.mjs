@@ -771,6 +771,133 @@ test("Secondary Codex WHAOU keeps four personalities coherent and lazy", async (
   }
 });
 
+test("Encounter WHAOU preserves generation rules while staging the table", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
+  page.on("dialog", dialog => dialog.accept());
+
+  await page.evaluate(async () => {
+    const raw=atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+    const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));
+    const transparent=new Blob([bytes],{type:"image/png"});
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(["dungeons","creatures","loot_items","interactables","media_assets"],"readwrite");
+      const dungeons=tx.objectStore("dungeons"),creatures=tx.objectStore("creatures"),loot=tx.objectStore("loot_items");
+      const interactables=tx.objectStore("interactables"),media=tx.objectStore("media_assets");
+
+      dungeons.put({
+        id:"whaou6-dungeon",name:"WHAOU6 Arène des Chopes",slug:"whaou6-arene-des-chopes",
+        description:"Salle de test du générateur.",floor_budgets:[4,5,6,3],base_floor_count:4,boss_name:"WHAOU6 Patron",
+        tags:["whaou6"],image_path:""
+      });
+      dungeons.put({
+        id:"whaou6-missing-budget",name:"WHAOU6 Sans Budget",slug:"whaou6-sans-budget",
+        description:"Budget absent.",floor_budgets:[null],base_floor_count:1,boss_name:"",tags:["whaou6"],image_path:""
+      });
+
+      const common={dungeon_id:"whaou6-dungeon",dungeon_name:"WHAOU6 Arène des Chopes",zone:1,actions:2,tags:["whaou6"],image_path:""};
+      creatures.put({...common,id:"whaou6-normal",name:"WHAOU6 Gobelin Double",slug:"whaou6-gobelin-double",category:"basique",menace:2,pv:5,atk:2,def:1,special_attack_name:"Coup de chope"});
+      creatures.put({...common,id:"whaou6-mini",name:"WHAOU6 Mini Patron",slug:"whaou6-mini-patron",category:"mini_boss",menace:3,pv:12,atk:4,def:2,special_attack_name:"Addition salée"});
+      creatures.put({...common,id:"whaou6-boss",name:"WHAOU6 Patron",slug:"whaou6-patron",category:"boss",menace:4,pv:20,atk:5,def:3,special_attack_name:"Dernière tournée"});
+
+      loot.put({
+        id:"whaou6-loot",creature_id:"whaou6-normal",creature_name:"WHAOU6 Gobelin Double",
+        name:"WHAOU6 Trophée",type:"Trophée",effect:"Brille vaguement",gold_value:4,tags:["whaou6"],image_path:""
+      });
+      interactables.put({
+        id:"whaou6-object",name:"WHAOU6 Tonneau à levier",slug:"whaou6-tonneau-a-levier",
+        dungeon_id:"whaou6-dungeon",dungeon_name:"WHAOU6 Arène des Chopes",type:"Tonneau",hp:6,
+        actions_allowed:"ouvrir; pousser; casser",effect:"Répand la bière sur deux cases.",tags:["whaou6"],image_path:""
+      });
+
+      for(const [id,type] of [["whaou6-normal","creatures"],["whaou6-mini","creatures"],["whaou6-boss","creatures"]]){
+        media.put({
+          id:"media-"+id,label:id,file_name:id+".png",path:"local-media/"+type+"/"+id+".png",
+          entity_type:type,entity_id:id,transparent_blob:transparent,
+          transparent_path:"local-media/"+type+"/transparent/"+id+".png",
+          transparent_review_status:"approved",transparent_audit:{pass:true,has_alpha_channel:true,width:1,height:1}
+        });
+      }
+
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+    db.close();
+  });
+
+  await page.reload({waitUntil:"domcontentloaded"});
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await gotoView(page,"generator");
+
+  await expect(page.locator(".session-start-card")).toBeVisible();
+  await page.locator('[data-action="session-start-dungeon"]').selectOption("whaou6-dungeon");
+  await page.locator('[data-action="session-start"]').click();
+  await expect(page.locator(".generator-config-v6")).toBeVisible();
+  await expect(page.locator(".generator-order-v6")).toContainText("1 · Donjon");
+  await expect(page.locator(".generator-order-v6")).toContainText("5 · Générer");
+
+  await page.evaluate(() => { Math.random = () => 0.85; });
+  await page.locator('[data-action="generate-session-encounter"]').click();
+  await expect(page.locator(".session-encounter-v6.mode-normal")).toBeVisible();
+  await expect(page.locator('.encounter-creature-v6[data-creature-id="whaou6-normal"]')).toHaveCount(1);
+  await expect(page.locator('.encounter-creature-v6[data-creature-id="whaou6-normal"] .encounter-quantity-v6 b')).toHaveText("2");
+  await expect(page.locator('.encounter-creature-v6[data-creature-id="whaou6-normal"] .encounter-creature-media>img:not(.encounter-creature-sigil)')).toHaveAttribute("src",/^blob:/);
+  await expect(page.locator(".encounter-object-v6")).toContainText("WHAOU6 Tonneau à levier");
+  await expect(page.locator(".encounter-object-actions-v6 b")).toHaveCount(3);
+  await expect(page.locator(".generator-v6.has-result .generator-config-v6")).toBeVisible();
+
+  const normalEliminate=page.locator('[data-action="session-eliminate-creature"][data-id="whaou6-normal"]');
+  await normalEliminate.click();
+  await expect.poll(async()=>page.locator('.encounter-creature-v6[data-creature-id="whaou6-normal"] .encounter-quantity-v6 b').innerText()).toBe("1");
+  await expect(page.locator(".session-loot-row.has-loot")).toHaveCount(1);
+  await expect(page.locator(".session-loot-row.has-loot")).toContainText("WHAOU6 Trophée");
+
+  await page.locator('[data-action="session-eliminate-creature"][data-id="whaou6-normal"]').click();
+  await expect(page.locator('.encounter-creature-v6[data-creature-id="whaou6-normal"]')).toHaveCount(0);
+  await expect(page.locator(".encounter-complete-v6")).toBeVisible();
+  await expect(page.locator(".session-encounter-v6.is-complete")).toBeVisible();
+  await expect(page.locator(".session-loot-row")).toHaveCount(2);
+
+  await page.locator('[data-action="session-set-floor"]').selectOption("1");
+  await page.locator('[data-action="session-set-mode"][data-mode="mini_boss"]').click();
+  await page.locator('[data-action="generate-session-encounter"]').click();
+  await expect(page.locator(".session-encounter-v6.mode-mini_boss")).toBeVisible();
+  await expect(page.locator('.encounter-creature-v6.mini_boss[data-creature-id="whaou6-mini"]')).toBeVisible();
+  await expect(page.locator('.encounter-creature-v6[data-creature-id="whaou6-normal"]')).toBeVisible();
+
+  await page.locator('[data-action="session-set-floor"]').selectOption("2");
+  await page.locator('[data-action="session-set-mode"][data-mode="boss"]').click();
+  await page.locator('[data-action="generate-session-encounter"]').click();
+  await expect(page.locator(".session-encounter-v6.mode-boss")).toBeVisible();
+  await expect(page.locator('.encounter-creature-v6.boss[data-creature-id="whaou6-boss"]')).toBeVisible();
+
+  await page.setViewportSize({width:834,height:1112});
+  await assertNoHorizontalOverflow(page);
+  await expect(page.locator(".encounter-remaining-v6")).toBeVisible();
+  await page.setViewportSize({width:390,height:844});
+  await assertNoHorizontalOverflow(page);
+  await expect(page.locator('.encounter-creature-v6.boss[data-creature-id="whaou6-boss"]')).toBeVisible();
+
+  await page.setViewportSize({width:1440,height:900});
+  await page.locator('[data-action="session-set-floor"]').selectOption("3");
+  await page.locator('[data-action="session-set-mode"][data-mode="normal"]').click();
+  await page.locator('[data-action="generate-session-encounter"]').click();
+  await expect(page.locator(".session-encounter-v6")).toHaveCount(0);
+  await expect(page.getByText("Impossible de composer une rencontre exacte", {exact:false})).toBeVisible();
+
+  await page.locator('[data-action="session-set-dungeon"]').selectOption("whaou6-missing-budget");
+  await expect(page.locator(".generator-budget-v6.missing")).toBeVisible();
+  await expect(page.locator('[data-action="generate-session-encounter"]')).toBeDisabled();
+
+  await page.locator('[data-action="session-end"]').click();
+  await gotoView(page,"generator");
+  await expect(page.locator(".session-start-card")).toBeVisible();
+
+  const mediaDebug=await page.evaluate(()=>globalThis.__GARGOTTEX_MEDIA_DEBUG__?.());
+  expect(mediaDebug.catalogScans).toBe(0);
+});
+
 test("session Generator Brouhaha and Quest flows remain coherent", async ({ page }) => {
   await ready(page);
 
