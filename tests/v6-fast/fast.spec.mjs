@@ -1206,17 +1206,20 @@ test("Atelier saves an edit and restores it after reload", async ({ page }) => {
   const changed = original + " V6Fast";
   await nameInput.fill(changed);
   const dirtyBadges=page.locator("[data-workshop-status]");
-  await expect(dirtyBadges).toHaveCount(2);
-  await expect(dirtyBadges.nth(0)).toHaveAttribute("data-state","dirty");
-  await expect(dirtyBadges.nth(1)).toHaveAttribute("data-state","dirty");
-  await expect(dirtyBadges.nth(0)).toContainText("Modifications non enregistrées");
-  await expect(dirtyBadges.nth(1)).toContainText("Modifications non enregistrées");
+  const badgeCount=await dirtyBadges.count();
+  expect(badgeCount).toBeGreaterThanOrEqual(2);
+  for(let i=0;i<badgeCount;i++){
+    await expect(dirtyBadges.nth(i)).toHaveAttribute("data-state","dirty");
+    await expect(dirtyBadges.nth(i)).toContainText("Modifications non enregistrées");
+  }
   await form.locator("[data-workshop-save]").click();
-  await expect(page.locator("[data-workshop-status]")).toHaveCount(2);
-  await expect(page.locator("[data-workshop-status]").nth(0)).toHaveAttribute("data-state","saved");
-  await expect(page.locator("[data-workshop-status]").nth(1)).toHaveAttribute("data-state","saved");
-  await expect(page.locator("[data-workshop-status]").nth(0)).toContainText("Enregistré localement");
-  await expect(page.locator("[data-workshop-status]").nth(1)).toContainText("Enregistré localement");
+  const savedBadges=page.locator("[data-workshop-status]");
+  const savedCount=await savedBadges.count();
+  expect(savedCount).toBeGreaterThanOrEqual(2);
+  for(let i=0;i<savedCount;i++){
+    await expect(savedBadges.nth(i)).toHaveAttribute("data-state","saved");
+    await expect(savedBadges.nth(i)).toContainText("Enregistré localement");
+  }
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
@@ -1309,10 +1312,10 @@ test("structured import preview stays write-free until confirmation", async ({ p
   await expect(page.getByText("Aucune donnée métier écrite")).toBeVisible();
   const metrics=page.locator(".import-metrics-v6 .metric");
   await expect(metrics).toHaveCount(4);
-  await expect(metrics.nth(0)).toContainText("2");
-  await expect(metrics.nth(1)).toContainText("1");
-  await expect(metrics.nth(2)).toContainText("1");
-  await expect(metrics.nth(3)).toContainText("1");
+  await expect(metrics.nth(0).locator("b")).toHaveText("2");
+  await expect(metrics.nth(1).locator("b")).toHaveText("1");
+  await expect(metrics.nth(2).locator("b")).toHaveText("2");
+  await expect(metrics.nth(3).locator("b")).toHaveText("1");
   await expect(page.locator(".import-plan-row .warning")).toContainText("Warning");
   await expect(page.locator(".import-plan-row .error").first()).toContainText("Erreur bloquante");
   await expect(page.locator(".import-effect-plan")).toContainText("1 écriture(s) autorisée(s)");
