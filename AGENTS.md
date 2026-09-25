@@ -1,7 +1,7 @@
 # AGENTS.md - Gargottex V6
 
 ## Documents actifs
-Le chantier V6-WHAOU est **clos**. Son document maître historique reste `docs/V6-WHAOU.md` et ses cahiers de lots sont archivés dans `docs/archive/v6-whaou`.
+Le chantier V6-WHAOU est **clos et archivé**. Son document maître, sa synthèse de clôture et ses dix cahiers de lots sont conservés dans `docs/archive/v6-whaou`.
 La baseline applicative issue de cette clôture est Gargottex **5.6.5**, cache PWA `gargottex-v6-whaou-final-v1`.
 Ne pas rouvrir un lot V6-WHAOU pour engager une migration backend ou média : ces évolutions relèvent de V7.
 

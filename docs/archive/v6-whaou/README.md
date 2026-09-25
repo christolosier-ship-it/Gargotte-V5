@@ -2,7 +2,7 @@
 
 Statut : **CLOS**.
 
-Cette archive contient les dix cahiers d'exécution du chantier V6-WHAOU, consacré à l'émotion, la mise en scène et l'ambition visuelle de Gargottex V6.
+Cette archive contient le document maître et les dix cahiers d'exécution du chantier V6-WHAOU, consacré à l'émotion, la mise en scène et l'ambition visuelle de Gargottex V6.
 
 Clôture :
 - application : **5.6.5** ;
@@ -16,7 +16,7 @@ Clôture :
 - reduced-motion, responsive et accessibilité : validés ;
 - aucun report bloquant.
 
-Le document maître et la synthèse de clôture restent dans `docs/V6-WHAOU.md`.
+Le document maître et la synthèse de clôture sont archivés dans `docs/archive/v6-whaou/V6-WHAOU.md`.
 
 ## Lots archivés
 
