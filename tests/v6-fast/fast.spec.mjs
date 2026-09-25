@@ -196,11 +196,11 @@ test("media runtime stays lazy and enforces active visual rules", async ({ page 
 
   await gotoView(page,"media");
   const whiteCard=page.locator('[data-action="media-select"][data-id="v6fast-white-original"]');
-  const dungeonCard=page.locator('[data-action="media-select"][data-id="v6fast-dungeon-original"]');
+  const dungeonMediaCard=page.locator('[data-action="media-select"][data-id="v6fast-dungeon-original"]');
   await expect(whiteCard).toHaveAttribute("data-card-variant","inactive-original");
   await expect(whiteCard.locator("img")).toHaveCount(0);
-  await expect(dungeonCard).toHaveAttribute("data-card-variant","dungeon-original");
-  await expect(dungeonCard.locator("img")).toHaveAttribute("src", /assets\/images\/logo-192\.png/);
+  await expect(dungeonMediaCard).toHaveAttribute("data-card-variant","dungeon-original");
+  await expect(dungeonMediaCard.locator("img")).toHaveAttribute("src", /assets\/images\/logo-192\.png/);
 
   await whiteCard.click();
   await page.locator('[data-action="media-link-type"]').selectOption("dungeons");
