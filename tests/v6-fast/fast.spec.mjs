@@ -206,7 +206,10 @@ test("media runtime stays lazy and enforces active visual rules", async ({ page 
   await whiteCard.click();
   await page.locator('[data-action="media-link-type"]').selectOption("dungeons");
   await page.locator('[data-action="media-link-entity"]').selectOption(seeded.dungeonId);
-  const beforeAttach = await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().refreshDataCalls);
+  const beforeAttach = await page.evaluate(() => {
+    const debug=globalThis.__GARGOTTEX_MEDIA_DEBUG__?.();
+    return {refreshDataCalls:debug?.refreshDataCalls,renderCalls:debug?.renderCalls,partial:debug?.mediaPartialRenders};
+  });
   await page.locator('[data-action="media-attach"]').click();
 
   await expect.poll(async () => page.evaluate(async id => {
@@ -217,8 +220,13 @@ test("media runtime stays lazy and enforces active visual rules", async ({ page 
     return row ? `${row.entity_type}:${row.entity_id}` : "";
   },"v6fast-white-original")).toBe(`dungeons:${seeded.dungeonId}`);
 
-  const afterAttach = await page.evaluate(() => globalThis.__GARGOTTEX_MEDIA_DEBUG__?.().refreshDataCalls);
-  expect(afterAttach).toBe(beforeAttach);
+  const afterAttach = await page.evaluate(() => {
+    const debug=globalThis.__GARGOTTEX_MEDIA_DEBUG__?.();
+    return {refreshDataCalls:debug?.refreshDataCalls,renderCalls:debug?.renderCalls,partial:debug?.mediaPartialRenders};
+  });
+  expect(afterAttach.refreshDataCalls).toBe(beforeAttach.refreshDataCalls);
+  expect(afterAttach.renderCalls).toBe(beforeAttach.renderCalls);
+  expect(afterAttach.partial).toBeGreaterThan(beforeAttach.partial);
 
   const persisted = await page.evaluate(async id => {
     const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
