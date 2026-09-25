@@ -62,6 +62,53 @@ async function runAxe(page, label) {
   expect(violations, `${label} axe violations\n${JSON.stringify(violations, null, 2)}`).toEqual([]);
 }
 
+test("V6-WHAOU final shell keeps motion finite and offline assets coherent", async ({ page }) => {
+  await ready(page);
+
+  const audit=await page.evaluate(async()=>{
+    const [cssText,appText,swText]=await Promise.all([
+      fetch("./styles.css",{cache:"no-store"}).then(r=>r.text()),
+      fetch("./src/app.js",{cache:"no-store"}).then(r=>r.text()),
+      fetch("./service-worker.js",{cache:"no-store"}).then(r=>r.text())
+    ]);
+
+    const appVersion=appText.match(/const APP_VERSION = "([^"]+)"/)?.[1] || "";
+    const appCache=appText.match(/const PWA_CACHE_NAME = "([^"]+)"/)?.[1] || "";
+    const swCache=swText.match(/const CACHE = "([^"]+)"/)?.[1] || "";
+    const swAssets=[...swText.matchAll(/"(\.\/[^"]+)"/g)].map(match=>match[1].replace(/^\.\//,""));
+    const cssAssets=[...new Set(
+      [...cssText.matchAll(/url\((["']?)([^)"']+)\1\)/g)]
+        .map(match=>match[2])
+        .filter(value=>!value.startsWith("data:")&&!/^https?:/i.test(value))
+        .map(value=>value.replace(/^\.\//,""))
+    )];
+    const missingCssAssets=cssAssets.filter(value=>!swAssets.includes(value));
+    const externalVisualUrls=[...cssText.matchAll(/https?:\/\/[^)"'\s]+/g)].map(match=>match[0]);
+    const infiniteAnimations=[...cssText.matchAll(/animation\s*:\s*([^;}]+)/g)]
+      .map(match=>match[1].trim())
+      .filter(value=>/\binfinite\b/.test(value))
+      .map(value=>value.split(/\s+/)[0]);
+
+    return{
+      appVersion,
+      appCache,
+      swCache,
+      missingCssAssets,
+      externalVisualUrls,
+      infiniteAnimations:[...new Set(infiniteAnimations)].sort(),
+      permanentHomePulse:cssText.includes("home-local-pulse")
+    };
+  });
+
+  expect(audit.appVersion).toBe("5.6.5");
+  expect(audit.appCache).toBe("gargottex-v6-whaou-final-v1");
+  expect(audit.swCache).toBe(audit.appCache);
+  expect(audit.missingCssAssets).toEqual([]);
+  expect(audit.externalVisualUrls).toEqual([]);
+  expect(audit.infiniteAnimations).toEqual(["cinematic-spark","v6-skeleton"]);
+  expect(audit.permanentHomePulse).toBe(false);
+});
+
 test("bootstrap defers seed diagnostics and heavy modules after first install", async ({ page }) => {
   await page.goto("/index.html", { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
