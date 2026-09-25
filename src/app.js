@@ -2296,13 +2296,15 @@ function normalizeCreatureCategory(value) {
 
 function openImageViewer(src, alt = "") {
   if (!src) return;
+  const captureFocus = !activeExternalDialog();
   state.imageViewer = { src, alt };
-  render();
+  syncOverlayLayers({ captureFocus });
 }
 
 function closeImageViewer() {
+  if (!state.imageViewer) return;
   state.imageViewer = null;
-  render();
+  syncOverlayLayers({ restoreFocus: true });
 }
 
 function renderImageViewer() {
@@ -2785,8 +2787,6 @@ function renderShell(content){
         '<div class="search-wrap" role="search"><span class="search-leading">'+shellIcon("search")+'</span><input class="search" data-action="search" type="search" role="searchbox" aria-label="Recherche globale" autocomplete="off" placeholder="Rechercher dans le Codex…" value="'+escapeHtml(state.ui.globalSearch)+'">'+(state.ui.globalSearch?renderSearchResults():"")+'</div>',
         '<div class="topbar-right"><span class="offline-badge" title="Données locales disponibles">'+shellIcon("wifi")+'<span>Local</span></span><button class="ghost topbar-action" data-action="toggle-journal" aria-label="Ouvrir le journal">'+shellIcon("journal")+'<span>Journal</span></button></div>',
       '</header><main class="page v6-main" id="main-content">'+content+'</main>',
-      '<aside class="toast-stack" aria-live="polite" aria-atomic="true">'+state.toasts.map(t=>'<div class="toast '+t.tone+'">'+escapeHtml(t.message)+'</div>').join("")+'</aside>',
-      renderImageViewer(), state.ui.journalOpen?renderJournalDrawer():"",
       '<nav class="mobile-bottom" aria-label="Navigation téléphone">',
         mobileNavButton("home","Accueil",shellIcon("home")),
         mobileNavButton("codex","Codex",shellIcon("book")),
@@ -5921,6 +5921,64 @@ function focusDialog(dialog) {
   (focusable[0] || dialog).focus({ preventScroll: true });
 }
 
+function renderToastLayer() {
+  return `<aside class="toast-stack" aria-live="polite" aria-atomic="true">${state.toasts.map(t=>`<div class="toast ${escapeHtml(t.tone)}">${escapeHtml(t.message)}</div>`).join("")}</aside>`;
+}
+
+function syncToastLayer() {
+  toastRoot.innerHTML = renderToastLayer();
+}
+
+function activeExternalDialog() {
+  return overlayRoot.querySelector(".image-viewer-panel[role='dialog']")
+    || overlayRoot.querySelector(".journal[role='dialog']")
+    || null;
+}
+
+function syncOverlayLayers({ captureFocus = false, restoreFocus = false } = {}) {
+  const previous = activeExternalDialog();
+  if (captureFocus && !previous && !overlayFocusReturn) {
+    overlayFocusReturn = focusDescriptor(document.activeElement);
+  }
+
+  overlayRoot.innerHTML = [
+    state.ui.journalOpen ? renderJournalDrawer() : "",
+    state.imageViewer?.src ? renderImageViewer() : ""
+  ].join("");
+
+  const next = activeExternalDialog();
+  if (next) {
+    requestAnimationFrame(() => focusDialog(next));
+  } else if (restoreFocus && overlayFocusReturn) {
+    const descriptor = overlayFocusReturn;
+    overlayFocusReturn = null;
+    requestAnimationFrame(() => findFocusDescriptor(descriptor)?.focus({ preventScroll: true }));
+  }
+}
+
+async function toggleJournalOverlay() {
+  const opening = !state.ui.journalOpen;
+  const captureFocus = opening && !activeExternalDialog();
+  state.ui.journalOpen = opening;
+  await saveUiState(state.ui);
+  syncOverlayLayers({ captureFocus, restoreFocus: !opening });
+}
+
+function wireExternalLayerEvents() {
+  overlayRoot.addEventListener("click", async event => {
+    const control = event.target.closest?.("[data-action]");
+    if (!(control instanceof HTMLElement)) return;
+    const action = control.dataset.action;
+    if (action === "close-image-viewer") {
+      if (control.classList.contains("image-viewer-close") || event.target === control) closeImageViewer();
+      return;
+    }
+    if (action === "toggle-journal") {
+      await toggleJournalOverlay();
+    }
+  });
+}
+
 function closeActiveOverlay(dialog) {
   if (!(dialog instanceof HTMLElement)) return false;
   const selector = dialog.classList.contains("danger-modal")
@@ -5942,7 +6000,7 @@ function closeActiveOverlay(dialog) {
 
 function wireOverlayKeyboard() {
   document.addEventListener("keydown", event => {
-    const dialog = app.querySelector('[role="dialog"][aria-modal="true"]');
+    const dialog = activeExternalDialog() || app.querySelector('[role="dialog"][aria-modal="true"]');
     if (!(dialog instanceof HTMLElement)) return;
     if (event.key === "Escape") {
       if (closeActiveOverlay(dialog)) {
@@ -5970,6 +6028,7 @@ function wireOverlayKeyboard() {
 }
 
 function render() {
+  runtimeMetrics.renderCalls += 1;
   const previousDialog = app.querySelector('[role="dialog"][aria-modal="true"]');
   const hadDialog = previousDialog instanceof HTMLElement;
   const focusBefore = hadDialog ? null : focusDescriptor(document.activeElement);
@@ -5994,10 +6053,10 @@ function toast(message, tone = "info") {
   const id = uid("toast");
   state.toasts.unshift({ id, message, tone });
   state.toasts = state.toasts.slice(0, 5);
-  render();
+  syncToastLayer();
   setTimeout(() => {
     state.toasts = state.toasts.filter(t => t.id !== id);
-    render();
+    syncToastLayer();
   }, 3200);
 }
 
@@ -6489,9 +6548,7 @@ function bindEvents() {
           return;
         }
         case "toggle-journal":
-          state.ui.journalOpen = !state.ui.journalOpen;
-          await saveUiState(state.ui);
-          render();
+          await toggleJournalOverlay();
           return;
         case "open-image": {
           if (btn.dataset.mediaId) {
@@ -7402,7 +7459,7 @@ async function reportError(err, context = "") {
   state.logs = [log, ...state.logs].slice(0, 100);
   toast(`⚠️ ${message}`, "error");
   await saveUiState(state.ui);
-  render();
+  if (state.ui.journalOpen) syncOverlayLayers();
 }
 
 function wireGlobalErrors() {
@@ -7462,11 +7519,14 @@ async function bootstrap() {
   wireWorkshopUnloadGuard();
   wirePwaInstallPrompt();
   wireOverlayKeyboard();
+  wireExternalLayerEvents();
   bindEvents();
   wireBestiaryScrollTracking();
   wireCodexFamilyScrollTracking();
   wireCreatureMediaFallbacks();
   render();
+  syncToastLayer();
+  syncOverlayLayers({ captureFocus: Boolean(state.ui.journalOpen) });
 
   if ("serviceWorker" in navigator) {
     const controlledBeforeRegistration = Boolean(navigator.serviceWorker.controller);
