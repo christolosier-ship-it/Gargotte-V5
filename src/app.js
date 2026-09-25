@@ -6533,7 +6533,12 @@ function bindEvents() {
           const allowed = familyModeOptions().map(mode => mode.value);
           state.ui.codexFamilies[type].mode = allowed.includes(btn.dataset.mode) ? btn.dataset.mode : defaultCodexFamiliesUi()[type].mode;
           state.ui.codexFamilies[type].scrollTop = 0;
+          if (type === "media_assets") {
+            state.ui.codexFamilies.media_assets.page = 0;
+            resetMediaRuntimeContext();
+          }
           await saveUiState(state.ui);
+          if (type === "media_assets" && renderMediaSurfaceInPlace("codex")) return;
           render();
           return;
         }
@@ -7015,17 +7020,46 @@ function bindEvents() {
         case "media-scope":
           state.ui.media.scope = ["all","linked","orphan"].includes(btn.dataset.scope) ? btn.dataset.scope : "all";
           state.ui.media.selectedId = "";
-          await saveUiState(state.ui); render(); return;
+          state.ui.media.page = 0;
+          resetMediaRuntimeContext();
+          await saveUiState(state.ui);
+          if (!renderMediaSurfaceInPlace("admin")) render();
+          return;
+        case "media-admin-page": {
+          const nextPage = Math.max(0, Math.floor(Number(btn.dataset.page || 0)));
+          if (nextPage === state.ui.media.page) return;
+          state.ui.media.page = nextPage;
+          state.ui.media.selectedId = "";
+          resetMediaRuntimeContext();
+          await saveUiState(state.ui);
+          if (!renderMediaSurfaceInPlace("admin")) render();
+          return;
+        }
+        case "media-codex-page": {
+          ensureCodexFamilyUi();
+          const nextPage = Math.max(0, Math.floor(Number(btn.dataset.page || 0)));
+          if (nextPage === state.ui.codexFamilies.media_assets.page) return;
+          state.ui.codexFamilies.media_assets.page = nextPage;
+          resetMediaRuntimeContext();
+          await saveUiState(state.ui);
+          if (!renderMediaSurfaceInPlace("codex")) render();
+          return;
+        }
         case "media-select": {
           let asset = mediaRepository.getCachedById(btn.dataset.id);
           if (!asset) asset = await mediaRepository.loadMetadataById(btn.dataset.id);
           if (!asset) return;
           state.ui.media.selectedId=String(asset.id); state.ui.media.linkType=asset.entity_type||"gallery"; state.ui.media.linkEntityId=asset.entity_id||"";
           if (mediaRepository.canDisplay(asset, asset.entity_type)) await mediaRepository.ensureActiveUrl(asset, asset.entity_type);
-          await saveUiState(state.ui); render(); return;
+          await saveUiState(state.ui);
+          if (!renderMediaSurfaceInPlace("admin")) render();
+          return;
         }
         case "media-back-library":
-          state.ui.media.selectedId=""; await saveUiState(state.ui); render(); return;
+          state.ui.media.selectedId="";
+          await saveUiState(state.ui);
+          if (!renderMediaSurfaceInPlace("admin")) render();
+          return;
         case "media-attach":
           await attachMediaAsset(btn.dataset.id,state.ui.media.linkType||"gallery",state.ui.media.linkEntityId||""); toast("Rattachement média enregistré.","success"); return;
         case "media-download-original": {
@@ -7034,7 +7068,10 @@ function bindEvents() {
         }
         case "media-refresh":
           await ensureMediaCatalog(true);
-          render();
+          state.ui.media.page = 0;
+          state.ui.media.selectedId = "";
+          resetMediaRuntimeContext();
+          if (!renderMediaSurfaceInPlace("admin")) render();
           return;
         case "export-entity":
           await exportEntityFile(btn.dataset.type);toast("XLSX structuré exporté. Aucun Blob média inclus.","info");return;
@@ -7204,8 +7241,10 @@ function bindEvents() {
         case "media-filter-type":
           state.ui.media.filterType = el.value;
           state.ui.media.filterEntity = "";
+          state.ui.media.page = 0;
+          resetMediaRuntimeContext();
           await saveUiState(state.ui);
-          render();
+          if (!renderMediaSurfaceInPlace("admin")) render();
           return;
         case "media-link-type":
           state.ui.media.linkType=el.value||"gallery"; state.ui.media.linkEntityId=""; await saveUiState(state.ui); render(); return;
@@ -7213,8 +7252,10 @@ function bindEvents() {
           state.ui.media.linkEntityId=el.value||""; await saveUiState(state.ui); return;
         case "media-filter-entity":
           state.ui.media.filterEntity = el.value;
+          state.ui.media.page = 0;
+          resetMediaRuntimeContext();
           await saveUiState(state.ui);
-          render();
+          if (!renderMediaSurfaceInPlace("admin")) render();
           return;
         case "media-upload": {
           const files = Array.from(el.files || []);
@@ -7257,9 +7298,14 @@ function bindEvents() {
       return;
     }
     if (el.dataset.action === "media-search") {
-      state.ui.media.search=el.value; state.ui.media.selectedId="";
+      state.ui.media.search=el.value; state.ui.media.selectedId=""; state.ui.media.page=0;
       if(searchDebounceTimer)clearTimeout(searchDebounceTimer);
-      searchDebounceTimer=setTimeout(async()=>{await saveUiState(state.ui);render();requestAnimationFrame(()=>{const input=app.querySelector('[data-action="media-search"]');if(input){input.focus({preventScroll:true});input.setSelectionRange?.(input.value.length,input.value.length);}})},140);
+      searchDebounceTimer=setTimeout(async()=>{
+        resetMediaRuntimeContext();
+        await saveUiState(state.ui);
+        if (!renderMediaSurfaceInPlace("admin")) render();
+        requestAnimationFrame(()=>{const input=app.querySelector('[data-action="media-search"]');if(input){input.focus({preventScroll:true});input.setSelectionRange?.(input.value.length,input.value.length);}});
+      },140);
       return;
     }
     if (el.dataset.action === "search") {
@@ -7285,10 +7331,12 @@ function bindEvents() {
       ensureCodexFamilyUi();
       state.ui.codexFamilies[type].search = el.value;
       state.ui.codexFamilies[type].scrollTop = 0;
+      if (type === "media_assets") state.ui.codexFamilies.media_assets.page = 0;
       if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
       searchDebounceTimer = setTimeout(async () => {
+        if (type === "media_assets") resetMediaRuntimeContext();
         await saveUiState(state.ui);
-        render();
+        if (!(type === "media_assets" && renderMediaSurfaceInPlace("codex"))) render();
         requestAnimationFrame(() => {
           const input = app.querySelector(`[data-action="family-search"][data-type="${type}"]`);
           if (input) {
