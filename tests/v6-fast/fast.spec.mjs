@@ -967,14 +967,16 @@ test("Brouhaha WHAOU stages pressure without coupling level and draw, and Quest 
 
   await page.evaluate(() => {
     globalThis.__lot7Classes=[];
-    const root=document.querySelector(".brouhaha-session-stage");
+    const root=document.querySelector("#app");
     if(!root)return;
     const observer=new MutationObserver(records=>{
       for(const record of records){
-        if(record.type==="attributes"&&record.attributeName==="class") globalThis.__lot7Classes.push(root.className);
+        if(record.type==="attributes"&&record.attributeName==="class"&&record.target instanceof HTMLElement&&record.target.matches(".brouhaha-session-stage")){
+          globalThis.__lot7Classes.push(record.target.className);
+        }
       }
     });
-    observer.observe(root,{attributes:true,attributeFilter:["class"]});
+    observer.observe(root,{subtree:true,attributes:true,attributeFilter:["class"]});
     globalThis.__lot7Observer=observer;
   });
   await plus.click();
