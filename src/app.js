@@ -6334,7 +6334,9 @@ async function handleMediaUpload(files) {
     state.ui.media.linkEntityId=latest.entity_id||"";
     await saveUiState(state.ui);
   }
-  render();
+  state.ui.media.page = 0;
+  resetMediaRuntimeContext();
+  if (!renderMediaSurfaceInPlace("admin")) render();
   toast("Média ajouté localement. Original conservé.", "success");
 }
 
@@ -6347,7 +6349,7 @@ async function attachMediaAsset(assetId, type, entityId) {
   const metadata = await mediaRepository.saveAsset(next);
   if (mediaRepository.canDisplay(metadata, metadata.entity_type)) await mediaRepository.ensureActiveUrl(metadata, metadata.entity_type);
   state.ui.media.selectedId=assetId;state.ui.media.linkType=next.entity_type;state.ui.media.linkEntityId=next.entity_id;await saveUiState(state.ui);
-  render();
+  if (!renderMediaSurfaceInPlace("admin")) render();
 }
 
 function structuredEntityForExport(entity){const copy=structuredClone(entity);for(const key of["blob","thumb_blob","preview_blob","transparent_blob","has_blob","has_thumb_blob","has_preview_blob","has_transparent_blob","blob_size","thumb_blob_size","preview_blob_size","transparent_blob_size"])delete copy[key];return copy;}
