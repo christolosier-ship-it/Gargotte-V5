@@ -692,6 +692,12 @@ function sessionModeLabel(mode) {
   return mode === "boss" ? "Boss" : mode === "mini_boss" ? "Mini-boss" : "Normal";
 }
 
+function sessionModeVisual(mode) {
+  if (mode === "boss") return { key: "boss", label: "Boss", sigil: "Sigil_Boss.webp" };
+  if (mode === "mini_boss") return { key: "mini_boss", label: "Mini-boss", sigil: "Sigil_MiniBoss.webp" };
+  return { key: "normal", label: "Normal", sigil: "Sigil_Basique.webp" };
+}
+
 function sessionHasTemporaryData(session = ensureSessionContext()) {
   return Boolean(
     session.encounter ||
@@ -5009,6 +5015,51 @@ function renderMediaAssetDetail(asset) {
   </section>`;
 }
 
+function queueEncounterReveal() {
+  requestAnimationFrame(() => {
+    const encounter = app.querySelector(".session-encounter-v6");
+    if (!encounter || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    encounter.classList.remove("encounter-enter-v6");
+    void encounter.offsetWidth;
+    encounter.classList.add("encounter-enter-v6");
+    encounter.addEventListener("animationend", () => encounter.classList.remove("encounter-enter-v6"), { once: true });
+  });
+}
+
+async function playEncounterEliminationFeedback(creatureId) {
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+  const row = [...app.querySelectorAll(".encounter-creature-v6")].find(node => String(node.dataset.creatureId || "") === String(creatureId || ""));
+  if (!row) return;
+  row.classList.add("is-eliminating");
+  await new Promise(resolve => setTimeout(resolve, 145));
+}
+
+function queueEncounterEliminationResult(creatureId, previousLootCount = 0) {
+  requestAnimationFrame(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    const row = [...app.querySelectorAll(".encounter-creature-v6")].find(node => String(node.dataset.creatureId || "") === String(creatureId || ""));
+    if (row) {
+      row.classList.add("is-updated");
+      row.addEventListener("animationend", () => row.classList.remove("is-updated"), { once: true });
+    }
+    const encounter = ensureSessionContext().encounter;
+    const currentLootCount = sessionEncounterLootRows(encounter).length;
+    if (currentLootCount > previousLootCount) {
+      const lootRows = [...app.querySelectorAll(".session-loot-row")];
+      const newest = lootRows.at(-1);
+      if (newest?.dataset.lootType === "loot") {
+        newest.classList.add("loot-enter-v6");
+        newest.addEventListener("animationend", () => newest.classList.remove("loot-enter-v6"), { once: true });
+      }
+    }
+    const complete = app.querySelector(".encounter-complete-v6");
+    if (complete) {
+      complete.classList.add("complete-enter-v6");
+      complete.addEventListener("animationend", () => complete.classList.remove("complete-enter-v6"), { once: true });
+    }
+  });
+}
+
 function renderGenerator() {
   const session = ensureSessionContext();
   if (!session.active) return renderShell(`<section class="session-tool-page">${renderSessionStartCard("Générateur")}</section>`);
@@ -5017,8 +5068,9 @@ function renderGenerator() {
   const budgets = sessionFloorBudgets(session);
   const budget = sessionBudget(session);
   const result = session.encounter;
+  const accent = dungeon ? dungeonAccent(dungeon) : "#8A5E31";
   return renderShell(`
-    <section class="session-tool-page generator-v6 ${result ? "has-result" : ""}">
+    <section class="session-tool-page generator-v6 ${result ? "has-result" : ""}" style="--generator-accent:${escapeHtml(accent)}">
       ${renderSessionToolHeader("generator")}
       <section class="generator-config-v6 panel">
         <div class="generator-config-title"><div><span class="eyebrow">Configuration</span><h2>Générateur de rencontre</h2></div>${result ? `<span>Configuration compacte · rencontre active</span>` : ""}</div>
@@ -5030,11 +5082,12 @@ function renderGenerator() {
             ${budgets.map((value,index)=>`<option value="${index}" ${index===session.floorIndex?"selected":""}>Étage ${index+1}${value === null ? "" : ` · budget ${escapeHtml(String(value))}`}</option>`).join("")}
           </select></label>
           <div class="generator-mode-v6"><span>3 · Mode</span><div class="segmented" role="group" aria-label="Mode de rencontre">
-            ${[
-              ["normal","Normal"],["mini_boss","Mini-boss"],["boss","Boss"]
-            ].map(([value,label])=>`<button type="button" data-action="session-set-mode" data-mode="${value}" class="${session.mode===value?"active":""}" aria-pressed="${session.mode===value?"true":"false"}">${label}</button>`).join("")}
+            ${["normal","mini_boss","boss"].map(value => {
+              const meta = sessionModeVisual(value);
+              return `<button type="button" data-action="session-set-mode" data-mode="${value}" class="${session.mode===value?"active":""} mode-${meta.key}" aria-pressed="${session.mode===value?"true":"false"}"><img src="${V6_ICON_PATH}${meta.sigil}" alt="" aria-hidden="true"><span>${meta.label}</span></button>`;
+            }).join("")}
           </div></div>
-          <div class="generator-budget-v6"><span>4 · Budget</span><b>${budget === null ? "Non renseigné" : escapeHtml(String(budget))}</b><small>${budget === null ? "Ajoute un budget à cet étage dans le Codex." : "issu du Donjon actif"}</small></div>
+          <div class="generator-budget-v6 ${budget === null ? "missing" : ""}"><span>4 · Budget</span><b>${budget === null ? "—" : escapeHtml(String(budget))}</b><small>${budget === null ? "Ajoute un budget à cet étage dans le Codex." : "issu du Donjon actif"}</small></div>
           <button class="primary generator-roll-v6" type="button" data-action="generate-session-encounter" ${budget === null || budget <= 0 ? "disabled" : ""}>5 · ${result ? "Régénérer" : "Générer"}</button>
         </div>
       </section>
@@ -5056,10 +5109,13 @@ function renderEncounterResult(encounter) {
   }));
   const total = groups.reduce((sum,group)=>sum+group.total,0);
   const remaining = groups.reduce((sum,group)=>sum+group.remaining,0);
+  const mode = sessionModeVisual(encounter.mode);
+  const dungeon = findById("dungeons", encounter.dungeonId);
+  const accent = dungeon ? dungeonAccent(dungeon) : "#8A5E31";
   return `
-    <article class="session-encounter-v6 panel">
+    <article class="session-encounter-v6 panel mode-${mode.key} ${remaining === 0 ? "is-complete" : ""}" style="--encounter-accent:${escapeHtml(accent)}">
       <header class="session-encounter-head">
-        <div><span class="eyebrow">${escapeHtml(sessionModeLabel(encounter.mode))}</span><h2>Rencontre · étage ${Number(encounter.floorIndex)+1}</h2><p>Budget ${escapeHtml(String(encounter.used))}/${escapeHtml(String(encounter.budget))}</p></div>
+        <div><span class="encounter-mode-chip"><img src="${V6_ICON_PATH}${mode.sigil}" alt="" aria-hidden="true"><b>${escapeHtml(mode.label)}</b></span><h2>Rencontre · étage ${Number(encounter.floorIndex)+1}</h2><p>Budget ${escapeHtml(String(encounter.used))}/${escapeHtml(String(encounter.budget))}</p></div>
         <div class="encounter-remaining-v6"><b>${remaining}</b><span>sur ${total}<br>à éliminer</span></div>
       </header>
 
@@ -5072,8 +5128,13 @@ function renderEncounterResult(encounter) {
           const image = creature ? imageUrlForEntity(creature) : "";
           const sigil = category?.sigil || "Icone_Gameplay_ACTION.webp";
           const categoryLabel = category?.label || (creature ? "Catégorie non renseignée" : "Relation Codex indisponible");
-          return `<div class="encounter-creature-v6 ${category?.key || "unknown"}">
-            <div class="encounter-creature-media">${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy">` : `<img src="${V6_ICON_PATH}${sigil}" alt="">`}</div>
+          return `<div class="encounter-creature-v6 ${category?.key || "unknown"}" data-creature-id="${escapeHtml(group.creatureId)}">
+            <div class="encounter-creature-media">
+              <span class="encounter-figure-stage" aria-hidden="true"></span>
+              <span class="encounter-figure-plinth" aria-hidden="true"></span>
+              ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy">` : `<img src="${V6_ICON_PATH}${sigil}" alt="">`}
+              <img class="encounter-creature-sigil" src="${V6_ICON_PATH}${sigil}" alt="" aria-hidden="true">
+            </div>
             <div class="encounter-creature-main">
               <div class="encounter-creature-name"><span><img src="${V6_ICON_PATH}${sigil}" alt="">${escapeHtml(categoryLabel)}</span><h4>${escapeHtml(creature?.name || group.name || "Créature indisponible")}</h4></div>
               ${creature ? `<div class="encounter-stat-strip">
@@ -5097,20 +5158,24 @@ function renderEncounterResult(encounter) {
       <section class="encounter-objects-v6">
         <div class="session-section-title"><h3>Objets interactifs</h3><span>${interactables.length}</span></div>
         <div class="encounter-object-grid">
-          ${interactables.length ? interactables.map(({ref,item})=>`<article class="encounter-object-v6">
-            <div><img src="${V6_ICON_PATH}Icone_Entite_OBJET_INTERACTIF.webp" alt=""><span>${escapeHtml(item?.type || "Objet interactif")}</span></div>
-            <h4>${escapeHtml(item?.name || ref.name || "Objet indisponible")}</h4>
-            ${item?.hp !== null && item?.hp !== undefined && String(item.hp).trim() !== "" ? `<p><b>PV ${escapeHtml(String(item.hp))}</b></p>` : ""}
-            ${item?.actions_allowed ? `<p><span>Actions</span> ${escapeHtml(String(item.actions_allowed))}</p>` : ""}
-            ${item?.effect ? `<p><span>Effet</span> ${escapeHtml(String(item.effect))}</p>` : ""}
-            ${item ? `<button class="ghost" type="button" data-action="jump-codex" data-type="interactables" data-id="${escapeHtml(String(item.id || ""))}">Fiche</button>` : ""}
-          </article>`).join("") : `<div class="empty small">Aucun Objet interactif lié à cette génération.</div>`}
+          ${interactables.length ? interactables.map(({ref,item})=>{
+            const actions = interactableActions(item).slice(0, 3);
+            return `<article class="encounter-object-v6">
+              <span class="encounter-object-gridlines" aria-hidden="true"></span>
+              <div><img src="${V6_ICON_PATH}Icone_Entite_OBJET_INTERACTIF.webp" alt=""><span>${escapeHtml(item?.type || "Objet interactif")}</span></div>
+              <h4>${escapeHtml(item?.name || ref.name || "Objet indisponible")}</h4>
+              ${item?.hp !== null && item?.hp !== undefined && String(item.hp).trim() !== "" ? `<p><b>PV ${escapeHtml(String(item.hp))}</b></p>` : ""}
+              ${actions.length ? `<div class="encounter-object-actions-v6">${actions.map(action=>`<b>${escapeHtml(action)}</b>`).join("")}</div>` : ""}
+              ${item?.effect ? `<p class="encounter-object-effect-v6"><span>Effet</span> ${escapeHtml(String(item.effect))}</p>` : ""}
+              ${item ? `<button class="ghost" type="button" data-action="jump-codex" data-type="interactables" data-id="${escapeHtml(String(item.id || ""))}">Fiche</button>` : ""}
+            </article>`;
+          }).join("") : `<div class="empty small">Aucun Objet interactif lié à cette génération.</div>`}
         </div>
       </section>
 
       ${lootRows.length ? `<section class="session-loot-v6">
         <div class="session-section-title"><h3>Loot des occurrences éliminées</h3><span>${lootRows.length}</span></div>
-        <div>${lootRows.map((row,index)=>`<div class="session-loot-row"><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt=""><span><b>${escapeHtml(row.creature?.name || row.name || "Créature")}</b><small>Occurrence ${index+1}</small></span><strong>${escapeHtml(row.loot?.text || "Aucun Loot")}</strong></div>`).join("")}</div>
+        <div>${lootRows.map((row,index)=>`<div class="session-loot-row ${row.loot?.type === "loot" ? "has-loot" : "no-loot"}" data-loot-type="${escapeHtml(row.loot?.type || "none")}" data-occurrence-id="${escapeHtml(String(row.id || ""))}"><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt=""><span><b>${escapeHtml(row.creature?.name || row.name || "Créature")}</b><small>Occurrence ${index+1}</small></span><strong>${escapeHtml(row.loot?.text || "Aucun Loot")}</strong></div>`).join("")}</div>
       </section>` : ""}
     </article>
   `;
@@ -7223,17 +7288,22 @@ function bindEvents() {
           session.updatedAt = nowISO();
           await saveUiState(state.ui);
           render();
+          queueEncounterReveal();
           toast("Rencontre générée", "success");
           return;
         }
         case "session-eliminate-creature": {
           const id = String(btn.dataset.id || "");
+          const session = ensureSessionContext();
+          const previousLootCount = sessionEncounterLootRows(session.encounter).length;
+          await playEncounterEliminationFeedback(id);
           if (!eliminateSessionOccurrence(id)) {
             toast("Aucune occurrence restante pour cette Créature.", "warn");
             return;
           }
           await saveUiState(state.ui);
           render();
+          queueEncounterEliminationResult(id, previousLootCount);
           return;
         }
         case "session-brouhaha-plus": {

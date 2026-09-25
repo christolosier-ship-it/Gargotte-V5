@@ -208,6 +208,32 @@ test("reduced motion keeps interactions usable", async ({ page }) => {
     });
   });
   expect(Math.max(0, ...timings)).toBeLessThanOrEqual(20);
+
+  await gotoView(page, "generator");
+  const startDungeon=page.locator('[data-action="session-start-dungeon"]');
+  if(await startDungeon.count()){
+    const options=await startDungeon.locator("option").evaluateAll(nodes=>nodes.map(node=>node.value));
+    const preferred=options.includes("dungeon_le-cabaret-des-joyeuses")?"dungeon_le-cabaret-des-joyeuses":options[0];
+    if(preferred) await startDungeon.selectOption(preferred);
+    await page.locator('[data-action="session-start"]').click();
+  }
+  const generate=page.locator('[data-action="generate-session-encounter"]');
+  if(await generate.isEnabled()){
+    await generate.click();
+    await expect(page.locator(".session-encounter-v6")).toBeVisible();
+    const encounterMotion=await page.locator(".session-encounter-v6").evaluate(el => {
+      const nodes=[el,...el.querySelectorAll("*")];
+      const parse=value=>value.split(",").map(part=>part.trim()).map(text=>text.endsWith("ms")?parseFloat(text):parseFloat(text)*1000).filter(Number.isFinite);
+      return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
+    });
+    expect(encounterMotion).toBeLessThanOrEqual(20);
+    const eliminate=page.locator('[data-action="session-eliminate-creature"]').first();
+    if(await eliminate.count()){
+      const beforeRemaining=Number(await page.locator(".encounter-remaining-v6 b").innerText());
+      await eliminate.click();
+      await expect.poll(async()=>Number(await page.locator(".encounter-remaining-v6 b").innerText())).toBeLessThan(beforeRemaining);
+    }
+  }
 });
 
 test("large structured datasets long text and missing relations remain usable", async ({ page }) => {
