@@ -1516,8 +1516,8 @@ function brouhahaIntensityClass(level) {
   if (!Number.isFinite(n)) return "unknown";
   if (n >= 10) return "critical";
   if (n >= 7) return "hot";
-  if (n >= 4) return "loud";
-  return "low";
+  if (n >= 4) return "rising";
+  return "calm";
 }
 
 function defaultBestiaryUi() {
@@ -4205,14 +4205,16 @@ function renderQuestDifficultyBadge(item) {
 function renderQuestCollectionCard(item, mode = "list", active = false) {
   const npc = resolveQuestNpc(item);
   const dungeon = resolveQuestDungeon(item);
+  const difficulty = questDifficultyMeta(item?.difficulty);
+  const accent = dungeon ? dungeonAccent(dungeon) : "#9d7449";
   return `
-    <button class="quest-codex-card ${mode} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="quests" data-id="${escapeHtml(String(item.id || ""))}">
-      <span class="quest-card-emblem"><img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt=""></span>
+    <button class="quest-codex-card ${mode} ${difficulty?.key || "unknown"} ${active ? "active" : ""}" style="--quest-accent:${escapeHtml(accent)}" type="button" data-action="select-family-codex" data-type="quests" data-id="${escapeHtml(String(item.id || ""))}">
+      <span class="quest-card-emblem"><img src="${V6_ICON_PATH}Icone_Entite_QUETE.webp" alt=""><i aria-hidden="true"></i></span>
       <span class="quest-card-copy">
         <strong>${escapeHtml(item.name || "Quête sans titre")}</strong>
         ${renderQuestDifficultyBadge(item)}
         <small>${escapeHtml([npc?.name || item.npc_name, dungeon?.name || item.dungeon_name].filter(Boolean).join(" · "))}</small>
-        ${item.objective ? `<em>${escapeHtml(item.objective)}</em>` : ""}
+        ${item.objective ? `<em><span>Objectif</span>${escapeHtml(item.objective)}</em>` : ""}
       </span>
     </button>`;
 }
@@ -4224,8 +4226,11 @@ function renderQuestDetailV6(item) {
   const image = imageUrlForEntity(item);
   const tags = tagsToArray(item.tags).filter(Boolean);
   const name = String(item.name || "").trim() || "Quête sans titre";
+  const difficulty = questDifficultyMeta(item?.difficulty);
+  const accent = dungeon ? dungeonAccent(dungeon) : "#9d7449";
   return `
-    <article class="quest-sheet-v6">
+    <article class="quest-sheet-v6 ${difficulty?.key || "unknown"}" style="--quest-accent:${escapeHtml(accent)}">
+      <span class="quest-contract-fold" aria-hidden="true"></span>
       ${image ? `
         <button class="quest-media-v6" type="button" data-action="open-image" data-src="${escapeHtml(image)}" data-alt="${escapeHtml(name)}">
           <img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(name)}" data-safe-media>
@@ -4270,10 +4275,15 @@ function renderLootRarityBadge(item) {
 function renderLootCollectionCard(item, mode = "gallery", active = false) {
   const image = imageUrlForEntity(item);
   const source = resolveLootCreature(item);
+  const rarity = lootRarityMeta(item);
+  const goldPresent = item.gold_value !== null && item.gold_value !== undefined && String(item.gold_value).trim() !== "";
   return `
-    <button class="loot-codex-card ${mode} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="loot_items" data-id="${escapeHtml(String(item.id || ""))}">
+    <button class="loot-codex-card ${mode} ${rarity?.key || "unknown"} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="loot_items" data-id="${escapeHtml(String(item.id || ""))}">
       <span class="loot-card-media">
+        <span class="loot-card-halo" aria-hidden="true"></span>
         ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>Illustration indisponible</span>` : `<span class="loot-media-fallback"><img src="${V6_ICON_PATH}Icone_Gameplay_BUTIN.webp" alt=""></span>`}
+        <span class="loot-card-shadow" aria-hidden="true"></span>
+        ${goldPresent ? `<b class="loot-card-gold">${escapeHtml(String(item.gold_value))}<small>or</small></b>` : ""}
       </span>
       <span class="loot-card-copy">
         <strong>${escapeHtml(item.name || "Loot sans nom")}</strong>
@@ -4291,9 +4301,11 @@ function renderLootDetailV6(item) {
   const tags = tagsToArray(item.tags).filter(Boolean);
   const goldPresent = item.gold_value !== null && item.gold_value !== undefined && String(item.gold_value).trim() !== "";
   const name = String(item.name || "").trim() || "Loot sans nom";
+  const rarity = lootRarityMeta(item);
   return `
-    <article class="loot-sheet-v6">
+    <article class="loot-sheet-v6 ${rarity?.key || "unknown"}">
       <section class="loot-stage-v6">
+        <span class="loot-stage-reflection" aria-hidden="true"></span>
         ${image ? `
           <img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(name)}" data-safe-media>
           <span class="relation-media-fallback" hidden>Illustration indisponible</span>
@@ -4330,16 +4342,18 @@ function renderInteractableCollectionCard(item, mode = "list", active = false) {
   const image = imageUrlForEntity(item);
   const dungeon = resolveEntityDungeon(item);
   const hpPresent = item.hp !== null && item.hp !== undefined && String(item.hp).trim() !== "";
+  const actions = interactableActions(item).slice(0, 2);
   return `
     <button class="interactable-codex-card ${mode} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="interactables" data-id="${escapeHtml(String(item.id || ""))}">
       <span class="interactable-card-media">
+        <span class="interactable-card-grid" aria-hidden="true"></span>
         ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>Illustration indisponible</span>` : `<span class="interactable-media-fallback"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_INTERACTIF.webp" alt=""></span>`}
       </span>
       <span class="interactable-card-copy">
         <small>Objet interactif${item.type ? ` · ${escapeHtml(item.type)}` : ""}</small>
         <strong>${escapeHtml(item.name || "Objet sans nom")}</strong>
         ${dungeon || item.dungeon_name ? `<em>${escapeHtml(dungeon?.name || item.dungeon_name)}</em>` : ""}
-        ${hpPresent ? `<span>PV ${escapeHtml(String(item.hp))}</span>` : ""}
+        <span class="interactable-card-facts">${hpPresent ? `<b>PV ${escapeHtml(String(item.hp))}</b>` : ""}${actions.map(action => `<i>${escapeHtml(action)}</i>`).join("")}</span>
       </span>
     </button>`;
 }
@@ -4356,6 +4370,7 @@ function renderInteractableDetailV6(item) {
     <article class="interactable-sheet-v6">
       <section class="interactable-blueprint-v6">
         <div class="interactable-grid-lines" aria-hidden="true"></div>
+        <div class="interactable-blueprint-arrows" aria-hidden="true"><i></i><i></i><i></i></div>
         ${image ? `
           <img src="${escapeHtml(image)}" alt="Illustration de ${escapeHtml(name)}" data-safe-media>
           <span class="relation-media-fallback" hidden>Illustration indisponible</span>
@@ -4397,7 +4412,7 @@ function renderBrouhahaCollectionCard(item, mode = "cards", active = false) {
   const level = item.level === null || item.level === undefined || item.level === "" ? "—" : String(item.level);
   const intensity = brouhahaIntensityClass(item.level);
   return `
-    <button class="brouhaha-ref-card ${mode} ${intensity} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="brouhaha_effects" data-id="${escapeHtml(String(item.id || ""))}">
+    <button class="brouhaha-ref-card ${mode} ${intensity} ${Number(item.level) === 12 ? "level-12" : ""} ${active ? "active" : ""}" type="button" data-action="select-family-codex" data-type="brouhaha_effects" data-id="${escapeHtml(String(item.id || ""))}">
       <span class="brouhaha-ref-level"><small>Niveau</small><b>${escapeHtml(level)}</b></span>
       <span class="brouhaha-ref-copy">
         <strong>${escapeHtml(brouhahaReferenceLabel(item))}</strong>
@@ -4420,7 +4435,7 @@ function renderBrouhahaReferenceDetailV6(item) {
   const intensity = brouhahaIntensityClass(item.level);
   const title = brouhahaReferenceLabel(item);
   return `
-    <article class="brouhaha-reference-sheet-v6 ${intensity}">
+    <article class="brouhaha-reference-sheet-v6 ${intensity} ${Number(item.level) === 12 ? "level-12" : ""}">
       <section class="brouhaha-reference-visual">
         ${image ? `<img src="${escapeHtml(image)}" alt="" data-safe-media><span class="relation-media-fallback" hidden>Illustration indisponible</span>` : `<div class="brouhaha-ref-emblem"><img src="${V6_ICON_PATH}Icone_Entite_OBJET_BROUHAHA.webp" alt=""></div>`}
         <div class="brouhaha-reference-number" aria-hidden="true">${escapeHtml(level)}</div>
