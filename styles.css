@@ -1415,3 +1415,42 @@ body.cinematic-open{overflow:hidden}
 }
 
 
+
+
+/* V6-Fast Lot 3: bounded media collections */
+.media-pager-v6 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 18px 0 4px;
+  flex-wrap: wrap;
+}
+
+.media-pager-v6 span {
+  min-width: 180px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.media-pager-v6 strong {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.media-pager-v6 button[disabled] {
+  opacity: 0.42;
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .media-pager-v6 {
+    gap: 8px;
+  }
+
+  .media-pager-v6 span {
+    order: -1;
+    flex-basis: 100%;
+  }
+}
