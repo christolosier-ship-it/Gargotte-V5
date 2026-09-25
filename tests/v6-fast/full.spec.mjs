@@ -139,6 +139,13 @@ test("extended axe coverage checks detail Atelier and Import", async ({ page }) 
 test("reduced motion keeps interactions usable", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await ready(page);
+
+  await gotoView(page, "codex");
+  await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
+  await page.locator('[data-action="select-family-codex"][data-type="dungeons"]').first().click();
+  await expect(page.locator(".dungeon-sheet-v6")).toBeVisible();
+  await expect(page.locator(".gargotte-cinematic.show")).toHaveCount(0);
+
   await gotoView(page, "brouhaha");
   const timings = await page.locator("body").evaluate(() => {
     const parse = value => value.split(",").map(part => {
