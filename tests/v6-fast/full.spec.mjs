@@ -140,6 +140,14 @@ test("reduced motion keeps interactions usable", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await ready(page);
 
+  await gotoView(page, "home");
+  const homeMotion=await page.locator(".home-polish-v6").evaluate(el => {
+    const nodes=[el,...el.querySelectorAll("*")];
+    const parse=value=>value.split(",").map(part=>part.trim()).map(text=>text.endsWith("ms")?parseFloat(text):parseFloat(text)*1000).filter(Number.isFinite);
+    return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
+  });
+  expect(homeMotion).toBeLessThanOrEqual(20);
+
   await gotoView(page, "codex");
   await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
   await page.locator('[data-action="select-family-codex"][data-type="dungeons"]').first().click();
@@ -562,6 +570,66 @@ test("Administration reduced motion removes non-essential feedback motion", asyn
     return Math.max(0,...nodes.flatMap(node=>{const style=getComputedStyle(node);return [...parse(style.animationDuration),...parse(style.transitionDuration)];}));
   });
   expect(adminMotion).toBeLessThanOrEqual(20);
+});
+
+test("V6-WHAOU reopens from the final cache with the network offline", async ({ page }) => {
+  await ready(page);
+
+  const controlled=await page.evaluate(async()=>{
+    const reg=await navigator.serviceWorker.ready;
+    if(!navigator.serviceWorker.controller){
+      await reg.update();
+      return false;
+    }
+    return true;
+  });
+  if(!controlled){
+    await page.reload({waitUntil:"domcontentloaded"});
+    await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller),null,{timeout:10_000});
+  }
+
+  await expect.poll(async()=>page.evaluate(async()=>{
+    const cache=await caches.open("gargottex-v6-whaou-final-v1");
+    const required=["./index.html","./styles.css","./manifest.webmanifest","./src/app.js","./src/storage/idb.js","./src/storage/media-repository.js"];
+    const present=await Promise.all(required.map(path=>cache.match(path,{ignoreSearch:true})));
+    return present.every(Boolean);
+  })).toBe(true);
+
+  const before=await page.evaluate(async()=>{
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const tx=db.transaction(["dungeons","creatures","media_assets"],"readonly"),counts={};
+    for(const name of ["dungeons","creatures","media_assets"]){
+      counts[name]=await new Promise((resolve,reject)=>{const req=tx.objectStore(name).count();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    }
+    db.close();
+    return counts;
+  });
+
+  await page.context().setOffline(true);
+  try{
+    await page.reload({waitUntil:"domcontentloaded"});
+    await expect(page.locator(".v6-app")).toBeVisible();
+    await page.waitForFunction(()=>document.documentElement.dataset.gargottexReady==="true");
+    expect(await page.evaluate(()=>navigator.onLine)).toBe(false);
+    await expect(page.locator(".offline-badge")).toContainText("Local");
+
+    await gotoView(page,"codex");
+    await expect(page.locator(".bestiary-v6")).toBeVisible();
+    await assertNoHorizontalOverflow(page);
+
+    const after=await page.evaluate(async()=>{
+      const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+      const tx=db.transaction(["dungeons","creatures","media_assets"],"readonly"),counts={};
+      for(const name of ["dungeons","creatures","media_assets"]){
+        counts[name]=await new Promise((resolve,reject)=>{const req=tx.objectStore(name).count();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+      }
+      db.close();
+      return counts;
+    });
+    expect(after).toEqual(before);
+  }finally{
+    await page.context().setOffline(false);
+  }
 });
 
 test("Service Worker update preserves local data and core cache", async ({ page }) => {

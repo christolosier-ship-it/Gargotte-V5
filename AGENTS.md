@@ -1,9 +1,9 @@
 # AGENTS.md - Gargottex V6
 
 ## Documents actifs
-Le chantier V6-WHAOU est actif pour l'évolution visuelle et émotionnelle de Gargottex V6.
-Pour V6-WHAOU, lire d'abord `docs/V6-WHAOU.md`, puis uniquement le document du lot demandé.
-V6-WHAOU est strictement visuel et interactionnel : il ne doit pas modifier le modèle de données, anticiper la migration V7 ni annuler les invariants V6-Fast.
+Le chantier V6-WHAOU est **clos**. Son document maître historique reste `docs/V6-WHAOU.md` et ses cahiers de lots sont archivés dans `docs/archive/v6-whaou`.
+La baseline applicative issue de cette clôture est Gargottex **5.6.5**, cache PWA `gargottex-v6-whaou-final-v1`.
+Ne pas rouvrir un lot V6-WHAOU pour engager une migration backend ou média : ces évolutions relèvent de V7.
 
 Le chantier V6-Fast est clos. Son historique documentaire est archivé dans `docs/archive/v6-fast`.
 Les documents UI-1 à UI-6 sont archivés dans `docs/archive/v6-ui-ux`.
