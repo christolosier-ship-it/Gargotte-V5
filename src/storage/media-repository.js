@@ -281,6 +281,57 @@ export class MediaRepository {
     }
   }
 
+  canLoadOriginal(metadata) {
+    if (!metadata?.id) return false;
+    return Boolean(metadata.has_blob || isStaticPath(metadata.path));
+  }
+
+  cachedOriginalUrl(metadata) {
+    if (!metadata?.id) return "";
+    const key = `${metadata.id}:original`;
+    const cached = this.urlCache.get(key);
+    if (cached) return cached;
+    if (!metadata.has_blob && isStaticPath(metadata.path)) return metadata.path;
+    return "";
+  }
+
+  async ensureOriginalUrl(metadata) {
+    if (!metadata?.id || !this.canLoadOriginal(metadata)) return "";
+    const key = `${metadata.id}:original`;
+    const cached = this.cachedOriginalUrl(metadata);
+    if (cached) return cached;
+    if (this.urlPromises.has(key)) return this.urlPromises.get(key);
+
+    const promise = (async () => {
+      this.metrics.fullRecordReads += 1;
+      const record = await getById("media_assets", String(metadata.id));
+      if (!record) return "";
+      const fresh = this.rememberRecord(record);
+      if (!record.blob) return isStaticPath(record.path) ? record.path : "";
+      const url = URL.createObjectURL(record.blob);
+      this.urlCache.set(key, url);
+      this.metrics.objectUrlsCreated += 1;
+      return url;
+    })();
+
+    this.urlPromises.set(key, promise);
+    try {
+      return await promise;
+    } finally {
+      this.urlPromises.delete(key);
+    }
+  }
+
+  revokeUrlKind(id, kind) {
+    const key = `${String(id || "")}:${String(kind || "")}`;
+    const url = this.urlCache.get(key);
+    if (!url) return false;
+    try { URL.revokeObjectURL(url); } catch (_) {}
+    this.urlCache.delete(key);
+    this.urlPromises.delete(key);
+    return true;
+  }
+
   revokeAssetUrls(id) {
     const prefix = `${String(id || "")}:`;
     for (const [key, url] of [...this.urlCache.entries()]) {

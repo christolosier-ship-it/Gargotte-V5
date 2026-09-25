@@ -1946,9 +1946,21 @@ function rebuildRelations() {
 let mediaImageObserver = null;
 let mediaRenderTimer = null;
 let mediaContextGeneration = 0;
+let mediaComparisonAssetId = "";
 const pendingMediaLoads = new Map();
 
+function releaseMediaComparisonOriginal() {
+  const id = String(mediaComparisonAssetId || "");
+  mediaComparisonAssetId = "";
+  if (!id) return;
+  const asset = mediaRepository.getCachedById(id);
+  if (!asset) return;
+  if (mediaRepository.activeKind(asset, asset.entity_type) === "original") return;
+  mediaRepository.revokeUrlKind(id, "original");
+}
+
 function resetMediaRuntimeContext() {
+  releaseMediaComparisonOriginal();
   mediaContextGeneration += 1;
   mediaImageObserver?.disconnect?.();
   mediaImageObserver = null;
@@ -2082,6 +2094,59 @@ function mediaOriginalUrlForAsset(asset) {
 function mediaTransparentUrlForAsset(asset) {
   if (!mediaHasApprovedTransparent(asset)) return "";
   return mediaRepository.cachedActiveUrl(asset, asset.entity_type);
+}
+
+function mediaViewerVariant(asset) {
+  if (!asset) return "default";
+  if (mediaHasApprovedTransparent(asset)) return "transparent";
+  if (String(asset.entity_type || "") === "dungeons") return "dungeon";
+  return "default";
+}
+
+function setMediaDetailPreviewDom(asset, src, mode = "active") {
+  const root = app.querySelector("[data-media-detail-preview]");
+  if (root && String(root.dataset.mediaId || "") !== String(asset?.id || "")) return false;
+  if (!(root instanceof HTMLElement)) return false;
+  const title = root.dataset.mediaTitle || asset?.label || "Média";
+  root.dataset.previewMode = mode;
+  root.classList.toggle("transparent", mode === "active" && mediaHasApprovedTransparent(asset));
+  root.classList.toggle("original", mode === "original");
+  root.innerHTML = src
+    ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(title)}">`
+    : `<span>Visuel indisponible</span>`;
+  const controls = root.parentElement?.querySelectorAll?.("[data-media-preview-mode]") || [];
+  for (const control of controls) {
+    if (!(control instanceof HTMLElement)) continue;
+    const active = control.dataset.mediaPreviewMode === mode;
+    control.classList.toggle("active", active);
+    control.setAttribute("aria-pressed", active ? "true" : "false");
+  }
+  return true;
+}
+
+async function showMediaDetailPreview(asset, mode = "active") {
+  if (!asset) return false;
+  if (mode === "original") {
+    const id = String(asset.id || "");
+    if (mediaComparisonAssetId && mediaComparisonAssetId !== id) releaseMediaComparisonOriginal();
+    const original = await mediaRepository.ensureOriginalUrl(asset);
+    if (!original) {
+      toast("Original local indisponible.", "warn");
+      return false;
+    }
+    if (mediaRepository.activeKind(asset, asset.entity_type) !== "original") {
+      mediaComparisonAssetId = id;
+    }
+    return setMediaDetailPreviewDom(asset, original, "original");
+  }
+
+  releaseMediaComparisonOriginal();
+  const active = await mediaRepository.ensureActiveUrl(asset, asset.entity_type);
+  if (!active) {
+    toast("Visuel actif indisponible.", "warn");
+    return false;
+  }
+  return setMediaDetailPreviewDom(asset, active, "active");
 }
 
 function imageUrlForEntity(entity, typeHint = "") {
@@ -2398,10 +2463,10 @@ function normalizeCreatureCategory(value) {
   return "basique";
 }
 
-function openImageViewer(src, alt = "") {
+function openImageViewer(src, alt = "", variant = "default") {
   if (!src) return;
   const captureFocus = !activeExternalDialog();
-  state.imageViewer = { src, alt };
+  state.imageViewer = { src, alt, variant: ["transparent","dungeon"].includes(variant) ? variant : "default" };
   syncOverlayLayers({ captureFocus });
 }
 
@@ -2413,12 +2478,12 @@ function closeImageViewer() {
 
 function renderImageViewer() {
   if (!state.imageViewer?.src) return "";
-  const { src, alt } = state.imageViewer;
+  const { src, alt, variant = "default" } = state.imageViewer;
   return `
-    <div class="image-viewer-overlay" data-action="close-image-viewer">
-      <div class="image-viewer-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(alt || "Image agrandie")}" tabindex="-1">
+    <div class="image-viewer-overlay viewer-${escapeHtml(variant)}" data-action="close-image-viewer">
+      <div class="image-viewer-panel viewer-${escapeHtml(variant)}" role="dialog" aria-modal="true" aria-label="${escapeHtml(alt || "Image agrandie")}" tabindex="-1">
         <button class="ghost image-viewer-close" type="button" data-action="close-image-viewer" aria-label="Fermer l’image agrandie">✕</button>
-        <img src="${escapeHtml(src)}" alt="${escapeHtml(alt || "")}">
+        <div class="image-viewer-stage"><img src="${escapeHtml(src)}" alt="${escapeHtml(alt || "")}"></div>
       </div>
     </div>
   `;
@@ -4580,11 +4645,17 @@ function renderMediaCodexCard(asset, mode = "gallery") {
     : String(asset.entity_type || "") === "dungeons"
       ? "Visuel Donjon"
       : "Visuel historique non affiché";
+  const cardVariant = mediaHasApprovedTransparent(asset)
+    ? "transparent"
+    : String(asset.entity_type || "") === "dungeons"
+      ? "dungeon"
+      : "inactive";
   return `
-    <article class="codex-media-card-v6 ${mode}">
+    <article class="codex-media-card-v6 ${mode} variant-${cardVariant}">
       <button class="codex-media-open-v6" type="button" data-action="open-image" data-media-id="${escapeHtml(String(asset.id || ""))}" data-media-type="${escapeHtml(String(asset.entity_type || ""))}" data-alt="${escapeHtml(title)}" ${canDisplay ? "" : "disabled"}>
-        <span class="codex-media-visual-v6 ${mediaHasApprovedTransparent(asset) ? "transparent" : ""}">
+        <span class="codex-media-visual-v6 ${cardVariant}">
           ${visual || `<span>Visuel indisponible</span>`}
+          ${canDisplay ? `<i class="codex-media-active-mark">Actif</i>` : ""}
         </span>
       </button>
       <div class="codex-media-copy-v6">
@@ -4983,13 +5054,22 @@ function renderMediaAssetDetail(asset) {
   const linkEntityId = ui.selectedId === asset.id ? (ui.linkEntityId || asset.entity_id || "") : (asset.entity_id || "");
   const linkTypes = ["gallery","dungeons","creatures","heroes","npcs","quests","loot_items","interactables","brouhaha_effects"];
   const entityOptions = linkType === "gallery" ? [] : (state.data[linkType] || []);
+  const hasApprovedTransparent = mediaHasApprovedTransparent(asset);
+  const canLoadOriginal = mediaRepository.canLoadOriginal(asset);
+  const activeKind = mediaRepository.activeKind(asset, asset.entity_type);
+  const compareUseful = hasApprovedTransparent;
+  const variantLabel = hasApprovedTransparent ? "Actif · Détouré" : activeKind === "original" ? "Actif · Original Donjon" : "Aucun visuel actif";
   return `<section class="media-detail-v6 panel">
     <button class="ghost media-back-library" type="button" data-action="media-back-library">${shellIcon("back")}<span>Bibliothèque</span></button>
     <header class="media-detail-head-v6">
       <div><span class="eyebrow">Média local</span><h2>${escapeHtml(title)}</h2><p>${attachment ? escapeHtml(getLabel(attachment.type)) : "Sans rattachement"}</p></div>
-      <div class="media-detail-state"><span class="local">Local</span></div>
+      <div class="media-detail-state"><span class="local">Local</span><span class="active-variant">${escapeHtml(variantLabel)}</span></div>
     </header>
-    <div class="media-admin-preview-v6 ${mediaHasApprovedTransparent(asset) ? "transparent" : ""}">
+    ${compareUseful ? `<div class="media-preview-switch-v6" role="group" aria-label="Comparer le visuel actif et l’original">
+      <button type="button" class="active" data-action="media-detail-preview" data-media-preview-mode="active" data-id="${escapeHtml(String(asset.id || ""))}" aria-pressed="true">Actif</button>
+      <button type="button" data-action="media-detail-preview" data-media-preview-mode="original" data-id="${escapeHtml(String(asset.id || ""))}" aria-pressed="false" ${canLoadOriginal ? "" : "disabled"}>Original</button>
+    </div>` : activeKind === "original" ? `<div class="media-preview-note-v6">Le visuel actif est déjà l’original du Donjon.</div>` : ""}
+    <div class="media-admin-preview-v6 ${hasApprovedTransparent ? "transparent" : ""}" data-media-detail-preview data-media-id="${escapeHtml(String(asset.id || ""))}" data-media-title="${escapeHtml(title)}" data-preview-mode="active">
       ${activeImage ? `<img src="${escapeHtml(activeImage)}" alt="${escapeHtml(title)}">` : (lazyMediaMarkup(asset, title) || `<span>Visuel indisponible</span>`)}
     </div>
     <div class="media-detail-main-v6">
@@ -5992,7 +6072,7 @@ function renderMediaAssetCard(asset, active = false) {
   const attachment = mediaAttachment(asset);
   const derivative = mediaDerivativeState(asset);
   return `
-    <button class="media-card-v6 ${active ? "active" : ""}" type="button" data-action="media-select" data-id="${escapeHtml(String(asset.id || ""))}" data-card-variant="${hasApprovedTransparent ? "transparent" : String(asset.entity_type || "") === "dungeons" ? "dungeon-original" : "inactive-original"}">
+    <button class="media-card-v6 ${active ? "active" : ""} ${attachment ? "linked" : "orphan"}" type="button" data-action="media-select" data-id="${escapeHtml(String(asset.id || ""))}" data-card-variant="${hasApprovedTransparent ? "transparent" : String(asset.entity_type || "") === "dungeons" ? "dungeon-original" : "inactive-original"}">
       <div class="media-card-visual ${hasApprovedTransparent ? "transparent" : ""}">${visual || `<div class="media-empty-visual">Visuel actif indisponible</div>`}</div>
       <div class="media-card-copy-v6">
         <div class="media-card-kicker"><span class="media-local-dot"></span><span>Stockage local</span></div>
@@ -6864,10 +6944,10 @@ function bindEvents() {
             if (!asset) asset = await mediaRepository.loadMetadataById(btn.dataset.mediaId);
             const src = asset ? await mediaRepository.ensureActiveUrl(asset, relationStore(btn.dataset.mediaType) || asset.entity_type) : "";
             if (!src) { toast("Visuel actif indisponible.", "warn"); return; }
-            openImageViewer(src, btn.dataset.alt || "");
+            openImageViewer(src, btn.dataset.alt || "", mediaViewerVariant(asset));
             return;
           }
-          openImageViewer(btn.dataset.src, btn.dataset.alt || "");
+          openImageViewer(btn.dataset.src, btn.dataset.alt || "", btn.dataset.viewerVariant || "default");
           return;
         }
         case "close-image-viewer":
@@ -7426,6 +7506,7 @@ function bindEvents() {
           return;
         }
         case "media-select": {
+          releaseMediaComparisonOriginal();
           let asset = mediaRepository.getCachedById(btn.dataset.id);
           if (!asset) asset = await mediaRepository.loadMetadataById(btn.dataset.id);
           if (!asset) return;
@@ -7435,12 +7516,22 @@ function bindEvents() {
           if (!renderMediaSurfaceInPlace("admin")) render();
           return;
         }
+        case "media-detail-preview": {
+          let asset = mediaRepository.getCachedById(btn.dataset.id);
+          if (!asset) asset = await mediaRepository.loadMetadataById(btn.dataset.id);
+          if (!asset) return;
+          const mode = btn.dataset.mediaPreviewMode === "original" ? "original" : "active";
+          await showMediaDetailPreview(asset, mode);
+          return;
+        }
         case "media-back-library":
+          releaseMediaComparisonOriginal();
           state.ui.media.selectedId="";
           await saveUiState(state.ui);
           if (!renderMediaSurfaceInPlace("admin")) render();
           return;
         case "media-attach":
+          releaseMediaComparisonOriginal();
           await attachMediaAsset(btn.dataset.id,state.ui.media.linkType||"gallery",state.ui.media.linkEntityId||""); toast("Rattachement média enregistré.","success"); return;
         case "media-download-original": {
           const asset=await mediaRepository.getFullAsset(btn.dataset.id); if(!asset?.blob){toast("Original local indisponible.","warn");return;}
