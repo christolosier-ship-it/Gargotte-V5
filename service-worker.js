@@ -1,5 +1,5 @@
 
-const CACHE = "gargottex-v6-fast-media-render-v1";
+const CACHE = "gargottex-v6-fast-bootstrap-v1";
 const CACHE_PREFIX = "gargottex-";
 const ASSETS = [
   "./",
@@ -91,52 +91,38 @@ self.addEventListener("activate", event => {
   })());
 });
 
+async function fetchAndRefreshCache(req) {
+  const fresh = await fetch(req, { cache: "no-cache" });
+  if (fresh && fresh.ok) {
+    const cache = await caches.open(CACHE);
+    await cache.put(req, fresh.clone());
+  }
+  return fresh;
+}
+
 self.addEventListener("fetch", event => {
   const req = event.request;
-
   if (req.method !== "GET") return;
 
+  const refreshPromise = fetchAndRefreshCache(req);
+  event.waitUntil(refreshPromise.then(() => undefined).catch(() => undefined));
+
   event.respondWith((async () => {
-
-    // Toujours essayer le réseau d'abord pour les fichiers JS/CSS/HTML
-    const isCriticalAsset =
-      req.url.includes(".js") ||
-      req.url.includes(".css") ||
-      req.url.includes(".html") ||
-      req.url.includes("manifest");
-
-    if (isCriticalAsset) {
-      try {
-        const fresh = await fetch(req, { cache: "no-store" });
-
-        const cache = await caches.open(CACHE);
-        cache.put(req, fresh.clone()).catch(() => {});
-
-        return fresh;
-      } catch (_) {
-        const cached = await caches.match(req);
-        if (cached) return cached;
-      }
-    }
-
-    // Pour le reste : cache first classique
-    const cached = await caches.match(req);
+    const cached = await caches.match(req, { ignoreSearch: true });
     if (cached) return cached;
 
     try {
-      const fresh = await fetch(req);
-
-      const cache = await caches.open(CACHE);
-      cache.put(req, fresh.clone()).catch(() => {});
-
-      return fresh;
+      return await refreshPromise;
     } catch (_) {
+      if (req.mode === "navigate") {
+        const shell = await caches.match("./index.html", { ignoreSearch: true });
+        if (shell) return shell;
+      }
       return new Response("Offline", {
         status: 503,
         headers: { "Content-Type": "text/plain" }
       });
     }
-
   })());
 });
 

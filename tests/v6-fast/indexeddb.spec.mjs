@@ -110,12 +110,54 @@ test("IndexedDB v1 -> V6 v2 preserves IDs, unknown fields, relations and Blobs t
   expect(offline.originalBytes).toEqual(upgraded.originalBytes);
 
   await page.locator('.v6-sidebar [data-action="set-view"][data-view="import"]').click();
-  const downloadPromise = page.waitForEvent("download");
-  await page.locator('[data-action="export-structured-json"]').click();
-  const download = await downloadPromise;
-  expect(download.suggestedFilename()).toMatch(/gargottex_structured_.*\.json$/);
+  await expect(page.locator(".admin-io-v6")).toBeVisible();
+
+  const beforeTools=await page.evaluate(() => globalThis.__GARGOTTEX_BOOTSTRAP_DEBUG__?.());
+  expect(beforeTools.xlsxModuleLoads).toBe(0);
+  expect(beforeTools.zipModuleLoads).toBe(0);
+
+  const offlineTools=await page.evaluate(async () => {
+    const [xlsxCached,zipCached]=await Promise.all([
+      caches.match("./src/utils/xlsx.js",{ignoreSearch:true}),
+      caches.match("./src/utils/zip.js",{ignoreSearch:true})
+    ]);
+    const [xlsx,zip]=await Promise.all([
+      import("./src/utils/xlsx.js"),
+      import("./src/utils/zip.js")
+    ]);
+    return {
+      xlsxCached:Boolean(xlsxCached),
+      zipCached:Boolean(zipCached),
+      xlsxReady:typeof xlsx.buildXlsxBlob==="function" && typeof xlsx.buildXlsxWorkbookBlob==="function",
+      zipReady:typeof zip.makeZip==="function" && typeof zip.readZip==="function"
+    };
+  });
+  expect(offlineTools).toEqual({xlsxCached:true,zipCached:true,xlsxReady:true,zipReady:true});
 
   await context.setOffline(false);
+
+  const xlsxDownloadPromise = page.waitForEvent("download");
+  await page.locator('[data-action="export-entity"][data-type="creatures"]').click();
+  const xlsxDownload = await xlsxDownloadPromise;
+  expect(xlsxDownload.suggestedFilename()).toMatch(/creatures.*\.xlsx$/i);
+
+  const afterXlsx=await page.evaluate(() => globalThis.__GARGOTTEX_BOOTSTRAP_DEBUG__?.());
+  expect(afterXlsx.xlsxModuleLoads).toBe(1);
+  expect(afterXlsx.zipModuleLoads).toBe(0);
+
+  const backupDownloadPromise = page.waitForEvent("download");
+  await page.locator('[data-action="export-backup"]').click();
+  const backupDownload = await backupDownloadPromise;
+  expect(backupDownload.suggestedFilename()).toMatch(/gargottex_backup_.*\.zip$/);
+
+  const afterBackup=await page.evaluate(() => globalThis.__GARGOTTEX_BOOTSTRAP_DEBUG__?.());
+  expect(afterBackup.xlsxModuleLoads).toBe(1);
+  expect(afterBackup.zipModuleLoads).toBe(1);
+
+  const jsonDownloadPromise = page.waitForEvent("download");
+  await page.locator('[data-action="export-structured-json"]').click();
+  const jsonDownload = await jsonDownloadPromise;
+  expect(jsonDownload.suggestedFilename()).toMatch(/gargottex_structured_.*\.json$/);
 });
 
 test("old incomplete records and broken relations render without rewriting them", async ({ page }) => {

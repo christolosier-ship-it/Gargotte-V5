@@ -15,13 +15,6 @@ import {
 } from "./utils/common.js";
 
 import {
-  buildXlsxBlob,
-  buildXlsxWorkbookBlob,
-  readXlsxFile
-} from "./utils/xlsx.js";
-import { makeZip, readZip, toBytes, fromBytes } from "./utils/zip.js";
-
-import {
   initDatabase,
   loadAllData,
   loadUiState,
@@ -92,6 +85,18 @@ const ENTITY_SHEETS = {
   interactables: "Objets interactifs",
   brouhaha_effects: "Brouhaha",
   media_assets: "Médias"
+};
+
+const ENTITY_DOWNLOAD_FILES = {
+  dungeons: "dungeons.xlsx",
+  creatures: "creatures.xlsx",
+  heroes: "heroes.xlsx",
+  npcs: "npcs.xlsx",
+  quests: "quests.xlsx",
+  loot_items: "loot.xlsx",
+  interactables: "interactables.xlsx",
+  brouhaha_effects: "brouhaha.xlsx",
+  media_assets: "media_assets.xlsx"
 };
 
 const ENTITY_SHEET_ALIASES = {
@@ -290,8 +295,8 @@ const WORKSHOP_REQUIRED_FIELDS = {
 };
 
 const IMPORT_TYPES = ENTITY_ORDER.filter(type => type !== "media_assets");
-const APP_VERSION = "5.6.3";
-const PWA_CACHE_NAME = "gargottex-v6-fast-media-render-v1";
+const APP_VERSION = "5.6.4";
+const PWA_CACHE_NAME = "gargottex-v6-fast-bootstrap-v1";
 const PWA_OFFLINE_CORE = ["./index.html","./styles.css","./manifest.webmanifest","./seed-data.js","./src/app.js","./src/utils/common.js","./src/utils/zip.js","./src/utils/xlsx.js","./src/storage/idb.js","./src/storage/media-repository.js"];
 
 const HOME_TAGLINE = "Ici, même les habitués ne savent plus pourquoi ils sont venus.";
@@ -418,13 +423,71 @@ const state = {
 };
 
 const mediaRepository = new MediaRepository();
-const runtimeMetrics = { refreshDataCalls: 0, renderCalls: 0, mediaPartialRenders: 0 };
+const runtimeMetrics = {
+  refreshDataCalls: 0,
+  renderCalls: 0,
+  mediaPartialRenders: 0,
+  diagnosticRuns: 0,
+  seedLoads: 0,
+  xlsxModuleLoads: 0,
+  zipModuleLoads: 0,
+  readyAtMs: null,
+  bootstrapStartedAt: performance.now()
+};
+
+let xlsxModulePromise = null;
+let zipModulePromise = null;
+let seedScriptPromise = null;
+
+async function loadXlsxTools() {
+  if (!xlsxModulePromise) {
+    runtimeMetrics.xlsxModuleLoads += 1;
+    xlsxModulePromise = import("./utils/xlsx.js");
+  }
+  return xlsxModulePromise;
+}
+
+async function loadZipTools() {
+  if (!zipModulePromise) {
+    runtimeMetrics.zipModuleLoads += 1;
+    zipModulePromise = import("./utils/zip.js");
+  }
+  return zipModulePromise;
+}
+
+async function loadSeedDataOnce() {
+  if (globalThis.GARGOTTEX_SEED) return globalThis.GARGOTTEX_SEED;
+  if (!seedScriptPromise) {
+    runtimeMetrics.seedLoads += 1;
+    seedScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "./seed-data.js";
+      script.async = true;
+      script.onload = () => resolve(globalThis.GARGOTTEX_SEED || {});
+      script.onerror = () => reject(new Error("Impossible de charger les données initiales Gargottex."));
+      document.head.appendChild(script);
+    });
+  }
+  return seedScriptPromise;
+}
+
 globalThis.__GARGOTTEX_MEDIA_DEBUG__ = () => ({
   ...mediaRepository.debugSnapshot(),
   refreshDataCalls: runtimeMetrics.refreshDataCalls,
   renderCalls: runtimeMetrics.renderCalls,
   mediaPartialRenders: runtimeMetrics.mediaPartialRenders,
   mountedMediaCards: document.querySelectorAll(".media-card-v6, .codex-media-card-v6").length
+});
+
+globalThis.__GARGOTTEX_BOOTSTRAP_DEBUG__ = () => ({
+  renderCalls: runtimeMetrics.renderCalls,
+  diagnosticRuns: runtimeMetrics.diagnosticRuns,
+  seedLoads: runtimeMetrics.seedLoads,
+  xlsxModuleLoads: runtimeMetrics.xlsxModuleLoads,
+  zipModuleLoads: runtimeMetrics.zipModuleLoads,
+  readyAtMs: runtimeMetrics.readyAtMs,
+  ready: document.documentElement.dataset.gargottexReady === "true",
+  resources: performance.getEntriesByType("resource").map(entry => String(entry.name || ""))
 });
 
 function defaultBlankUi() {
@@ -5755,6 +5818,7 @@ function renderMedia() {
 async function idbStoreCount(storeName){return transaction([storeName],"readonly",({[storeName]:store})=>new Promise((resolve,reject)=>{const req=store.count();req.onsuccess=()=>resolve(Number(req.result||0));req.onerror=()=>reject(req.error||new Error(`Count ${storeName} failed`));}));}
 
 async function collectLocalDiagnostic(){
+  runtimeMetrics.diagnosticRuns += 1;
   const counts={};for(const def of STORE_DEFS){try{counts[def.name]=await idbStoreCount(def.name);}catch(_){counts[def.name]=null;}}
   const reg="serviceWorker"in navigator?(state.serviceWorkerRegistration||await navigator.serviceWorker.getRegistration()):null,names="caches"in globalThis?await caches.keys():[],cachePresent=names.includes(PWA_CACHE_NAME),cachedCore={};
   if(cachePresent){const cache=await caches.open(PWA_CACHE_NAME);for(const path of PWA_OFFLINE_CORE)cachedCore[path]=Boolean(await cache.match(path,{ignoreSearch:true}));}else for(const path of PWA_OFFLINE_CORE)cachedCore[path]=false;
@@ -5765,7 +5829,15 @@ async function collectLocalDiagnostic(){
 
 function diagnosticText(diag){return JSON.stringify(diag,null,2);}
 
-async function refreshDiagnostic(renderAfter=true){state.diagnostic=await collectLocalDiagnostic();if(renderAfter)render();return state.diagnostic;}
+async function refreshDiagnostic(renderAfter=true){
+  state.diagnostic=await collectLocalDiagnostic();
+  if(renderAfter){
+    const root=app.querySelector("[data-diagnostic-panel]");
+    if(root && state.ui.view==="import") root.innerHTML=renderDiagnosticPanel();
+    else render();
+  }
+  return state.diagnostic;
+}
 
 async function copyDiagnostic(){const textValue=diagnosticText(state.diagnostic||await collectLocalDiagnostic());if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(textValue);return;}const area=document.createElement("textarea");area.value=textValue;document.body.appendChild(area);area.select();document.execCommand("copy");area.remove();}
 
@@ -5787,7 +5859,7 @@ function renderDiagnosticPanel(){
 
 function renderImportExport(){
   const preview=state.importRuntime.preview,last=state.importRuntime.lastResult;
-  return renderShell(`<section class="admin-io-v6"><header class="admin-io-head"><div><span class="eyebrow">Administration locale</span><h1>Import / Export</h1><p>Prévisualiser, confirmer, sauvegarder. Aucun backend distant.</p></div></header><section class="panel import-v6"><div class="panel-title"><h2>Import structuré</h2><div class="muted">JSON et XLSX utilisent deux entrées distinctes. Les médias binaires ne s'importent pas par ce formulaire.</div></div><label class="import-family-select"><span>Famille</span><select data-action="import-type">${IMPORT_TYPES.map(t=>`<option value="${t}" ${t===state.ui.import.type?"selected":""}>${escapeHtml(getLabel(t))}</option>`).join("")}</select></label><div class="import-format-grid"><label class="import-format-card"><span class="eyebrow">JSON</span><strong>Importer JSON</strong><small>Tableau, objet <code>rows</code> ou export structuré Gargottex.</small><input type="file" accept=".json,application/json" data-action="import-json-file"></label><label class="import-format-card"><span class="eyebrow">XLSX</span><strong>Importer XLSX</strong><small>La feuille correspondant à la famille sélectionnée est utilisée.</small><input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-action="import-xlsx-file"></label></div>${preview?renderImportPreview(preview):`<div class="import-preview-empty">Charge un JSON ou XLSX : le preview est calculé en mémoire, sans write métier.</div>`}${last?`<div class="import-final-report"><strong>Dernier bilan</strong><span>${last.written} écriture(s) · ${last.created} création(s) · ${last.updated} mise(s) à jour · ${last.excluded} exclue(s)</span><small>${escapeHtml(last.fileName)} · ${escapeHtml(String(last.format).toUpperCase())}</small></div>`:""}</section><section class="panel export-v6"><div class="panel-title"><h2>Export</h2><div class="muted">Les exports XLSX/JSON structurés <strong>ne contiennent aucun Blob média</strong>. Le backup ZIP est le format de sécurité avec binaires.</div></div><div class="export-safety-grid"><article><span>XLSX existants</span><strong>Données structurées</strong><p>Format historique conservé. Aucun Blob.</p><div class="export-buttons">${ENTITY_ORDER.map(t=>`<button class="secondary" data-action="export-entity" data-type="${t}">Exporter ${escapeHtml(getLabel(t))}</button>`).join("")}<button class="primary" data-action="export-all">Exporter tout XLSX</button></div></article><article><span>JSON</span><strong>Snapshot structuré</strong><p>Préserve les propriétés sérialisables et les métadonnées médias. Aucun Blob.</p><button class="primary" data-action="export-structured-json">Exporter JSON structuré</button></article><article class="backup-card-v6"><span>Sauvegarde de sécurité</span><strong>Backup ZIP complet</strong><p>Contient XLSX, JSON structuré, métadonnées et Blobs média disponibles : originaux, thumbnails, aperçus et dérivés transparents. Le ZIP est relu et vérifié avant téléchargement.</p><button class="primary" data-action="export-backup">Exporter et vérifier le backup ZIP</button></article></div><div class="backup-restore-note">La restauration ZIP destructive historique est désactivée. Toute restauration métier passe par un import avec preview et confirmation.</div></section>${renderDiagnosticPanel()}</section>`);
+  return renderShell(`<section class="admin-io-v6"><header class="admin-io-head"><div><span class="eyebrow">Administration locale</span><h1>Import / Export</h1><p>Prévisualiser, confirmer, sauvegarder. Aucun backend distant.</p></div></header><section class="panel import-v6"><div class="panel-title"><h2>Import structuré</h2><div class="muted">JSON et XLSX utilisent deux entrées distinctes. Les médias binaires ne s'importent pas par ce formulaire.</div></div><label class="import-family-select"><span>Famille</span><select data-action="import-type">${IMPORT_TYPES.map(t=>`<option value="${t}" ${t===state.ui.import.type?"selected":""}>${escapeHtml(getLabel(t))}</option>`).join("")}</select></label><div class="import-format-grid"><label class="import-format-card"><span class="eyebrow">JSON</span><strong>Importer JSON</strong><small>Tableau, objet <code>rows</code> ou export structuré Gargottex.</small><input type="file" accept=".json,application/json" data-action="import-json-file"></label><label class="import-format-card"><span class="eyebrow">XLSX</span><strong>Importer XLSX</strong><small>La feuille correspondant à la famille sélectionnée est utilisée.</small><input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-action="import-xlsx-file"></label></div>${preview?renderImportPreview(preview):`<div class="import-preview-empty">Charge un JSON ou XLSX : le preview est calculé en mémoire, sans write métier.</div>`}${last?`<div class="import-final-report"><strong>Dernier bilan</strong><span>${last.written} écriture(s) · ${last.created} création(s) · ${last.updated} mise(s) à jour · ${last.excluded} exclue(s)</span><small>${escapeHtml(last.fileName)} · ${escapeHtml(String(last.format).toUpperCase())}</small></div>`:""}</section><section class="panel export-v6"><div class="panel-title"><h2>Export</h2><div class="muted">Les exports XLSX/JSON structurés <strong>ne contiennent aucun Blob média</strong>. Le backup ZIP est le format de sécurité avec binaires.</div></div><div class="export-safety-grid"><article><span>XLSX existants</span><strong>Données structurées</strong><p>Format historique conservé. Aucun Blob.</p><div class="export-buttons">${ENTITY_ORDER.map(t=>`<button class="secondary" data-action="export-entity" data-type="${t}">Exporter ${escapeHtml(getLabel(t))}</button>`).join("")}<button class="primary" data-action="export-all">Exporter tout XLSX</button></div></article><article><span>JSON</span><strong>Snapshot structuré</strong><p>Préserve les propriétés sérialisables et les métadonnées médias. Aucun Blob.</p><button class="primary" data-action="export-structured-json">Exporter JSON structuré</button></article><article class="backup-card-v6"><span>Sauvegarde de sécurité</span><strong>Backup ZIP complet</strong><p>Contient XLSX, JSON structuré, métadonnées et Blobs média disponibles : originaux, thumbnails, aperçus et dérivés transparents. Le ZIP est relu et vérifié avant téléchargement.</p><button class="primary" data-action="export-backup">Exporter et vérifier le backup ZIP</button></article></div><div class="backup-restore-note">La restauration ZIP destructive historique est désactivée. Toute restauration métier passe par un import avec preview et confirmation.</div></section>${`<div data-diagnostic-panel>${renderDiagnosticPanel()}</div>`}</section>`);
 }
 
 function renderImportPreview(preview){
@@ -6423,6 +6495,7 @@ async function exportEntityFile(type) {
   const sourceRows = type === "media_assets" ? await ensureMediaCatalog() : (state.data[type] || []);
   const rows = toTemplateRows(type, sourceRows);
   const headers = sheetHeaders(type);
+  const { buildXlsxBlob } = await loadXlsxTools();
   const blob = buildXlsxBlob(ENTITY_SHEETS[type] || getLabel(type), headers, rows);
   downloadBlob(blob, ENTITY_DOWNLOAD_FILES[type] || `${type}.xlsx`);
 }
@@ -6434,6 +6507,7 @@ async function exportAllFile() {
     headers: sheetHeaders(type),
     rows: toTemplateRows(type, type === "media_assets" ? mediaRows : (state.data[type] || []))
   }));
+  const { buildXlsxWorkbookBlob } = await loadXlsxTools();
   const blob = buildXlsxWorkbookBlob(sheets);
   downloadBlob(blob, `gargottex_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
@@ -6441,6 +6515,7 @@ async function exportAllFile() {
 async function exportFullBackupFile(){
   if(backupBusy)throw new Error("Un export backup est déjà en cours.");backupBusy=true;
   try{
+    const [{buildXlsxWorkbookBlob},{makeZip,readZip,toBytes,fromBytes}]=await Promise.all([loadXlsxTools(),loadZipTools()]);
     const mediaMetadata=await ensureMediaCatalog(),mediaAssets=await mediaRepository.getAllFullAssetsForExplicitBackup();
     const sheets=ENTITY_ORDER.map(type=>({sheetName:ENTITY_SHEETS[type]||getLabel(type),headers:sheetHeaders(type),rows:toTemplateRows(type,type==="media_assets"?mediaMetadata:(state.data[type]||[]))})),wb=buildXlsxWorkbookBlob(sheets),wbBytes=new Uint8Array(await wb.arrayBuffer()),structured={};
     for(const type of ENTITY_ORDER)structured[type]=(type==="media_assets"?mediaMetadata:(state.data[type]||[])).map(structuredEntityForExport);
@@ -6484,7 +6559,7 @@ function downloadBlob(blob, filename) {
 
 async function parseImportFile(file,type,expectedFormat=""){
   const ext=String(file.name.split(".").pop()||"").toLowerCase();let rows=[],format="",structuredJson=false;
-  if(ext==="xlsx"){if(expectedFormat&&expectedFormat!=="xlsx")throw new Error("Sélectionne un fichier XLSX.");const parsed=await readXlsxFile(file),wanted=entitySheetNames(type).map(name=>String(name).trim().toLowerCase()),sheet=(parsed.sheets||[]).find(s=>wanted.includes(String(s.sheetName||"").trim().toLowerCase()))||parsed;rows=sheet.rows||[];format="xlsx";}
+  if(ext==="xlsx"){if(expectedFormat&&expectedFormat!=="xlsx")throw new Error("Sélectionne un fichier XLSX.");const {readXlsxFile}=await loadXlsxTools(),parsed=await readXlsxFile(file),wanted=entitySheetNames(type).map(name=>String(name).trim().toLowerCase()),sheet=(parsed.sheets||[]).find(s=>wanted.includes(String(s.sheetName||"").trim().toLowerCase()))||parsed;rows=sheet.rows||[];format="xlsx";}
   else if(ext==="json"){if(expectedFormat&&expectedFormat!=="json")throw new Error("Sélectionne un fichier JSON.");const payload=JSON.parse(await file.text()),ex=extractJsonImportRows(payload,type);rows=ex.rows;structuredJson=ex.structured;format="json";}
   else throw new Error("UI-5C accepte JSON ou XLSX dans leurs zones dédiées.");
   return buildImportPreview(type,rows,{format,fileName:file.name,structuredJson});
@@ -6547,6 +6622,9 @@ function bindEvents() {
           if (nextView === "media") await ensureMediaCatalog();
           await saveUiState(state.ui);
           render();
+          if (nextView === "import" && !state.diagnostic) {
+            void refreshDiagnostic(true).catch(err => reportError(err, "diagnostic:open"));
+          }
           return;
         }
         case "toggle-journal":
@@ -7473,8 +7551,34 @@ function wireGlobalErrors() {
   });
 }
 
+async function registerServiceWorkerAfterReady() {
+  if (!("serviceWorker" in navigator)) return null;
+  const controlledBeforeRegistration = Boolean(navigator.serviceWorker.controller);
+  const reg = await navigator.serviceWorker.register("./service-worker.js");
+  state.serviceWorkerRegistration = reg;
+  setInterval(() => { reg.update().catch(() => {}); }, 15 * 60 * 1000);
+  if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing || !controlledBeforeRegistration) return;
+    refreshing = true;
+    window.location.reload();
+  });
+  return reg;
+}
+
+async function hydrateLogsAfterReady() {
+  state.logs = await getLogs(100);
+  if (state.ui.journalOpen) syncOverlayLayers();
+}
+
 async function bootstrap() {
-  await initDatabase(globalThis.GARGOTTEX_SEED || {});
+  const initState = await initDatabase();
+  if (initState?.needsSeed) {
+    const seed = await loadSeedDataOnce();
+    await initDatabase(seed);
+  }
+
   const data = await loadAllData();
   hydrateState(data);
 
@@ -7509,14 +7613,15 @@ async function bootstrap() {
     state.ui = defaultBlankUi();
     ensureUiDefaults();
   }
+
   ensureUiDefaults();
   ensureSelectionExists();
   await saveUiState(state.ui);
 
-  state.logs = await getLogs(100);
   if (state.ui.view === "media" || (state.ui.view === "codex" && state.ui.codexType === "media_assets")) {
     await ensureMediaCatalog();
   }
+
   state.ready = true;
   wireGlobalErrors();
   wireWorkshopUnloadGuard();
@@ -7527,33 +7632,28 @@ async function bootstrap() {
   wireBestiaryScrollTracking();
   wireCodexFamilyScrollTracking();
   wireCreatureMediaFallbacks();
+
   render();
   syncToastLayer();
   syncOverlayLayers({ captureFocus: Boolean(state.ui.journalOpen) });
 
-  if ("serviceWorker" in navigator) {
-    const controlledBeforeRegistration = Boolean(navigator.serviceWorker.controller);
-    const reg = await navigator.serviceWorker.register("./service-worker.js");
-    state.serviceWorkerRegistration = reg;
-    setInterval(() => { reg.update().catch(() => {}); }, 15 * 60 * 1000);
-    if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (refreshing || !controlledBeforeRegistration) return;
-      refreshing = true;
-      window.location.reload();
-    });
-  }
-  state.diagnostic = await collectLocalDiagnostic();
-  render();
+  runtimeMetrics.readyAtMs = performance.now() - runtimeMetrics.bootstrapStartedAt;
   document.documentElement.dataset.gargottexReady = "true";
+
+  void hydrateLogsAfterReady().catch(err => reportError(err, "logs:bootstrap"));
+  void registerServiceWorkerAfterReady().then(() => {
+    if (state.ui.view === "import" && !state.diagnostic) {
+      return refreshDiagnostic(true);
+    }
+    return null;
+  }).catch(err => reportError(err, "service-worker:bootstrap"));
 
   if (navigator.storage?.persist) {
     navigator.storage.persist().catch(() => {});
   }
 
-  // Le modèle rembg est une IndexedDB séparée : on la retire après le démarrage
-  // afin de ne jamais concurrencer l'installation/activation du Service Worker.
+  // Le modèle rembg est une IndexedDB séparée : on la retire après le premier rendu
+  // afin de ne jamais concurrencer le chemin critique d'affichage.
   setTimeout(() => { void retireLegacyRembgModelOnce(); }, 0);
 }
 

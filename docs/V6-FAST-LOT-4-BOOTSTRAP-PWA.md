@@ -1,5 +1,8 @@
 # V6-Fast Lot 4 — Bootstrap, PWA et modules
 
+## Statut
+CLOS SUR PR #39 — Gate automatisée validée le 25/09/2026.
+
 ## Objectif
 Alléger le reste du chemin critique de démarrage après stabilisation du runtime média.
 
@@ -85,6 +88,62 @@ Mesurer avant/après :
 
 Les mesures CI servent à comparer les versions. Ne pas ajouter de seuil flaky dépendant du runner.
 
+## Résultat d'exécution
+
+### Bootstrap
+- `gargottexReady` est posé immédiatement après le premier rendu stable.
+- Première installation et redémarrage chaud : 1 seul `render()` global jusqu'à `ready`.
+- Logs, enregistrement Service Worker, persistance stockage et retrait du modèle rembg historique sont exécutés après le premier rendu.
+- Le diagnostic complet n'est plus une condition d'affichage de l'accueil.
+
+### Diagnostic
+- calcul à l'ouverture d'Import / Export ou à la demande ;
+- mise à jour dans un root local `data-diagnostic-panel` ;
+- aucune reconstruction globale du formulaire Import / Export lors du retour du diagnostic.
+
+Cette isolation a supprimé une course réelle détectée par la Fast CI entre la sélection d'un fichier d'import et le rendu asynchrone du diagnostic.
+
+### IndexedDB et seed
+- `initDatabase()` détecte une base vide avant de demander le seed ;
+- `seed-data.js` a été retiré du HTML initial ;
+- première installation : seed chargé une fois puis comportement métier identique ;
+- base existante : seed non chargé et non parsé.
+
+### Logs
+L'implémentation présente sur V5.3 utilisait déjà l'index `created_at`, un curseur `prev` et un arrêt à `limit`. Aucun refactor artificiel n'a été ajouté.
+
+Un test Full remplit volontairement la table et vérifie que `getLogs(7)` renvoie exactement les 7 entrées les plus récentes, dans l'ordre attendu.
+
+### Modules XLSX et ZIP
+- suppression des imports statiques XLSX / ZIP de `src/app.js` ;
+- import dynamique XLSX à la première action XLSX ;
+- import dynamique ZIP à la première sauvegarde ZIP ;
+- modules toujours précachés par la PWA afin de rester disponibles hors ligne ;
+- test offline : présence cache + `import()` dynamique fonctionnel sans réseau.
+
+La Gate a également révélé un bug latent antérieur : `exportEntityFile()` utilisait `ENTITY_DOWNLOAD_FILES` sans définition. La table de noms de fichiers XLSX a été restaurée explicitement.
+
+### Service Worker
+- cache versionné : `gargottex-v6-fast-bootstrap-v1` ;
+- suppression du network-first `cache: no-store` pour l'app-shell ;
+- réponse immédiate du cache valide ;
+- revalidation réseau en arrière-plan ;
+- fallback navigation vers `index.html` hors ligne ;
+- IndexedDB non modifié par les mises à jour Service Worker.
+
+### Mesures finales CI
+Run final du 25/09/2026 :
+- Fast : 13/13, 39,4 s ;
+- Full Chromium + WebKit iPad : 24/24, 1,2 min ;
+- cold ready : ~87,1 ms ;
+- warm ready : ~51,9 ms ;
+- cold render calls : 1 ;
+- warm render calls : 1 ;
+- redémarrage chaud avant `ready` : 0 seed, 0 diagnostic, 0 XLSX, 0 ZIP ;
+- Full : migration IndexedDB, export/reopen/offline, Service Worker update, stress Média et smoke WebKit iPad verts.
+
+Les temps `ready` sont indicatifs et propres au runner CI. Aucun seuil timing dépendant du runner n'est utilisé comme Gate.
+
 ## Gate
 Le lot est validé si :
 - le diagnostic ne bloque plus le premier rendu ;
@@ -98,4 +157,4 @@ Le lot est validé si :
 - Fast CI et Full ciblée passent.
 
 ## Clôture
-Lorsque cette Gate est franchie, mettre à jour docs/V6-FAST.md avec le bilan réel du chantier et marquer V6-Fast clos.
+Gate franchie le 25/09/2026. `docs/V6-FAST.md` est mis à jour avec le bilan réel. V6-Fast est techniquement clos sur la PR #39, en attente de fusion dans V5.3.

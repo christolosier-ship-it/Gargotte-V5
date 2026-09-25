@@ -62,6 +62,62 @@ async function runAxe(page, label) {
   expect(violations, `${label} axe violations\n${JSON.stringify(violations, null, 2)}`).toEqual([]);
 }
 
+test("bootstrap defers seed diagnostics and heavy modules after first install", async ({ page }) => {
+  await page.goto("/index.html", { waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+
+  const cold = await page.evaluate(() => globalThis.__GARGOTTEX_BOOTSTRAP_DEBUG__?.());
+  expect(cold).toBeTruthy();
+  expect(cold.renderCalls).toBe(1);
+  expect(cold.diagnosticRuns).toBe(0);
+  expect(cold.seedLoads).toBe(1);
+  expect(cold.xlsxModuleLoads).toBe(0);
+  expect(cold.zipModuleLoads).toBe(0);
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".v6-app")).toBeVisible();
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+
+  const warm = await page.evaluate(() => {
+    const debug=globalThis.__GARGOTTEX_BOOTSTRAP_DEBUG__?.();
+    const paths=(debug?.resources||[]).map(value => {
+      try { return new URL(value).pathname; } catch (_) { return value; }
+    });
+    return {...debug,paths};
+  });
+
+  expect(warm.renderCalls).toBe(1);
+  expect(warm.diagnosticRuns).toBe(0);
+  expect(warm.seedLoads).toBe(0);
+  expect(warm.xlsxModuleLoads).toBe(0);
+  expect(warm.zipModuleLoads).toBe(0);
+  expect(warm.readyAtMs).toBeGreaterThan(0);
+  expect(warm.paths.some(path => path.endsWith("/seed-data.js"))).toBe(false);
+  expect(warm.paths.some(path => path.endsWith("/src/utils/xlsx.js"))).toBe(false);
+  expect(warm.paths.some(path => path.endsWith("/src/utils/zip.js"))).toBe(false);
+
+  console.log("[v6fast-bootstrap]", JSON.stringify({
+    coldReadyMs:cold.readyAtMs,
+    warmReadyMs:warm.readyAtMs,
+    coldRenderCalls:cold.renderCalls,
+    warmRenderCalls:warm.renderCalls,
+    warmResourceCount:warm.paths.length,
+    warmSeedLoads:warm.seedLoads,
+    warmDiagnosticRuns:warm.diagnosticRuns,
+    warmXlsxLoads:warm.xlsxModuleLoads,
+    warmZipLoads:warm.zipModuleLoads
+  }));
+
+  await gotoView(page, "import");
+  await expect(page.locator(".admin-io-v6")).toBeVisible();
+  await expect(page.locator(".diagnostic-metrics-v6")).toBeVisible();
+  await expect.poll(async () => page.evaluate(() => globalThis.__GARGOTTEX_BOOTSTRAP_DEBUG__?.().diagnosticRuns)).toBe(1);
+
+  const afterDiagnostic=await page.evaluate(() => globalThis.__GARGOTTEX_BOOTSTRAP_DEBUG__?.());
+  expect(afterDiagnostic.xlsxModuleLoads).toBe(0);
+  expect(afterDiagnostic.zipModuleLoads).toBe(0);
+});
+
 test("home bootstrap and session actions remain usable", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await ready(page);
