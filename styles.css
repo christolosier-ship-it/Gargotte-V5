@@ -3339,6 +3339,7 @@ body.cinematic-open{overflow:hidden}
   justify-self:end;color:#c6aa83;font:700 18px/1 Alegreya,Georgia,serif
 }
 .import-family-select{margin:0}
+.import-family-select>span{color:#c8b49a}
 .import-format-card{
   position:relative;overflow:hidden;min-height:142px;
   border-color:#463326;background:linear-gradient(150deg,#1c140f,#130e0b);
@@ -3451,7 +3452,7 @@ body.cinematic-open{overflow:hidden}
 .diagnostic-line i.ok{background:#6fa577}
 .diagnostic-line i.warn{background:#d9a12e}
 .diagnostic-line i.offline{background:#70859a}
-.diagnostic-line span{color:var(--color-text-tertiary);font-size:8px}
+.diagnostic-line span{color:#c3ad91;font-size:8px}
 .diagnostic-line b{font-size:8px;overflow-wrap:anywhere}
 .diagnostic-last-error{
   box-shadow:inset 3px 0 rgba(239,75,75,.11)
