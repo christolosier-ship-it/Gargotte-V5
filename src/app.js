@@ -2104,7 +2104,8 @@ function mediaViewerVariant(asset) {
 }
 
 function setMediaDetailPreviewDom(asset, src, mode = "active") {
-  const root = app.querySelector(`[data-media-detail-preview][data-media-id="${CSS.escape(String(asset?.id || ""))}"]`);
+  const root = app.querySelector("[data-media-detail-preview]");
+  if (root && String(root.dataset.mediaId || "") !== String(asset?.id || "")) return false;
   if (!(root instanceof HTMLElement)) return false;
   const title = root.dataset.mediaTitle || asset?.label || "Média";
   root.dataset.previewMode = mode;
@@ -2126,14 +2127,15 @@ function setMediaDetailPreviewDom(asset, src, mode = "active") {
 async function showMediaDetailPreview(asset, mode = "active") {
   if (!asset) return false;
   if (mode === "original") {
+    const id = String(asset.id || "");
+    if (mediaComparisonAssetId && mediaComparisonAssetId !== id) releaseMediaComparisonOriginal();
     const original = await mediaRepository.ensureOriginalUrl(asset);
     if (!original) {
       toast("Original local indisponible.", "warn");
       return false;
     }
-    releaseMediaComparisonOriginal();
     if (mediaRepository.activeKind(asset, asset.entity_type) !== "original") {
-      mediaComparisonAssetId = String(asset.id || "");
+      mediaComparisonAssetId = id;
     }
     return setMediaDetailPreviewDom(asset, original, "original");
   }
@@ -7523,6 +7525,7 @@ function bindEvents() {
           if (!renderMediaSurfaceInPlace("admin")) render();
           return;
         case "media-attach":
+          releaseMediaComparisonOriginal();
           await attachMediaAsset(btn.dataset.id,state.ui.media.linkType||"gallery",state.ui.media.linkEntityId||""); toast("Rattachement média enregistré.","success"); return;
         case "media-download-original": {
           const asset=await mediaRepository.getFullAsset(btn.dataset.id); if(!asset?.blob){toast("Original local indisponible.","warn");return;}
