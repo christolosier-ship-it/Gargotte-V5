@@ -48,7 +48,6 @@ const ASSETS = [
   "./assets/ui-v6/ornaments/corner-brass.svg",
   "./assets/images/logo-192.png",
   "./assets/images/logo-512.png",
-  "./assets/images/logo.png",
   "./assets/images/logo-source.jpeg",
   "./assets/images/bard.png",
   "./assets/images/berthold.png",
