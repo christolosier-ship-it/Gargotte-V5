@@ -48,3 +48,18 @@ Après publication explicite de cette branche sur une origine HTTPS, URL à ouvr
 | Mise à jour de révision réellement déployée, si disponible | À compléter | |
 
 **Conditions Gate :** EN ATTENTE avant essai physique. ROUGE si fuite, perte de fond général, discontinuité géographique, régression média/IndexedDB, navigation bloquée ou impossibilité de reprise sûre ; classer les échecs CI par cause code ou test avant correction. VERTE seulement après retour matériel détaillé et correction/validation de tout problème bloquant. Même une Gate verte ne fabrique aucune image finale et ne déploie pas B1 par elle-même.
+
+## Fiche complétée par retour utilisateur du 27/09/2026
+
+Le propriétaire confirme avoir testé le laboratoire sur **son iPad** et avoir validé **tous les tests**. La capture montre Safari vers 15 h 42, benchmark terminé, SW A2 actif et contrôleur, quatre fonds de base présents sur quatre, réseau indiqué **en ligne au moment de la capture**. Les contrôles offline/veille/gestes sont enregistrés comme **OK sur déclaration** ; la photo ne les prouve pas individuellement. Le stockage libre, modèle exact, build iPadOS et JSON intégral ne sont pas fournis ; UA visible Version/26.4 Safari/604.1, écran CSS 810×1080, DPR 2.
+
+| Contrôle | Résultat et preuve |
+|---|---|
+| Navigation tactile, portrait/paysage, continuité géographique, labels et previews | OK déclaré par le propriétaire |
+| Veille/reprise, détail manquant/fallback, cycles répétés sans blocage notable | OK déclaré par le propriétaire ; aucune mesure RSS native |
+| Worker enfant, cache de quatre fonds | OK visible sur capture : true / true / 4/4, **en ligne** |
+| Réouverture complètement hors réseau | OK déclaré par le propriétaire, aucune capture offline jointe ; WebKit CI Linux reste non concluant |
+| Comparaison de formats 256/512/1024 px | OK : capture de données réelles, PNG/JPEG mesurés ; WebP encodeur Canvas indisponible et AVIF suspect, à ne pas assimiler à une validation de ces formats |
+| Nouvelle révision réellement publiée du Worker/cache | Non documentée, à valider au lot C3 |
+
+**Gate A2 VERTE sur attestation matérielle explicite du propriétaire, avec limites du banc de formats détaillées dans le rapport.** Ne pas confondre la validation du POC neutre avec celle des futurs visuels ou des quatre vraies cartes offline.

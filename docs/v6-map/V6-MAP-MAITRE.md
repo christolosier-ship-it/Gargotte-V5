@@ -98,10 +98,13 @@ Lire ce maître puis le cahier concerné ; une branche/PR par lot d'implémentat
 | C1 | V6-MAP-C1-DIMENSIONS.md | Après A2/B2/B3 ; trois nouvelles cartes |
 | C2 | V6-MAP-C2-CAMPAGNES-SECRETS.md | Après backend V7 stabilisé et B4/C1 ; autorisations, découvertes MJ |
 | C3 | V6-MAP-C3-PWA-VALIDATION.md | Après C1/C2 ; cache offline, validation transversale, clôture |
+
+**Journal de Gate (27/09/2026) : A0 VERTE, A1 VERTE, A2 VERTE pour le POC neutre après retour d'essai sur iPad physique déclaré concluant par le propriétaire.** Voir le rapport et la fiche matérielle A2. La capture montre Worker A2 contrôleur/cache 4/4 **en ligne** ; les parcours offline et tactiles sont acceptés sur attestation utilisateur. Choix pilotes : moteur DOM, tuiles 512 px, référence/fallback PNG, JPEG opaque à évaluer visuellement ; WebP Canvas n'encode pas sur cette session Safari, ce qui ne renseigne pas son décodage ; AVIF suspect (poids strictement identiques au PNG), non qualifié. Budget théorique de travail ≈32 MiB RGBA, non mesuré RSS. Revalider la qualité/les formats des fonds peints en B1 et l'offline réel/mises à jour des quatre véritables cartes en C3. **B1 non démarré par ce constat.**
+
 Ne pas déployer pour tous une version intermédiaire contenant des marqueurs secrets non filtrés. Un lot n'anticipe pas le suivant hors nécessité stricte. Conserver les tests fast CI courts et les validations WebKit/iPad ciblées ; éviter assertions de pixels/temps fragiles.
 
 ## 12. Points expressément réservés, pas de faux acquis
-Contours précis, positions définitives des donjons/portes, portails, géographie des terres encore anonymes, réalité de la liste locale de campagnes, permissions réelles V7, hébergement des ressources Atlas (assets statiques versus stockage objet), choix de moteur/librairie de rendu, format image (WebP/AVIF selon essais), résolution et taille finales des tuiles, seuils exacts de zoom/cache, détails de la figure par niveau et nom officiel définitif des deux royaumes. Les dimensions des premières cartes ne sont pas des kilomètres.
+Contours précis, positions définitives des donjons/portes, portails, géographie des terres encore anonymes, réalité de la liste locale de campagnes, permissions réelles V7, hébergement des ressources Atlas (assets statiques versus stockage objet), choix de moteur/librairie de rendu, formats finaux des fonds peints (WebP/AVIF non qualifiés pour les exports, PNG 512 pilote A2), résolutions finales de chaque pyramide, seuils définitifs de zoom/cache, détails de la figure par niveau et nom officiel définitif des deux royaumes. Les dimensions des premières cartes ne sont pas des kilomètres.
 Toute découverte d'une incompatibilité de lore se signale et fait l'objet d'une décision explicite ; ne pas corriger silencieusement une donnée validée.
 
 ## 13. Protocole d'exécution / STOP

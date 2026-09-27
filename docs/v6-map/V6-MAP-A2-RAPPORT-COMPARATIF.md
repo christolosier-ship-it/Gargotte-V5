@@ -1,6 +1,6 @@
 # V6-Map A2 — Rapport comparatif technique et limites de preuve
 
-Date d'ouverture : 27/09/2026. Statut : **MESURES AUTOMATISÉES EN COURS ; VALIDATION MATÉRIELLE NON RÉALISÉE ; GATE EN ATTENTE.** Ce rapport porte sur le POC **neutre** Saint-Fût, et non sur des fonds finaux.
+Date d'ouverture : 27/09/2026. **Statut courant : Gate A2 VERTE sur le POC neutre, après validation matérielle déclarée par le propriétaire le 27/09/2026.** Les mentions historiques EN ATTENTE ci-dessous précèdent cette réception ; qualification des formats graphiques définitifs non acquise. Ce rapport porte sur le POC **neutre** Saint-Fût, et non sur des fonds finaux.
 
 ## Inventaire de référence vérifié dans A1
 
@@ -37,7 +37,7 @@ Worker strictement dans `poc/v6-map-a1/` : `a2-sw.js`, cache `atlas-a2-public-ne
 
 **Limite importante :** le Worker global V6 actuel intercepte toute l'origine avec `ignoreSearch:true` et pourrait aussi voir les requêtes du POC avant l'activation du Worker enfant. La procédure demande une installation puis un rechargement en ligne afin de confirmer le **controller enfant** avant de couper le réseau. Le Worker A2 ne remplace/modifie pas le Worker global. La démonstration ne valide pas une stratégie complète offline des quatre cartes définitives ni des états MJ/joueur.
 
-## Orientation technique proposée, NON DÉFINITIVE en l'absence d'iPad physique
+## Orientation technique proposée en CI (historique, avant le retour iPad)
 
 - **Moteur natif DOM conservé comme candidat** tant que l'iPad ne présente pas de saccades, de saut cartographique ou de pression mémoire ; aucune nouvelle dépendance lourde n'est justifiée par A1 seul.
 - Préférer provisoirement **WebP opaque à qualité ≈0,82 et tuiles carrées 512 px** comme hypothèse de comparaison B1, sous réserve du tableau de mesures réel et d'un échantillon graphique représentatif futur. Garder PNG pour ressources exigeant réellement le sans-perte/alpha et une voie de compatibilité si WebP échoue ; n'adopter AVIF que si la compatibilité et l'avantage net sont observés sur les iPad cibles.
@@ -79,4 +79,25 @@ Le run [V6-Map A2 WebKit #36321385112](https://github.com/christolosier-ship-it/
 
 Le test ciblé distingue maintenant une URL avec query **consultée en ligne**, qui peut légalement recevoir 200 du réseau, d'un alias interdit en CacheStorage. Le premier contrôle exigeait à tort un refus HTTP en ligne : **test trop contraignant**, corrigé sans supprimer la protection de clé exacte. Le test de cache interroge son Worker propriétaire, puisque WebKit simulé renvoie `caches.keys()=[]` dans le contexte page malgré le cache effectivement présent.
 
-**Conclusion de décision au 27/09/2026 : Gate A2 EN ATTENTE matériel.** Hypothèses WebP 512 et moteur natif à valider avec mesures et rendu sur l'appareil cible, pas de choix irrévocable ni production B1.
+**État historique avant réception du retour matériel du 27/09/2026 : Gate A2 EN ATTENTE matériel.** Hypothèses WebP 512 et moteur natif à valider avec mesures et rendu sur l'appareil cible, pas de choix irrévocable ni production B1.
+
+## Retour iPad physique du propriétaire, dimanche 27/09/2026
+
+Capture du laboratoire A2 vers 15 h 42 et confirmation explicite : tous les tests sont concluants et validés. La photo montre directement les **quatre fonds neutres**, la fin du benchmark, et « SW A2 actif : true ; pilote cette page : true ; fonds présents : 4/4 » **en ligne**. Le succès du mode avion/réseau coupé, de l'orientation, des gestes, de la veille/reprise, du fallback et de l'absence de blocage repose sur **l'attestation utilisateur**, pas une trace instrumentée dans cette capture. Aucune mesure native de mémoire RSS, capture offline ni nouvelle version du cache ne sont fournies.
+
+L'extrait JSON visible indique Safari sur iPad, Version/26.4 Safari/604.1, UA « Macintosh » (présentation desktop), écran CSS 810×1080, DPR 2 ; modèle exact et build système non communiqués. Chiffres de la **géométrie neutre seulement**, pas des illustrations B1 :
+
+| Format | 256 px octets | 512 px octets | 1024 px octets | Constat |
+|---|---:|---:|---:|---|
+| PNG | 22 301 | 50 416 | 115 906 | référence sans perte |
+| JPEG q=.82 | 10 247 | 26 230 | 68 642 | encodeur disponible, contrôle visuel ultérieur |
+| WebP q=.82 | non pris en charge | non pris en charge | non pris en charge | **encodeur Canvas seulement**, le décodeur d'images reste à essayer avec un vrai WebP |
+| « AVIF » affiché | 22 301 | 50 416 | 115 906 | octets identiques au PNG à chaque taille et écart RGB nul : résultat suspect, non qualifié |
+
+Décodages médians photographiés, 256/512/1024 px : PNG 4/3/9 ms ; JPEG 2/2/5 ms ; « AVIF » affiché 2/3/8 ms mais **à écarter jusqu'à vérification binaire**. Le banc original vérifiait seulement le type MIME annoncé par le Blob. La correction A2 compare aussi les signatures PNG/JPEG/RIFF-WEBP/ISO-BMFF-AVIF et rejette un PNG annoncé comme AVIF. Une incapacité à encoder WebP via Canvas n'est pas une incapacité à afficher des tuiles WebP préencodées, pratique attendue pour l'Atlas.
+
+### Verdict et décisions techniques limités à A2
+
+**Gate A2 VERTE** sur le périmètre du POC neutre après l'acceptation matérielle explicite du propriétaire. Moteur léger DOM conservé. **512×512 px** comme taille pilote ; PNG garanti comme référence/fallback, JPEG opaque mesuré à comparer sur peinture réelle, WebP à produire hors navigateur et à essayer en **décodage sur iPad**, AVIF non validé. Garder le zoom pilote 1..4 et ses seuils actuels 1,45/2,55, ajustables sur la future géographie commune. Enveloppe de travail ≈32 MiB RGBA de surfaces actives, **non mesurée en RSS** : viewport prioritaire, préchargement voisin borné, éviction des images hors champ, quatre fonds publics de base en cache exact/versionné, détails opportunistes, jamais de donnée MJ dans le cache public. Répéter une vraie transition de révision cache et tester les vrais fonds offline en C3.
+
+Le résultat de la CI A2 demeure le run WebKit simulé final du lot précédent (10/10) et sa limite persistante « Load failed » quand Playwright simule une coupure complète. Le **retour physique** du propriétaire clôt A2, sans transformer cet échec de simulation en succès. Les images finales, leur taux de compression et l'offline définitif ne sont pas acquis. **Aucun B1 lancé ou fusion automatique.**
