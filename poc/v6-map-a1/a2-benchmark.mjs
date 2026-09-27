@@ -4,6 +4,22 @@ const MIME = [["PNG","image/png",undefined],["WebP (q=0.82)","image/webp",0.82],
 const median = values=>{const s=[...values].sort((a,b)=>a-b);return s[Math.floor(s.length/2)];};
 const round=n=>Math.round(n*100)/100;
 const encode=(canvas,mime,q)=>new Promise(resolve=>canvas.toBlob(resolve,mime,q));
+/** The MIME reported by canvas.toBlob() is not proof of the bytes' actual format.
+ * Some Safari builds appear to report AVIF while producing PNG-equivalent output.
+ * Test only the container signatures, not browser support for image decoding. */
+export function hasExpectedSignature(bytes,mime){
+ const ascii=(offset,n)=>String.fromCharCode(...bytes.slice(offset,offset+n));
+ if(mime==="image/png")return bytes.length>=8&&[137,80,78,71,13,10,26,10].every((v,i)=>bytes[i]===v);
+ if(mime==="image/jpeg")return bytes.length>=3&&bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
+ if(mime==="image/webp")return bytes.length>=12&&ascii(0,4)==="RIFF"&&ascii(8,4)==="WEBP";
+ if(mime==="image/avif"){
+  if(bytes.length<16||ascii(4,4)!=="ftyp")return false;
+  if(["avif","avis"].includes(ascii(8,4)))return true;
+  for(let i=16;i+4<=bytes.length;i+=4)if(["avif","avis"].includes(ascii(i,4)))return true;
+  return false;
+ }
+ return false;
+}
 function imageFrom(url){
  return new Promise((resolve,reject)=>{
   const image=new Image();image.onload=async()=>{try{if(typeof image.decode==="function")await image.decode();resolve(image);}catch(error){reject(error);}};image.onerror=()=>reject(Error("Decode impossible"));
@@ -33,6 +49,9 @@ export async function compareNeutral({sizes=[256,512,1024],repeats=3}={}){
     const t0=performance.now();const blob=await encode(source,mime,quality);
     const t1=performance.now();
     if(!blob||blob.type!==mime){supported=false;reason="Encodeur MIME indisponible (repli refusé)";break;}
+    if(!hasExpectedSignature(new Uint8Array(await blob.slice(0,64).arrayBuffer()),mime)){
+      supported=false;reason="Signature binaire incompatible avec le MIME annoncé (repli potentiel)";break;
+    }
     let url;
     try{
       url=URL.createObjectURL(blob);
@@ -58,6 +77,6 @@ export async function compareNeutral({sizes=[256,512,1024],repeats=3}={}){
  return {fixture:"A2 public neutral SVG crop from A1 (NOT final map), no quality claim on painted art",
    device:navigator.userAgent,device_memory_api_navigator_deviceMemory:navigator.deviceMemory??null,
    screen:{w:screen.width,h:screen.height,dpr:devicePixelRatio},
-   generated_at:new Date().toISOString(),repeats,method:"Canvas toBlob + blob URL image load AND image.decode(), per-size PNG reference, sampled mean absolute RGB difference",
+   generated_at:new Date().toISOString(),repeats,method:"Canvas toBlob + MIME and binary signature verification + blob URL image load AND image.decode(), per-size PNG reference, sampled mean absolute RGB difference",
    total_ms:round(performance.now()-started),results};
 }

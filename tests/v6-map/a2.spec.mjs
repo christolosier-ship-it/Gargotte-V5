@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { hasExpectedSignature } from "../../poc/v6-map-a1/a2-benchmark.mjs";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 const origin="/poc/v6-map-a1/";
@@ -9,6 +10,19 @@ async function openA1(page){
  await page.goto(origin+"index.html");
  await expect(page.locator("#viewport")).toHaveAttribute("data-ready","true");
 }
+test("A2 format signatures reject false AVIF/PNG fallback and accept correct headers @webkit",()=>{
+ const png=Uint8Array.from([137,80,78,71,13,10,26,10]);
+ const jpeg=Uint8Array.from([255,216,255,224]);
+ const webp=Uint8Array.from([82,73,70,70,24,0,0,0,87,69,66,80]);
+ const avif=Uint8Array.from([0,0,0,24,102,116,121,112,97,118,105,102,0,0,0,0,109,105,102,49,97,118,105,102]);
+ expect(hasExpectedSignature(png,"image/png")).toBe(true);
+ expect(hasExpectedSignature(jpeg,"image/jpeg")).toBe(true);
+ expect(hasExpectedSignature(webp,"image/webp")).toBe(true);
+ expect(hasExpectedSignature(avif,"image/avif")).toBe(true);
+ expect(hasExpectedSignature(png,"image/avif")).toBe(false);
+ expect(hasExpectedSignature(png,"image/webp")).toBe(false);
+ expect(hasExpectedSignature(avif,"image/png")).toBe(false);
+});
 test("A2 geography has one shared neutral SVG source (not real raster quality) @webkit",()=>{
  expect(manifest.asset_revision).toBe("a1-neutral-1");
  expect(manifest.coordinate_system).toMatchObject({local_width:1024,local_height:512});
