@@ -48,3 +48,25 @@ Worker strictement dans `poc/v6-map-a1/` : `a2-sw.js`, cache `atlas-a2-public-ne
 ## Résultats de CI et résultats matériels
 
 Le workflow A2 est dans `.github/workflows/v6-map-a2.yml`, avec tests WebKit simulés en portrait/paysage et artefacts JSON de mesures. Inscrire ici les numéros de runs, résultats, anomalies de code ou de test et chiffres réellement recueillis **après leur exécution**. Le propriétaire complétera le formulaire séparé `V6-MAP-A2-PROTOCOLE-IPAD.md`. Tant que sa validation n'existe pas : **Gate A2 EN ATTENTE**, y compris avec CI verte.
+
+### Mesures initiales concrètes, CI WebKit Linux, non iPadOS
+
+Les deux profils WebKit portrait/paysage donnent les mêmes tailles encodées sur la **fixture neutre**. Médianes de décodage après `Image.decode()` observées sur le run A2 [#36321255956](https://github.com/christolosier-ship-it/Gargotte-V5/actions/runs/36321255956), **dont le test cache était encore rouge pour un test incorrect d'une variante en ligne** :
+
+| Côté | PNG octets / médiane décodage portrait | WebP q=.82 octets / médiane décodage portrait | JPEG q=.82 octets / médiane décodage portrait | AVIF encodage Canvas |
+|---:|---:|---:|---:|---|
+| 256 | 21 402 / 2 ms | 3 616 / 4 ms | 6 437 / 5 ms | non pris en charge |
+| 512 | 45 617 / 5 ms | 7 732 / 4 ms | 16 019 / 8 ms | non pris en charge |
+| 1024 | 96 478 / 13 ms | 17 552 / 10 ms | 40 980 / 16 ms | non pris en charge |
+
+WebP 512 a un écart RGB moyen échantillonné de 1,16/255 par rapport au raster PNG neutre. Écart **non généralisable** à la lisibilité des arts définitifs. AVIF : un encodeur Canvas absent n'implique pas absence de décodeur sur iPadOS. Échantillonnage faible et environnement CI mutualisé : ces millisecondes ne peuvent servir de SLA.
+
+### Journal d'anomalies et classification
+
+- Run ciblé [#36320681223](https://github.com/christolosier-ship-it/Gargotte-V5/actions/runs/36320681223) : 8 tests sur 10, cache noté 0/4 par le diagnostic de page ; investigation plutôt que relâchement du test.
+- Run [#36320802252](https://github.com/christolosier-ship-it/Gargotte-V5/actions/runs/36320802252) : `caches.keys()` de la page WebKit CI vide malgré Worker actif ; le diagnostic est déplacé dans le **Worker qui possède le cache**, interrogé par `MessageChannel`. Le Worker disposait bien des quatre ressources.
+- Run [#36320933330](https://github.com/christolosier-ship-it/Gargotte-V5/actions/runs/36320933330) : **défaut code avéré**, `PREFIX + REV` produisait `atlas-a2-public-neutral-a2-neutral-r1` tandis que l'interface attendait `atlas-a2-public-neutral-r1` ; REV raccourcie à `r1`, cache cohérent. Rechargement véritablement offline renvoyait une erreur interne WebKit simulé, pas assimilable à une mesure physique.
+- Run [#36321140811](https://github.com/christolosier-ship-it/Gargotte-V5/actions/runs/36321140811) : quatre ressources présentes dans le Worker, `context.setOffline(true)` entraîne `Load failed` côté WebKit CI. Test distingué entre réponse déjà mise en cache sous réseau artificiellement bloqué, simulation offline, et réouverture réelle sur Safari iPad.
+- Run [#36321255956](https://github.com/christolosier-ship-it/Gargotte-V5/actions/runs/36321255956) : les quatre fonds, le shell, le manifest et le fallback ont renvoyé 200 avec routes de ressources neutralisées, mais **assertion de test trop contraignante** : une URL avec query inconnue est autorisée à être récupérée depuis le réseau en ligne (200), elle ne doit simplement jamais aliaser une entrée cache. L'assertion a été corrigée : vérifier absence de clés `?` dans le cache et comportement hors réseau, sans empêcher un fetch réseau légitime.
+
+À compléter après dernier run de la PR : statut et éventuelles limites du simulateur. Un passage de CI ne vaut pas une réouverture hors ligne sur iPad réel. **Gate A2 EN ATTENTE matériel.**
