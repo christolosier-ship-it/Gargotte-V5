@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>A2 | Validation technique neutre iPad</title>
+<link rel="stylesheet" href="./poc.css"><style>
+#bench-results{width:100%;border-collapse:collapse;font-size:.82rem}
+#bench-results th,#bench-results td{padding:.4em .3em;text-align:left;border-bottom:1px solid #aabcb0}
+#bench-results th{position:sticky;top:0;background:#f4f6f3}
+#raw{width:100%;min-height:150px;font-family:ui-monospace,monospace;font-size:.75rem}
+.fixture-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fixture-grid figure{margin:0}.fixture-grid img{width:100%;display:block;border:1px solid #93a69b}.fixture-grid figcaption{font-size:.8rem}
+#bench-status,#offline-status{font-weight:600}
+.scroll-table{overflow:auto}
+</style></head>
+<body><main><header><div><p class="eyebrow">Gargottex · V6-Map A2 · ESSAI TECHNIQUE</p>
+<h1>Validation iPad et formats</h1><p>Uniquement des géométries neutres, jamais les illustrations définitives.</p></div>
+<a href="./index.html">Retour au POC A1</a></header>
+<div class="layout"><section class="panel">
+<h2>1. Comparaison des rasters neutres</h2><p>Variantes 256, 512 et 1024 px : PNG, WebP, JPEG, AVIF si l'encodeur du navigateur l'accepte. Trois répétitions, médiane ; temps et octets sont propres à cet appareil, sans seuil magique.</p>
+<button id="run-benchmark" type="button">Mesurer les formats</button><p id="bench-status" role="status">Mesure non lancée.</p>
+<div class="scroll-table"><table id="bench-results"><thead><tr><th>Tuile</th><th>Format</th><th>Poids</th><th>Enc. ms</th><th>Déc. ms</th><th>Écart RGB</th><th>RGBA brut</th></tr></thead><tbody></tbody></table></div>
+<h2>2. Export brut</h2><p>Copier les résultats ci-dessous dans la fiche matérielle. Aucun envoi réseau de ce rapport.</p><textarea id="raw" readonly aria-label="Résultat JSON de la comparaison"></textarea>
+</section><aside><div class="panel"><h2>3. Essai offline isolé</h2><p>Installer un cache **public et neutre** du seul dossier POC. Il précharge son shell et les quatre fonds basiques ci-dessous, jamais les données Gargottex, V7 ou les médias du Codex.</p>
+<button id="install-offline" type="button">Installer le cache A2</button>
+<button id="check-offline" type="button">Vérifier les quatre fonds</button>
+<p id="offline-status" role="status">Non vérifié.</p>
+<p>Après installation, recharger cette page **en ligne**, puis passer l'iPad hors réseau et recharger. Les quatre fonds doivent rester accessibles. Les détails hors cache peuvent manquer.</p></div>
+<div class="panel"><h2>Quatre fonds neutres de contrôle</h2><div class="fixture-grid">
+<figure><img src="./a2-neutral/ardera.svg" alt="Trame géométrique neutre Ardéra"><figcaption>Ardéra</figcaption></figure>
+<figure><img src="./a2-neutral/trame-astrale.svg" alt="Trame géométrique neutre astrale"><figcaption>Trame astrale</figcaption></figure>
+<figure><img src="./a2-neutral/hautes-fermentations.svg" alt="Trame géométrique neutre divine"><figcaption>Hautes Fermentations</figcaption></figure>
+<figure><img src="./a2-neutral/royaume-soifs-eteintes.svg" alt="Trame géométrique neutre infernale"><figcaption>Royaume des Soifs Éteintes</figcaption></figure>
+</div></div></aside></div><footer>A2 : l'essai WebKit simulé et ces fonds neutres ne suffisent pas à valider la Gate sur un iPad physique.</footer>
+<script type="module" src="./a2-validation.mjs"></script></main></body></html>
