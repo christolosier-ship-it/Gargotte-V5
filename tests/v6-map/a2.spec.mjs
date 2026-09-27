@@ -81,9 +81,10 @@ test("A2 scoped public cache keeps four neutral maps offline and rejects query a
  },maps);
  for(const v of controlled.bases){expect(v.status).toBe(200);expect(v.length).toBeGreaterThan(0);}
  expect(controlled.fallback.status).toBe(200);expect(controlled.shell.status).toBe(200);
- expect(controlled.manifest.status).toBe(200);expect(controlled.variant.status).not.toBe(200);
+ expect(controlled.manifest.status).toBe(200); // Online unknown query can fetch independently; must NEVER alias a cached variant.
  // Direct Worker evidence, independent of WebKit's occasionally empty page-side caches enumeration.
  expect(cacheDebug.cache).toBe("atlas-a2-public-neutral-r1");
+ expect(cacheDebug.stored.every(url=>!url.includes("?"))).toBe(true); // No variant stored under the base URL.
  expect(cacheDebug.keys.filter(k=>k.startsWith("atlas-a2-public-neutral-"))).toEqual(["atlas-a2-public-neutral-r1"]);
  await context.setOffline(true);
  const fullyOffline=await page.evaluate(async ids=>{
