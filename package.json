@@ -6,7 +6,8 @@
     "test:v6fast:fast": "playwright test --config=playwright.fast.config.mjs",
     "test:v6fast:full": "playwright test --config=playwright.config.mjs",
     "test:v6fast:chromium": "playwright test --config=playwright.config.mjs --project=chromium",
-    "test:v6fast:webkit": "playwright test --config=playwright.config.mjs --project=webkit-ipad"
+    "test:v6fast:webkit": "playwright test --config=playwright.config.mjs --project=webkit-ipad",
+    "test:v6map:a1": "playwright test --config=playwright.a1.config.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10.2",
