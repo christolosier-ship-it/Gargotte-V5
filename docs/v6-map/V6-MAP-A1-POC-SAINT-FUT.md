@@ -22,3 +22,7 @@ Zoom/déplacement fiables ; fonds toujours alignés ; un nom masqué ne reste pa
 
 ## Fin de session
 PR autonome limitée au POC, statut précis, captures/observations locales si disponibles ; A2 reste requis pour tout arbitrage définitif de résolution/performance.
+
+## Suivi de réalisation du lot A1 (branche v6-map/a1-poc-saint-fut)
+
+Statut de construction : **POC créé, Gate A1 en attente des preuves Fast CI**. Notice : [A1-NOTICE-POC.md](A1-NOTICE-POC.md). Jeu neutre local accessible uniquement par URL directe `poc/v6-map-a1/index.html`, sans intégrer la navigation normale. Pas de changement IndexedDB, médias métier, service-worker.js ni V7 ; pas d'illustration finale. Verdict définitif et tests observés consignés après GitHub Actions, sans anticipation A2/B1.
