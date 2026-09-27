@@ -1,5 +1,6 @@
 # V6-Map A0 — Contrat technique, géographique et sécurité
-Statut initial : À FAIRE. Lot documentaire autonome. Référence impérative : V6-MAP-MAITRE.md et AGENTS.md.
+Statut initial : À FAIRE. Lot documentaire autonome.
+Statut au 27/09/2026 : A0 EXÉCUTÉ, Gate VERTE documentaire (réserves explicites ci-dessous). Référence impérative : V6-MAP-MAITRE.md et AGENTS.md.
 
 ## Objectif
 Transformer les décisions du maître en contrats vérifiables avant toute implémentation ou image finale. Ne pas refaire le lore, ne pas déployer de ressource et ne pas créer de table à ce stade.
@@ -23,3 +24,20 @@ Vérifier l'existence du registre complet (7 continents, 42 régions, 7 merveill
 
 ## Reprise et limites
 Laisser une conclusion Gate/écarts dans le suivi documentaire ; ne pas lancer A1 sans validation A0. Ne pas modifier AGENTS.md ou un autre document maître sans besoin motivé et borné.
+## Compte rendu d'exécution / Gate A0 — 27/09/2026
+
+**Branche dédiée** : docs/v6-map-a0-contrat (cible V5.3). **Livrable** : [V6-MAP-A0-ANNEXE-CONTRATS.md](V6-MAP-A0-ANNEXE-CONTRATS.md). Aucun changement du maître n'était requis : aucune décision durable nouvelle sur format, moteur, stockage, campagnes ou lore n'a été prise.
+
+**Pré-check** : AGENTS.md, maître V6-Map, maître V7, cahiers V7 Lot 0/1 et progression Git, idb.js, app.js, MediaRepository, service-worker.js, tests Fast/Full et seed examinés. Base V6 locale DB_VERSION=2, neuf familles métier dont media_assets, plus meta/logs ; aucun store Atlas/campagne constaté. V7 présent sous forme de documentation dans l'arbre examiné ; aucun backend réel ni rôle de campagne présumé. Comparaison de la PR V6-Map de cadrage #54 et absence d'autre implémentation Atlas dans la branche de départ.
+
+**Contrôle statique du registre en annexe** :
+- 4 cartes, 7 continents, 42 régions, 4 océans et 5 mers, 7 merveilles, 15 placements : OK ;
+- 84 identifiants Atlas déclarés, 84 distincts : OK ; IDs indépendants des libellés ; géographie et coordonnées provisoires indiquées ;
+- 0 portail inscrit ou déduit : OK ; toutes extrémités et positions de portails réservées ;
+- les quinze placements restent V1 PROVISOIRES, les IDs dungeons de production non supposés ; D1/seed divergent, seed à deux donjons ≠ base de production : écart tracé ;
+- modèle de liens entity_type + entity_id, co-enregistrement du fond/surcouches, géographie mère, manifest et cache séparé : formalisés sans implémentation ;
+- politique de lecture et recherche filtrées côté serveur, découverte MJ par campagne, absence de fuite HTML/JSON/JS/URL/cache/tuile : formalisée ; campagne et rôles V7 réels à contrôler avant C2 ;
+- aucune décision implicite sur tuiles, moteur, format, hébergement, contour, portail, position finale ou schéma D1 : OK, points réservés listés ;
+- aucun test navigateur / iPad / runtime requis ou revendiqué pour ce lot documentaire : les mesures réelles relèvent de A1/A2.
+
+**Gate A0 : VERTE (documentaire)**. Les écarts restants sont explicitement réservés aux lots concernés et ne se transforment pas en données canoniques par cette Gate. Le respect du périmètre est constaté par le diff GitHub : annexe et mise à jour du présent cahier uniquement ; aucune mutation du runtime, service worker, tests, V7, IndexedDB ou Blobs. Pas de déploiement, pas de fusion automatique. **ARRÊT à la Gate A0 : ne pas exécuter A1 dans ce lot.**
