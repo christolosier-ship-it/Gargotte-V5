@@ -22,3 +22,15 @@ Choix explicites basés sur essais, navigation acceptable sur l'iPad cible, fond
 
 ## Hors périmètre
 Pas de production d'Ardéra, pas de campagne/portail, pas de migration backend ni nettoyage IndexedDB.
+## Suivi d'exécution, 27/09/2026
+
+Branche dédiée `v6-map/a2-validation-ipad`, depuis V5.3 après fusion de #56. **Statut Gate A2 : EN ATTENTE de validation réelle de l'iPad cible**, même si les contrôles automatisés passent.
+
+Livrables : [rapport comparatif et limites](V6-MAP-A2-RAPPORT-COMPARATIF.md), [protocole matériel reproductible](V6-MAP-A2-PROTOCOLE-IPAD.md), laboratoire indépendant `poc/v6-map-a1/a2-validation.html`, cache public neutre strictement scoped et 4 fonds tests, tests ciblés WebKit portrait/paysage via CI spécifique. Les formats/tailles et les budgets restent des hypothèses de travail jusqu'au retour physique. Aucun visuel final, aucun B1, aucune modification au Worker global, IndexedDB, médias ou V7.
+
+
+### Preuves automatisées et réserve du verdict
+
+- Run A2 WebKit portrait/paysage [#36321385112](https://github.com/christolosier-ship-it/Gargotte-V5/actions/runs/36321385112) : **10/10 tests réussis** sur le commit de code `5772ba9` ; quatre bases disponibles dans le cache du Worker et servies avec ressources réseau neutralisées, fallback, zoom/pan, géographie stable et mesures neutres. **`context.setOffline(true)` sous WebKit Linux reste non concluant** (`Load failed`) : il n'est pas noté « essai offline iPad réussi ».
+- Historique de corrections et classification dans le rapport : clé de cache doublement préfixée = code corrigé ; requête avec query en ligne pouvant retourner 200 = assertion initiale trop stricte, ajustée pour contrôler la **clé cache exacte** ; inspection cache dans le contexte du Worker = diagnostic adapté au simulateur.
+- L'ouverture/rechargement du fond général hors ligne, la veille/reprise, le comportement mémoire Safari réel et le contrôle de publication HTTPS du laboratoire demeurent à accomplir suivant `V6-MAP-A2-PROTOCOLE-IPAD.md`. **Gate EN ATTENTE**, sans autorisation automatique pour B1.

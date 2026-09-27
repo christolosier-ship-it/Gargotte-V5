@@ -1,0 +1,50 @@
+name: V6-Map A2 WebKit iPad emulation
+
+on:
+  pull_request:
+    branches: [V5.3]
+    paths:
+      - "poc/v6-map-a1/**"
+      - "tests/v6-map/a2.spec.mjs"
+      - "playwright.a2.config.mjs"
+      - ".github/workflows/v6-map-a2.yml"
+      - "package.json"
+  workflow_dispatch:
+
+concurrency:
+  group: v6map-a2-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  webkit-a2:
+    name: Targeted WebKit iPad simulation (not physical iPad)
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+      - name: Check isolated A2 scripts and neutral A1 source
+        run: |
+          node --check poc/v6-map-a1/a2-sw.js
+          node --check poc/v6-map-a1/a2-validation.mjs
+          node --check poc/v6-map-a1/a2-benchmark.mjs
+          node poc/v6-map-a1/generate-tiles.mjs --check
+      - name: Run targeted portrait/landscape tests and neutral format comparison
+        run: npm run test:v6map:a2
+      - name: Upload neutral measurements and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v6map-a2-neutral-webkit-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
