@@ -53,7 +53,7 @@ test("Two-pointer zoom, pan, clamps, and Chope reset retain normalized location"
 });
 test("Absent detail tile keeps fallback, and levels are evicted when leaving zoom",async({page})=>{
  await page.route("**/poc/v6-map-a1/tiles/z2/2-1.svg",route=>route.abort());await openPoc(page);
- for(let i=0;i<4;i++)await page.getByRole("button",{name:"Zoomer"}).click();
+ for(let i=0;i<4;i++)await page.locator("#zoom-in").click();
  await expect.poll(async()=> (await diagnostic(page)).failed).toBeGreaterThan(0);
  const high=await diagnostic(page);expect(high.lowerFallbackReady).toBe(true);
  expect(high.active).toBeLessThanOrEqual(11);expect(high.peak).toBeLessThanOrEqual(11);
