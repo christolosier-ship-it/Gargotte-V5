@@ -22,3 +22,8 @@ Choix explicites basés sur essais, navigation acceptable sur l'iPad cible, fond
 
 ## Hors périmètre
 Pas de production d'Ardéra, pas de campagne/portail, pas de migration backend ni nettoyage IndexedDB.
+## Suivi d'exécution, 27/09/2026
+
+Branche dédiée `v6-map/a2-validation-ipad`, depuis V5.3 après fusion de #56. **Statut Gate A2 : EN ATTENTE de validation réelle de l'iPad cible**, même si les contrôles automatisés passent.
+
+Livrables : [rapport comparatif et limites](V6-MAP-A2-RAPPORT-COMPARATIF.md), [protocole matériel reproductible](V6-MAP-A2-PROTOCOLE-IPAD.md), laboratoire indépendant `poc/v6-map-a1/a2-validation.html`, cache public neutre strictement scoped et 4 fonds tests, tests ciblés WebKit portrait/paysage via CI spécifique. Les formats/tailles et les budgets restent des hypothèses de travail jusqu'au retour physique. Aucun visuel final, aucun B1, aucune modification au Worker global, IndexedDB, médias ou V7.
