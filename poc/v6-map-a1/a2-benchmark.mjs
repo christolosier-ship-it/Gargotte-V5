@@ -6,7 +6,7 @@ const round=n=>Math.round(n*100)/100;
 const encode=(canvas,mime,q)=>new Promise(resolve=>canvas.toBlob(resolve,mime,q));
 function imageFrom(url){
  return new Promise((resolve,reject)=>{
-  const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(Error("Decode impossible"));
+  const image=new Image();image.onload=async()=>{try{if(typeof image.decode==="function")await image.decode();resolve(image);}catch(error){reject(error);}};image.onerror=()=>reject(Error("Decode impossible"));
   image.src=url;
  });
 }
@@ -58,6 +58,6 @@ export async function compareNeutral({sizes=[256,512,1024],repeats=3}={}){
  return {fixture:"A2 public neutral SVG crop from A1 (NOT final map), no quality claim on painted art",
    device:navigator.userAgent,device_memory_api_navigator_deviceMemory:navigator.deviceMemory??null,
    screen:{w:screen.width,h:screen.height,dpr:devicePixelRatio},
-   generated_at:new Date().toISOString(),repeats,method:"Canvas toBlob + blob URL Image load, per-size PNG reference, sampled mean absolute RGB difference",
+   generated_at:new Date().toISOString(),repeats,method:"Canvas toBlob + blob URL image load AND image.decode(), per-size PNG reference, sampled mean absolute RGB difference",
    total_ms:round(performance.now()-started),results};
 }

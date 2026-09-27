@@ -1,6 +1,6 @@
 /* A2 isolated public/neutral cache experiment; scoped to poc/v6-map-a1/ only.
  * Deliberately no ignoreSearch, no root app shell, no personal/Atlas secrets. */
-const REV = "a2-neutral-r1";
+const REV = "r1";
 const PREFIX = "atlas-a2-public-neutral-";
 const CACHE = PREFIX + REV;
 const ROOT = new URL("./", self.registration.scope);
