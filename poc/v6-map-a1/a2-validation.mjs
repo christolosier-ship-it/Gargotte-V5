@@ -22,11 +22,15 @@ document.querySelector("#run-benchmark").addEventListener("click",async()=>{
 async function cacheInfo(){
  const registrations=await navigator.serviceWorker.getRegistrations();
  const own=registrations.find(r=>r.scope===new URL("./",location.href).href);
- const key="atlas-a2-public-neutral-r1";
- const keys=await caches.keys();
- const cache=keys.includes(key)?await caches.open(key):null;
- const checks=await Promise.all(names.map(async n=>Boolean(cache && await cache.match(new URL("./a2-neutral/"+n+".svg",location.href).href))));
- return {scope:own?.scope||null,active:Boolean(own?.active),controller:navigator.serviceWorker.controller?.scriptURL||null,cache:key,all:checks.every(Boolean),checks};
+ const worker=own?.active;
+ if(!worker)return {scope:own?.scope||null,active:false,controller:navigator.serviceWorker.controller?.scriptURL||null,all:false,checks:[false,false,false,false]};
+ const status=await new Promise((resolve,reject)=>{
+  const channel=new MessageChannel();
+  const timeout=setTimeout(()=>reject(Error("Worker A2 ne répond pas au diagnostic cache")),7000);
+  channel.port1.onmessage=event=>{clearTimeout(timeout);channel.port1.close();if(event.data?.error)reject(Error(event.data.error));else resolve(event.data);};
+  worker.postMessage({type:"A2_CACHE_STATUS"},[channel.port2]);
+ });
+ return {...status,scope:own.scope,active:true,controller:navigator.serviceWorker.controller?.scriptURL||null};
 }
 async function showCache(){
  try{const d=await cacheInfo();offline.textContent="SW A2 actif : "+d.active+" ; pilote cette page : "+Boolean(d.controller?.endsWith("/a2-sw.js"))+" ; fonds présents : "+d.checks.filter(Boolean).length+"/4"+(navigator.onLine?" ; navigateur annonce en ligne":" ; navigateur annonce hors ligne");return d;}

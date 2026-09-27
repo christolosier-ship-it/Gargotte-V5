@@ -59,7 +59,7 @@ test("A2 absent detail preserves lower fallback and releases stale tiles @webkit
 test("A2 scoped public cache keeps four neutral maps offline and rejects query alias @webkit",async({page,context})=>{
  await page.goto(origin+"a2-validation.html");
  await page.locator("#install-offline").click();
- const cacheDebug=await page.evaluate(async()=>{const keys=await caches.keys();const c=await caches.open("atlas-a2-public-neutral-r1");return {keys,stored:(await c.keys()).map(r=>r.url),expected:new URL("./a2-neutral/ardera.svg",location.href).href};});console.log("A2 CACHE DEBUG "+JSON.stringify(cacheDebug));
+ const cacheDebug=await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration("./");return new Promise((resolve,reject)=>{const ch=new MessageChannel();ch.port1.onmessage=e=>resolve(e.data);r.active.postMessage({type:"A2_CACHE_STATUS"},[ch.port2]);});});console.log("A2 SW CACHE DEBUG "+JSON.stringify(cacheDebug));expect(cacheDebug.all).toBe(true);
  await expect(page.locator("#offline-status")).toContainText("4/4");
  const scope=await page.evaluate(async()=> {
   const r=await navigator.serviceWorker.getRegistration("./");
@@ -76,13 +76,15 @@ test("A2 scoped public cache keeps four neutral maps offline and rejects query a
   for(const id of ids){const r=await fetch("./a2-neutral/"+id+".svg");values.push({status:r.status,length:(await r.text()).length});}
   let variantStatus=null;
   try{const r=await fetch("./a2-neutral/ardera.svg?rev=NEVER-CACHED");variantStatus=r.status;}catch{variantStatus="network-failed";}
-  return {values,variantStatus,keys:await caches.keys()};
+  const r=await navigator.serviceWorker.getRegistration("./");
+  const workerStatus=await new Promise(resolve=>{const ch=new MessageChannel();ch.port1.onmessage=e=>resolve(e.data);r.active.postMessage({type:"A2_CACHE_STATUS"},[ch.port2]);});
+  return {values,variantStatus,workerStatus};
  },maps);
  expect(response.values).toHaveLength(4);
  for(const v of response.values){expect(v.status).toBe(200);expect(v.length).toBeGreaterThan(0);}
  expect(response.variantStatus).not.toBe(200);
- expect(response.keys.some(k=>k==="atlas-a2-public-neutral-r1")).toBe(true);
- expect(response.keys.filter(k=>k.startsWith("atlas-a2-public-neutral-"))).toEqual(["atlas-a2-public-neutral-r1"]);
+ expect(response.workerStatus.cache).toBe("atlas-a2-public-neutral-r1");expect(response.workerStatus.all).toBe(true);
+ expect(response.workerStatus.keys.filter(k=>k.startsWith("atlas-a2-public-neutral-"))).toEqual(["atlas-a2-public-neutral-r1"]);
  await page.goto(origin+"index.html");
  await expect(page.locator("#viewport")).toHaveAttribute("data-ready","true");
  expect((await diag(page)).lowerFallbackReady).toBe(true);

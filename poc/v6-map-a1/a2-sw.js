@@ -56,3 +56,17 @@ self.addEventListener("fetch",event=>{
    }catch{return unavailable();}
  })());
 });
+
+/* In WebKit automation, page CacheStorage enumeration can differ from SW context.
+   Report from the actual cache owner. Offline fetch is still the decisive proof. */
+self.addEventListener("message",event=>{
+ if(event.data?.type!=="A2_CACHE_STATUS"||!event.ports?.[0])return;
+ const port=event.ports[0];
+ event.waitUntil((async()=>{
+  const keys=await caches.keys();const cache=await caches.open(CACHE);
+  const base=PUBLIC.filter(u=>u.includes("/a2-neutral/"));
+  const checks=await Promise.all(base.map(async u=>Boolean(await cache.match(u))));
+  port.postMessage({cache:CACHE,keys,base,checks,all:checks.length===4&&checks.every(Boolean),
+   stored:(await cache.keys()).map(r=>r.url)});
+ })().catch(error=>port.postMessage({error:String(error)})));
+});
