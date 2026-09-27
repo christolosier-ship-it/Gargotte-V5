@@ -1,0 +1,109 @@
+# Gargottex V6-Map — Atlas de l'Entrevers
+Statut : DOCUMENT MAÎTRE DE CONCEPTION. Chantier documentaire ouvert ; aucun lot d'implémentation n'est réalisé à la création de ce fichier.
+Références d'exécution : AGENTS.md, ce maître, puis uniquement le cahier du lot concerné. V6-Map est un chantier autonome, distinct de V6-WHAOU (archivé) et de V7 (migration backend Cloudflare).
+Source : décisions explicites de la conception collaborative de l'Atlas. Distinguer systématiquement décision validée, proposition provisoire et choix encore ouvert.
+
+## 1. Finalité, périmètre et interdictions
+Créer dans Gargottex un Atlas de consultation fantasy peint sur parchemin, monumental et fluide sur iPad, lié au Codex. Il comprend quatre cartes indépendantes : le monde matériel Ardéra, la Trame astrale, les Hautes Fermentations (dimension divine) et le Royaume des Soifs Éteintes (dimension infernale). Les familles « Plans divins », « Plans infernaux », futurs Plans élémentaires et dimensions inconnues ne sont pas en elles-mêmes des cartes uniques. Une nouvelle réalité recevra sa propre carte.
+Pas d'éditeur de carte, pas de simulation de déplacements, pas de système de progression ajouté au gameplay, pas de génération de portails sans lore, pas de réécriture des fiches existantes. Les lieux et liens ouvrent les fiches Codex existantes. La Chope Qui Colle est un repère central d'aventure, pas un nexus cosmologique.
+Les ressources cartographiques sont distinctes des médias métier en cours de migration V7. Aucun lot V6-Map ne doit réinitialiser IndexedDB, supprimer des Blobs historiques, modifier la migration V7 ni supposer une base vide. Conserver les IDs/relations/champs existants et protéger le comportement actuel des médias. Aucune production graphique finale avant Gate du POC.
+
+## 2. Statuts et conventions
+VALIDÉ = approuvé pendant la conception. V1 PROVISOIRE = répartition ou emplacement retenu comme hypothèse, à vérifier au lore et aux fonds définitifs. RÉSERVÉ = non inventé, décision future.
+Grille de composition normalisée X et Y sur 0..100 pour chaque carte, indépendante des autres ; X/Y expriment la fraction largeur/hauteur, pas des kilomètres ni un repère géodésique. Pour Ardéra, rapport visuel global 2:1, nord en haut. Les rectangles continentaux et centres indiqués sont des repères indicatifs, pas des contours définitifs. La Trame n'a pas de nord physique.
+Objectif artistique : environ 65 % océans et 35 % terres, avec petite marge. Vérifier sur les silhouettes finales, pas sur les boîtes englobantes. Sept continents relativement rapprochés, avec des mers et grandes étendues océaniques.
+
+## 3. Cosmologie validée
+Univers : **L'Entrevers** ; monde matériel : **Ardéra** ; réalité intermédiaire reliant les dimensions : **la Trame astrale**. Des portails directs entre deux dimensions sont également possibles ; le passage par la Trame n'est pas obligatoire.
+Une liaison cosmologique, un passage astral localisé, un portail direct, une anomalie, une résonance et une merveille naturelle sont des notions différentes. Ne jamais déduire qu'une merveille est un portail. Les Cimes Suspendues résultent d'une ancienne anomalie liée à la Trame, sans constituer automatiquement un accès.
+Seuls les passages confirmés par leur lore et leurs deux extrémités auront des marqueurs de portail. TOUS les emplacements de portails restent réservés pour le moment.
+Quatre cartes consultables dès le départ, sans signifier que les personnages peuvent physiquement s'y rendre. La carte d'une dimension n'est pas l'ensemble de sa famille divine/infernale.
+Les noms de travail **Hautes Fermentations** et **Royaume des Soifs Éteintes** sont validés comme bases géographiques ; ne pas les déclarer noms cosmologiques définitifs au-delà de ce statut.
+
+## 4. Ardéra : océans, mers, continents et régions
+Quatre noms d'océans VALIDÉS : Océan des Longs Silences (grand bassin extérieur visible de part et d'autre du cadre, bords communicants), Océan d'Outrebrume (nord-ouest), Océan des Mille Voiles (bassin oriental entre les continents centraux), Océan Austral (sud). Les bassins communiquent naturellement, sans lignes de séparation physiques.
+Mers VALIDÉES : Mer Boréale (Boréclat / Valdorie / Ferrécime), Mer des Trois Couronnes (Valdorie / Sahaldune / Sylvaronde : grande mer **semi-fermée avec deux passages océaniques**, dont un passage occidental entre Valdorie et Sahaldune et un passage sud-oriental vers le détroit Sahaldune / Sylvaronde), Mer des Éclats (Ferrécime / Pelagrève). À Pelagrève, **Mer des Lanternes** (la plus grande et profonde) et **Mer aux Cent Passes** (plus ramifiée et insulaire), deux mers intérieures reliées entre elles et à l'océan par des détroits. Vérifier précisément la continuité des côtes lors de la géographie de référence, sans inventer de pont terrestre.
+Sept continents et leurs SIX régions VALIDÉS :
+- **Valdorie**, X12–43/Y26–57, terres tempérées variées, trois péninsules méridionales, deux grands bassins versants : Les Côtes Grises (O/NO), Les Hautes Marches (N/centre), La Sylve des Anciens (E/NE), Les Plaines de Valdor (centre/sud), Les Bassins de l'Est (E/SE), Les Terres de Cendre (SO). Merveille **Arbres-Colosses** dans la Sylve des Anciens ; origine non définie. Toponymie secondaire VALIDÉE : fleuve oriental **l'Avelorne** (Hautes Marches → Bassins de l'Est → Mer des Trois Couronnes), fleuve occidental **la Rivombre** (vers Côtes Grises), **ruisseau des Saules** (près de Saint-Fût, affluent du bassin de l'Avelorne), **lac d'Ysambre** (est), **Collines de la Vieille Lande** (près du village), **Monts d'Escarbelle** (reliefs anciens de Terres de Cendre). Ne pas réintroduire anciens noms provisoires Argenne/Ornebrune/Petite Aulne/Lac des Miroirs/Collines de Valdor/Monts de Cendre.
+- **Boréclat**, X25–59/Y4–20 : Les Fjords des Brisants (S), La Grande Taïga (SO), Les Crêtes du Haut-Givre (centre O-E), Le Plateau des Blancs Silences (N), Le Pays des Sept Lacs (centre/sud), Les Marches d'Écume (E). Trois réseaux : Sept Lacs vers fjords méridionaux ; cours d'eau occidentaux via taïga ; ruissellements polaires saisonniers. Petite zone géothermique à l'ouest, quatre fjords méridionaux, golfe occidental et îles à l'est. **Aiguilles Boréales**, au sein des Crêtes vers X43/Y11 ; origine volontairement mystérieuse.
+- **Sahaldune**, X11–36/Y61–82 : Les Côtes d'Ambre (N), Les Monts Fendus (O), La Grande Dépression (centre), Les Vallées des Deux Fleuves (NE), Les Savanes d'Olvara (E), Le Littoral des Moussons (S). Quatre bassins : deux fleuves pérennes au nord débouchant sur Mer des Trois Couronnes, cours d'eau occidentaux, endoréisme saisonnier de la Grande Dépression, drainage méridional. **Couronne de Sel** vers X23/Y71 : ancienne anomalie magique ayant provoqué le retrait de la mer intérieure. Ne pas raccorder artificiellement le bassin endoréique à l'océan.
+- **Sylvaronde**, X45–67/Y54–77 : Le Delta des Mille Bras (NO), Le Bassin des Grandes Eaux (centre/O), La Forêt des Hautes Couronnes (centre/N), Les Monts des Orages (E), Les Hautes Brumes (NE), Les Marches du Sud (S). Quatre systèmes : grand bassin vers delta NO, affluents et lacs des Hautes Brumes, bassins côtiers orientaux et bassins méridionaux. **Canopée-Monde** vers X54/Y60 : merveille biologique et magique propre à Ardéra, forêt elle-même verticale ; différente des quelques Arbres-Colosses de Valdorie.
+- **Ferrécime**, X56–76/Y22–52 : Les Portes du Givre (N), L'Échine d'Ardéra (axe central N-S), Les Hauts Plateaux de Silex (O), Les Vallées des Mille Cascades (E), Les Hautes Voûtes (centre/E), Les Marches de Braise (SE). Quatre bassins : ouest, est, lacs/bassins internes d'altitude et sud. **Cimes Suspendues** vers X68/Y37 dans les Hautes Voûtes : ancienne anomalie liée à la Trame astrale. Géographie côtière abrupte à l'est, volcans au SE.
+- **Pelagrève**, X81–95/Y34–66 : Les Côtes des Éclats (NO), Les Mers Encloses (centre), La Dorsale des Fournaises (NE), Les Côtes des Alizés (E), La Ceinture des Lagons (SE), Les Marches des Marées (SO). Croissant continental fracturé, péninsules, archipels et deux mers intérieures validées. Quatre bassins : mers encloses, ouest, est et sud ; lacs centraux et petits réseaux insulaires. **Labyrinthe Corallien** vers X91/Y60 : merveille biologique et magique propre à Ardéra.
+- **Austrébrume**, X43–75/Y84–96 : Les Fjords de Nacrelune (NO), Les Bois des Dernières Feuilles (N), Les Monts du Voile (centre O-E), Le Bassin des Lacs Sombres (NE), Les Landes du Grand Hiver (centre/S), La Couronne Blanche (extrême S). Quatre bassins : fjords ouest, Lacs Sombres vers baie NE, vallées forestières nord, bassins polaires. **Cascades de Brume** vers X59/Y89 : merveille dont l'origine reste totalement mystérieuse, phénomène atmosphérique distinct des cascades d'eau. Formations secondaires PROPOSÉES uniquement : Falaises de Nacrelune, Plateaux du Dernier Vent.
+Les civilisations sont présentes sur TOUS les continents ; conserver de grandes régions sauvages et anonymes. Reliefs, hydrographie, climats et archipels physiquement plausibles dans un univers fantasy ; ne pas imposer de dimensions planétaires réelles.
+
+### 4.1 Saint-Fût-le-Petit et la Chope
+**Saint-Fût-le-Petit** est un hameau rural banal et isolé de Valdorie, près des Collines de la Vieille Lande, de la Sylve des Anciens, du ruisseau des Saules, de terres agricoles et d'un vieux pont ; centre indicatif X30/Y44. **La Chope Qui Colle** est l'auberge centrale des aventures, tenue par Berthold « Deux-Doigts » ; elle devient un hub par les péripéties du jeu, sans rôle cosmologique privilégié. Marqueur spécial chope, toujours prioritaire à faible zoom. Première ouverture de l'Atlas centrée sur la Chope ; ouvertures suivantes restaurent carte/position/zoom précédents. Commande permanente « Revenir à la Chope ».
+
+## 5. Les trois cartes dimensionnelles : géographie VALIDÉE, coordonnées PROPOSÉES
+Chaque carte possède son propre référentiel 0..100 ; ses positions ne correspondent pas à celles d'Ardéra.
+**Trame astrale**, géographie d'îles flottantes, courants et anomalies (pas un champ d'étoiles générique), cinq territoires VALIDÉS : Archipels d'Éther (centre indicatif 24/34), Courants de Filaments (traversent la carte, ossature graphique mais non présumés praticables), Nœud des Convergences (51/47, pas nécessairement portail universel), Voiles Sans Rive (76/29), Déchirure Immobile (77/73, anomalie, PAS portail automatique). Carte sans nord physique ; positions indiquent des relations cartographiques, pas des distances.
+**Hautes Fermentations**, dimension divine (nom de travail) : Les Hauts Plateaux (29/32), La Mer des Nuages (49/50), Les Jardins Suspendus (25/69), Les Terrasses des Brasseurs (72/55) ; D7 La Brasserie Céleste dans les Terrasses, point indicatif 74/57. Toute la dimension ne doit pas être une fabrique de bière.
+**Royaume des Soifs Éteintes**, dimension infernale (nom de travail) : Les Plaines de Cendre (30/30), Les Fosses du Silence (27/67), Les Fleuves Tarissables (49/49), La Citadelle de l'Abstinence (73/51) ; D8 L'Enfer de la Sobriété Éternelle associé à la Citadelle, point indicatif 75/53. Distinct du désert naturel de Sahaldune.
+Les Plans élémentaires et dimensions inconnues sont réservés à l'extension, non requis pour la V1.
+
+## 6. Répartition des quinze donjons : V1 PROVISOIRE APPROUVÉE
+La répartition ci-dessous est une **base de travail validée**, pas la vérification du lore ni les coordonnées définitives. Ne pas en faire des faits canoniques sans validation spécifique. Six emplacements de Valdorie étaient antérieurement acceptés provisoirement ; tous les autres restent des pistes V1.
+| ID | Donjon | Carte / emplacement de travail | Historique |
+|---|---|---|---|
+| D1 | Le Château Bastognac | Valdorie, Collines de la Vieille Lande, NO du village | Ancien accord provisoire |
+| D2 | La Forêt en Chantier | Valdorie, lisière Sylve des Anciens | Ancien accord provisoire |
+| D3 | Hôtel Zombifornia | Pelagrève, Côtes des Alizés | Nouvelle piste V1 |
+| D4 | Le Cabaret des Joyeuses | Valdorie, grande ville des Plaines de Valdor | Ancien accord provisoire |
+| D5 | Le Sanctuaire du Houblon Noir | Valdorie, contreforts des Hautes Marches | Ancien accord provisoire |
+| D6 | Le Panthéon des Fermentations Interdites | Valdorie, ancien site religieux des Hautes Marches | Nouvelle piste V1 |
+| D7 | La Brasserie Céleste | Hautes Fermentations, Terrasses des Brasseurs | Dimension envisagée V1 |
+| D8 | L'Enfer de la Sobriété Éternelle | Royaume des Soifs Éteintes, Citadelle de l'Abstinence | Dimension envisagée V1 |
+| D9 | Le Bastion du Sauciflard | Valdorie, région frontalière des Hautes Marches | Ancien accord provisoire |
+| D10 | Les Thermes de la Bonne Trempette | Pelagrève, Dorsale des Fournaises | Nouvelle piste V1 |
+| D11 | La Ruche Royale | Valdorie, zone boisée/fleurie à l'est des Plaines | Ancien accord provisoire |
+| D12 | Le Monastère des Dénaturées | Ferrécime, vallée reculée de l'Échine d'Ardéra | Nouvelle piste V1 |
+| D13 | Les Marécages Infectés | Sylvaronde, Delta des Mille Bras | Nouvelle piste V1 |
+| D14 | La Citadelle des Tonneaux Perchés | Ferrécime, Hautes Voûtes | Nouvelle piste V1 |
+| D15 | Le Gynécotron du Gnome Tordu | Valdorie, complexe souterrain des Hautes Marches, lien éventuel D5 à vérifier | Nouvelle piste V1 |
+Totaux : Valdorie 8 ; Pelagrève 2 ; Ferrécime 2 ; Sylvaronde 1 ; dimension divine 1 ; infernale 1. Boréclat, Sahaldune et Austrébrume sans implantation dans la V1, mais possibilité ultérieure d'en recevoir. D5 et D15 restent deux marqueurs distincts. L'accès réel aux dimensions, les portails et les liens narratifs exacts exigent lecture et validation du lore ; ne pas les inventer.
+
+## 7. DA cartographique VALIDÉE
+Fantasy tabletop Gargotte, peinture et encrage de parchemin médiéval, chaleureux, coloré et détaillé ; monumental, légèrement absurde, jamais GPS. Carte mondiale respirante ; foisonnement croissant avec zoom. Grandes formations fantastiques intégrées et lisibles à l'échelle mondiale ; reliefs, cours d'eau et littoraux cohérents à toutes les résolutions. Ornements non interactifs (roses des vents, navires, monstres marins, enluminures) peints dans le fond ; commandes indépendantes.
+Ambiances : Ardéra sépia et pigments naturels/océans bleu-vert ; Trame astrale parchemin nocturne indigo-violet et filaments ; Hautes Fermentations ivoire/or patiné/bleu céleste/turquoise ; Royaume des Soifs Éteintes parchemin noirci/cendre/ocre/cuivre sombre.
+**AUCUN nom, marqueur, portail ou indice narratif secret incrusté dans le fond.** Toute toponymie, même majeure, est indépendante, dynamique et masquable globalement. Décor public autorisé ; les sites secrets ne doivent pas se trahir par le dessin.
+Production : mappemonde et niveaux continentaux détaillés ; enrichissements régionaux uniquement pour zones remarquables/lieux importants. D'abord POC technique Saint-Fût, ensuite Ardéra, ensuite les trois dimensions. Pas de gros visuel unique en mémoire.
+
+## 8. UX VALIDÉE
+Quatre cartes accessibles dès le départ. Première visite : Ardéra centrée sur Saint-Fût et la Chope ; suivantes : dernière carte, position et zoom (préférence locale, indépendante des découvertes). Commande Revenir à la Chope ; sélecteur de dimensions permanent. Recherche globale sur les quatre cartes, dimension indiquée dans les résultats et contrôle des secrets AVANT la recherche/zoom. Les principaux marqueurs apparaissent à faible zoom ; les autres progressivement au zoom, sans obligation de clustering chiffré. Noms automatiquement gradués au zoom ; bouton pour masquer temporairement toute toponymie.
+Sélection d'un marqueur : panneau contextuel (nom, région, miniature si disponible, court descriptif, ouvrir dans le Codex). iPad paysage : panneau latéral ; portrait/téléphone : volet inférieur. Fermer restaure la position. Navigation tactile fluide, zoom progressif, pas de transition forcée entre fonds. La Chope a un marqueur prioritaire unique. Aucun éditeur cartographique en V1.
+Deux lectures de la même carte : vue campagne filtrée et vue complète MJ où les secrets sont distinctement identifiés. Bouton **Aperçu joueurs** pour masquer temporairement les éléments réservés au MJ, sans changement de campagne ni mutation durable de rôle.
+
+## 9. Confidentialité et campagnes VALIDÉES
+Quatre cartes globalement consultables ; seuls les lieux, donjons et marqueurs sensibles sont masqués selon la campagne. La découverte d'un donjon secret est **confirmée explicitement par le MJ** pour une campagne donnée ; ouvrir sa fiche Codex n'enregistre jamais de découverte. Révélation dans campagne A ne change rien dans B ; possibilité de rectification explicite d'une erreur. La liste/résultats de recherche/aperçus/portails liés ne doivent pas révéler indirectement un lieu secret.
+La définition du lieu (dont public/secret) est distincte de son état de découverte par campagne. Vue MJ complète et « Aperçu joueurs » ; contrôler les droits **côté backend**, ne pas envoyer aux comptes joueurs les données secrètes pour seulement les cacher dans le DOM, le JS ou le cache offline. Interdire tout indice de secret dans les noms/URLs/tuile publique. Vérifier comment la campagne active et les rôles s'articulent avec la V7 réelle : aucun store ou endpoint de campagne n'est présumé existant. Préférences de navigation locales et données de campagne distinctes.
+
+## 10. Architecture cible de principe et hors ligne
+Cartes statiques versionnées et piramide de tuiles multi-résolution, coordonnées stables + surcouches de toponymie, marqueurs et visibilité. Éviter une image géante ; charger les tuiles utiles et voisines, fallback résolution inférieure si détail absent, libérer les images décodées hors champ. Géographie de référence commune à tous les niveaux artistiques : une côte ne change jamais pendant le zoom.
+Les **quatre fonds généraux** doivent fonctionner hors ligne ; détails conservés progressivement à l'exploration, avec éviction possible par le navigateur. Ne pas prétendre garantir durablement tous les détails offline. Cache de tuiles distinct du shell et des données privées ; ressources versionnées ; ne pas exploiter une mise en cache ignoreSearch qui confond variantes. Choix final format, dimensions, seuils et hébergement uniquement après mesures POC iPad. Les visuels Atlas ne sont pas le patrimoine média métier V7 (images détourées actives et images de donjons), ne pas les inclure dans la migration existante par accident.
+Références de dépôt à relire au lancement : AGENTS.md, docs/V7-CLOUDFLARE-BACKEND.md, src/storage/idb.js, src/app.js, service-worker.js et tests. La V7 cible Cloudflare Access/Worker/D1/R2 et interdit toute suppression prématurée IndexedDB. Faire un pré-check de la branche et de l'avancement réel avant un lot, sans déduire l'état courant d'une ancienne conversation.
+
+## 11. Ordonnancement V6-Map et contrats des lots
+Lire ce maître puis le cahier concerné ; une branche/PR par lot d'implémentation, périmètre limité, tests ciblés, Gate écrite, arrêt si danger. Le lot A0 documentaire ne préjuge pas de sa réalisation du simple fait que son cahier existe.
+| Lot | Cahier | Dépendances / finalité |
+|---|---|---|
+| A0 | V6-MAP-A0-CONTRAT.md | Contrat géographie/données/risques ; zéro implémentation |
+| A1 | V6-MAP-A1-POC-SAINT-FUT.md | Après A0 ; POC technique isolé |
+| A2 | V6-MAP-A2-VALIDATION-IPAD.md | Après A1 ; mesures réelles, décision formats/tailles |
+| B1 | V6-MAP-B1-RESSOURCES-ARDERA.md | Après A2 ; géographie mère et assets Ardéra |
+| B2 | V6-MAP-B2-INTERFACE.md | Après A2 et contrat A0 ; UI Atlas autonome, branchée sur fonds disponibles |
+| B3 | V6-MAP-B3-TOPONYMIE.md | Après B1/B2 ; noms et niveaux de lecture |
+| B4 | V6-MAP-B4-DONJONS-CODEX.md | Après B2/B3 ; marqueurs et recherche, données publiques/sûres |
+| C1 | V6-MAP-C1-DIMENSIONS.md | Après A2/B2/B3 ; trois nouvelles cartes |
+| C2 | V6-MAP-C2-CAMPAGNES-SECRETS.md | Après backend V7 stabilisé et B4/C1 ; autorisations, découvertes MJ |
+| C3 | V6-MAP-C3-PWA-VALIDATION.md | Après C1/C2 ; cache offline, validation transversale, clôture |
+Ne pas déployer pour tous une version intermédiaire contenant des marqueurs secrets non filtrés. Un lot n'anticipe pas le suivant hors nécessité stricte. Conserver les tests fast CI courts et les validations WebKit/iPad ciblées ; éviter assertions de pixels/temps fragiles.
+
+## 12. Points expressément réservés, pas de faux acquis
+Contours précis, positions définitives des donjons/portes, portails, géographie des terres encore anonymes, réalité de la liste locale de campagnes, permissions réelles V7, hébergement des ressources Atlas (assets statiques versus stockage objet), choix de moteur/librairie de rendu, format image (WebP/AVIF selon essais), résolution et taille finales des tuiles, seuils exacts de zoom/cache, détails de la figure par niveau et nom officiel définitif des deux royaumes. Les dimensions des premières cartes ne sont pas des kilomètres.
+Toute découverte d'une incompatibilité de lore se signale et fait l'objet d'une décision explicite ; ne pas corriger silencieusement une donnée validée.
+
+## 13. Protocole d'exécution / STOP
+Début de lot : relire AGENTS.md, ce maître et uniquement son cahier ; relever branche et état V7 réels ; confirmer périmètre, données, sécurité, stratégie de retour arrière et livrables antérieurs. Fin de lot : tests ciblés, inspection iPad si applicable, Gate VERTE/ROUGE motivée, documentation de l'état exact et PR, pas de fusion implicite.
+STOP immédiat si risque de perte IndexedDB/Blobs, fuite d'un secret vers un compte joueur, conflit V7, collision d'IDs, carte/noms dont géographie varie au zoom, gros chargement média global, absence de validation préalable requise, ou échec inexpliqué de la Gate. Aucune suppression de contenu historique au titre de V6-Map.
