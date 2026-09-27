@@ -1,0 +1,103 @@
+{
+  "poc": true,
+  "map_id": "ardera",
+  "asset_revision": "a1-neutral-1",
+  "geography_revision": "a1-neutral-1",
+  "status": "PROVISOIRE - tests techniques uniquement",
+  "coordinate_system": {
+    "extent_on_ardera": {
+      "x_min": 20,
+      "x_max": 40,
+      "y_min": 34,
+      "y_max": 54
+    },
+    "local_width": 1024,
+    "local_height": 512,
+    "north": "top",
+    "x_y_normalized": true
+  },
+  "levels": [
+    {
+      "z": 0,
+      "columns": 1,
+      "rows": 1,
+      "tile_world_width": 1024,
+      "tile_world_height": 512,
+      "tiles": [
+        {
+          "x": 0,
+          "y": 0,
+          "src": "./tiles/z0/0-0.svg"
+        }
+      ]
+    },
+    {
+      "z": 1,
+      "columns": 2,
+      "rows": 1,
+      "tile_world_width": 512,
+      "tile_world_height": 512,
+      "tiles": [
+        {
+          "x": 0,
+          "y": 0,
+          "src": "./tiles/z1/0-0.svg"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "src": "./tiles/z1/1-0.svg"
+        }
+      ]
+    },
+    {
+      "z": 2,
+      "columns": 4,
+      "rows": 2,
+      "tile_world_width": 256,
+      "tile_world_height": 256,
+      "tiles": [
+        {
+          "x": 0,
+          "y": 0,
+          "src": "./tiles/z2/0-0.svg"
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "src": "./tiles/z2/1-0.svg"
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "src": "./tiles/z2/2-0.svg"
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "src": "./tiles/z2/3-0.svg"
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "src": "./tiles/z2/0-1.svg"
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "src": "./tiles/z2/1-1.svg"
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "src": "./tiles/z2/2-1.svg"
+        },
+        {
+          "x": 3,
+          "y": 1,
+          "src": "./tiles/z2/3-1.svg"
+        }
+      ]
+    }
+  ]
+}

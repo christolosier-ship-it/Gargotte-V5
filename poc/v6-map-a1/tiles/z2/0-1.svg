@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 256 256 256" aria-hidden="true"><!-- A1 NEUTRAL POC: same geometry in every resolution; not final cartography --><rect width="1024" height="512" fill="#e4e7e5"/>
+<path d="M0 0H1024V122Q879 147 742 109Q617 84 500 122Q324 170 166 108L0 135Z" fill="#d3d8d0"/>
+<path d="M0 385Q185 337 339 383T660 374T1024 400V512H0Z" fill="#d7dbd2"/>
+<path d="M0 210Q190 159 300 211L371 266L277 320L0 300Z" fill="#c8ceca"/>
+<path d="M744 0L1024 0V512L855 512L808 374L861 257L771 171Z" fill="#c1cbc4"/>
+<path d="M45 20Q195 53 335 6M42 73Q169 103 301 57M65 116Q202 143 318 104M86 160Q218 183 322 151" fill="none" stroke="#aebbb0" stroke-width="4"/>
+<path d="M760 61Q875 20 1013 89M764 105Q884 62 1012 129M793 159Q901 109 1016 176M798 202Q915 148 1017 222M812 263Q922 209 1023 274M819 317Q933 264 1022 328M840 380Q930 339 1020 396" fill="none" stroke="#a7b9ae" stroke-width="5"/>
+<path d="M226 472C296 400 369 408 450 337S580 265 644 318S751 421 791 493" fill="none" stroke="#b7ac99" stroke-width="27" stroke-linecap="round"/>
+<path d="M226 472C296 400 369 408 450 337S580 265 644 318S751 421 791 493" fill="none" stroke="#e8dfcf" stroke-width="19" stroke-linecap="round"/>
+<path d="M160 -18C179 66 254 112 295 169S321 267 396 300S510 294 568 345S634 410 660 537" fill="none" stroke="#94afb5" stroke-width="20" stroke-linecap="round"/>
+<path d="M160 -18C179 66 254 112 295 169S321 267 396 300S510 294 568 345S634 410 660 537" fill="none" stroke="#b5cdd1" stroke-width="11" stroke-linecap="round"/>
+<path d="M381 279L421 299L408 323L367 304Z" fill="#8e9895" stroke="#657575" stroke-width="3"/>
+<path d="M434 226L461 214L478 234L449 247Z M486 207L514 202L529 226L502 233Z M540 220L571 216L580 243L547 247Z M462 257L486 249L496 272L469 280Z M515 258L541 247L556 271L526 282Z M566 270L587 255L605 276L581 294Z" fill="#b3aaa0" stroke="#8d8b85" stroke-width="3"/>
+<path d="M0 256H1024M256 0V512M512 0V512M768 0V512" stroke="#a4aca8" stroke-opacity=".23" stroke-dasharray="5 10" fill="none"/></svg>
