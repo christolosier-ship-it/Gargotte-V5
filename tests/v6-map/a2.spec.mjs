@@ -56,7 +56,7 @@ test("A2 absent detail preserves lower fallback and releases stale tiles @webkit
  const d=await diag(page);expect(d.active).toBe(1);expect(d.evicted).toBeGreaterThan(0);
  expect(await page.locator(".tile-layer img").count()).toBe(1);
 });
-test("A2 scoped public cache keeps four neutral maps offline and rejects query alias @webkit",async({page,context})=>{
+test("A2 scoped public cache works with network paths blocked; real offline state explicitly classified @webkit",async({page,context})=>{
  await page.goto(origin+"a2-validation.html");
  await page.locator("#install-offline").click();
  await expect.poll(()=>page.evaluate(async()=>Boolean((await navigator.serviceWorker.getRegistration("./"))?.active))).toBe(true);
