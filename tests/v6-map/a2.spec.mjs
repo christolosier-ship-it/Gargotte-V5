@@ -59,6 +59,7 @@ test("A2 absent detail preserves lower fallback and releases stale tiles @webkit
 test("A2 scoped public cache keeps four neutral maps offline and rejects query alias @webkit",async({page,context})=>{
  await page.goto(origin+"a2-validation.html");
  await page.locator("#install-offline").click();
+ const cacheDebug=await page.evaluate(async()=>{const keys=await caches.keys();const c=await caches.open("atlas-a2-public-neutral-r1");return {keys,stored:(await c.keys()).map(r=>r.url),expected:new URL("./a2-neutral/ardera.svg",location.href).href};});console.log("A2 CACHE DEBUG "+JSON.stringify(cacheDebug));
  await expect(page.locator("#offline-status")).toContainText("4/4");
  const scope=await page.evaluate(async()=> {
   const r=await navigator.serviceWorker.getRegistration("./");
