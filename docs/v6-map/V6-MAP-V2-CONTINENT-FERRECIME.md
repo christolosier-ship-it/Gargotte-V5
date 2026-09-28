@@ -83,7 +83,7 @@ Les scènes restent **non explicites, non graphiquement violentes, sans noms ni 
 
 ## 6. Contrat artistique, technique et sécurité
 
-Fond continental **paysage 3:2 avec marges maritimes N/E**, sans texte peint, aucun donjon ni réserve secrète visible ; villages et merveilles publiques autorisés. Produire une illustration **native indépendante** de la mappemonde approuvée, pas un upscale ni un recadrage agrandi. Ne jamais annoncer 4K/8K/16K à défaut des pixels effectivement générés. En cas d'incompatibilité du moteur avec 3:2 natif, proposer et faire arbitrer un recadrage destructif depuis un format natif compatible, sans interpolation, tout en préservant la géographie.
+Fond continental **paysage 3:2 avec marges maritimes N/E**, sans texte peint, aucun donjon ni réserve secrète visible ; villages et merveilles publiques autorisés. **UPSCALING INTERDIT, sans exception.** Produire une illustration **native indépendante** de la mappemonde approuvée, pas un upscale ni un recadrage agrandi. Ne jamais annoncer 4K/8K/16K à défaut des pixels effectivement générés. En cas d'incompatibilité du moteur avec 3:2 natif, proposer et faire arbitrer un recadrage destructif depuis un format natif compatible, sans interpolation, tout en préservant la géographie.
 
 Les trois silhouettes de donjons sont des fichiers indépendants, potentiellement transparents/détourés si technologie réelle vérifiée. Le contrôle des droits s'applique **avant transmission des images/URL/aperçus/recherche/cache**, MJ/joueur/campagne, et non par simple masquage d'éléments publics.
 
