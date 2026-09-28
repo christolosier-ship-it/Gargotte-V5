@@ -2,7 +2,7 @@
 
 **STATUT : CADRAGE COMMUN EN REVUE, PREMIER CONTINENT FERRÉCIME : ONZE ARBITRAGES ET TROIS CONCEPTS DE DONJONS VALIDÉS LE 28/09/2026. Les cinq autres continents restent à arbitrer. AUCUNE IMAGE GÉNÉRÉE.**
 
-**Dépendance GitHub** : le pivot de Valdorie est préparé dans la **PR #59**, actuellement encore ouverte au début de ce chantier. Cette nouvelle branche part de `V5.3` et ne modifie aucun des cinq fichiers de #59. Fusionner/résoudre #59 avant d'activer les références V2 de ce cadrage. L'état de PR doit être revérifié au moment de la fusion ; aucun merge automatique.
+**Dépendance GitHub vérifiée** : la **PR #59 (pivot V2 et Valdorie) est désormais FUSIONNÉE** sur `V5.3` ; les cinq fichiers V2 sont disponibles sur la branche de base. La présente branche/PR #60 conserve ses propres ajouts documentaires, sans mutation des fichiers Valdorie de #59. Revérifier la comparaison au moment de l'intégration ; aucun merge automatique.
 
 Sources contractuelles : `AGENTS.md`, `V6-MAP-MAITRE.md` (géographie canonique, PAS son ancien pipeline 8K/16K), `V6-MAP-A0-ANNEXE-CONTRATS.md`, et, une fois la PR #59 fusionnée, `V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md`, `V6-MAP-PIVOT-V2-ARCHITECTURE-DOCUMENTAIRE.md`, `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`, `V6-MAP-V2-CONTINENT-VALDORIE.md` et l'annexe des neuf illustrations validées.
 
