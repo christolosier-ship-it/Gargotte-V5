@@ -1,6 +1,6 @@
 # V6-Map V2 — Six continents après Valdorie : cadrage et registre des arbitrages
 
-**STATUT : CADRAGE COMMUN EN REVUE. FERRÉCIME : 11 ARBITRAGES + 3 CONCEPTS VALIDÉS ; SYLVARONDE : 12 ARBITRAGES + CONCEPT D13 VALIDÉS LE 28/09/2026. Quatre autres continents à arbitrer. AUCUNE IMAGE GÉNÉRÉE.**
+**STATUT : CADRAGE COMMUN EN REVUE. FERRÉCIME (11 arbitrages et D12/D14/D15), SYLVARONDE (12 arbitrages et D13) et PELAGRÈVE (12 arbitrages) VALIDÉS LE 28/09/2026. Les trois continents Boréclat, Sahaldune et Austrébrume restent à arbitrer. AUCUNE IMAGE GÉNÉRÉE.**
 
 **Dépendance GitHub vérifiée** : la **PR #59 (pivot V2 et Valdorie) est désormais FUSIONNÉE** sur `V5.3` ; les cinq fichiers V2 sont disponibles sur la branche de base. La présente branche/PR #60 conserve ses propres ajouts documentaires, sans mutation des fichiers Valdorie de #59. Revérifier la comparaison au moment de l'intégration ; aucun merge automatique.
 
@@ -20,7 +20,7 @@ Les scènes de population et de gargotterie doivent illustrer **différents peup
 
 Règles proposées de conception : chaque carte habitée comporte plusieurs races visuellement distinguables à l'échelle possible ; les marchés, quais, caravanes, postes de garde, ateliers et fêtes montrent de la mixité, y compris les rôles non comiques ; éviter « une race = un continent », « un biome = un seul peuple », stéréotypes humiliants ou intégration arbitraire d'une créature du donjon secret. La présence artistique de ces peuples dans un décor **ne fixe pas leur origine raciale, territoire politique, statut de faction, diplomatie ou affiliation aux donjons** ; ces éventuelles affirmations nécessiteraient un arbitrage lore explicite.
 
-**Arbitrages Ferrécime ET Sylvaronde VALIDÉS :** diversité multiraciale, sans quota par race ni exclusivité territoriale et métiers/climats adaptés. Pour Sylvaronde en particulier : elfes, orques, Gripplies/Mycéliennes non infectées lorsque le corpus public le permet, et autres peuples forestiers/marécageux attestés, sans création de races canoniques improvisées. Pour les quatre autres continents, soumettre explicitement la répartition sans déduire qu'elle est acceptée. Les populations seront de taille suffisamment lisible dans le rendu réel, mais ni foule de figurines géantes ni spoilers de boss.
+**Arbitrages Ferrécime, Sylvaronde ET Pelagrève VALIDÉS :** mixité multiraciale adaptée aux climats et activités, sans assigner par défaut un monopole territorial à une race. Sylvaronde : elfes, orques, Gripplies/Mycéliennes non infectées si corpus public et peuples forestiers/marécageux attestés. **Pelagrève : peuplements terrestres, marins et sous-marins ; Pandarens OBLIGATOIRES comme choix artistique explicite du propriétaire**, avec apparence et statut Codex à vérifier (une recherche du nom dans la branche par défaut n'a fourni aucun résultat), et diverses silhouettes aquatiques attestées. Pour les trois autres continents, soumettre explicitement les peuples visibles avant de les déclarer approuvés. Les populations seront de taille suffisamment lisible dans le rendu réel, mais ni foule de figurines géantes ni spoilers de boss.
 
 ## 3. Inventaire des six continents : canon et décisions encore ouvertes
 
@@ -54,12 +54,15 @@ La position des merveilles au monde est indicative dans le référentiel Ardéra
 - **Aucun des quinze donjons actuels**. Des haltes, ruines et marchés PUBLICS ne deviennent pas automatiquement des donjons cachés.
 - Ouverts : ratio/cadrage, sites riverains/oasis et axes de caravane, ports du nord/sud selon vraie côte, mixité visuelle des races, gags de marché, caravane, sel et mousson sans copier-coller les déserts infernaux, densité des cités.
 
-### Pelagrève — aucun D1–D15, REVUE EN COURS
+### Pelagrève — DOUZE arbitrages VALIDÉS, 0 donjon D1–D15
 
-- **Cahier de préparation :** [12 arbitrages artistiques et géographiques à soumettre](V6-MAP-V2-CONTINENT-PELAGREVE-PREPARATION.md), **NON ENCORE VALIDÉS**. Ne pas attribuer à Pelagrève les anciens D3/D10 de V1 : ils sont désormais en Valdorie selon le registre V2.
-- **Canon :** X81–95/Y34–66 ; Côtes des Éclats, Mers Encloses, Dorsale des Fournaises, Côtes des Alizés, Ceinture des Lagons, Marches des Marées ; croissant continental fracturé et archipels ; **Mer des Lanternes** (grande/profonde) et **Mer aux Cent Passes** (ramifiée/insulaire), reliées ENTRE ELLES et À L'OCÉAN par détroits ; **Labyrinthe Corallien** vers X91/Y60. Préserver côte découpée, lacs centraux, bassins insulaires et détroits. PAS de pont terrestre.
-- **Aucun des quinze donjons actuels.** D3 et D10 ont été déplacés en Valdorie par décision V2 ; ne pas les faire réapparaître ici.
-- Ouverts : silhouette possiblement plus haute que large et ratio adapté aux îles, populations multi-races et culture maritime, nombre de villes/ports/escales, transport par navires/bacs, gargotteries de marins, pirates de foire, coquillages et marchés aquatiques ; visibilité correcte des deux mers intérieures.
+- **Référence courante :** [`V6-MAP-V2-CONTINENT-PELAGREVE.md`](V6-MAP-V2-CONTINENT-PELAGREVE.md). Le brouillon de 12 options a été remplacé après décision expresse du propriétaire le 28/09/2026.
+- **Canon :** X81–95/Y34–66, Côtes des Éclats, Mers Encloses, Dorsale des Fournaises, Côtes des Alizés, Ceinture des Lagons, Marches des Marées ; croissant fracturé/archipels ; Mer des Lanternes grande/profonde/sombre et Mer aux Cent Passes fragmentée/lumineuse, **communiquant entre elles ET avec l'océan par détroits**, sans pont terrestre. Labyrinthe Corallien, merveille biologique/magique sauvage.
+- **Validé :** **portrait 2:3** avec marges océaniques, **un grand port commercial + 3–5 bourgs/escales + une cité sous-marine** ; identité fantasy mêlant piraterie et inspirations asiatiques ; **Pandarens obligatoirement visibles** dans les populations/gargotteries aux côtés de races terrestres, marines et sous-marines (apparence et statut dans Codex à vérifier) ; **12–18 gargotteries**, palette mixte selon régions, détails maritimes animés et variés, aucun texte peint. Dorsale des Fournaises **ponctuellement volcanique active**, Labyrinthe Corallien sauvage/sous-marin sans bâtiment ni accès.
+- **Réserves d'avenir : cinq VALIDÉES EN NOMBRE**, secteurs R1–R5 encore à arbitrer ; cinq propositions distinctes dans le cahier, sans assignation tacite au Labyrinthe ni coordonnées inventées. Le positionnement de la cité sous-marine et son mode de représentation sur une carte de surface restent à décider.
+- **ZÉRO D1–D15** : anciens D3/D10 V1 transférés à Valdorie selon V2, ne pas les réintroduire. Aucun concept d'illustration de donjon Pelagrève requis.
+- **Ouverts :** localisation/représentation de la cité sous-marine, cinq secteurs relatifs des réserves et règle explicite sur leur présence au Labyrinthe, véritables références graphiques Pandaren, lieux publics à ancrer sur fond réel, PNG maître 4K, sortie native 2:3 et QA.
+
 
 ### Austrébrume — aucun D1–D15
 
@@ -71,7 +74,7 @@ La position des merveilles au monde est indicative dans le référentiel Ardéra
 
 1. **Ferrécime** : arbitrages, concepts et **secteurs relatifs R1/R2 VALIDÉS** ; restent leurs positions précises sur le fond, et les Gates techniques.
 2. **Sylvaronde** : arbitrages, concept D13 et **cinq secteurs régionaux R1–R5 VALIDÉS** ; restent les points/contours précis sur fond, les géopoints D13/R1–R5 et les Gates techniques.
-3. **Pelagrève** : deux mers intérieures et continuité maritime à traiter soigneusement.
+3. **Pelagrève** : les 12 choix artistiques sont VALIDÉS ; restent le positionnement de la cité sous-marine, cinq secteurs de réserve et les Gates géométriques/techniques, sans modifier les communications des deux mers.
 4. **Boréclat** : géographie arctique, quatre fjords, échanges et population.
 5. **Sahaldune** : endoréisme, les deux fleuves, mer ancienne et cultures.
 6. **Austrébrume** : merveille atmosphérique, frange australe et densité raisonnable.
