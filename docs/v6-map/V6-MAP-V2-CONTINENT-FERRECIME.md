@@ -62,7 +62,7 @@ Les trois concepts précis sont figés dans l'[annexe](V6-MAP-V2-FERRECIME-ILLUS
 | Secteur | Scènes publiques suggérées | Nombre |
 |---|---|---:|
 | Portes du Givre | Caravane multiraciale poussant un tonneau dans le vent ; aubergiste adulte cherchant son enseigne emportée ; couple de muletiers bataillant avec une chèvre ; brasseur à la barbe givrée. | 4 |
-| Échine d'Ardéra | Faux guide pointant le mauvais sommet ; pont de corde traversé par deux fûts coincés ; une gargouille grivoise sculptée par un groupe d'artisans ; corbeille de saucisses renversée en téléportation *non magique* par simple dégringolade de pente. | 4 |
+| Échine d'Ardéra | Faux guide pointant le mauvais sommet ; pont de corde traversé par deux fûts coincés ; une gargouille grivoise sculptée par un groupe d'artisans ; corbeille de saucisses dévalant la pente et semant son contenu. | 4 |
 | Hauts Plateaux de Silex | Nains, elfes et gobelins autour d'une foire de montagne ; campement où un tonneau sert de chaise tournante ; concours de moustaches gelées. Toutes scènes suffisamment distantes de D12. | 3 |
 | Vallées des Mille Cascades | Pêcheur ramenant une botte énorme ; batelier trop confiant devant une petite cascade ; éclaboussures d'une lessive de dessous adultes ; vendeur de boissons cherchant un endroit sec. | 4 |
 | Hautes Voûtes | Mulet particulièrement fier de tirer une charrette vide ; poseur de banc public qui n'a pas prévu la pente ; brasseur portant son pichet au-dessus des nuages, hors Cimes Suspendues et à distance de D14. | 3 |
