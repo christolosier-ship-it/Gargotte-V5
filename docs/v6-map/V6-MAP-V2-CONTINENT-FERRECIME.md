@@ -1,6 +1,6 @@
 # V6-Map V2 — Ferrécime : cahier continental approuvé
 
-**Statut : ONZE ARBITRAGES DE CONCEPTION VALIDÉS PAR LE PROPRIÉTAIRE LE 28/09/2026 ; trois concepts d'illustration D12/D14/D15 VALIDÉS.** Les coordonnées exactes, les deux géopoints de réserves futures, les images effectivement générées, les IDs du Codex et la mise en œuvre technique restent EN ATTENTE. **Aucune image générée, aucune modification applicative.**
+**Statut : ONZE ARBITRAGES DE CONCEPTION VALIDÉS PAR LE PROPRIÉTAIRE LE 28/09/2026 ; trois concepts d'illustration D12/D14/D15 VALIDÉS.** Les coordonnées exactes des donjons et des deux réserves, les images effectivement générées, les IDs du Codex et la mise en œuvre technique restent EN ATTENTE. Les secteurs relatifs des réserves R1/R2 sont VALIDÉS. **Aucune image générée, aucune modification applicative.**
 
 **Dépendance :** ce fichier appartient au lot documentaire de PR #60. Le pivot Valdorie V2 est porté par PR #59 ; revérifier qu'elle est fusionnée avant de considérer les références V2 comme disponibles sur la branche de base. Sources : `AGENTS.md`, géographie canonique du `V6-MAP-MAITRE.md`, `V6-MAP-A0-ANNEXE-CONTRATS.md`, puis après #59 `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` et les contrats de la feuille de route V2. Le maître V1 reste historique pour ses **anciens placements** et son **ancien upscaling**. Le présent cahier n'autorise pas les modifications de V7/IndexedDB, ni la génération.
 
@@ -18,7 +18,7 @@
 | 8 | **Les trois concepts de silhouettes, palettes et gags D12, D14, D15 sont VALIDÉS intégralement**, tels que décrits dans [l'annexe des illustrations](V6-MAP-V2-FERRECIME-ILLUSTRATIONS-DONJONS.md). Les rendus d'images ne sont pas encore validés. |
 | 9 | **D12/D14/D15 initialement cachés aux joueurs, révélés explicitement par le MJ par campagne**, et leurs illustrations en calques indépendants conditionnels, comme Valdorie ; aucune donnée/image sensible transmise avant autorisation. |
 | 10 | **Aucun texte peint dans le fond** ; noms et marqueurs par surcouches d'interface. |
-| 11 | **Réserver exactement deux secteurs pour des développements futurs**, dans des lieux géographiquement singuliers et éloignés des donjons D12/D14/D15. **Cimes Suspendues explicitement EXCLUES** des réserves. Le principe et le nombre sont VALIDÉS, les deux sites précis et leurs coordonnées encore À ARBITRER sur une composition géographique réelle. |
+| 11 | **Réserver exactement deux secteurs pour des développements futurs**, dans des lieux géographiquement singuliers et éloignés des donjons D12/D14/D15. **Cimes Suspendues explicitement EXCLUES** des réserves. Le principe, le nombre **et les secteurs naturels relatifs R1/R2** sont VALIDÉS ; leurs contours fins, séparation effective des donjons et coordonnées locales restent à déterminer sur la carte réelle. |
 
 **Attention au point 5 :** le choix « C : quelques villages éparpillés » remplace bien les options A/B de ville et port proposées. Le projet ne doit pas lui substituer une cité par habitude de copier le cahier Valdorie.
 
@@ -71,16 +71,18 @@ Les trois concepts précis sont figés dans l'[annexe](V6-MAP-V2-FERRECIME-ILLUS
 
 Les scènes restent **non explicites, non graphiquement violentes, sans noms ni lettres**, et sans représenter des habitants de donjons cachés comme gags publics. Éviter la confusion stylistique entre la merveille et des appareils mécaniques ou des vortex.
 
-## 5. Deux réserves d'extension : règle validée, secteurs candidats à discuter
+## 5. Deux réserves d'extension : secteurs VALIDÉS, coordonnées réservées
 
-**Validation acquise :** deux secteurs, chacun situé dans un paysage remarquable/singulier de Ferrécime, **éloigné** des sites D12 (Hauts Plateaux), D14 (Hautes Voûtes) et D15 (Marches de Braise). La totalité des **Cimes Suspendues** et de leur abord immédiatement reconnaissable est exclue. Les réserves restent des données de planification MJ et **ne doivent pas se matérialiser par une entrée, ruine distinctive, marqueur ou forme suggérant un futur donjon sur le fond public**.
+**Décision expresse du propriétaire (28/09/2026) : « Je valide les secteurs R1 et R2 proposés. Leurs coordonnées précises seront définies sur la carte. »**
 
-**Deux pistes proposées, NON ENCORE VALIDÉES géographiquement :**
-- **R1 : Portes du Givre, extrémité nord**, autour d'un site naturel singulier à identifier sur le PNG continental réel. Ne pas dessiner par défaut un portail de glace : « Portes » est un toponyme de région, pas un passage cosmologique.
-- **R2 : zone orientale/périphérique des Vallées des Mille Cascades**, au voisinage d'une confluence ou cascade géographiquement marquante **à distance réelle du D14** dans les Hautes Voûtes et du D15 au SE. Si la carte finale rapproche ce point des donjons, proposer un autre point remarquable plutôt que forcer la distance.
+| Identifiant de conception | Secteur relatif VALIDÉ | Contrainte d'intégration toujours applicable |
+|---|---|---|
+| **R1** | **Extrémité nord des Portes du Givre**, autour d'un **passage glaciaire naturel remarquable**. | Ce passage est un relief public, **pas un portail de dimension**, ni l'annonce d'un futur donjon. Identifier le point/contour local exact sur le vrai fond, à distance des D12/D14/D15. |
+| **R2** | **Est des Vallées des Mille Cascades**, autour d'une **confluence spectaculaire** cohérente avec le bassin oriental. | La confluence est un fait de paysage public, non une entrée scénaristique. Préserver un éloignement effectif de D14 aux Hautes Voûtes et D15 aux Marches de Braise ; fixer le point/contour précis sur le fond validé. |
 
-**À valider avec le propriétaire après lecture du vrai fond** : choix définitif de R1/R2, critères de séparation visuelle/géographique et coordonnées locales de chaque secteur. Une réserve n'est **pas** un donjon D16 ou D17, ni un portail et n'apparaît pas en vue joueurs.
+Ces deux secteurs sont les **seules réserves géographiques futures prévues à Ferrécime** à ce stade. Les **Cimes Suspendues et leurs abords reconnaissables sont EXCLUS** ; R1 et R2 restent éloignés de D12, D14 et D15. En cas de conflit lors de la composition, ajuster le point **à l'intérieur du secteur approuvé** et présenter la planche MJ à validation, sans déplacer silencieusement une réserve vers la merveille ou la proximité d'un donjon.
 
+Ne fixer **aucune coordonnée numérique, rayon, emprise métrique ni `entity_id` inventé** avant l'examen du vrai fond continental. Les réserves ne sont **ni des D16/D17, ni des portails**, ni des marqueurs visibles par les joueurs. Le fond public peut montrer des phénomènes naturels génériques, mais jamais une forme ou un signe révélant leur statut de réserve. Les informations R1/R2 ne figurent que dans une couche de planification MJ séparée.
 ## 6. Contrat artistique, technique et sécurité
 
 Fond continental **paysage 3:2 avec marges maritimes N/E**, sans texte peint, aucun donjon ni réserve secrète visible ; villages et merveilles publiques autorisés. **UPSCALING INTERDIT, sans exception.** Produire une illustration **native indépendante** de la mappemonde approuvée, pas un upscale ni un recadrage agrandi. Ne jamais annoncer 4K/8K/16K à défaut des pixels effectivement générés. En cas d'incompatibilité du moteur avec 3:2 natif, proposer et faire arbitrer un recadrage destructif depuis un format natif compatible, sans interpolation, tout en préservant la géographie.
@@ -93,7 +95,7 @@ Le prompt final de production reste à écrire **sur la base du vrai PNG maître
 
 **VERT** : onze choix de conception ci-dessus ; région relative des trois donjons ; trois concepts artistiques approuvés ; règle de révélation par le MJ ; diversité multiraciale de la population ; deux réserves singulières éloignées, avec Cimes Suspendues exclues.
 
-**RESTENT À ARBITRER** : l'identification concrète de R1/R2 et de leurs points singuliers sur le fond, coordonnées locales D12/D14/D15 et réserves ; éventuellement le placement et les noms des petits villages seulement s'ils doivent devenir des fiches Codex interactives.
+**RESTENT À FINALISER SUR LA CARTE** : les coordonnées locales et contours fins de D12/D14/D15 et des secteurs R1/R2 **déjà validés**, le contrôle effectif des distances et non-collisions ; éventuellement le placement et les noms des petits villages seulement s'ils doivent devenir des fiches Codex interactives. **Aucun nouvel arbitrage de secteur R1/R2 n'est requis**, sauf conflit visuel réel dûment signalé.
 
 **RESTENT À VÉRIFIER TECHNIQUEMENT AVANT GÉNÉRATION / INTÉGRATION** : vrai PNG mondial 4K/hash, possibilité native 3:2 et dimensions mesurées, correspondance D12/D14/D15 ↔ IDs métier du Codex, modèle backend d'autorisation des illustrations par campagne, validation finale des images après production. Ne pas rouvrir d'office les onze choix déjà validés.
 
