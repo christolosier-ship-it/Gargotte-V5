@@ -1,6 +1,6 @@
 # V6-Map V2 — Boréclat : cahier continental, douze réponses reçues
 
-**STATUT : CHOIX PRINCIPAUX DES DOUZE QUESTIONS VALIDÉS EXPRESSÉMENT PAR LE PROPRIÉTAIRE LE 28/09/2026 ; SOUS-QUESTION DE LA N° 11 TOUJOURS OUVERTE.** Cinq réserves validées **en nombre seulement** : ni leurs secteurs ni l'exclusion éventuelle des Aiguilles Boréales et de leurs abords n'ont reçu de réponse. Aucune image produite, aucun point local numérique inventé, aucune modification applicative.
+**STATUT : LES DOUZE CHOIX PRINCIPAUX, LES CINQ SECTEURS DE RÉSERVE R1–R5 ET L'EXCLUSION DES AIGUILLES BORÉALES ET DE LEURS ABORDS SONT VALIDÉS EXPLICITEMENT PAR LE PROPRIÉTAIRE LE 28/09/2026.** Restent uniquement les points singuliers précis, contours et coordonnées locales à fixer sur le véritable fond. Aucune image produite, aucun point local numérique inventé, aucune modification applicative.
 
 **Sources/précédence :** `AGENTS.md` ; `V6-MAP-MAITRE.md` pour le canon géographique, pas son ancienne répartition V1/pipeline 8K ; `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` pour 0 D1–D15 ; `V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md` pour la méthode ; réponses 1A 2A 3C 4A 5A 6B 7A 8C 9C 10C 11D 12A de l'utilisateur. La branche de la PR #60 a été créée avant la fusion de PR #59 et ne doit pas recréer son registre central V2 par erreur.
 
@@ -14,14 +14,14 @@
 | **4** | **Mixité multiraciale du jeu**, métiers et vêtements adaptés au climat : nains, elfes, orques, gobelins, gnomes, kobolds et autres références visuelles attestées, sans présumer d'une répartition politique/raciale exclusive. |
 | **5** | Vie surtout aux **Fjords des Brisants, Pays des Sept Lacs, Grande Taïga et quelques Marches d'Écume**. **Plateau des Blancs Silences largement sauvage**, sans implantation obligatoirement permanente. |
 | **6** | **Commerce maritime renforcé** autour du golfe occidental, des quatre fjords et des îles de l'est ; la continuité naturelle **Sept Lacs → fjords** et les voies terrestres/taïga restent maintenues sans imposer un équilibre mer/terre artificiel ni créer de canal. |
-| **7** | **Aiguilles Boréales sauvages et monumentales, sans bâtiment construit à leur pied**. Leur origine mystérieuse ne reçoit ni explication magique, ni portail, ni donjon canonique. **Ce choix ne répond PAS à l'autre question, distincte, concernant l'exclusion des Aiguilles des cinq réserves.** |
+| **7** | **Aiguilles Boréales sauvages et monumentales, sans bâtiment construit à leur pied**. Leur origine mystérieuse ne reçoit ni explication magique, ni portail, ni donjon canonique. **Décision ultérieure et distincte : les Aiguilles Boréales ET leurs abords sont expressément EXCLUS de toutes les réserves.** |
 | **8** | **Géothermie occidentale fortement illustrée mais géographiquement limitée**, vapeur/eaux thermales et contraste avec froid, sans nouveau volcan fictif ni expansion à toute la taïga. |
 | **9** | **10–15 gargotteries publiques**, dosage aéré, principalement dans les secteurs habités ; éviter le peuplement du Plateau des Blancs Silences. |
 | **10** | **Ambiance mixte : accueil coloré au sud, silence polaire au nord, mystère discret autour des Aiguilles**. La merveille est visible publiquement mais sans cause narrative inventée. |
-| **11** | **EXACTEMENT CINQ réserves de développement futur : nombre VALIDÉ.** Le propriétaire n'a pas répondu à la sous-question expresse **« Aiguilles Boréales et leurs abords exclus : OUI/NON ? »**. Les cinq secteurs et singularités proposés au §4 sont encore À ARBITRER. |
+| **11** | **EXACTEMENT CINQ réserves futures, dont les cinq secteurs relatifs R1–R5 du §4 sont VALIDÉS** par confirmation explicite « 1. Je valide. ». Le propriétaire a également répondu **« 2. Oui aiguilles boréales exclus » : la merveille et ses abords sont EXCLUS**. Points/contours numériques à fixer ultérieurement sur la carte. |
 | **12** | **Zéro texte peint**, noms et marqueurs en surcouche d'interface ; bateaux, chalets de fjord, paysages lacustres, ponts/traîneaux et petites scènes animées compatibles avec les échelles et les biomes. |
 
-**État exact : 12/12 réponses principales reçues et validées ; sous-question 11 sur l'exclusion des Aiguilles EN ATTENTE ; 5/5 réserves validées en nombre ; 0/5 secteurs particuliers et 0/5 coordonnées locales approuvés.** Ne pas dire « Boréclat intégralement verrouillé » tant que cette décision est ouverte.
+**État exact : 12/12 réponses principales VALIDÉES ; exclusion des Aiguilles Boréales et de leurs abords VALIDÉE ; 5/5 secteurs relatifs R1–R5 VALIDÉS ; 0/5 points/contours locaux chiffrés fixés.** Boréclat est verrouillé en conception relative, et non en géométrie fine ou en rendus effectivement produits.
 
 ## 1. Géographie CANONIQUE, six régions et eaux
 
@@ -38,7 +38,7 @@
 
 Préserver le **golfe occidental**, les îles de l'est et la petite zone géothermique occidentale. Trois systèmes hydrographiques : **Sept Lacs → fjords méridionaux**, cours d'eau occidentaux de taïga, ruissellements saisonniers polaires. Aucune rivière à contre-pente ou canal artificiel non validé. **Mer Boréale** en voisinage sans nouveau pont terrestre vers Valdorie/Ferrécime.
 
-**Aiguilles Boréales** : merveille géographique PUBLIQUE sauvage et monumentale, origine volontairement non définie. Absence d'édifices construits à son pied approuvée. **Interdiction ou permission d'une réserve invisible à leur emplacement/abords : réponse distincte toujours attendue** ; ne pas la déduire automatiquement de l'absence de constructions.
+**Aiguilles Boréales** : merveille géographique PUBLIQUE sauvage et monumentale, origine volontairement non définie. Absence d'édifices construits à son pied approuvée. **Exclusion des Aiguilles Boréales ET de leurs abords de toutes les réserves : VALIDÉE expressément**, en complément de la règle sans bâtiments à leur pied. Ne pas placer R1–R5 dans ce périmètre.
 
 ## 2. Habitat, voies commerciales et peuples
 
@@ -63,28 +63,29 @@ Préserver le **golfe occidental**, les îles de l'est et la petite zone géothe
 
 Les silhouettes sont fantasy tabletop peint/encré Gargotte et multiraciales, humour grivois adulte non explicite, sans attaque graphique contre une race, sans écriture ni indice de site de réserve ou de donjon. L'effet géothermal spectaculaire conserve un périmètre étroit afin de ne pas supplanter le relief froid.
 
-## 4. Cinq réserves : nombre validé, emplacement ET exclusion des Aiguilles encore ouverts
+## 4. Cinq réserves : cinq secteurs VALIDÉS, Aiguilles et abords EXCLUS
 
-**VALIDÉ : cinq réserves de planification MJ**, sur des singularités réelles à choisir après examen du vrai fond. **NON VALIDÉ : leurs cinq secteurs, géopoints et la réponse oui/non sur les Aiguilles Boréales et leurs abords.** Les propositions ci-dessous sont réparties entre plusieurs régions sans préjuger de la réponse concernant la merveille ; si le propriétaire souhaite une réserve liée aux Aiguilles, revenir sur cette répartition au prochain arbitrage. Les réserves ne sont pas des entrées D16–D20 ni des marqueurs publics.
+**Décisions expresses du propriétaire du 28/09/2026 :** « 1. Je valide. » au sujet des cinq secteurs proposés R1–R5, puis « 2. Oui aiguilles boréales exclus » à la sous-question de protection de la merveille. Les **cinq secteurs relatifs** et l'**exclusion complète des Aiguilles Boréales ET de leurs abords** sont donc VALIDÉS, indépendamment de la règle préexistante « pas de construction à leur pied ».
 
-| Réserve PROPOSÉE | Secteur relatif et singularité naturelle PROPOSÉS | Contrôle préalable |
+| Réserve de planification MJ | Secteur relatif VALIDÉ | Singularité naturelle à localiser sur le vrai fond |
 |---|---|---|
-| **R1** | **Fjords des Brisants**, promontoire naturel dominant l'un des quatre fjords. | Respecter les vraies embouchures et éloigner du port principal après implantation. |
-| **R2** | **Grande Taïga**, bassin de sources géothermales ou affleurement singulier à l'ouest. | Ne pas ajouter de volcan et ne pas dévoiler le statut de réserve dans le décor public. |
-| **R3** | **Plateau des Blancs Silences**, crête glaciaire isolée sculptée par les vents ou formation polaire remarquable. | Rester dans le grand paysage sauvage, sans ville ou route ajoutée. |
-| **R4** | **Pays des Sept Lacs**, promontoire rocheux ou isthme naturel entre deux lacs existants. | Ne pas inventer de canal ni déformer le réseau des Sept Lacs. |
-| **R5** | **Marches d'Écume**, îlot oriental singulier ou aiguilles rocheuses maritimes naturelles. | Conserver les îles de la mappemonde, sans en créer pour porter la réserve. |
+| **R1** | **Fjords des Brisants** | Promontoire naturel dominant **l'un des quatre fjords** méridionaux, éloigné du futur port marchand. |
+| **R2** | **Grande Taïga** | Bassin de sources géothermales ou affleurement remarquable de l'ouest, dans le **périmètre limité** de la zone canonique ; aucun volcan supplémentaire. |
+| **R3** | **Plateau des Blancs Silences** | Crête glaciaire isolée sculptée par les vents ou autre formation polaire singulière ; conserver le plateau public largement sauvage. |
+| **R4** | **Pays des Sept Lacs** | Promontoire rocheux ou isthme naturel **entre deux des sept lacs existants**, sans canal ni nouveau grand lac. |
+| **R5** | **Marches d'Écume** | Îlot oriental singulier ou aiguilles **rocheuses maritimes ordinaires**, distinctes de la merveille nommée Aiguilles Boréales ; aucune île artificiellement ajoutée. |
 
-**Sous-question encore à poser :** « Faut-il exclure les Aiguilles Boréales ET leurs abords des cinq réserves ? » Réponse **OUI/NON** requise, séparée de la décision 7A « merveille sauvage et aucune construction au pied ». À défaut de réponse, ni exclusion ni inclusion des Aiguilles ne sera déclarée approuvée.
+**Exclusion contraignante :** les **Aiguilles Boréales, leur pied et leurs abords immédiatement reconnaissables** sont exclus des cinq réserves ; aucune zone R1–R5 ne doit y empiéter. Respecter le caractère monumental/sauvage de la merveille et ne pas inventer sa cause, un portail ou un accès secret. Lors de l'ancrage géographique, tenir aussi les réserves à distance du port et des hameaux lorsque le vrai tracé le permet et les séparer raisonnablement entre elles. En cas de conflit, soumettre le détail géométrique au propriétaire sans déplacer silencieusement une réserve vers la merveille.
 
-**État exact :** 5/5 réserves VALIDÉES en nombre ; **0/5 secteurs régionaux validés** ; 0/5 points/contours numériques ; politique d'exclusion des Aiguilles EN ATTENTE. Les points remarquables sont des faits de géographie publics sans marqueur secret ; seul leur rôle de réserve demeure une couche MJ.
+Ces réserves restent des **surcouches de planification MJ**, non des D16–D20, bâtiments remarquables, toponymes ou marqueurs publics sur la peinture. Les singularités naturelles peuvent exister sur le fond public sans signaler leur statut de réserve.
 
+**État exact : 5/5 secteurs relatifs VALIDÉS ; 0/5 géopoints/contours locaux chiffrés fixés.** Les coordonnées et la forme précise des points remarquables seront déterminées exclusivement sur le fond réel, sans extrapolation depuis le rectangle mondial indicatif.
 ## 5. Gates et suites sans présupposition
 
 **VERT en conception (12 choix principaux) :** cadrage panorama 2:1 ; port sud + 4–6 villages ; architecture régionale mixte ; diversité raciale ; plateau largement sauvage ; commerce maritime renforcé ; Aiguilles sauvages et monumentales sans bâtiment à leur pied ; géothermie O forte mais localisée ; 10–15 scènes ; ambiance mixte ; exactement cinq réserves en nombre ; pas de texte peint et vie publique ponctuelle.
 
-**OUVERTS À RÉPONSE EXPRESSE :** exclusion OUI/NON des Aiguilles et abords comme réserves ; validation ou correction des cinq secteurs R1–R5 (§4), qui n'ont pas été sélectionnés par le propriétaire. Ne pas demander de revoter les douze réponses déjà reçues.
+**VERT EN CONCEPTION RELATIVE :** les cinq secteurs de réserve R1–R5 sont VALIDÉS et les Aiguilles Boréales ET leurs abords sont EXCLUS expressément. Aucun nouvel arbitrage sur le choix des cinq régions ou l'exclusion de la merveille n'est requis, sauf conflit géographique réel à expliquer au propriétaire.
 
-**À POSITIONNER SUR LE VRAI FOND :** ville/port, 4–6 villages, périmètre exact de la petite géothermie O, cinq réserves si/une fois approuvées, Aiguilles comme merveille ; coordonnées et éventuels noms publics seulement après vérification de l'asset réel.
+**À POSITIONNER SUR LE VRAI FOND :** ville/port, 4–6 villages, périmètre exact de la petite géothermie O, cinq réserves dans leurs secteurs déjà approuvés, Aiguilles comme merveille exclue des réserves ; coordonnées et éventuels noms publics seulement après vérification de l'asset réel.
 
 **GATES TECHNIQUES/DE PRODUCTION :** authentique PNG mondial 4K version/hash, continuité des quatre fjords/Sept Lacs/golfe/îles/écoulements, possibilité d'une production native panoramique 2:1 et dimensions réelles mesurées. **UPSCALING INTERDIT**, y compris tuiles produites pour feindre une résolution native. Rendu public sans texte, aucune réserve secrète visible, droits MJ vérifiés avant toute donnée/preview si nécessaire. QA Safari iPad. Aucune génération ni modification de runtime, IndexedDB/Blobs ou V7 dans ce lot documentaire.
