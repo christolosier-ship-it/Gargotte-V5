@@ -12,7 +12,7 @@ Statut : **PROPOSITION DOCUMENTAIRE EN REVUE ; REGISTRE D'AFFECTATIONS V2 CRÉÉ
 - **Cartes publiques, surcouches sensibles privées** : aucune localisation de donjon secret ne se lit dans le fond ; positions et fiches protégées par filtrage préalable selon campagne.
 - Réemploi des décisions géographiques V1, des résultats POC A0/A1/A2 et des garanties données/médias V6/V7 ; réécrire les prescriptions de pyramide/zoom devenues obsolètes, sans effacer les preuves historiques.
 
-## 2. Arborescence V2 proposée (seul le registre existe désormais ; autres fichiers encore futurs)
+## 2. Arborescence V2 proposée (registre et cahier Valdorie déjà créés ; autres fichiers encore futurs)
 
 ```text
 docs/v6-map/
@@ -35,7 +35,7 @@ docs/v6-map/
 └── V6-MAP-V2-SECURITE-OFFLINE-VALIDATION.md
 ```
 
-Ces dix-sept fichiers constituent la **structure cible**, et non une demande de les remplir immédiatement. **Exception : le registre des quinze donjons vient d'être créé dans la branche documentaire** ; les autres noms sont des fichiers futurs. L'image mondiale n'est pas un dix-huitième fichier Markdown : elle est un asset à inventorier/versionner. Les deux fichiers `V6-MAP-PIVOT-V2-*.md` servent uniquement de proposition de transition.
+Ces dix-sept fichiers constituent la **structure cible**, et non une demande de les remplir immédiatement. **Exceptions : le registre des quinze donjons et le cahier pilote Valdorie sont créés dans la branche documentaire** ; les autres noms sont des fichiers futurs. L'image mondiale n'est pas un dix-huitième fichier Markdown : elle est un asset à inventorier/versionner. Les deux fichiers `V6-MAP-PIVOT-V2-*.md` servent uniquement de proposition de transition.
 
 ## 3. Responsabilité précise de chaque document
 
@@ -46,7 +46,7 @@ Ces dix-sept fichiers constituent la **structure cible**, et non une demande de 
 | `V6-MAP-V2-PRODUCTION-FONDS.md` | Inventaire/hash de la vraie image maître 4K, références et droits, contrat fichier natif, ratio individuel, test de taille réelle, PNG source, dérivés de diffusion plus petits si besoin, aucun upscale, nomination/versionnement, contrôle avant/après, rollback. |
 | `V6-MAP-V2-DA-GARGOTTE.md` | Bible de peinture et d'humour : tavernes, bière, foire, bordel joyeux, burlesque grivois adulte et non explicite, gargotteries publiques par biome ; dosage/lisibilité ; aucun décor suggérant un secret. |
 | `V6-MAP-V2-ENTREVERS.md` | **Vue supérieure illustrée** de l'univers et ses entrées navigables ; distinction d'Ardéra, de la Trame et des familles de plans ; langage graphique cosmologique ; représentation symbolique plutôt que modèle astronomique non attesté ; aucun portail inventé. Concept graphique et liens à valider avant génération. |
-| `V6-MAP-V2-CONTINENT-*.md` (7) | Une fiche par continent, calée sur la mappemonde : six régions approuvées, merveille, silhouettes et hydrographie, paysages, civils anonymes, routes/ports, scènes Gargotte, limites de confidentialité, donjons **après** registre validé, extensions futures, prompt spécifique et contrôle sortie native. |
+| `V6-MAP-V2-CONTINENT-*.md` (7) | **Valdorie créée en tant que brief à revoir, aucune génération autorisée ; les six autres fiches sont futures.** Une fiche par continent, calée sur la mappemonde : six régions approuvées, merveille, silhouettes et hydrographie, paysages, civils anonymes, routes/ports, scènes Gargotte, limites de confidentialité, affectations relatives du registre, extensions futures, prompt conceptuel et contrôle sortie native. Coordonnées exactes et droits avant prompt exécutable. |
 | `V6-MAP-V2-DIMENSION-*.md` (3) | Trame astrale, **La Brasserie Céleste** et **L'Enfer de la Sobriété Éternelle** : régions/territoires du corpus existant, palette, références, D7/D8 dans leurs dimensions homonymes mais comme objets distincts, fond sans secret, consultation ≠ accès réel ; aucune assimilation Trame=Entrevers. Conserver provisoirement les anciennes clés conceptuelles map_id jusqu'à contrat de migration. |
 | `V6-MAP-V2-NAVIGATION-TOPONYMIE-CODEX.md` | Contrat vue par vue/hotspots indépendants des bitmaps, identifiants stables, retours, Chope, label dynamique, panneau Codex, extension, pas de changement de fond piloté par zoom. |
 | `V6-MAP-V2-SECURITE-OFFLINE-VALIDATION.md` | Filtrage MJ/joueur/campagne côté backend, absence de secrets en image/recherche/cache/URL, chargement paresseux, ressources versionnées, validation Safari iPad, vraie qualification offline et non-régression IndexedDB/V7. |
@@ -83,4 +83,4 @@ Conserver pour chaque entrée le `placement_id` conceptuel stable, l'ID Dn édit
 
 ## 7. Livrables et critères de fermeture de cette préparation
 
-Le cadrage initial produisait deux documents ; la décision utilisateur du 28/09/2026 a autorisé **un troisième fichier, le registre V2 des quinze affectations validées**, et leur répercussion dans les deux documents de cadrage. Critères de revue : l'Entrevers figure bien au-dessus du monde et distinct de la Trame ; les sept continents et les trois dimensions subsistent ; 13+2 affectations et zones relatives **validées, géopoints réservés** ; aucune résolution inventée ; aucune mise en scène de site secret ; aucun upgrade du runtime, des services, de l'IndexedDB ni des assets. Les décisions en attente sont le concept visuel de l'Entrevers, l'arbitrage des quinze placements et la capacité native réelle des futures générations.
+Le cadrage initial produisait deux documents ; la décision utilisateur du 28/09/2026 a autorisé **un troisième fichier, le registre V2 des quinze affectations validées**, et leur répercussion dans les deux documents de cadrage. L'ordre ultérieur « go » a autorisé un **quatrième document, le cahier conceptuel de Valdorie**, sans production d'image et sans remplissage fictif de coordonnées. Critères de revue : l'Entrevers figure bien au-dessus du monde et distinct de la Trame ; les sept continents et les trois dimensions subsistent ; 13+2 affectations et zones relatives **validées, géopoints réservés** ; aucune résolution inventée ; aucune mise en scène de site secret ; aucun upgrade du runtime, des services, de l'IndexedDB ni des assets. Les décisions en attente sont le concept visuel de l'Entrevers, l'arbitrage des quinze placements et la capacité native réelle des futures générations.
