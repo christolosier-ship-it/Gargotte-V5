@@ -1,6 +1,6 @@
 # V6-Map V2 — Six continents après Valdorie : cadrage et registre des arbitrages
 
-**STATUT : CADRAGE COMMUN EN REVUE, PREMIER CONTINENT FERRÉCIME : ONZE ARBITRAGES ET TROIS CONCEPTS DE DONJONS VALIDÉS LE 28/09/2026. Les cinq autres continents restent à arbitrer. AUCUNE IMAGE GÉNÉRÉE.**
+**STATUT : CADRAGE COMMUN EN REVUE. FERRÉCIME : 11 ARBITRAGES + 3 CONCEPTS VALIDÉS ; SYLVARONDE : 12 ARBITRAGES + CONCEPT D13 VALIDÉS LE 28/09/2026. Quatre autres continents à arbitrer. AUCUNE IMAGE GÉNÉRÉE.**
 
 **Dépendance GitHub vérifiée** : la **PR #59 (pivot V2 et Valdorie) est désormais FUSIONNÉE** sur `V5.3` ; les cinq fichiers V2 sont disponibles sur la branche de base. La présente branche/PR #60 conserve ses propres ajouts documentaires, sans mutation des fichiers Valdorie de #59. Revérifier la comparaison au moment de l'intégration ; aucun merge automatique.
 
@@ -20,7 +20,7 @@ Les scènes de population et de gargotterie doivent illustrer **différents peup
 
 Règles proposées de conception : chaque carte habitée comporte plusieurs races visuellement distinguables à l'échelle possible ; les marchés, quais, caravanes, postes de garde, ateliers et fêtes montrent de la mixité, y compris les rôles non comiques ; éviter « une race = un continent », « un biome = un seul peuple », stéréotypes humiliants ou intégration arbitraire d'une créature du donjon secret. La présence artistique de ces peuples dans un décor **ne fixe pas leur origine raciale, territoire politique, statut de faction, diplomatie ou affiliation aux donjons** ; ces éventuelles affirmations nécessiteraient un arbitrage lore explicite.
 
-**Arbitrage Ferrécime VALIDÉ :** diversité multiraciale, sans quota par race ni exclusivité territoriale et métiers/climats adaptés. Pour les cinq autres continents, soumettre la même règle au propriétaire, sans étendre tacitement son approbation. Les populations seront de taille suffisamment lisible dans le rendu réel, mais ni foule de figurines géantes ni spoilers de boss.
+**Arbitrages Ferrécime ET Sylvaronde VALIDÉS :** diversité multiraciale, sans quota par race ni exclusivité territoriale et métiers/climats adaptés. Pour Sylvaronde en particulier : elfes, orques, Gripplies/Mycéliennes non infectées lorsque le corpus public le permet, et autres peuples forestiers/marécageux attestés, sans création de races canoniques improvisées. Pour les quatre autres continents, soumettre explicitement la répartition sans déduire qu'elle est acceptée. Les populations seront de taille suffisamment lisible dans le rendu réel, mais ni foule de figurines géantes ni spoilers de boss.
 
 ## 3. Inventaire des six continents : canon et décisions encore ouvertes
 
@@ -34,12 +34,14 @@ La position des merveilles au monde est indicative dans le référentiel Ardéra
 - **D12 : Hauts Plateaux de Silex VALIDÉ** (ancienne piste Échine abandonnée) ; **D14 : Hautes Voûtes sur roche ORDINAIRE VALIDÉ**, à distance des Cimes ; **D15 : Marches de Braise, complexe industriel semi-enterré dans flanc volcanique VALIDÉ**, aucun lien avec D5. **Les trois concepts d'illustration sont approuvés sans correction**, sans prétendre valider un rendu non produit.
 - **Deux réserves d'extension VALIDÉES AUSSI DANS LEUR SECTEUR RELATIF le 28/09/2026** : **R1 extrémité nord des Portes du Givre, autour d'un passage glaciaire naturel remarquable ; R2 est des Vallées des Mille Cascades, autour d'une confluence spectaculaire**. R1/R2 éloignés des trois donjons, **Cimes Suspendues entièrement exclues**. Restent à fixer le point et l'emprise locaux exacts après lecture du vrai fond ; aucun X/Y, donjon futur ou portail inventé.
 - **Ouverts uniquement :** les emplacements géométriques exacts D12/D14/D15 et des réserves R1/R2 **dont les secteurs sont déjà approuvés**, la preuve de séparation effective, le vrai asset mondial 4K, capacités pixels natifs 3:2, IDs Codex/permissions, validation des rendus ; les noms des petits villages peuvent rester réservés tant que leurs points ne sont pas fichés.
-### Sylvaronde — un donjon
+### Sylvaronde — DOUZE arbitrages et concept D13 VALIDÉS
 
-- **Canon :** X45–67/Y54–77 ; Delta des Mille Bras, Bassin des Grandes Eaux, Forêt des Hautes Couronnes, Monts des Orages, Hautes Brumes, Marches du Sud ; grand bassin vers delta NO, affluents/lacs des brumes, écoulements est/sud ; **Canopée-Monde** vers X54/Y60, merveille biologique et magique VERTICALE, différente des Arbres-Colosses de Valdorie.
-- **D13 Marécages Infectés** : **Delta des Mille Bras VALIDÉ** ; position relative (chenaux isolés, îlot marécageux, bras mort, etc.) et concept d'illustration sont à proposer et approuver. La merveille elle-même n'est pas le donjon.
-- Ouverts : format/ratio, habitat/commerce dans l'eau et la canopée sans géographie fantaisiste incontrôlée, populations multi-races, scènes Gargotte fluviales/sylvestres, densité, marqueur D13 et géopoint après fond.
-
+- **Références courantes :** [`V6-MAP-V2-CONTINENT-SYLVARONDE.md`](V6-MAP-V2-CONTINENT-SYLVARONDE.md) et [concept D13 approuvé](V6-MAP-V2-SYLVARONDE-ILLUSTRATION-D13.md). L'ancienne fiche préparatoire est retirée pour éviter les propositions présentées comme encore ouvertes.
+- **Canon :** X45–67/Y54–77 ; Delta des Mille Bras, Bassin des Grandes Eaux, Forêt des Hautes Couronnes, Monts des Orages, Hautes Brumes, Marches du Sud ; grand bassin → delta NO, affluents/lacs des Brumes, bassins orientaux et méridionaux ; **Canopée-Monde** forêt biologique et magique verticalisée, distincte des Arbres-Colosses, sans portail présumé.
+- **Décisions explicites du 28/09/2026 :** paysage **3:2** avec mer/delta NO ; **communautés dispersées sans centre urbain dominant** ; Canopée-Monde **principalement sauvage avec rares observatoires sur les lisières** ; mixité races/peuples du jeu, elfes/orques et races fantasy forestières/marécageuses existantes ; **15–20 gargotteries** ; fond sans texte ; développement **léger** du commerce forestier et terrestre dans le sud, réseau hydrologique préservé ; ambiance de vie luxuriante dans la majorité du continent et **plus brumeuse/mystérieuse dans le Delta, sans localiser visuellement le secret de D13**.
+- **D13 Les Marécages Infectés : Delta des Mille Bras, îlot marécageux encerclé de chenaux, VALIDÉ** ; concept individuel d'îlot noueux avec passerelles et architecture en partie engloutie VALIDÉ ; donjon caché initialement aux joueurs, révélation MJ explicite par campagne et illustration conditionnelle distincte du fond public.
+- **Exactement CINQ réserves futures VALIDÉES en nombre/critères** : sur des points singuliers, éloignées de D13 et de la Canopée-Monde. **0/5 secteurs exacts encore validés** ; cinq propositions R1–R5 sont présentées comme pistes dans le cahier et devront être arbitrées sur le vrai fond. Ne pas déduire de coordonnées ou inventer D16+.
+- **Ouverts seulement :** choix final des cinq sites de réserve sur plan, leurs contours/points X/Y et le point D13, vrai master 4K, pixels natifs 3:2, IDs réels et contrôle de sécurité, validation du rendu final.
 ### Boréclat — aucun D1–D15
 
 - **Canon :** X25–59/Y4–20 ; Fjords des Brisants, Grande Taïga, Crêtes du Haut-Givre, Plateau des Blancs Silences, Pays des Sept Lacs, Marches d'Écume ; réseaux Sept Lacs→fjords, taïga occidentale et ruissellements saisonniers ; quatre fjords méridionaux, golfe occidental, îles à l'est et petite zone géothermique O ; **Aiguilles Boréales** dans les Crêtes vers X43/Y11, origine mystérieuse.
@@ -67,13 +69,13 @@ La position des merveilles au monde est indicative dans le référentiel Ardéra
 ## 4. Ordre d'arbitrage recommandé (non obligatoire)
 
 1. **Ferrécime** : arbitrages, concepts et **secteurs relatifs R1/R2 VALIDÉS** ; restent leurs positions précises sur le fond, et les Gates techniques.
-2. **Sylvaronde** : verrouiller la précision de D13, l'identité de Canopée-Monde et le caractère habitable de la forêt/delta.
+2. **Sylvaronde** : arbitrages et concept D13 TERMINÉS ; restent les cinq secteurs précis de réserve à sélectionner sur fond, les géopoints D13/R1–R5 et les Gates techniques.
 3. **Pelagrève** : deux mers intérieures et continuité maritime à traiter soigneusement.
 4. **Boréclat** : géographie arctique, quatre fjords, échanges et population.
 5. **Sahaldune** : endoréisme, les deux fleuves, mer ancienne et cultures.
 6. **Austrébrume** : merveille atmosphérique, frange australe et densité raisonnable.
 
-Ce classement est **proposition d'organisation**, pas ordre canonique. La revue commune des choix devrait être close avant d'écrire leurs briefs définitifs, puis **une fiche continent par vue**, une annexe pour les quatre concepts D12/D13/D14/D15 si utile, et une mise à jour du registre des quinze **uniquement après les décisions du propriétaire**. Les quatre continents sans D1–D15 ne reçoivent pas de pseudo-annexes de donjons ; leur absence est un choix de répartition V2 déjà acté.
+Ce classement est **proposition d'organisation**, pas ordre canonique. Les fiches approuvées Ferrécime et Sylvaronde et leurs annexes D12/D13/D14/D15 sont désormais créées. Répercuter leurs placements relatifs validés dans le registre des quinze à l'intégration de ce lot, en partant de la version V2 fusionnée de PR #59 (le fichier n'existait pas encore sur le snapshot initial de branche PR #60). Ne pas fabriquer d'IDs métier ni de géopoints. Les quatre continents sans D1–D15 ne reçoivent pas de pseudo-annexes de donjons ; leur absence est une répartition V2 déjà actée.
 
 ## 5. Questions à poser et Gate par continent
 
