@@ -1,6 +1,6 @@
 # V6-Map V2 — Valdorie : cahier de conception continentale
 
-**Statut : TREIZE ARBITRAGES VALDORIE VALIDÉS LE 28/09/2026 ; NEUF CONCEPTS D'ILLUSTRATION DES DONJONS EN ATTENTE DE VALIDATION INDIVIDUELLE ; géopoints, IDs métier, capacités de génération et implémentation EN ATTENTE. Aucune image générée.** Première carte continentale pilote du nouveau parcours **Entrevers → Ardéra (mappemonde approuvée 4K) → Valdorie**. Ce cahier fixe les invariants déjà documentés, les décisions V2 de placement relatif et des **propositions artistiques clairement distinctes du lore canonique**. Il ne crée ni coordonnées définitives, ni identité technique de donjon, ni accès narratif.
+**Statut : TREIZE ARBITRAGES VALDORIE VALIDÉS LE 28/09/2026 ; NEUF CONCEPTS D'ILLUSTRATION DES DONJONS VALIDÉS SANS RÉSERVE ; géopoints, IDs métier, capacités de génération et implémentation EN ATTENTE. Aucune image générée.** Première carte continentale pilote du nouveau parcours **Entrevers → Ardéra (mappemonde approuvée 4K) → Valdorie**. Ce cahier fixe les invariants déjà documentés, les décisions V2 de placement relatif et des **propositions artistiques clairement distinctes du lore canonique**. Il ne crée ni coordonnées définitives, ni identité technique de donjon, ni accès narratif.
 
 Références à consulter avant exécution : `AGENTS.md`, `V6-MAP-MAITRE.md` (géographie V1 et historiques), `V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md`, `V6-MAP-PIVOT-V2-ARCHITECTURE-DOCUMENTAIRE.md`, **`V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` (autorité actuelle sur les affectations)**, annexe A0 et la véritable illustration Ardéra V3 / 4K approuvée (inventaire de fichier/hash à faire avant génération). En cas de conflit : ne pas recopier l'ancienne répartition D1–D15 du maître V1 ; préserver l'historique et signaler le conflit.
 
@@ -22,7 +22,7 @@ Références à consulter avant exécution : `AGENTS.md`, `V6-MAP-MAITRE.md` (g�
 | 12 | **Aucune réserve d'emplacement futur prédéfinie** ; laisser les paysages respirer naturellement, sans créer de géopoints futurs fictifs. |
 | 13 | **Aucun texte peint** sur le fond, titre du continent compris ; noms exclusivement en surcouches d'interface masquables. |
 
-**Validation esthétique distincte :** les neuf descriptions proposées dans [`V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md`](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md) sont **À ARBITRER UNE À UNE**. Leur présence dans GitHub ne valide pas leurs silhouettes.
+**Validation esthétique complémentaire :** les neuf concepts dans [`V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md`](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md) sont **TOUS VALIDÉS SANS RÉSERVE par le propriétaire le 28/09/2026**. Les futurs rendus restent à produire et inspecter ; leur approbation ne doit pas être présumée.
 
 ## 1. Intentions et livrables du continent
 
@@ -57,7 +57,7 @@ Repère de **composition mondiale indicatif** (non contour final) : Valdorie X12
 
 ## 4. Les neuf donjons de Valdorie : décisions V2 et contrat de représentation
 
-**Affectations/positions relatives et règle de révélation VALIDÉES le 28/09/2026 ; géopoints, IDs Codex et filtrage backend EN ATTENTE.** Les neuf sites ont chacun une **illustration dédiée sur calque indépendant et conditionnel**, pas neuf signatures peintes sur le fond public. Tous sont initialement cachés aux joueurs, révélés explicitement par le MJ **par campagne**. Leurs silhouettes concrètes demeurent des propositions visuelles à valider une à une.
+**Affectations/positions relatives et règle de révélation VALIDÉES le 28/09/2026 ; géopoints, IDs Codex et filtrage backend EN ATTENTE.** Les neuf sites ont chacun une **illustration dédiée sur calque indépendant et conditionnel**, pas neuf signatures peintes sur le fond public. Tous sont initialement cachés aux joueurs, révélés explicitement par le MJ **par campagne**. Leurs **concepts de silhouettes sont validés sans réserve** dans l'annexe artistique ; les fichiers images n'existent pas encore.
 
 | ID / placement_id | Zone V2 validée | Implantation et précaution de conception |
 |---|---|---|
@@ -73,7 +73,7 @@ Repère de **composition mondiale indicatif** (non contour final) : Valdorie X12
 
 **Hors Valdorie** : D7 et D8 dans leurs dimensions désormais nommées La Brasserie Céleste et L'Enfer de la Sobriété Éternelle ; D12/D14/D15 en Ferrécime ; D13 en Sylvaronde ; D3/D10 ne sont **plus** à Pelagrève et D15 n'a aucun lien avec D5. Ne pas extrapoler de donjon non validé à partir d'un décor de tavernes.
 
-**Les neuf concepts architecturaux ne sont PAS encore approuvés :** voir [l'annexe des illustrations dédiées](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md). Les fichiers d'illustration sensibles ne devront pas davantage être diffusés via une URL ou un cache public que leurs marqueurs.
+**Les neuf concepts architecturaux sont VALIDÉS sans réserve :** voir [l'annexe des illustrations dédiées](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md). Les fichiers d'illustration sensibles ne devront pas davantage être diffusés via une URL ou un cache public que leurs marqueurs.
 
 **Registre géométrique ultérieur, sans valeurs fictives :** pour chaque `placement_id`, `view_id`, point local (x,y), éventuel `level/depth`, statut public/sensible, niveau de découverte par campagne, lien Codex `entity_type/entity_id` réellement résolu, rayon de sélection UI, vérification d'un marqueur voisin. Pour D5/D6, définir le modèle vertical avant de renseigner leurs positions. Tous les marqueurs secrets sont filtrés **avant transmission**, y compris recherche, aperçus, URLs et cache. Ne pas présenter une vue de contrôle MJ comme fichier public.
 
@@ -141,7 +141,7 @@ The public illustrated background may show the Chope but MUST NOT contain the ni
 No text whatsoever, including no painted continent title, no labels, no fake writing, no political borders, no UI, no portals or secrets. NO UPSCALING. Produce only in a verified native output size, disclose the real pixel dimensions and preserve geography.
 ```
 
-Ce texte décrit la vision sans autoriser une génération. Valider d'abord les neuf silhouettes proposées dans [l'annexe des illustrations](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md), le vrai master mondial de référence, la capacité native du moteur et les règles d'accès aux ressources privées.
+Ce texte décrit la vision sans autoriser une génération. **Les neuf silhouettes sont déjà validées** dans [l'annexe des illustrations](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md). Avant une production réelle, vérifier le vrai master mondial de référence, la capacité native du moteur et le périmètre public/privé des ressources ; les géopoints numériques et droits techniques seront requis avant leur intégration dans l'Atlas.
 
 ## 10. Checklist QA et Gates
 
@@ -150,11 +150,28 @@ Ce texte décrit la vision sans autoriser une génération. Valider d'abord les 
 | Géographie | Six régions, trois péninsules, côtes/archipels et fleuves cohérents, Arbres-Colosses distincts du D9. |
 | Composition | **3:2 paysage avec mer**, une cité fortifiée anonyme, un port, **3–5 bourgs**, Saint-Fût rural, Chope publique identifiable et modeste. |
 | Donjons | Neuf affectations relatives validées, notamment D1 côté collines/D2 côté forêt, D3 quartier hôtelier/D4 festif, D6 sous D5 dans un marqueur commun. |
-| Illustrations | Neuf silhouettes à **valider une par une**, calques conditionnels séparés, aucun indice peint dans le fond. |
+| Illustrations | **Neuf concepts validés sans réserve** ; futurs rendus à inspecter, calques conditionnels séparés, aucun indice peint dans le fond. |
 | Gargotteries | **25–30** micro-scènes publiques non explicites, géographiquement plausibles et non révélatrices de secrets. |
 | Extension | **Aucune réserve future prédéfinie**, mais grandes étendues naturelles non saturées. |
 | Technique | Ratio 3:2, résolution native réelle vérifiée, **pas d'upscale**, aucun texte peint, noms via surcouches. |
 | Sécurité | Neuf donjons cachés initialement, révélation MJ par campagne, filtrage serveur **avant transmission des images aussi**. |
 | Validation | Vraie image Ardéra 4K inventoriée, concordance visuelle, essai Safari iPad, aucune altération IndexedDB/V7. |
 
-**État au 28/09/2026 :** treize arbitrages VALIDÉS. Neuf implantations relatives validées. Les [neuf concepts d'illustration](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md) sont **EN ATTENTE DE VALIDATION INDIVIDUELLE** ; coordonnées numériques, IDs métier, visibilité technique, authentique source mondiale 4K et démonstration de génération native 3:2 EN ATTENTE. **Aucune image produite, aucun déploiement.**
+**État au 28/09/2026 :** treize arbitrages VALIDÉS. Neuf implantations relatives validées. Les [neuf concepts d'illustration](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md) sont **VALIDÉS SANS RÉSERVE** ; les neuf rendus finaux, coordonnées numériques, IDs métier, visibilité technique, authentique source mondiale 4K et démonstration de génération native 3:2 restent EN ATTENTE. **Aucune image produite, aucun déploiement.**
+
+## 11. Audit des points restant à trancher ou à vérifier après approbation des neuf concepts (28/09/2026)
+
+**Aucun nouveau choix de direction artistique majeur n'est nécessaire à ce stade.** Les 13 arbitrages du continent et les 9 concepts des donjons sont VALIDÉS. Ne pas rouvrir ces points par défaut. Les résidus ci-dessous sont séparés selon leur nature et leur vraie dépendance :
+
+| Point restant | Nature / responsable | Moment et condition de sortie |
+|---|---|---|
+| **Identifier l'asset exact de la mappemonde 4K approuvée** : fichier, version, dimensions réelles et empreinte/hash, comparaison à la V3 | **Prérequis documentaire/source**, nécessite le bon fichier de référence si absent du dépôt ; ne pas utiliser une capture ou une SVG indicative comme preuve de côtes exactes | **Avant génération du fond public** et validation de la fidélité de Valdorie. |
+| **Résolution et moteur de génération natifs compatibles avec le cadrage 3:2** ; format maître, transparence éventuelle des illustrations, capacité réelle et règle de recadrage sans agrandissement | **Validation technique**, pas de nouvelle décision de style. Le ratio 3:2 est déjà arrêté, aucun upscaling autorisé | **Avant génération**, consigner dimensions mesurées et technique exacte ; si 3:2 natif inaccessible, demander un arbitrage explicite sur l'alternative, sans tromper sur la définition. |
+| **Plan de composition sur le vrai fond** : contour, marges maritimes, place de la Chope, cité, port, 3–5 bourgs, 25–30 micro-scènes (plan détaillé proposé : 28) | **Contrôle éditorial/visuel du premier rendu**. Les plages 3–5 et 25–30 sont déjà VALIDÉES ; choisir un nombre dans chaque plage n'est pas un changement de canon | Vérifier contre la mappemonde et le cahier au premier fond produit ; ne pas peindre de secrets. |
+| **Coordonnées locales exactes des neuf donjons, de la Chope et des repères publics** ; D5/D6 même x/y et niveaux distincts, D1/D2 séparés, D3/D4 distincts dans la même cité | **Implantation cartographique**, qui exige un fond continental ou une esquisse géographique approuvée ; ne pas inventer de géopoints | Après cadrage du fond, **avant intégration des calques et hotspots** ; faire approuver la planche de placement MJ. |
+| **Correspondance éditoriale Dn → `entity_type/entity_id` du Codex réel**, notamment divergence de titre D1 entre historiques | **Inventaire technique/lore**, sans fabriquer les IDs ni modifier les fiches | Avant liens cliquables, marqueurs et mise en production ; constater/faire arbitrer toute divergence réelle. |
+| **Modèle d'autorisation et de révélation par campagne**, stockage/URL/aperçu/cache/search des neuf ressources conditionnelles ; marqueur unique D5/D6 et ses choix filtrés | **Audit/contrat sécurité de l'application réelle**, règle fonctionnelle de secret déjà VALIDÉE mais non implémentée par cette PR | Avant toute exposition d'assets sensibles, test joueur/MJ/multi-campagne et offline iPad, incluant cache et accès direct URL. |
+| **Validation des neuf rendus finals** (un par donjon) et du fond Valdorie après génération | **Contrôle qualité graphique** : conformité aux concepts déjà approuvés, qualité native, détourage/alpha réel, lisibilité et absence de spoilers. Ce n'est pas une réouverture des concepts | À réception de chaque asset ; aucune validation d'image anticipée. |
+| **Nom de la grande cité** | **Volontairement RÉSERVÉ par décision du propriétaire**, et non oublié. Aucun mot n'est peint sur le fond | Ne bloque **pas la production graphique** ; décider seulement avant son étiquetage dans l'interface/Codex si nécessaire. Les noms éventuels des 3–5 bourgs restent aussi non inventés. |
+
+**Deux dépendances à ne pas confondre :** le fond public de Valdorie peut être préparé puis généré après vérification du véritable master mondial et des capacités natives **sans attendre** que les URL de fichiers de donjon ou leurs ID Codex soient finalisés, puisqu'il ne doit contenir aucun de ces secrets. En revanche, la pose des neuf illustrations conditionnelles et l'intégration applicative ne peuvent pas précéder la validation des positions, de leurs identifiants et des autorisations. Le cahier actuel ne constitue pas un ordre de génération et ne modifie ni runtime ni V7.
