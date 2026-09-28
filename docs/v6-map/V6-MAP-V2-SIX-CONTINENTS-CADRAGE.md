@@ -54,8 +54,9 @@ La position des merveilles au monde est indicative dans le référentiel Ardéra
 - **Aucun des quinze donjons actuels**. Des haltes, ruines et marchés PUBLICS ne deviennent pas automatiquement des donjons cachés.
 - Ouverts : ratio/cadrage, sites riverains/oasis et axes de caravane, ports du nord/sud selon vraie côte, mixité visuelle des races, gags de marché, caravane, sel et mousson sans copier-coller les déserts infernaux, densité des cités.
 
-### Pelagrève — aucun D1–D15
+### Pelagrève — aucun D1–D15, REVUE EN COURS
 
+- **Cahier de préparation :** [12 arbitrages artistiques et géographiques à soumettre](V6-MAP-V2-CONTINENT-PELAGREVE-PREPARATION.md), **NON ENCORE VALIDÉS**. Ne pas attribuer à Pelagrève les anciens D3/D10 de V1 : ils sont désormais en Valdorie selon le registre V2.
 - **Canon :** X81–95/Y34–66 ; Côtes des Éclats, Mers Encloses, Dorsale des Fournaises, Côtes des Alizés, Ceinture des Lagons, Marches des Marées ; croissant continental fracturé et archipels ; **Mer des Lanternes** (grande/profonde) et **Mer aux Cent Passes** (ramifiée/insulaire), reliées ENTRE ELLES et À L'OCÉAN par détroits ; **Labyrinthe Corallien** vers X91/Y60. Préserver côte découpée, lacs centraux, bassins insulaires et détroits. PAS de pont terrestre.
 - **Aucun des quinze donjons actuels.** D3 et D10 ont été déplacés en Valdorie par décision V2 ; ne pas les faire réapparaître ici.
 - Ouverts : silhouette possiblement plus haute que large et ratio adapté aux îles, populations multi-races et culture maritime, nombre de villes/ports/escales, transport par navires/bacs, gargotteries de marins, pirates de foire, coquillages et marchés aquatiques ; visibilité correcte des deux mers intérieures.
