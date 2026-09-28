@@ -32,8 +32,8 @@ La position des merveilles au monde est indicative dans le référentiel Ardéra
 - **Canon géographique :** X56–76/Y22–52 ; Portes du Givre, Échine d'Ardéra, Hauts Plateaux de Silex, Vallées des Mille Cascades, Hautes Voûtes, Marches de Braise ; quatre bassins ouest/est/internes/sud ; côte E abrupte, SE volcanique ; Cimes Suspendues dans les Hautes Voûtes, merveille ancienne liée à la Trame mais PAS un portail ni une réserve.
 - **Arbitrages du 28/09/2026 :** paysage 3:2 avec marges maritimes N/E ; **quelques villages éparpillés, aucune grande ville/port imposé** ; peuplements multiraciaux adaptés au climat sans exclusivité ; **18–24 scènes Gargotte** ; aucun texte peint ; donjons cachés initialement aux joueurs et révélés explicitement par MJ par campagne via calques conditionnels.
 - **D12 : Hauts Plateaux de Silex VALIDÉ** (ancienne piste Échine abandonnée) ; **D14 : Hautes Voûtes sur roche ORDINAIRE VALIDÉ**, à distance des Cimes ; **D15 : Marches de Braise, complexe industriel semi-enterré dans flanc volcanique VALIDÉ**, aucun lien avec D5. **Les trois concepts d'illustration sont approuvés sans correction**, sans prétendre valider un rendu non produit.
-- **Deux réserves d'extension VALIDÉES EN PRINCIPE** : secteurs singuliers éloignés des trois donjons, Cimes Suspendues entièrement exclues. Pistes R1 extrémité nord des Portes du Givre et R2 Vallées des Mille Cascades à l'est (hors voisinage D14/D15) **À ARBITRER** après examen du vrai fond ; aucun point X/Y ni donjon futur fictif.
-- **Ouverts uniquement :** les emplacements géométriques exacts D12/D14/D15/R1/R2, le vrai asset mondial 4K, capacités pixels natifs 3:2, IDs Codex/permissions, validation des rendus ; les noms des petits villages peuvent rester réservés tant que leurs points ne sont pas fichés.
+- **Deux réserves d'extension VALIDÉES AUSSI DANS LEUR SECTEUR RELATIF le 28/09/2026** : **R1 extrémité nord des Portes du Givre, autour d'un passage glaciaire naturel remarquable ; R2 est des Vallées des Mille Cascades, autour d'une confluence spectaculaire**. R1/R2 éloignés des trois donjons, **Cimes Suspendues entièrement exclues**. Restent à fixer le point et l'emprise locaux exacts après lecture du vrai fond ; aucun X/Y, donjon futur ou portail inventé.
+- **Ouverts uniquement :** les emplacements géométriques exacts D12/D14/D15 et des réserves R1/R2 **dont les secteurs sont déjà approuvés**, la preuve de séparation effective, le vrai asset mondial 4K, capacités pixels natifs 3:2, IDs Codex/permissions, validation des rendus ; les noms des petits villages peuvent rester réservés tant que leurs points ne sont pas fichés.
 ### Sylvaronde — un donjon
 
 - **Canon :** X45–67/Y54–77 ; Delta des Mille Bras, Bassin des Grandes Eaux, Forêt des Hautes Couronnes, Monts des Orages, Hautes Brumes, Marches du Sud ; grand bassin vers delta NO, affluents/lacs des brumes, écoulements est/sud ; **Canopée-Monde** vers X54/Y60, merveille biologique et magique VERTICALE, différente des Arbres-Colosses de Valdorie.
@@ -66,7 +66,7 @@ La position des merveilles au monde est indicative dans le référentiel Ardéra
 
 ## 4. Ordre d'arbitrage recommandé (non obligatoire)
 
-1. **Ferrécime** : arbitrages et concepts TERMINÉS ; restent les positions précises, deux réserves à choisir sur fond, et les Gates techniques.
+1. **Ferrécime** : arbitrages, concepts et **secteurs relatifs R1/R2 VALIDÉS** ; restent leurs positions précises sur le fond, et les Gates techniques.
 2. **Sylvaronde** : verrouiller la précision de D13, l'identité de Canopée-Monde et le caractère habitable de la forêt/delta.
 3. **Pelagrève** : deux mers intérieures et continuité maritime à traiter soigneusement.
 4. **Boréclat** : géographie arctique, quatre fjords, échanges et population.
