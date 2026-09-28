@@ -1,6 +1,6 @@
 # V6-Map V2 — Six continents après Valdorie : cadrage et registre des arbitrages
 
-**STATUT : CADRAGE DOCUMENTAIRE PROPOSÉ LE 28/09/2026 ; AUCUN NOUVEAU CONCEPT CONTINENTAL OU SOUS-EMPLACEMENT DE DONJON N'EST VALIDÉ PAR CE FICHIER. AUCUNE IMAGE GÉNÉRÉE.**
+**STATUT : CADRAGE COMMUN EN REVUE, PREMIER CONTINENT FERRÉCIME : ONZE ARBITRAGES ET TROIS CONCEPTS DE DONJONS VALIDÉS LE 28/09/2026. Les cinq autres continents restent à arbitrer. AUCUNE IMAGE GÉNÉRÉE.**
 
 **Dépendance GitHub** : le pivot de Valdorie est préparé dans la **PR #59**, actuellement encore ouverte au début de ce chantier. Cette nouvelle branche part de `V5.3` et ne modifie aucun des cinq fichiers de #59. Fusionner/résoudre #59 avant d'activer les références V2 de ce cadrage. L'état de PR doit être revérifié au moment de la fusion ; aucun merge automatique.
 
@@ -20,20 +20,20 @@ Les scènes de population et de gargotterie doivent illustrer **différents peup
 
 Règles proposées de conception : chaque carte habitée comporte plusieurs races visuellement distinguables à l'échelle possible ; les marchés, quais, caravanes, postes de garde, ateliers et fêtes montrent de la mixité, y compris les rôles non comiques ; éviter « une race = un continent », « un biome = un seul peuple », stéréotypes humiliants ou intégration arbitraire d'une créature du donjon secret. La présence artistique de ces peuples dans un décor **ne fixe pas leur origine raciale, territoire politique, statut de faction, diplomatie ou affiliation aux donjons** ; ces éventuelles affirmations nécessiteraient un arbitrage lore explicite.
 
-**Question commune à valider avec le propriétaire :** diversité multiraciale sur chaque continent, sans quota par race et sans attribuer une exclusivité territoriale ; choix de quelques accents visuels par biome uniquement comme esthétique, sauf canon documenté. Les populations seront de taille suffisamment lisible dans le rendu réel, mais ni foule de figurines géantes ni spoilers de boss.
+**Arbitrage Ferrécime VALIDÉ :** diversité multiraciale, sans quota par race ni exclusivité territoriale et métiers/climats adaptés. Pour les cinq autres continents, soumettre la même règle au propriétaire, sans étendre tacitement son approbation. Les populations seront de taille suffisamment lisible dans le rendu réel, mais ni foule de figurines géantes ni spoilers de boss.
 
 ## 3. Inventaire des six continents : canon et décisions encore ouvertes
 
 La position des merveilles au monde est indicative dans le référentiel Ardéra 0..100, pas un géopoint final continental. Les six régions sont déjà VALIDÉES et ne doivent pas être renommées.
 
-### Ferrécime — pilotage proposé en premier, trois donjons
+### Ferrécime — ONZE décisions validées, trois concepts validés
 
-- **Canon :** X56–76/Y22–52 ; Portes du Givre, Échine d'Ardéra, Hauts Plateaux de Silex, Vallées des Mille Cascades, Hautes Voûtes, Marches de Braise ; quatre bassins ouest/est/internes/sud ; côte est abrupte, SE volcanique ; **Cimes Suspendues** dans les Hautes Voûtes vers X68/Y37, anomalie ancienne liée à la Trame astrale mais PAS un portail avéré.
-- **D12 Monastère des Dénaturées** : continent et **région montagneuse VALIDÉS** ; « vallée reculée de l'Échine d'Ardéra » n'est qu'une **ancienne piste V1**, à approuver ou modifier ensemble.
-- **D14 Citadelle des Tonneaux Perchés** : continent Ferrécime VALIDÉ ; **Hautes Voûtes** = ancienne piste V1, encore à arbitrer précisément ; ne pas situer la citadelle automatiquement sur une Cime Suspendue.
-- **D15 Gynécotron du Gnome Tordu** : **Marches de Braise, secteur volcanique VALIDÉ**, **aucun lien avec D5** ; sous-secteur et rapport à un relief de surface ou complexe enfoui encore à décider, sans inventer de portail.
-- Ouverts : format/ratio ; peuplement et architecture multi-races ; nombre/type de villes, forteresses, bourgs, voies et routes de cols ; niveau de gargotteries adapté à la montagne ; **trois concepts illustratifs D12/D14/D15 à proposer et faire approuver individuellement** ; trois géopoints locaux après référence visuelle réelle.
-
+- **Référence courante :** [`V6-MAP-V2-CONTINENT-FERRECIME.md`](V6-MAP-V2-CONTINENT-FERRECIME.md) ; [trois illustrations D12/D14/D15 VALIDÉES](V6-MAP-V2-FERRECIME-ILLUSTRATIONS-DONJONS.md). Les anciennes options de préparation ne sont plus des demandes ouvertes.
+- **Canon géographique :** X56–76/Y22–52 ; Portes du Givre, Échine d'Ardéra, Hauts Plateaux de Silex, Vallées des Mille Cascades, Hautes Voûtes, Marches de Braise ; quatre bassins ouest/est/internes/sud ; côte E abrupte, SE volcanique ; Cimes Suspendues dans les Hautes Voûtes, merveille ancienne liée à la Trame mais PAS un portail ni une réserve.
+- **Arbitrages du 28/09/2026 :** paysage 3:2 avec marges maritimes N/E ; **quelques villages éparpillés, aucune grande ville/port imposé** ; peuplements multiraciaux adaptés au climat sans exclusivité ; **18–24 scènes Gargotte** ; aucun texte peint ; donjons cachés initialement aux joueurs et révélés explicitement par MJ par campagne via calques conditionnels.
+- **D12 : Hauts Plateaux de Silex VALIDÉ** (ancienne piste Échine abandonnée) ; **D14 : Hautes Voûtes sur roche ORDINAIRE VALIDÉ**, à distance des Cimes ; **D15 : Marches de Braise, complexe industriel semi-enterré dans flanc volcanique VALIDÉ**, aucun lien avec D5. **Les trois concepts d'illustration sont approuvés sans correction**, sans prétendre valider un rendu non produit.
+- **Deux réserves d'extension VALIDÉES EN PRINCIPE** : secteurs singuliers éloignés des trois donjons, Cimes Suspendues entièrement exclues. Pistes R1 extrémité nord des Portes du Givre et R2 Vallées des Mille Cascades à l'est (hors voisinage D14/D15) **À ARBITRER** après examen du vrai fond ; aucun point X/Y ni donjon futur fictif.
+- **Ouverts uniquement :** les emplacements géométriques exacts D12/D14/D15/R1/R2, le vrai asset mondial 4K, capacités pixels natifs 3:2, IDs Codex/permissions, validation des rendus ; les noms des petits villages peuvent rester réservés tant que leurs points ne sont pas fichés.
 ### Sylvaronde — un donjon
 
 - **Canon :** X45–67/Y54–77 ; Delta des Mille Bras, Bassin des Grandes Eaux, Forêt des Hautes Couronnes, Monts des Orages, Hautes Brumes, Marches du Sud ; grand bassin vers delta NO, affluents/lacs des brumes, écoulements est/sud ; **Canopée-Monde** vers X54/Y60, merveille biologique et magique VERTICALE, différente des Arbres-Colosses de Valdorie.
@@ -66,7 +66,7 @@ La position des merveilles au monde est indicative dans le référentiel Ardéra
 
 ## 4. Ordre d'arbitrage recommandé (non obligatoire)
 
-1. **Ferrécime** : verrouiller D12/D14/D15, leurs concepts et la montagne/volcanisme.
+1. **Ferrécime** : arbitrages et concepts TERMINÉS ; restent les positions précises, deux réserves à choisir sur fond, et les Gates techniques.
 2. **Sylvaronde** : verrouiller la précision de D13, l'identité de Canopée-Monde et le caractère habitable de la forêt/delta.
 3. **Pelagrève** : deux mers intérieures et continuité maritime à traiter soigneusement.
 4. **Boréclat** : géographie arctique, quatre fjords, échanges et population.
@@ -79,4 +79,4 @@ Ce classement est **proposition d'organisation**, pas ordre canonique. La revue 
 
 Renseigner pour chaque : A. ratio/cadrage natif + marges ; B. système de villes/ports/bourgs sans uniformiser tous les continents ; C. éventuelle proposition de topographie secondaire et toponymie, sans réécrire les six régions ; D. populations et **plusieurs races déjà présentes dans le jeu** (statut de la répartition ethno-géographique si nécessaire) ; E. densité, répartition et liste de 25–30 gargotteries si cette plage est approuvée spécifiquement, sinon autre quantité décidée ; F. merveille et interdictions lore ; G. donjon(s) réellement présent(s) : région, position relative, distinct de la merveille/portail, illustration conditionnelle et concept visuel à approuver ; H. absence de réserves géographiques prédéfinies ou décision contraire ; I. aucun texte peint ou changement expressément approuvé ; J. rapport de production native sans upscale, droits et QA.
 
-**Stop validation :** ne pas transformer l'ancienne piste D12/Échine ou D14/Hautes Voûtes en décision sans réponse. Ne pas inventer des coordonnées X/Y avant le fond détaillé, des origines de races ou des sites secrets pour les continents vides. La production de fond public peut rester indépendante des IDs/URLs des donjons, contrairement à leur intégration conditionnelle. La vérification sécurité côté backend est obligatoire avant diffusion de ressources sensibles. Aucune modification runtime, IndexedDB, V7 ou image dans ce lot documentaire.
+**Stop validation :** ne pas appliquer l'ancienne piste D12/Échine ; D12 est sur les Hauts Plateaux de Silex et D14 sur roche ordinaire des Hautes Voûtes, par validation expresse. Ne pas inventer des coordonnées X/Y avant le fond détaillé, des origines de races ou des sites secrets pour les continents vides. La production de fond public peut rester indépendante des IDs/URLs des donjons, contrairement à leur intégration conditionnelle. La vérification sécurité côté backend est obligatoire avant diffusion de ressources sensibles. Aucune modification runtime, IndexedDB, V7 ou image dans ce lot documentaire.
