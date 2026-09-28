@@ -79,77 +79,82 @@ Repère de **composition mondiale indicatif** (non contour final) : Valdorie X12
 
 ## 5. Civilisations, commerce et fioritures géographiques
 
-**Propositions artistiques, NON canonicalisées par ce document :**
+**Décision de densité VALIDÉE : une grande cité fortifiée anonyme, un grand port commercial anonyme et TROIS À CINQ bourgs secondaires.** Les hameaux modestes, dont Saint-Fût, ne deviennent pas de grandes villes. Les détails architecturaux sont des propositions de peinture non assimilées à un nouveau lore.
 
-- Grande cité anonyme des Plaines de Valdor : enceinte, portes, rues compactes, grand pont si cohérent avec les eaux, marché, maisons serrées, port fluvial **uniquement si un fleuve navigable y passe effectivement**. Ses quartiers peuvent réserver D3/D4 en surcouche sans les rendre identifiables sur la peinture.
-- Port public anonyme des Côtes Grises : quais de pierre/bois, phare, entrepôts, navires et marché aux poissons ; garder libre la zone locale de D10 jusqu'à sa position exacte.
-- Bourgades agricoles discrètes dans les Plaines et les Bassins de l'Est ; petites exploitations, moulins, halles et ponts. Saint-Fût demeure petit et à l'écart du réseau majeur.
-- Routes rares mais lisibles reliant la grande ville, un axe commercial vers les Côtes Grises et des voies suivant les vallées/cols des Hautes Marches. Un chemin modeste mène à Saint-Fût ; pas d'autoroute médiévale devant la Chope.
-- Commerces fluviaux **proposés** sur des tronçons plausibles de l'Avelorne/Rivombre : barges, bacs, petits ports, moulins. Aucun cours d'eau ne devient navigable sans considération des pentes et des reliefs.
-- Végétation et habitations variées par biome ; vastes espaces sauvages conservés en Sylve, Hautes Marches et Terres de Cendre.
-- Réserves visuelles et données pour futurs villages, ports, curiosités, donjons, quêtes et régions d'intérêt sans peindre leurs futurs emplacements comme des indices.
+- **Grande cité des Plaines de Valdor :** enceinte, portes, rues compactes, place et halles ; deux quartiers distincts, hôtelier pour D3 et festif pour D4, sans mettre leurs façades secrètes dans le fond. Pont majeur seulement si les eaux le justifient ; port fluvial seulement si une eau navigable la traverse. Le nom de la cité reste RÉSERVÉ.
+- **Grand port des Côtes Grises :** quais de pierre et de bois, phare, entrepôts, navires et criée publique ; D10 demeure sur le littoral rocheux sans devenir par supposition le port lui-même.
+- **Trois à cinq bourgs secondaires :** implantations publiques plausibles liées à agriculture, traversée, carrefour et vallée. Répartition numérique précise et noms EN ATTENTE ; aucun nom inventé pour remplir la carte.
+- **Saint-Fût :** hameau rural à l'écart des grands axes, Chope visible mais sans monumentalisation, chemin modeste, ruisseau et vieux pont.
+- **Routes et commerce :** axes sobres entre cité et port, traversées de vallées/cols, liens vers bourgs ; navigation sur des tronçons fluviaux uniquement si relief et débit plausibles de l'Avelorne et de la Rivombre.
+- **Grands espaces naturels :** préserver Sylve, Hautes Marches, Terres de Cendre et campagnes. Les Arbres-Colosses restent plus marquants que les villes ordinaires. Pas de futures coordonnées de donjons « réservées » par défaut.
 
-La densité urbaine doit rester **raisonnable à l'échelle continentale** : bâtiments monumentaux lisibles, merveilles naturelles plus dominantes que les villes.
+Le port, la ville et les bourgs ne doivent porter aucun nom peint ni détail qui révèle D1/D2/D3/D4/D5/D6/D9/D10/D11.
 
-## 6. Catalogue de gargotteries publiques, grivoises et cartographiquement lisibles
+## 6. Gargotteries publiques, grivoises et cartographiquement lisibles
 
-**18–24 micro-scènes proposées, pas un inventaire de lieux canoniques ni un quota à remplir coûte que coûte.** Évoquer bière, goinfrerie, foire, bagarre de taverne, catastrophes logistiques et humour sous la ceinture **adulte, burlesque et non explicite**. Les effets doivent se découvrir à l'inspection, sans saturer la géographie ou mettre en scène une entrée de donjon. Sans texte ni écritures lisibles sur pancartes.
+**Décision VALIDÉE : 25 à 30 micro-scènes**, réparties sur le continent, distinctes des secrets, et lisibles à l'échelle de l'atlas. Humour adulte sous la ceinture, bière, ridicule, fausses cérémonies pompeuses et accidents logistiques ; pas de nudité explicite, d'acte sexuel, de violence graphique ou de texte peint.
 
-| Secteur public | Idées de gags visuels non liés aux donjons |
-|---|---|
-| Saint-Fût et sa campagne | Charrette de fûts embourbée, poules poursuivant un ivrogne, pompe à bière de place publique hors service, linge de dessous adulte emporté par le vent, tonneaux servant de bancs, cochon volant une miche. |
-| Plaines de Valdor et grande ville | Statue de satyre au pagne démesuré, enseigne sculptée suggestive **sans lettres**, petite procession de brasseurs avec tonneau trop grand pour la rue, marché de saucisses géantes, arroseur arrosé à la fontaine, ruelle où les chariots restent coincés. |
-| Côtes Grises | Phare en forme de vieux pichet (option stylistique), marin cramponné à son fût, navire marchand déséquilibré par ses cargaisons, criée aux poissons burlesque, passerelle de quai anormalement branlante. |
-| Hautes Marches | Halte de muletiers avec tonneaux mal arrimés, gargouille au postérieur exagéré sur un relais public, vieux pont ridiculement étroit, auberge de col battue par les vents. |
-| Sylve et Bassins de l'Est | Champignons qui servent de tabourets, clairière de banquet abandonné, petit moulin aux pales disproportionnées, canards dérobant le déjeuner des bateliers, pêcheur surpris par un brochet trop ambitieux. |
-| Terres de Cendre | Caravane dont les fûts roulent dans la pente, halte routière faite de pièces récupérées, statue publique à la pose franchement prétentieuse. |
+**Plan d'ambiance proposé à 28 scènes**, modifiable à l'intérieur de la plage validée :
 
-**Direction du comique :** la carte reste un atlas médiéval fantasy premium ; personnages adultes très petits à l'échelle de la carte ; satire de beuverie et de sensualité ridicule, **pas de nudité explicite, pas d'acte sexuel, pas de violence graphique**. Ne dessiner ni le Château Bastognac, ni l'Hôtel Zombifornia, ni le Cabaret, ni la Ruche Royale comme des « blagues cachées » dont les silhouettes ou thèmes identifieraient un donjon non découvert. En cas de doute sur un emplacement, déplacer ou retirer la micro-scène.
+| Secteur public | Nombre | Micro-scènes proposées |
+|---|---:|---|
+| Saint-Fût et campagne | 5 | Charrette de fûts embourbée ; poules poursuivant un poivrot ; pompe à bière inutilisable ; linge de dessous d'adultes emporté par le vent ; cochon volant le casse-croûte. |
+| Grande cité et Plaines de Valdor | 6 | Statue de satyre au pagne ridicule ; procession de brasseurs bloquée par un tonneau ; saucisses démesurées au marché ; chariot coincé dans une ruelle ; fontaine arrosant le mauvais notable ; gargouille au postérieur outrancier. |
+| Côtes Grises et port | 5 | Phare au galbe de vieux pichet ; navire déséquilibré par ses fûts ; marin agrippé à sa barrique ; criée burlesque ; passerelle de quai branlante. |
+| Hautes Marches | 4 | Auberge de col battue par les vents ; mulet chargé de tonneaux instables ; pont ridiculement étroit ; relais avec enseigne grivoise sculptée mais sans inscription. |
+| Sylve des Anciens et Bassins de l'Est | 5 | Champignons-tabourets ; banquet abandonné ; moulin disproportionné ; canards voleurs de déjeuner ; pêcheur tiré par son énorme prise. |
+| Terres de Cendre | 3 | Tonneaux dévalant devant une caravane ; halte de récupération bringuebalante ; statue à la pose pompeuse et absurde. |
+| **Total** | **28** | Cible globale impérative **25–30**, adaptée au cadrage et à la lisibilité réelle. |
 
-## 7. Réserves d'avenir et cohérence inter-vues
+La géographie reste prioritaire sur les gags. Ne pas installer une scène à un emplacement qui divulgue indirectement un donjon initialement secret. Les neuf silhouettes spécifiques n'existent que dans leurs illustrations conditionnelles.
 
-- Prévoir des zones visuellement libres pour futurs sites publics/privés dans les six régions, sans préattribuer des donjons inexistants.
-- Les sept hotspots continentaux sont gérés sur la mappemonde ; la carte de Valdorie garde son `view_id` propre et un bouton de retour vers Ardéra, ainsi que le raccourci Chope. La consultation d'une carte **ne représente pas un voyage physique**.
-- Noms de mers, villes, régions, fleuves, merveilles et sites sont fournis par surcouches masquables ; les calques des lieux sensibles n'existent dans la réponse joueur qu'après autorisation.
-- L'Entrevers, vue cosmologique au-dessus d'Ardéra, et les trois dimensions ne sont pas visibles comme portes physiques sur Valdorie par simple parenté de navigation. **Aucun portail inventé.**
-- La stratégie média Atlas reste distincte des images métier V7. Pas de nouvelle lecture globale des Blobs, reset IndexedDB ou suppression d'assets historiques.
+## 7. Extension libre et cohérence inter-vues
 
-## 8. Contrat de production native (à instruire avant peinture)
+- **VALIDÉ : AUCUNE réserve géographique prédéfinie** pour un futur donjon, village, quête ou portail. Ne pas créer de cases, marqueurs ou coordonnées provisoires d'extension. Laisser néanmoins les paysages respirer en tant que paysages, pas en tant que réserves narratives.
+- Sept hotspots continentaux sur la mappemonde ; Valdorie est une carte fille indépendante, avec retour Ardéra et raccourci Chope. Consultation d'une carte ≠ voyage physique.
+- Tous les noms, merveilles, régions, sites et même le **titre « Valdorie »** passent par des surcouches masquables ; aucun texte peint.
+- Les calques et fichiers sensibles des neuf donjons ne sont servis qu'aux utilisateurs réellement autorisés après révélation explicite du MJ **par campagne** ; ni URL prédictible, ni manifest public, ni cache public contenant ces illustrations.
+- Aucun portail physique inventé entre l'Entrevers, la Trame ou les dimensions du simple fait de leur hiérarchie d'interface.
+- Les médias Atlas restent indépendants des médias métier V7. Aucun chargement global des Blobs, reset IndexedDB ou nettoyage destructif.
 
-La cible fixe « 4096 × 4096 natif » **n'est pas actée** : elle a été envisagée avant de constater les limites réelles de génération. Préparer le vrai master 4K approuvé et le contrôle géographique, vérifier les dimensions natives de sortie du moteur, puis choisir explicitement une résolution/ratio natifs adaptés au continent et à l'iPad. Pas d'upscaling, ni de second agrandissement, ni de fausse mention « 4K ».
+## 8. Contrat de production native : CADRAGE 3:2 VALIDÉ
 
-La carte continentale devra être une création indépendante inspirée de la géographie mondiale, avec assez d'eau périphérique pour les péninsules, côtes et archipels, mais sans étirer le littoral pour remplir artificiellement un carré. Tout dérivé de diffusion **plus petit** devra être nommé comme réduction/compression du fond natif, non comme un nouveau master. Rapport requis : fichier source et référence, dimensions pixels **mesurées**, format, poids, éventuel profil alpha, validateur visuel, révision, test d'affichage iPad. Format du master conseillé PNG sans perte si le moteur le fournit ; formats de diffusion à qualifier séparément, sans supposer qu'un encodeur Canvas WebP absent empêche son décodage.
+Le cadrage retenu est **PAYSAGE 3:2 AVEC MARGES MARITIMES**, pour les trois péninsules, les îles et la lecture des côtes. Ne pas déformer les proportions pour remplir artificiellement le cadre. La résolution **en pixels** n'est pas arrêtée : une cible « 4K natif » ou « 4096 × 4096 » ne peut être présumée à partir d'un prompt.
 
-## 9. Prompt conceptuel à conserver, **NON EXÉCUTABLE avant Gate**
+**UPSCALING INTERDIT.** Vérifier les pixels réels et le ratio d'origine du moteur. Si le moteur ne produit pas directement du 3:2, seul un recadrage **sans agrandissement** depuis un raster natif plus large, préservant la géographie, peut être proposé après preuve ; sinon soumettre une alternative au propriétaire, sans tromper sur la résolution. Ni interpolation ascendante ni simple étirement de la mappemonde 4K.
+
+La carte continentale est une illustration indépendante cohérente avec le monde approuvé ; les neuf illustrations dédiées sont des ressources indépendantes (alpha si disponible nativement, ou détourage contrôlé sans upscale). Un fichier réduit pour l'iPad est un **dérivé de diffusion**, non un nouveau master. Le manifeste donnera fichier source authentique/hash, dimensions pixels mesurées, format, poids, éventuel alpha, révision, QA et test Safari iPad. Le décodage WebP doit être vérifié sur de vrais assets, sans l'inférer de l'encodeur Canvas.
+
+## 9. Prompt conceptuel **NON EXÉCUTABLE AVANT LES GATES**
 
 ```text
-Produce an independent richly detailed fantasy atlas painting of the continent Valdorie, using the approved Ardéra V3 / 4K map as the binding geographic and visual reference.
+Create an independent premium hand-painted medieval illuminated parchment atlas of Valdorie, with a LANDSCAPE 3:2 composition and surrounding maritime margins, using the approved Ardéra V3/4K world illustration as the binding geographic and style reference.
 
-Preserve Valdorie's overall silhouette, three southern peninsulas, surrounding seas and archipelagos, two primary watersheds, northern-central highlands, eastern ancient forest and Arbres-Colosses. Keep the six canon regions in their approved relative areas: Côtes Grises, Hautes Marches, Sylve des Anciens, Plaines de Valdor, Bassins de l'Est and Terres de Cendre. Maintain the drainage of Avelorne towards the Mer des Trois Couronnes, Rivombre towards Côtes Grises, the eastern lake Ysambre, the old hills near Saint-Fût and the Monts d'Escarbelle. Do not invent passages closing the sea or move the natural wonder.
+Preserve Valdorie's recognizable contour, three southern peninsulas, surrounding islands and seas and the western exit of Mer des Trois Couronnes. Keep the six original regions (Côtes Grises, Hautes Marches, Sylve des Anciens, Plaines de Valdor, Bassins de l'Est and Terres de Cendre), their main relief and drainage, Avelorne flowing towards Mer des Trois Couronnes, Rivombre towards Côtes Grises, stream Saules near Saint-Fût, lake Ysambre, Collines de la Vieille Lande, Monts d'Escarbelle and Arbres-Colosses in the Sylve. No invented mainland bridge, portal or new coastline.
 
-Illustrate Saint-Fût-le-Petit as a genuinely small rural hamlet with its old bridge, fields and stream. Give the public Chope Qui Colle tavern a discreet yet recognizable visual silhouette, with a barrel-yard and an unlettered tankard-shaped sign.
+Depict Saint-Fût-le-Petit as a genuinely small rural hamlet with fields, old bridge and stream; the PUBLIC Chope Qui Colle tavern should be recognizable but not monumental. Paint ONE imposing yet proportionate anonymous FORTIFIED city in Plaines de Valdor with publicly plausible hotel and festive districts, ONE major anonymous commercial coastal port in Côtes Grises, and THREE TO FIVE smaller public towns. Roads, ports, farming, bridges, mills and trade must follow plausible geography and leave wide wild areas.
 
-Enrich public geography with an imposing but proportionate anonymous walled city in the Plaines de Valdor, an anonymous commercial port on Côtes Grises, villages, natural roads, coherent river trade, farms, bridges, mills and forests. Keep large wild territories and the Arbres-Colosses visually more monumental than ordinary settlements.
+Include 25 TO 30 tiny distinct PUBLIC Gargotte vignettes across the regions: clumsy barrel convoys, pub mishaps, bawdy stylized adult innuendo, absurd satyr statue, overloaded ship and festive market chaos. Keep the humor non-explicit, colorful and readable, and never suggest a hidden dungeon through background scenery.
 
-Add numerous tiny PUBLIC Gargotte vignettes: clumsy barrel caravans, a ludicrously loaded merchant cart, bawdy adult tavern humor conveyed through subtle visual innuendo, an absurd satyr statue, an overloaded ship and chaotic festivals. Warm, burlesque, ridiculous fantasy tavern atmosphere, never explicit or overcrowded.
+The public illustrated background may show the Chope but MUST NOT contain the nine secret dungeon silhouettes, identifying architecture, entrances or names. Their INDIVIDUAL CONDITIONAL OVERLAYS have to be handled as separate protected images: D1 next to Chope towards the hills, D2 next to Chope towards the forest, D3 hotel district and D4 festive district in the same city, D5 in Hautes Marches foothills and D6 DIRECTLY UNDER D5 with one filtered marker, D9 deep in Sylve separate from Arbres-Colosses, D10 on Côtes Grises rocky coast, and D11 at the flowering-meadow/forest transition east of the Plaines. All nine start hidden to players and must be unlocked explicitly by the MJ per campaign.
 
-Preserve compositional space for NINE dungeon overlays: D1 and D2 near the Chope, D3/D4 in the same city, D5 in Hautes Marches and D6 directly below D5, D9 in Sylve des Anciens, D10 in Côtes Grises and D11 in the wooded flowering area east of the Plaines. Never paint any of their secret entrances, identifying architecture, literal markers or names into the public background. All actual dungeon markers and Codex links are application overlays subject to authorization, not embedded in this image.
-
-Premium hand-painted medieval illuminated parchment atlas, organic blue-green seas, varied temperate greens, copper and weathered gold ink, expressive landforms and rich detail. NO text, NO labels, NO fake lettering, NO political borders, NO UI, NO secret hints, NO unconfirmed portals. Do not upscale the source: generate at the actual demonstrated native resolution and report it accurately.
+No text whatsoever, including no painted continent title, no labels, no fake writing, no political borders, no UI, no portals or secrets. NO UPSCALING. Produce only in a verified native output size, disclose the real pixel dimensions and preserve geography.
 ```
 
-Le prompt est une **base de travail non autorisée à générer** tant que les repères et la visibilité des lieux ne sont pas arbitrés. Il ne contient volontairement aucune dimension pixel promise ni coordonnée de donjon inventée.
+Ce texte décrit la vision sans autoriser une génération. Valider d'abord les neuf silhouettes proposées dans [l'annexe des illustrations](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md), le vrai master mondial de référence, la capacité native du moteur et les règles d'accès aux ressources privées.
 
 ## 10. Checklist QA et Gates
 
-| Contrôle | Critère de décision |
+| Contrôle | Critère |
 |---|---|
-| Géographie | 3 péninsules, 6 régions correctes, côtes/archipels et hydrographie cohérents, Arbres-Colosses dans la Sylve. |
-| Repères publics | Saint-Fût petit et rural ; Chope identifiable en tant que décor public ; grande ville et port anonymes proportionnés. |
-| Donjons | 9 placements V2, D1/D2 proches de la Chope, D3/D4 même ville, D6 **sous** D5 ; zéro entrée secrète peinte. |
-| Humoristique | Gargotteries publiques visibles en inspection, comique adulte burlesque, ni nudité explicite ni saturation de la carte. |
-| Technique | Image réellement générée à résolution native vérifiée, pas d'upscale, labels et marqueurs non peints, fond public versionné. |
-| Navigation et confidentialité | Retours parent, marqueur Chope, surcouches indépendantes, réponse joueur filtrée avant envoi, espace futur préservé. |
-| Tests | Revue visuelle sur vrai fond, ergonomie iPad au format réellement livré, absence de contamination du patrimoine IndexedDB/V7. |
+| Géographie | Six régions, trois péninsules, côtes/archipels et fleuves cohérents, Arbres-Colosses distincts du D9. |
+| Composition | **3:2 paysage avec mer**, une cité fortifiée anonyme, un port, **3–5 bourgs**, Saint-Fût rural, Chope publique identifiable et modeste. |
+| Donjons | Neuf affectations relatives validées, notamment D1 côté collines/D2 côté forêt, D3 quartier hôtelier/D4 festif, D6 sous D5 dans un marqueur commun. |
+| Illustrations | Neuf silhouettes à **valider une par une**, calques conditionnels séparés, aucun indice peint dans le fond. |
+| Gargotteries | **25–30** micro-scènes publiques non explicites, géographiquement plausibles et non révélatrices de secrets. |
+| Extension | **Aucune réserve future prédéfinie**, mais grandes étendues naturelles non saturées. |
+| Technique | Ratio 3:2, résolution native réelle vérifiée, **pas d'upscale**, aucun texte peint, noms via surcouches. |
+| Sécurité | Neuf donjons cachés initialement, révélation MJ par campagne, filtrage serveur **avant transmission des images aussi**. |
+| Validation | Vraie image Ardéra 4K inventoriée, concordance visuelle, essai Safari iPad, aucune altération IndexedDB/V7. |
 
-**État actuel :** Gate de rattachement relatif des neuf donjons **VALIDÉE** via le registre ; choix des géopoints, contrôle du lore réel, de la visibilité et des IDs métier, forme/ratio/résolution de la peinture et prompt définitif **EN ATTENTE**. Ce fichier n'approuve aucune image ni aucun déploiement.
+**État au 28/09/2026 :** treize arbitrages VALIDÉS. Neuf implantations relatives validées. Les [neuf concepts d'illustration](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md) sont **EN ATTENTE DE VALIDATION INDIVIDUELLE** ; coordonnées numériques, IDs métier, visibilité technique, authentique source mondiale 4K et démonstration de génération native 3:2 EN ATTENTE. **Aucune image produite, aucun déploiement.**
