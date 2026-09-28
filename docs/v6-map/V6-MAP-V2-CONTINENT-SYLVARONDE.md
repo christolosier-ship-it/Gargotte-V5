@@ -1,6 +1,6 @@
 # V6-Map V2 — Sylvaronde : cahier continental approuvé
 
-**STATUT : DOUZE ARBITRAGES DE CONCEPTION VALIDÉS EXPLICITEMENT PAR LE PROPRIÉTAIRE LE 28/09/2026 ; CONCEPT ARTISTIQUE D13 VALIDÉ.** Les cinq réserves sont approuvées en nombre et en critères de placement, pas encore sur cinq lieux précis. Aucun point local chiffré, image générée, rendu final approuvé ou modification de l'application.
+**STATUT : DOUZE ARBITRAGES DE CONCEPTION VALIDÉS EXPLICITEMENT PAR LE PROPRIÉTAIRE LE 28/09/2026 ; CONCEPT ARTISTIQUE D13 VALIDÉ.** Les cinq secteurs de réserve R1–R5 sont désormais VALIDÉS dans leurs régions respectives ; seuls leurs points singuliers précis, contours et coordonnées locales restent à déterminer sur le vrai fond. Aucun point local chiffré, image générée, rendu final approuvé ou modification de l'application.
 
 **Sources et précédence :** `AGENTS.md` ; `V6-MAP-MAITRE.md` pour la géographie mondiale et ses six régions (ne pas reprendre son ancien pipeline de tuiles/upscaling ni la répartition V1) ; `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` pour D13, **Delta des Mille Bras déjà validé** ; `V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md` pour la méthode ; et [annexe graphique D13 approuvée](V6-MAP-V2-SYLVARONDE-ILLUSTRATION-D13.md). Le dossier Drive [Donjon 13 — Les Marécages Infectés](https://drive.google.com/drive/folders/1gf_Hd-SSQadL2O12tObTFZZCjrgNuXBB) fournit des références de créatures Gripplie, Mycélienne et variantes infectées, pas une preuve de leur présence dans le fond public ni de l'architecture exacte du site. Tout détail supplémentaire de lore doit être confronté à sa fiche avant la génération.
 
@@ -17,11 +17,11 @@
 | **7** | Le **concept d'illustration D13 décrit dans l'annexe est VALIDÉ sans correction** : îlot de racines, arbres morts, passerelles branlantes, petite architecture engloutie/déformée, eaux vert sombre, mousses et champignons pâles, lueurs malsaines peintes. |
 | **8** | D13 **caché initialement aux joueurs, révélé explicitement par le MJ pour une campagne**, avec illustration individuelle conditionnelle, non dans le fond public. |
 | **9** | **Aucun texte peint**, noms et marqueurs exclusivement dans des surcouches d'interface masquables. |
-| **10** | **Exactement cinq réserves d'extension** sur des points naturels ou géographiques singuliers, **éloignés du donjon D13 et de la Canopée-Monde**. Le nombre et les exclusions sont VALIDÉS, **les cinq secteurs particuliers et leurs géopoints sont encore À ARBITRER sur la vraie carte**. Aucun D16 ou portail inventé. |
+| **10** | **Exactement cinq réserves d'extension** sur des points naturels ou géographiques singuliers, **éloignés du donjon D13 et de la Canopée-Monde**. Le nombre, les exclusions et **les cinq secteurs régionaux R1–R5 sont VALIDÉS expressément** ; la localisation précise de chaque point singulier et les géopoints/contours sont à déterminer sur la vraie carte. Aucun D16 ou portail inventé. |
 | **11** | **Commerce forestier et terrestre modérément développé dans le sud**, routes modestes sur sols portants ; le réseau naturel de canots/bacs/pontons du grand bassin et du delta reste géographiquement cohérent, sans devenir le cœur d'une grande cité commerciale obligatoire. |
 | **12** | **Ambiance mixte : foisonnement vivant et chaleureux sur la majorité du continent ; brume et mystère plus marqués dans la région du Delta, particulièrement dans le secteur narratif de D13.** Ne pas faire pointer une anomalie localisée du fond public vers le donjon caché : la brume doit être un trait régional continu, pas un indice d'entrée. |
 
-Les douze choix sont **VALIDÉS**, contrairement aux détails précis de cinq réserves futures et aux coordonnées. La validation artistique du concept D13 ne constitue pas l'approbation d'une image finale inexistante.
+Les douze choix sont **VALIDÉS**, ainsi que les cinq secteurs de réserve détaillés au §4 ; leurs emplacements numériques et l'élément topographique exact à pointer dans chaque secteur restent réservés. La validation artistique du concept D13 ne constitue pas l'approbation d'une image finale inexistante.
 
 ## 1. Géographie mondiale CANONIQUE, six régions et merveille
 
@@ -66,28 +66,30 @@ Humour paillard adulte non explicite, fantasy Gargotte peinte/encrée, sans écr
 
 Le fond continental PUBLIC ne doit contenir **ni architecture identifiante de D13, ni infection spécifiquement signalée sur son îlot, ni boss, ni marqueur, ni couleur/spot localisé dirigé vers l'entrée cachée**. Une zone de delta humide et brumeuse normale est en revanche autorisée pour l'ensemble de la région. Ne jamais déduire un accès à Canopée-Monde ou à la Trame des eaux/fongus.
 
-## 4. Cinq réserves futures : principe validé, secteurs à choisir
+## 4. Cinq réserves futures : secteurs régionaux VALIDÉS, géopoints réservés
 
-**Décision VALIDÉE : cinq réserves R1–R5** dans des points naturels ou géographiques singuliers, suffisamment éloignés les uns des autres si le vrai fond le permet, et dans tous les cas **loin de D13 ET de Canopée-Monde**. À la différence des deux secteurs R1/R2 de Ferrécime, **le propriétaire n'a encore sélectionné aucun des cinq sites particuliers**. Ne pas annoncer ces pistes comme validées ni inventer leurs coordonnées.
+**Décision explicite du propriétaire le 28/09/2026 : « Je valide les cinq secteurs R1 à R5 de Sylvaronde. Leurs coordonnées exactes seront déterminées sur la carte. »** Les cinq pistes proposées dans le cahier sont ainsi **approuvées dans leur implantation relative**, sans présumer une coordonnée, une emprise finale, un donjon D16+ ou un accès narratif.
 
-**Pistes de répartition à soumettre pour validation sur la véritable carte (propositions, PAS canon ni géopoints fixés) :**
-- **R1 : Hautes Brumes**, autour d'un lac/îlot de brume remarquable, éloigné de la merveille et du delta.
-- **R2 : Monts des Orages**, autour d'un col ou promontoire rocheux singulier sur le versant oriental.
-- **R3 : Marches du Sud**, autour d'une configuration naturelle inhabituelle de vallée, forêt ou méandre.
-- **R4 : Bassin des Grandes Eaux**, sur une confluence ou un ensemble de grandes berges **en amont**, loin des derniers bras du delta/D13 et des abords de la Canopée.
-- **R5 : Forêt des Hautes Couronnes**, dans un secteur boisé singulier clairement distinct du massif de Canopée-Monde et assez éloigné de celui-ci. Si le fond ne permet pas cette séparation, **reproposer un autre secteur** plutôt que forcer la règle.
+| Réserve de planification MJ | Secteur régional VALIDÉ | Singularité naturelle à localiser sur la véritable carte |
+|---|---|---|
+| **R1** | **Hautes Brumes** | Autour d'un lac ou îlot de brume remarquable, éloigné du Delta et de la merveille. |
+| **R2** | **Monts des Orages** | Autour d'un col ou promontoire rocheux singulier sur le versant oriental. |
+| **R3** | **Marches du Sud** | Autour d'une configuration naturelle inhabituelle de vallée, de forêt ou de méandre. |
+| **R4** | **Bassin des Grandes Eaux** | Sur une confluence ou de grandes berges **en amont**, suffisamment éloignées du delta et du secteur D13. |
+| **R5** | **Forêt des Hautes Couronnes** | Dans un secteur forestier singulier **distinct et éloigné du massif de Canopée-Monde**. Si le vrai fond ne permet pas de garantir l'éloignement requis, présenter la difficulté au propriétaire avant tout déplacement. |
 
-État : **5/5 réserves validées en nombre/critères ; 0/5 secteurs précis validés ; 0/5 coordonnées locales validées**. La planche de contrôle MJ devra montrer les cinq propositions, les exclusions D13/Canopée, puis demander l'aval explicite du propriétaire. Une réserve ne devient pas un donjon D16+, un portail ou un bâtiment bizarre sur le fond public. Les éléments remarquables naturels peuvent exister sur la peinture publique sans être marqués comme réserves.
+**Critères transversaux VALIDÉS :** les cinq sont des lieux géographiquement singuliers, éloignés de **D13 et de Canopée-Monde et de ses abords identifiables** ; les séparer entre eux autant que la carte le permet. Leur rôle de réserve reste exclusivement dans la **surcouche de planification MJ**. La peinture publique peut figurer ces éléments naturels, jamais signaler leur statut de réserve par ruine distinctive, portail, marqueur ou nom secret.
 
+**Statut exact :** **5/5 secteurs régionaux VALIDÉS ; 0/5 points/contours locaux chiffrés fixés**. Choisir ultérieurement, sur le fond réel, la singularité précise dans chaque secteur et ses coordonnées sans rouvrir les cinq régions déjà approuvées, sauf conflit géographique majeur explicitement signalé.
 ## 5. Contrat technique et Gates
 
 Fond autonome **paysage 3:2, marges maritimes**, aucun texte peint. **UPSCALING INTERDIT**, y compris prétendue sortie 4K/8K/16K par interpolation ou assemblage factice ; ne revendiquer que la vraie résolution native du moteur, à mesurer. Si le 3:2 n'est pas supporté nativement, proposer une option de recadrage **sans agrandissement** préserver toutes les terres/mer, demander arbitrage avant production.
 
 Images de donjon : fond public séparé de l'illustration D13 conditionnelle. Les droits s'appliquent **avant** transfert de l'asset, URL, aperçu, recherche et cache, selon identité/MJ/campagne. Même la topologie exacte de l'îlot secret est absente des images publiques. Le nom de D13, son `entity_type/entity_id` et ses coordonnées locales ne doivent pas être fabriqués à partir de son numéro éditorial.
 
-**Gates VERTES en conception :** les 12 arbitrages, région et position relative D13, concept d'illustration, cinq réserves en nombre et contraintes, mixité multiraciale et dégradé artistique (continent vivant, delta plus mystérieux).
+**Gates VERTES en conception :** les 12 arbitrages, région et position relative D13, concept d'illustration, **cinq réserves R1–R5 chacune VALIDÉE dans sa région**, mixité multiraciale et dégradé artistique (continent vivant, delta plus mystérieux).
 
-**À ARBITRER SUR LE VRAI FOND :** cinq secteurs particuliers R1–R5 et leurs points/contours, coordonnées précises de D13 et autres points publics nécessitant des hotspots. L'utilisateur n'a pas encore approuvé les cinq suggestions géographiques ci-dessus.
+**À FINALISER SUR LE VRAI FOND :** les cinq **points singuliers précis et leurs contours/coordonnées** à l'intérieur des secteurs R1–R5 déjà validés ; le géopoint de D13 et les points publics nécessitant des hotspots. Ne pas demander à nouveau l'approbation des cinq régions par défaut ; faire valider une planche de placement MJ lorsque les pixels du fond existeront.
 
 **À VÉRIFIER TECHNIQUEMENT** : véritable source PNG mondial 4K/version/hash, capacité native de génération 3:2 et taille des fichiers, cohérence hydrographique/côtes, vrais IDs Codex, modèle de révélation backend/permissions, production puis validation explicite du fond et du rendu D13 et essais Safari iPad. Ne pas rouvrir par défaut les 12 arbitrages déjà clos.
 
