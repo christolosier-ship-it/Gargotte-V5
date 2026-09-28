@@ -12,7 +12,7 @@ Statut : **PROPOSITION DOCUMENTAIRE EN REVUE ; REGISTRE D'AFFECTATIONS V2 CRÉÉ
 - **Cartes publiques, surcouches sensibles privées** : aucune localisation de donjon secret ne se lit dans le fond ; positions et fiches protégées par filtrage préalable selon campagne.
 - Réemploi des décisions géographiques V1, des résultats POC A0/A1/A2 et des garanties données/médias V6/V7 ; réécrire les prescriptions de pyramide/zoom devenues obsolètes, sans effacer les preuves historiques.
 
-## 2. Arborescence V2 proposée (registre et cahier Valdorie déjà créés ; autres fichiers encore futurs)
+## 2. Arborescence V2 proposée (registre, cahier Valdorie et annexe des neuf illustrations déjà créés ; autres fichiers encore futurs)
 
 ```text
 docs/v6-map/
@@ -22,6 +22,7 @@ docs/v6-map/
 ├── V6-MAP-V2-DA-GARGOTTE.md
 ├── V6-MAP-V2-ENTREVERS.md
 ├── V6-MAP-V2-CONTINENT-VALDORIE.md
+├── V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md
 ├── V6-MAP-V2-CONTINENT-BORECLAT.md
 ├── V6-MAP-V2-CONTINENT-SAHALDUNE.md
 ├── V6-MAP-V2-CONTINENT-SYLVARONDE.md
@@ -35,7 +36,7 @@ docs/v6-map/
 └── V6-MAP-V2-SECURITE-OFFLINE-VALIDATION.md
 ```
 
-Ces dix-sept fichiers constituent la **structure cible**, et non une demande de les remplir immédiatement. **Exceptions : le registre des quinze donjons et le cahier pilote Valdorie sont créés dans la branche documentaire** ; les autres noms sont des fichiers futurs. L'image mondiale n'est pas un dix-huitième fichier Markdown : elle est un asset à inventorier/versionner. Les deux fichiers `V6-MAP-PIVOT-V2-*.md` servent uniquement de proposition de transition.
+Ces dix-huit fichiers constituent la **structure cible**, et non une demande de les remplir immédiatement. **Exceptions : le registre des quinze donjons, le cahier pilote Valdorie et son annexe de neuf illustrations sont créés dans la branche documentaire** ; les autres noms sont des fichiers futurs. L'image mondiale n'est pas un dix-huitième fichier Markdown : elle est un asset à inventorier/versionner. Les deux fichiers `V6-MAP-PIVOT-V2-*.md` servent uniquement de proposition de transition.
 
 ## 3. Responsabilité précise de chaque document
 
@@ -46,7 +47,8 @@ Ces dix-sept fichiers constituent la **structure cible**, et non une demande de 
 | `V6-MAP-V2-PRODUCTION-FONDS.md` | Inventaire/hash de la vraie image maître 4K, références et droits, contrat fichier natif, ratio individuel, test de taille réelle, PNG source, dérivés de diffusion plus petits si besoin, aucun upscale, nomination/versionnement, contrôle avant/après, rollback. |
 | `V6-MAP-V2-DA-GARGOTTE.md` | Bible de peinture et d'humour : tavernes, bière, foire, bordel joyeux, burlesque grivois adulte et non explicite, gargotteries publiques par biome ; dosage/lisibilité ; aucun décor suggérant un secret. |
 | `V6-MAP-V2-ENTREVERS.md` | **Vue supérieure illustrée** de l'univers et ses entrées navigables ; distinction d'Ardéra, de la Trame et des familles de plans ; langage graphique cosmologique ; représentation symbolique plutôt que modèle astronomique non attesté ; aucun portail inventé. Concept graphique et liens à valider avant génération. |
-| `V6-MAP-V2-CONTINENT-*.md` (7) | **Valdorie créée en tant que brief à revoir, aucune génération autorisée ; les six autres fiches sont futures.** Une fiche par continent, calée sur la mappemonde : six régions approuvées, merveille, silhouettes et hydrographie, paysages, civils anonymes, routes/ports, scènes Gargotte, limites de confidentialité, affectations relatives du registre, extensions futures, prompt conceptuel et contrôle sortie native. Coordonnées exactes et droits avant prompt exécutable. |
+| `V6-MAP-V2-CONTINENT-*.md` (7) | **Valdorie : 13 décisions du propriétaire VALIDÉES le 28/09/2026 ; aucune génération autorisée ; les six autres fiches sont futures.** Une fiche par continent, calée sur la mappemonde : six régions approuvées, merveille, silhouettes et hydrographie, paysages, civils anonymes, routes/ports, scènes Gargotte, limites de confidentialité, affectations relatives du registre, extensions futures, prompt conceptuel et contrôle sortie native. Coordonnées exactes et droits avant prompt exécutable. |
+| `V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md` | **Créé : neuf concepts de silhouettes D1/D2/D3/D4/D5/D6/D9/D10/D11, chacun EN ATTENTE de validation esthétique individuelle.** Contracte l'image indépendante, le calque conditionnel, l'absence d'assets secrets publics ; pas d'image produite. |
 | `V6-MAP-V2-DIMENSION-*.md` (3) | Trame astrale, **La Brasserie Céleste** et **L'Enfer de la Sobriété Éternelle** : régions/territoires du corpus existant, palette, références, D7/D8 dans leurs dimensions homonymes mais comme objets distincts, fond sans secret, consultation ≠ accès réel ; aucune assimilation Trame=Entrevers. Conserver provisoirement les anciennes clés conceptuelles map_id jusqu'à contrat de migration. |
 | `V6-MAP-V2-NAVIGATION-TOPONYMIE-CODEX.md` | Contrat vue par vue/hotspots indépendants des bitmaps, identifiants stables, retours, Chope, label dynamique, panneau Codex, extension, pas de changement de fond piloté par zoom. |
 | `V6-MAP-V2-SECURITE-OFFLINE-VALIDATION.md` | Filtrage MJ/joueur/campagne côté backend, absence de secrets en image/recherche/cache/URL, chargement paresseux, ressources versionnées, validation Safari iPad, vraie qualification offline et non-régression IndexedDB/V7. |
@@ -57,7 +59,7 @@ Une même fiche contient ces rubriques dans cet ordre, sans réécrire le regist
 
 ## 5. Registre D1–D15 : décision relative enregistrée, finalisation restant à faire
 
-Le registre [`V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`](V6-MAP-V2-REGISTRE-IMPLANTATIONS.md) est créé. Le propriétaire a validé les **affectations continentales et dimensionnelles et les descriptions relatives**, non des points numériques : **Valdorie 9, Ferrécime 3, Sylvaronde 1, La Brasserie Céleste D7, L'Enfer de la Sobriété Éternelle D8**. Les noms de dimensions remplacent les anciens noms de travail, mais les clés `map_id` conceptuelles restent inchangées avant migration explicitement planifiée ; distinguer D7 et D8 de leurs dimensions homonymes.
+Le registre [`V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`](V6-MAP-V2-REGISTRE-IMPLANTATIONS.md) est créé. Le propriétaire a validé les **affectations continentales et dimensionnelles, les positions relatives, puis les précisions Valdorie** (D1 collines, D2 forêt, D3 hôtelier, D4 festif, D5/D6 marqueur partagé, D9 profonde Sylve, D10 côte rocheuse, D11 transition prairie-forêt) ; aucun point numérique n'est validé : **Valdorie 9, Ferrécime 3, Sylvaronde 1, La Brasserie Céleste D7, L'Enfer de la Sobriété Éternelle D8**. Les noms de dimensions remplacent les anciens noms de travail, mais les clés `map_id` conceptuelles restent inchangées avant migration explicitement planifiée ; distinguer D7 et D8 de leurs dimensions homonymes.
 
 Conserver pour chaque entrée le `placement_id` conceptuel stable, l'ID Dn éditorial, le titre à confronter au catalogue réel, `entity_type/entity_id` réel ou « non résolu », dimension/continent/région validés ou provisoires selon champ, point local **vide avant décision**, profondeur si souterrain, visibilité public/MJ à établir, historique V1, validation du propriétaire, réserve d'extension et éventuels conflits de lore. Aucun site secret ne doit être suggéré dans un fond raster public.
 
@@ -83,4 +85,4 @@ Conserver pour chaque entrée le `placement_id` conceptuel stable, l'ID Dn édit
 
 ## 7. Livrables et critères de fermeture de cette préparation
 
-Le cadrage initial produisait deux documents ; la décision utilisateur du 28/09/2026 a autorisé **un troisième fichier, le registre V2 des quinze affectations validées**, et leur répercussion dans les deux documents de cadrage. L'ordre ultérieur « go » a autorisé un **quatrième document, le cahier conceptuel de Valdorie**, sans production d'image et sans remplissage fictif de coordonnées. Critères de revue : l'Entrevers figure bien au-dessus du monde et distinct de la Trame ; les sept continents et les trois dimensions subsistent ; 13+2 affectations et zones relatives **validées, géopoints réservés** ; aucune résolution inventée ; aucune mise en scène de site secret ; aucun upgrade du runtime, des services, de l'IndexedDB ni des assets. Les décisions en attente sont le concept visuel de l'Entrevers, l'arbitrage des quinze placements et la capacité native réelle des futures générations.
+Le cadrage initial produisait deux documents ; la décision utilisateur du 28/09/2026 a autorisé **un troisième fichier, le registre V2 des quinze affectations validées**, et leur répercussion dans les deux documents de cadrage. L'ordre ultérieur « go » a autorisé un **quatrième document, le cahier conceptuel de Valdorie**, puis les treize arbitrages ont été actés et une **cinquième pièce, l'annexe des neuf propositions d'illustration**, a été créée pour arbitrage individuel. Aucune production d'image, aucun remplissage fictif de coordonnées. Critères de revue : l'Entrevers figure bien au-dessus du monde et distinct de la Trame ; les sept continents et les trois dimensions subsistent ; 13+2 affectations et zones relatives **validées, géopoints réservés** ; aucune résolution inventée ; aucune mise en scène de site secret ; aucun upgrade du runtime, des services, de l'IndexedDB ni des assets. Les décisions en attente sont le concept visuel de l'Entrevers, **les géopoints numériques et neuf apparences de donjons Valdorie**, les IDs métier et la capacité native réelle des futures générations. Les treize arbitrages de composition Valdorie sont VALIDÉS.
