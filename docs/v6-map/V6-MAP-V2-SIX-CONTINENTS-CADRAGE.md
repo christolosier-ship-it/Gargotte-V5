@@ -51,8 +51,9 @@ La position des merveilles au monde est indicative dans le référentiel Ardéra
 - **Ouverts uniquement :** points/contours exacts au sein des cinq secteurs déjà approuvés, séparation effective des Aiguilles et de leurs abords, vrai PNG mondial, vérification de la production native 2:1, QA et validation des images. Aucune coordonnée ni portail/donjon imaginaires.
 
 
-### Sahaldune — aucun D1–D15
+### Sahaldune — aucun D1–D15, REVUE EN COURS
 
+- **Cahier de préparation :** [12 arbitrages géographiques et artistiques à soumettre](V6-MAP-V2-CONTINENT-SAHALDUNE-PREPARATION.md), **AUCUN NOUVEAU CHOIX SAHALDUNE VALIDÉ**. Le questionnaire distingue l'endoréisme central, la Couronne de Sel et les cinq/sur mesure futures réserves et demande expressément si la merveille et ses abords doivent être exclus de celles-ci.
 - **Canon :** X11–36/Y61–82 ; Côtes d'Ambre, Monts Fendus, Grande Dépression, Vallées des Deux Fleuves, Savanes d'Olvara, Littoral des Moussons ; deux fleuves pérennes nord vers **Mer des Trois Couronnes**, écoulements O, bassin central endoréique saisonnier, drainage S ; **Couronne de Sel** vers X23/Y71, anomalie magique ayant provoqué retrait d'une ancienne mer intérieure. Aucun canal artificiel entre dépression et océan.
 - **Aucun des quinze donjons actuels**. Des haltes, ruines et marchés PUBLICS ne deviennent pas automatiquement des donjons cachés.
 - Ouverts : ratio/cadrage, sites riverains/oasis et axes de caravane, ports du nord/sud selon vraie côte, mixité visuelle des races, gags de marché, caravane, sel et mousson sans copier-coller les déserts infernaux, densité des cités.
