@@ -1,8 +1,8 @@
-# V6-Map V2 — Valdorie : propositions d'illustration des neuf donjons
+# V6-Map V2 — Valdorie : concepts VALIDÉS des neuf illustrations de donjons
 
-**STATUT : PROPOSITIONS ARTISTIQUES À SOUM​ETTRE À LA VALIDATION INDIVIDUELLE DU PROPRIÉTAIRE. AUCUNE DES NEUF SILHOUETTES N'EST ENCORE APPROUVÉE COMME APPARENCE CANONIQUE. AUCUNE IMAGE N'A ÉTÉ GÉNÉRÉE.**
+**STATUT : LES NEUF CONCEPTS D'ILLUSTRATION (D1, D2, D3, D4, D5, D6, D9, D10, D11) SONT TOUS VALIDÉS PAR LE PROPRIÉTAIRE LE 28/09/2026, SANS CORRECTION. Validation du CONCEPT seulement : aucune image finale n'a encore été générée, inspectée ou approuvée.**
 
-Décisions générales déjà **VALIDÉES le 28/09/2026** : neuf donjons sur Valdorie ; illustrations dédiées sur un calque indépendant et conditionnel ; les neuf donjons sont initialement cachés pour les joueurs, révélés explicitement par le MJ par campagne ; fond public sans texte ni indice graphique d'entrée secrète ; D5/D6 à même point planimétrique, un marqueur avec choix limité aux lieux autorisés. Les propositions ci-dessous préparent l'arbitrage visuel demandé et **ne changent pas le scénario, l'architecture des niveaux ni les factions**.
+Décisions générales déjà **VALIDÉES le 28/09/2026** : neuf donjons sur Valdorie ; illustrations dédiées sur un calque indépendant et conditionnel ; les neuf donjons sont initialement cachés pour les joueurs, révélés explicitement par le MJ par campagne ; fond public sans texte ni indice graphique d'entrée secrète ; D5/D6 à même point planimétrique, un marqueur avec choix limité aux lieux autorisés. Les descriptions ci-dessous fixent désormais le brief visuel approuvé et **ne changent pas le scénario, l'architecture des niveaux ni les factions**.
 
 ## 1. Corpus effectivement consulté et limites
 
@@ -19,11 +19,11 @@ Décisions générales déjà **VALIDÉES le 28/09/2026** : neuf donjons sur Val
 5. La silhouette et son pied/ancre doivent pouvoir être placés, remplacés et cachés sans retoucher le fond géographique public. Ne pas fabriquer visuellement le détail de leur emplacement secret dans l'image de base.
 6. Les effets burlesques et suggestifs restent adultes et non explicites ; priorité à la forme, au thème et à la lisibilité. Chaque donjon doit se distinguer des petits gags publics hors intrigue.
 
-## 3. Neuf propositions à arbitrer individuellement
+## 3. Neuf concepts individuellement VALIDÉS
 
-Les descriptions sont des **concepts proposés**, non des affirmations sur l'aspect déjà fixé par le scénario.
+**Décision expresse du propriétaire, 28/09/2026 : « J'approuve tous les concepts définis dans ce document. »** Elle s'applique aux neuf lignes, y compris silhouettes, matières, ambiances, gags secondaires et précautions d'implantation. Ces choix deviennent les **références artistiques approuvées de la future production cartographique** ; ils n'étendent pas rétroactivement le lore ni n'attestent d'une image livrée. Dans le tableau, les mentions « PROPOSÉE » sont désormais comprises comme « VALIDÉE au titre de ce brief ».
 
-| ID | Silhouette principale PROPOSÉE | Matières, ambiance et gag secondaire PROPOSÉS | Placement / précaution |
+| ID (concept VALIDÉ) | Silhouette principale VALIDÉE | Matières, ambiance et gag secondaire VALIDÉS | Placement / précaution |
 |---|---|---|---|
 | **D1 Château Bastognac** | Petit château fort médiéval un peu prétentieux, tour carrée et donjon bancal dominant un éperon des Collines de la Vieille Lande. | Pierre gris bleuté usée, bannière fanée **sans motif narratif**, herse et tourelles asymétriques ; une tour semble plus ambitieuse que ses fondations. Les personnages « Baron Pas-Très-Terrifiant » et « Chevalier Sans Cheval » observés dans le dossier fournissent le ton chevaleresque grotesque, **pas une preuve sur l'architecture**. | Proche de la Chope côté collines, **apparition conditionnelle seulement**. |
 | **D2 La Forêt en Chantier** | Îlot forestier bouleversé par un chantier sylvestre absurde : échafaudage de rondins, palissades en bois, grue artisanale entre deux arbres. | Mousse verte, bois brut, cordes, scies et échafaudages de guingois ; panneau vierge tordu et un tonneau utilisé comme contrepoids. « Gobelin Contremaître » et « Totem Sylvestre Instable » soutiennent l'imaginaire chantier/forêt, sans définir son plan réel. | Proche de la Chope côté forêt, distinct des Arbres-Colosses et de D1 ; **ne pas dessiner ce chantier sur le fond public si son emplacement est secret**. |
@@ -35,14 +35,29 @@ Les descriptions sont des **concepts proposés**, non des affirmations sur l'asp
 | **D10 Thermes de la Bonne Trempette** | Thermes côtiers sur des terrasses rocheuses des Côtes Grises : bassins extérieurs, galeries de pierre, toit bas et volutes de vapeur. | Pierre humide gris beige, eau turquoise, cuivre, linge de bain tendu, fontaine aux proportions suggestives mais non explicites ; petits détails « bain catastrophique ». Chaufferies fictives possibles **seulement en proposition**, ne pas inventer un volcan ou une source géothermique canonique aux Côtes Grises. | Côtes Grises, **littoral rocheux**, distinct du port public anonyme ; conditionnel. |
 | **D11 La Ruche Royale** | Grand assemblage organique de ruches sculpturales et tours d'alvéoles, au milieu d'une couronne de fleurs et de petits bois. | Cire dorée, ambre opaque, miel peint, feuillage et formes hexagonales lisibles ; exagération du cérémonial royal. « Reine des Mille Dards » et « Collecteur d'Essence » appartiennent aux références du dossier et ne doivent pas être révélés par défaut. | Transition **prairies fleuries / forêt à l'est des Plaines**, conditionnel ; pas de ruche géante révélatrice sur le fond public. |
 
-## 4. Fiche de validation requise pour chaque image
+## 4. Registre de décision des neuf concepts
 
-Pour D1, D2, D3, D4, D5, D6, D9, D10 et D11, le propriétaire peut choisir **approuver le concept**, **approuver avec corrections**, ou **refuser/proposer une autre silhouette**. Consigner séparément pour chaque : silhouette, angle de vue (conseillé : trois-quarts isométrique peint), palette, gag secondaire, degré de monumentalité, état de visibilité, lien de référence exact, dimensions natives réelles, format master et état de validation.
+| ID | Concept artistique | Date / autorité |
+|---|---|---|
+| D1 | **VALIDÉ sans réserve** | Propriétaire, 28/09/2026 |
+| D2 | **VALIDÉ sans réserve** | Propriétaire, 28/09/2026 |
+| D3 | **VALIDÉ sans réserve** | Propriétaire, 28/09/2026 |
+| D4 | **VALIDÉ sans réserve** | Propriétaire, 28/09/2026 |
+| D5 | **VALIDÉ sans réserve** | Propriétaire, 28/09/2026 |
+| D6 | **VALIDÉ sans réserve** | Propriétaire, 28/09/2026 |
+| D9 | **VALIDÉ sans réserve** | Propriétaire, 28/09/2026 |
+| D10 | **VALIDÉ sans réserve** | Propriétaire, 28/09/2026 |
+| D11 | **VALIDÉ sans réserve** | Propriétaire, 28/09/2026 |
 
-Les **neuf concepts restent EN ATTENTE DE VALIDATION** jusqu'à réponse explicite du propriétaire. Ils ne sont pas « approuvés » simplement parce qu'ils sont écrits ici.
+**Ne pas demander une nouvelle approbation de ces descriptions à chaque itération.** En revanche, la première image réellement produite de chaque donjon devra faire l'objet d'une vérification visuelle : conformité à son concept validé, fond/alpha ou détourage réel, palette, absence de texte, lisibilité dans Valdorie et absence de fuite d'informations. Cette revue concerne le **rendu**, pas une réouverture automatique du concept. Consigner pour chaque image le lien exact de la source, la taille native mesurée, le format, sa version et la validation du rendu.
 
-## 5. Gate et exclusions
+## 5. Points techniques restant ouverts et exclusions
 
-- **Gate de concept visuel des neuf donjons : EN ATTENTE** ; ne pas lancer d'image avant arbitrages et lecture des fiches de lore complètes.
-- Géopoints numériques, IDs Codex, permissions/backend, capacité native du générateur et géométrie exacte du master de Valdorie : EN ATTENTE et indépendants de l'approbation esthétique.
-- Aucun changement au document des quinze affectations ni au lore des autres continents. Ne pas générer, détourer ou injecter une image ; ne pas créer de marqueurs en code, modifier IndexedDB ou V7.
+- **Gate des concepts visuels des neuf donjons : VERTE, VALIDÉE le 28/09/2026.** Aucune image créée à ce stade et aucune approbation de rendu inventée.
+- **Avant génération :** obtenir la véritable illustration mondiale approuvée en 4K (asset/version/hash et référence visuelle), choisir/tester un moteur produisant une résolution réellement native pertinente, confirmer le contrat de sortie/alpha ou détourage **sans upscaling**, et relire les fiches de lore pertinentes pour ne pas injecter d'éléments secrets non prévus. Le cadrage Valdorie **3:2 paysage avec marges maritimes** est déjà validé ; dimensions pixels non déterminées.
+- **Avant implantation/intégration dans l'application :** choisir les coordonnées locales sur le fond continental final, conserver D5/D6 au même x/y sur des niveaux distincts ; résoudre les neuf `entity_type/entity_id` à partir du Codex réel, et définir/tester le filtrage des illustrations, marqueurs, URL, caches et aperçus par identité, MJ et campagne. **Tous les neuf cachés initialement**, puis révélés explicitement par le MJ.
+- Le nom de la grande cité des Plaines de Valdor reste **RÉSERVÉ**, mais le fond étant sans texte, ce nom ne bloque pas à lui seul la peinture.
+- Les trois à cinq bourgs et vingt-cinq à trente scènes Gargotte sont des **plages déjà approuvées** : une composition définitive dans ces limites n'est pas un nouvel arbitrage de lore.
+- Aucun changement aux quinze affectations, aucune génération/détourage/injection, aucun marqueur de production, aucun changement IndexedDB, média métier, backend ou V7.
+
+**Règle de représentation :** la Chope publique est peinte dans le fond ; les neuf illustrations de donjons sont toutes indépendantes, conditionnelles et servies uniquement aux utilisateurs autorisés. D6 est un temple souterrain illustré séparément (coupe d'ambiance) et **non** un pan de terrain visible à l'endroit de D5 dans le fond public.
