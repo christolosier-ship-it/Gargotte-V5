@@ -1,6 +1,6 @@
 # V6-Map — Pivot V2 : feuille de route Entrevers → monde → continents
 
-Statut : **PIVOT DOCUMENTAIRE EN REVUE**. Affectations et positions relatives D1–D15 + noms des deux dimensions **VALIDÉS par le propriétaire le 28/09/2026** ; coordonnées numériques et géopoints toujours RÉSERVÉS. Ce document prépare la refonte, sans remplacer à lui seul `V6-MAP-MAITRE.md` ni révoquer ses décisions de lore. Aucun code, aucune image et aucune donnée de production ne sont modifiés par ce lot.
+Statut : **PIVOT DOCUMENTAIRE EN REVUE ; 13 ARBITRAGES VALDORIE VALIDÉS**. Affectations et positions relatives D1–D15 + noms des deux dimensions **VALIDÉS par le propriétaire le 28/09/2026** ; coordonnées numériques et géopoints toujours RÉSERVÉS. Ce document prépare la refonte, sans remplacer à lui seul `V6-MAP-MAITRE.md` ni révoquer ses décisions de lore. Aucun code, aucune image et aucune donnée de production ne sont modifiés par ce lot.
 
 Références : `AGENTS.md`, `V6-MAP-MAITRE.md`, `V6-MAP-A0-ANNEXE-CONTRATS.md`, A1/A2, B1–B4, C1–C3 et `V6-MAP-PIVOT-V2-ARCHITECTURE-DOCUMENTAIRE.md` et `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`. La source visuelle approuvée de la mappemonde 4K doit encore être inventoriée comme asset réel ; ne pas présumer sa présence dans le dépôt.
 
@@ -46,7 +46,7 @@ Parcours principal : Entrevers → Ardéra → continent → panneau de lieu aut
 
 ## 4. Registre des donjons : affectations validées, géopoints réservés
 
-**Référence courante :** [`V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`](V6-MAP-V2-REGISTRE-IMPLANTATIONS.md). Le document maître V1 et l'annexe A0 consignent les anciennes pistes et restent archivables comme **historique**, sans déterminer les affectations V2.
+**Référence courante :** [`V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`](V6-MAP-V2-REGISTRE-IMPLANTATIONS.md). Pour Valdorie : [`V6-MAP-V2-CONTINENT-VALDORIE.md`](V6-MAP-V2-CONTINENT-VALDORIE.md) et [neuf concepts à valider individuellement](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md). Le document maître V1 et l'annexe A0 consignent les anciennes pistes et restent archivables comme **historique**, sans déterminer les affectations V2.
 
 | Vue | Donjons validés | Total |
 |---|---|---:|
@@ -59,7 +59,7 @@ Parcours principal : Entrevers → Ardéra → continent → panneau de lieu aut
 
 **13 sur Ardéra + 2 dimensionnels = 15.** D1/D2 sont proches de la Chope ; D3/D4 partagent la grande ville des **Plaines de Valdor** ; D6 est **directement sous D5** ; D15 est dans les **Marches de Braise** de Ferrécime, **sans lien avec D5**. Toutes les autres précisions, y compris l'absence de coordonnées finales, sont consignées dans le registre.
 
-**Gate : affectations/régions relatives VALIDÉES ; coordonnées, identité métier, accès et visibilité par campagne EN ATTENTE.** Aucun point secret n'est peint dans un fond public et aucun portail n'est déduit des proximités.
+**Gate : affectations/régions relatives VALIDÉES, plus précisions Valdorie et principe des neuf lieux initialement cachés et révélés par MJ par campagne VALIDÉS en conception ; illustrations individuelles et coordonnées, identité métier, implémentation des accès et vérification du filtrage EN ATTENTE.** Aucun point secret n'est peint dans un fond public et aucun portail n'est déduit des proximités.
 ## 5. Ordre de travail et gates
 
 | Phase | Travail borné | Condition de sortie |
@@ -67,12 +67,12 @@ Parcours principal : Entrevers → Ardéra → continent → panneau de lieu aut
 | P0. Pivot documentaire | Feuille de route + architecture des fichiers, sans changer le maître actif ni le runtime | Revue utilisateur du nouveau modèle et de l'Entrevers |
 | P1. Implantations V2 | **Affectations et positions relatives validées le 28/09/2026** ; confronter aux fiches de lore, confirmer point local, niveaux souterrains, IDs métier, statut public/secret et réserve future | Gate relative VALIDÉE ; Gate des géopoints et de l'exposition des secrets **EN ATTENTE** ; aucun prompt indiquant des entrées cachées avant |
 | P2. Contrats V2 | Réviser maître/A0/B1/B2/B3/B4/C1/C2/C3 selon architecture documentaire, conserver preuves A1/A2 comme historique du POC | Aucun contrat contredit le pivot, aucun ID ou secret exposé |
-| P3. Direction artistique et pilote | Charte Gargotte cartographique, limites de confidentialité, capacité native du générateur, puis brief et réalisation de Valdorie après P1 | Rapport pixels natifs + revue du lore, des détails et de la lisibilité |
+| P3. Direction artistique et pilote | **13 arbitrages Valdorie validés : paysage 3:2 avec marges maritimes, cité fortifiée anonyme, grand port, 3–5 bourgs, Chope modeste et identifiable, 25–30 gargotteries, aucun texte peint, pas de zones futures prédéfinies.** Valider INDIVIDUELLEMENT les neuf concepts de donjons, puis capacités natives du moteur et permissions avant toute illustration | Gate des neuf concepts, source mondiale 4K vérifiée, sortie native 3:2 démontrée, QA lore et lisibilité ; AUCUN UPSCALING |
 | P4. Continents restants | Six cartes indépendantes, statut individuel, zones cliquables sur Ardéra et registre de lieux | Sept cartes visuellement approuvées et cohérentes avec le monde |
 | P5. Cartes dimensionnelles et Entrevers | Produire les 3 cartes préexistantes et la vue supérieure de l'Entrevers après validation artistique/cosmologique de celle-ci | Douze vues consultables sans confusion univers/Trame/portails |
 | P6. Intégration et validation | Navigation par vues, surcouches, Codex, droits MJ/joueur par campagne, chargement paresseux, cache/offline réel iPad | Aucun secret fuyant, aucune perte IndexedDB/Blobs, tests iPad et rollback documentés |
 
-P3/P4 et P5 peuvent être préparés en parallèle après décision de l'architecture, mais **aucun visuel d'entrée secrète ni géopoint nominatif n'est produit avant fermeture de la Gate des positions et droits P1**. Les anciennes Gates A0/A1/A2 restent historiquement vertes pour leur périmètre, sans valider automatiquement la nouvelle UX ni les nouveaux fonds. Le POC de tuiles A1/A2 sert de retour d'expérience, pas d'obligation de conserver une pyramide de zoom.
+P3/P4 et P5 peuvent être préparés en parallèle après décision de l'architecture, mais **aucun visuel d'entrée secrète ni géopoint nominatif n'est produit avant fermeture des Gates des neuf concepts, des positions et des droits P1/P3**. La Chope est le seul des dix repères publics/donjons de Valdorie à être peint dans le fond de base ; les neuf donjons ont chacun leur illustration conditionnelle. Les anciennes Gates A0/A1/A2 restent historiquement vertes pour leur périmètre, sans valider automatiquement la nouvelle UX ni les nouveaux fonds. Le POC de tuiles A1/A2 sert de retour d'expérience, pas d'obligation de conserver une pyramide de zoom.
 
 ## 6. Politique de sûreté et de livraison
 
