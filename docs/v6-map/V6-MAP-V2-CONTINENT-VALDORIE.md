@@ -1,14 +1,34 @@
 # V6-Map V2 — Valdorie : cahier de conception continentale
 
-**Statut : BRIEF DOCUMENTAIRE À REVOIR AVEC LE PROPRIÉTAIRE ; aucune génération lancée.** Première carte continentale pilote du nouveau parcours **Entrevers → Ardéra (mappemonde approuvée 4K) → Valdorie**. Ce cahier fixe les invariants déjà documentés, les décisions V2 de placement relatif et des **propositions artistiques clairement distinctes du lore canonique**. Il ne crée ni coordonnées définitives, ni identité technique de donjon, ni accès narratif.
+**Statut : TREIZE ARBITRAGES VALDORIE VALIDÉS LE 28/09/2026 ; NEUF CONCEPTS D'ILLUSTRATION DES DONJONS EN ATTENTE DE VALIDATION INDIVIDUELLE ; géopoints, IDs métier, capacités de génération et implémentation EN ATTENTE. Aucune image générée.** Première carte continentale pilote du nouveau parcours **Entrevers → Ardéra (mappemonde approuvée 4K) → Valdorie**. Ce cahier fixe les invariants déjà documentés, les décisions V2 de placement relatif et des **propositions artistiques clairement distinctes du lore canonique**. Il ne crée ni coordonnées définitives, ni identité technique de donjon, ni accès narratif.
 
 Références à consulter avant exécution : `AGENTS.md`, `V6-MAP-MAITRE.md` (géographie V1 et historiques), `V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md`, `V6-MAP-PIVOT-V2-ARCHITECTURE-DOCUMENTAIRE.md`, **`V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` (autorité actuelle sur les affectations)**, annexe A0 et la véritable illustration Ardéra V3 / 4K approuvée (inventaire de fichier/hash à faire avant génération). En cas de conflit : ne pas recopier l'ancienne répartition D1–D15 du maître V1 ; préserver l'historique et signaler le conflit.
+
+## 0. Treize arbitrages VALIDÉS par le propriétaire le 28/09/2026
+
+| N° | Décision expressément actée |
+|---|---|
+| 1 | **Paysage 3:2 avec marges maritimes** : cadrage artistique, pas une promesse de pixels natifs non démontrés. |
+| 2 | **Une grande cité fortifiée** des **Plaines de Valdor**, nom RÉSERVÉ (jamais « Val-d’Or »). |
+| 3 | **Une grande cité, un grand port commercial et trois à cinq bourgs secondaires** ; des hameaux ordinaires restent possibles. |
+| 4 | La **Chope Qui Colle** est identifiable sur le fond public, **sans monumentalisation**, au sein du petit hameau Saint-Fût-le-Petit. |
+| 5 | **25 à 30** scènes publiques Gargotte, variées, grivoises adultes et non explicites, sans perdre la lisibilité de la carte. |
+| 6 | D1 proche de la Chope **côté Collines de la Vieille Lande**, D2 proche de la Chope **côté forêt**, deux points distincts. |
+| 7 | D3 **quartier hôtelier**, D4 **quartier festif**, tous deux dans la grande cité fortifiée. |
+| 8 | D5/D6 : **un marqueur partagé**, menu D5/D6 filtré selon droits ; D6 est directement SOUS D5, non au sud. |
+| 9 | D9 **partie profonde de la Sylve hors Arbres-Colosses**, D10 **littoral rocheux des Côtes Grises**, D11 **transition prairies fleuries/forêt à l'est des Plaines**. |
+| 10 | **Neuf illustrations dédiées, sur calque indépendant et conditionnel** ; aucune silhouette secrète n'est imprimée dans le bitmap public. |
+| 11 | **Neuf donjons cachés initialement** aux joueurs, révélés individuellement par acte explicite du MJ pour chaque campagne. |
+| 12 | **Aucune réserve d'emplacement futur prédéfinie** ; laisser les paysages respirer naturellement, sans créer de géopoints futurs fictifs. |
+| 13 | **Aucun texte peint** sur le fond, titre du continent compris ; noms exclusivement en surcouches d'interface masquables. |
+
+**Validation esthétique distincte :** les neuf descriptions proposées dans [`V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md`](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md) sont **À ARBITRER UNE À UNE**. Leur présence dans GitHub ne valide pas leurs silhouettes.
 
 ## 1. Intentions et livrables du continent
 
 Valdorie est une **carte illustrée indépendante et riche**, pas un recadrage agrandi du 4K et pas un niveau de pyramide de zoom géométriquement superposable pixel à pixel. L'image doit conserver les grandes silhouettes, la logique des eaux, les reliefs, les côtes, la merveille et les relations régionales de la mappemonde. Densifier la vie publique : villes, ports, voies terrestres, commerce fluvial, campagnes, gags de taverne et détails narratifs **non secrets**. La carte doit rester lisible et laisser des territoires vierges pour de futures quêtes.
 
-Livrables ultérieurs, après les Gates ouvertes ci-dessous : (a) fond natif sans texte/secret ; (b) registre indépendant de points/zones cliquables et liens Codex autorisés ; (c) aperçu de contrôle MJ avec repères/IDs de conception, **non distribué comme bitmap public** ; (d) manifeste de résolution/dimensions natifs, version de la source et des ressources ; (e) revue de conformité en iPad.
+Livrables ultérieurs, après les Gates ouvertes ci-dessous : (a) fond natif **3:2** sans texte/secret, avec Chope publique reconnaissable ; (b) **neuf illustrations conditionnelles séparées** et registre de points/liens Codex autorisés ; (c) aperçu de contrôle MJ avec repères/IDs de conception, **non distribué comme bitmap public** ; (d) manifeste de résolution/dimensions natives, version de la source et des ressources ; (e) revue iPad.
 
 **Interdiction d'upscaling** : ne jamais demander ni annoncer « 4K natif » ou autre taille si le générateur ne livre pas réellement ces pixels. Choisir format/ratio/résolution selon la morphologie de Valdorie et les capacités démontrées du moteur, puis documenter les pixels exacts. La mappemonde 4K approuvée reste inchangée. Aucun pipeline mondial 8K/16K ni assemblage de pseudo-zoom.
 
@@ -33,25 +53,27 @@ Repère de **composition mondiale indicatif** (non contour final) : Valdorie X12
 
 **VALIDÉ d'après le maître :** Saint-Fût-le-Petit reste un **hameau rural banal, relativement isolé** : Collines de la Vieille Lande, voisinage de la Sylve des Anciens, ruisseau des Saules, champs et vieux pont. Centre mondial X30/Y44 = indication historique, **pas un point exact à reconduire dans la carte autonome**. La **Chope Qui Colle**, auberge tenue par Berthold « Deux-Doigts », est un repère public essentiel de l'aventure, **pas un nexus cosmologique**.
 
-**Contrat visuel V2 proposé :** peindre le hameau, un bâtiment de taverne reconnaissable, sa cour, une petite cheminée, la proximité du vieux pont, quelques parcelles cultivées et un chemin boueux. Le bâtiment doit rester dimensionné comme une auberge de village, sans devenir château ou mégalopole. Une silhouette ludique (enseigne en chope **sans lettres**, auvent, tonneaux publics) peut suffire ; son nom et sa sélection relèvent de la surcouche. Préserver un emplacement lisible pour le marqueur prioritaire « Chope », la commande « Revenir à la Chope » et les deux emplacements distincts D1/D2 alentour. Aucune entrée ni silhouette caractéristique de ces donjons n'est révélée par défaut.
+**Contrat visuel V2 validé dans son principe :** peindre le hameau, un bâtiment de taverne reconnaissable, sa cour, une petite cheminée, la proximité du vieux pont, quelques parcelles cultivées et un chemin boueux. Le bâtiment doit rester dimensionné comme une auberge de village, sans devenir château ou mégalopole. Une silhouette ludique (enseigne en chope **sans lettres**, auvent, tonneaux publics) peut suffire ; son nom et sa sélection relèvent de la surcouche. Préserver un emplacement lisible pour le marqueur prioritaire « Chope », la commande « Revenir à la Chope » et les deux emplacements distincts D1/D2 alentour. Aucune entrée ni silhouette caractéristique de ces donjons n'est révélée par défaut.
 
 ## 4. Les neuf donjons de Valdorie : décisions V2 et contrat de représentation
 
-**Affectations/positions relatives VALIDÉES le 28/09/2026 ; coordonnées numériques et règles de découverte EN ATTENTE.** Les neuf seront représentables **dans la vue applicative autorisée** via marqueurs/surcouches et prévus dans l'espace de composition, **pas neuf signatures graphiques de donjons gravées dans le fond public**. Un site public pourra recevoir une illustration propre uniquement après classification de sa visibilité et validation d'absence d'indice secret.
+**Affectations/positions relatives et règle de révélation VALIDÉES le 28/09/2026 ; géopoints, IDs Codex et filtrage backend EN ATTENTE.** Les neuf sites ont chacun une **illustration dédiée sur calque indépendant et conditionnel**, pas neuf signatures peintes sur le fond public. Tous sont initialement cachés aux joueurs, révélés explicitement par le MJ **par campagne**. Leurs silhouettes concrètes demeurent des propositions visuelles à valider une à une.
 
 | ID / placement_id | Zone V2 validée | Implantation et précaution de conception |
 |---|---|---|
-| D1 / `placement:d01` — Le Château Bastognac | Proche de la Chope | Prévoir un point distinct de D2 près du secteur Saint-Fût ; pas de château peint à l'endroit secret par supposition. Vérifier le titre du véritable Codex, différent dans le seed historique. |
-| D2 / `placement:d02` — La Forêt en Chantier | Proche de la Chope | Deuxième point indépendant, proximité affirmée mais rayon non chiffré. Un décor forestier générique ne doit pas trahir une entrée. |
-| D3 / `placement:d03` — Hôtel Zombifornia | **Grande ville des Plaines de Valdor** | Réserver un point individuel au sein du tissu urbain public ; ne pas peindre un hôtel thématique identifiable avant décision de visibilité. |
-| D4 / `placement:d04` — Le Cabaret des Joyeuses | **Même grande ville des Plaines de Valdor que D3** | Deuxième point urbain distinct de D3 ; un quartier animé public n'est pas une divulgation du cabaret précis. |
+| D1 / `placement:d01` — Le Château Bastognac | **Proche de la Chope, côté Collines de la Vieille Lande** | Point distinct de D2 ; château secret seulement sur calque conditionnel ; titre métier à vérifier. |
+| D2 / `placement:d02` — La Forêt en Chantier | **Proche de la Chope, côté forêt** | Point distinct de D1 ; aucun chantier révélateur dans le fond public. |
+| D3 / `placement:d03` — Hôtel Zombifornia | **Quartier hôtelier de la grande cité fortifiée des Plaines de Valdor** | Point individuel et illustration conditionnelle. |
+| D4 / `placement:d04` — Le Cabaret des Joyeuses | **Quartier festif de la même grande cité fortifiée que D3** | Point distinct de D3 ; le quartier public ne dévoile pas le cabaret. |
 | D5 / `placement:d05` — Le Sanctuaire du Houblon Noir | **Contreforts des Hautes Marches** | Réserver secteur de relief et position de surface à préciser, sans indice visuel de sanctuaire secret. |
-| D6 / `placement:d06` — Le Panthéon des Fermentations Interdites | **Directement SOUS D5** | Même position planimétrique à préciser, profondeur/niveau distinct ; UI accessible sans collision (sélecteur multi-lieux/étages ou décalage d'étiquettes sans altérer les coordonnées). La superposition ne prouve ni accès direct ni portail. Pas de coupe souterraine peinte dans le fond public. |
-| D9 / `placement:d09` — Le Bastion du Sauciflard | **Sylve des Anciens** | Point distinct de la merveille Arbres-Colosses ; ne pas suggérer que les arbres géants abritent par défaut le bastion. |
-| D10 / `placement:d10` — Les Thermes de la Bonne Trempette | **Les Côtes Grises** | Réserver secteur côtier ; des bâtiments publics de bain peuvent exister comme décor générique, sans annoncer les thermes du donjon. |
-| D11 / `placement:d11` — La Ruche Royale | **Zone boisée/fleurie à l'est des Plaines de Valdor** | Réserver secteur de végétation/fleurs ; éviter une ruche géante qui révèlerait mécaniquement le donjon aux joueurs. |
+| D6 / `placement:d06` — Le Panthéon des Fermentations Interdites | **Directement SOUS D5** | Même x/y à déterminer, niveau/depth distinct ; **un marqueur commun D5/D6 avec menu filtré par droits**. Aucun accès direct ou portail déduit ; coupe souterraine uniquement conditionnelle. |
+| D9 / `placement:d09` — Le Bastion du Sauciflard | **Partie profonde de la Sylve des Anciens, distincte des Arbres-Colosses** | Illustration conditionnelle, aucune assimilation à la merveille. |
+| D10 / `placement:d10` — Les Thermes de la Bonne Trempette | **Littoral rocheux des Côtes Grises** | Lieux publics de bain génériques permis, sans identifier ce donjon. |
+| D11 / `placement:d11` — La Ruche Royale | **Transition prairies fleuries/forêt à l'est des Plaines de Valdor** | Ne pas peindre une ruche géante qui révélerait le donjon. |
 
 **Hors Valdorie** : D7 et D8 dans leurs dimensions désormais nommées La Brasserie Céleste et L'Enfer de la Sobriété Éternelle ; D12/D14/D15 en Ferrécime ; D13 en Sylvaronde ; D3/D10 ne sont **plus** à Pelagrève et D15 n'a aucun lien avec D5. Ne pas extrapoler de donjon non validé à partir d'un décor de tavernes.
+
+**Les neuf concepts architecturaux ne sont PAS encore approuvés :** voir [l'annexe des illustrations dédiées](V6-MAP-V2-VALDORIE-ILLUSTRATIONS-DONJONS.md). Les fichiers d'illustration sensibles ne devront pas davantage être diffusés via une URL ou un cache public que leurs marqueurs.
 
 **Registre géométrique ultérieur, sans valeurs fictives :** pour chaque `placement_id`, `view_id`, point local (x,y), éventuel `level/depth`, statut public/sensible, niveau de découverte par campagne, lien Codex `entity_type/entity_id` réellement résolu, rayon de sélection UI, vérification d'un marqueur voisin. Pour D5/D6, définir le modèle vertical avant de renseigner leurs positions. Tous les marqueurs secrets sont filtrés **avant transmission**, y compris recherche, aperçus, URLs et cache. Ne pas présenter une vue de contrôle MJ comme fichier public.
 
