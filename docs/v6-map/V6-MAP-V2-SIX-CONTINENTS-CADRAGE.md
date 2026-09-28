@@ -70,8 +70,9 @@ La position des merveilles au monde est indicative dans le référentiel Ardéra
 - **Ouverts :** géopoint/architecture/illustration du calque PUBLIC de la cité sous-marine, dont le mode de représentation n'est plus à arbitrer ; points/contours locaux des cinq réserves dans leurs secteurs approuvés, vérification des exclusions/éloignements, références graphiques Pandaren, lieux publics à ancrer sur le fond réel, PNG maître 4K, sortie native 2:3 et QA. Ne pas redemander un vote sur les cinq régions ou l'exclusion du Labyrinthe.
 
 
-### Austrébrume — aucun D1–D15
+### Austrébrume — aucun D1–D15, REVUE EN COURS
 
+- **Cahier de préparation :** [12 arbitrages et deux questions complémentaires à soumettre](V6-MAP-V2-CONTINENT-AUSTREBRUME-PREPARATION.md), **AUCUN NOUVEAU CHOIX AUSTRÉBRUME VALIDÉ**. Les Cascades de Brume sont ATMOSPHÉRIQUES et d'origine inconnue ; demander expressément si elles et leurs abords doivent être exclus des réserves éventuelles. Les deux noms « Falaises de Nacrelune » et « Plateaux du Dernier Vent » restent de simples propositions V1 jusqu'à réponse distincte.
 - **Canon :** X43–75/Y84–96 ; Fjords de Nacrelune, Bois des Dernières Feuilles, Monts du Voile, Bassin des Lacs Sombres, Landes du Grand Hiver, Couronne Blanche ; quatre bassins vers fjords O, baie NE, vallées forestières N et régions polaires ; **Cascades de Brume** vers X59/Y89 : phénomène ATMOSPHÉRIQUE, PAS cascades d'eau, origine totalement mystérieuse ; **Falaises de Nacrelune** et **Plateaux du Dernier Vent** sont seulement PROPOSÉS dans V1, non canoniques.
 - **Aucun des quinze donjons actuels.** Ne pas forcer de ville géante ou de village sur la calotte.
 - Ouverts : cadrage de la bande australe/fjords, densité des campements, ports et petites cités côtières, mixité visuelle de populations adaptées au climat, humour de brouillard, du froid et de navigation, éventuel accord sur les deux toponymes secondaires V1 ; ne pas convertir les Cascades de Brume en phénomène hydrologique.
