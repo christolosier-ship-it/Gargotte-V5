@@ -8,8 +8,6 @@ import {
   tagsToArray,
   tagsToText,
   parseFloorBudgets,
-  buildCsv,
-  parseCsv,
   safeFilename,
   fitSize
 } from "./utils/common.js";
@@ -23,7 +21,6 @@ import {
   putOne,
   putMany,
   deleteOne,
-  deleteWhere,
   clearStore,
   appendLog,
   getLogs,
@@ -966,10 +963,6 @@ function renderSessionToolHeader(activeTool) {
       <button class="danger" type="button" data-action="session-end">Terminer la partie</button>
     </div>
   </section>`;
-}
-
-function storeList() {
-  return [...ENTITY_ORDER];
 }
 
 function getLabel(type) {
@@ -2086,16 +2079,6 @@ function mediaCardUrlForAsset(asset) {
   return mediaRepository.cachedActiveUrl(asset, asset.entity_type);
 }
 
-function mediaOriginalUrlForAsset(asset) {
-  if (!asset || String(asset.entity_type || "") !== "dungeons") return "";
-  return mediaRepository.cachedActiveUrl(asset, "dungeons");
-}
-
-function mediaTransparentUrlForAsset(asset) {
-  if (!mediaHasApprovedTransparent(asset)) return "";
-  return mediaRepository.cachedActiveUrl(asset, asset.entity_type);
-}
-
 function mediaViewerVariant(asset) {
   if (!asset) return "default";
   if (mediaHasApprovedTransparent(asset)) return "transparent";
@@ -2294,11 +2277,6 @@ function getFilteredList(type, scope = "search") {
   }
 
   return list;
-}
-
-function getCurrentSelection(type, view) {
-  const id = view === "codex" ? state.ui.codexSelectedId : state.ui.workshopSelectedId;
-  return findById(type, id);
 }
 
 function sheetHeaders(type) {
@@ -2921,9 +2899,6 @@ function shellIcon(name, className = "") {
   };
   return '<svg class="ui-icon '+className+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'+(icons[name] || icons.more)+'</svg>';
 }
-function shellEmblem(file, className = "nav-emblem") {
-  return '<img class="'+className+'" src="'+V6_ICON_PATH+file+'" alt="" aria-hidden="true">';
-}
 function navButton(view,label,iconHtml){
   const active=state.ui.view===view?"active":"";
   return '<button class="navbtn '+active+'" data-action="set-view" data-view="'+view+'" '+(active?'aria-current="page"':'')+'>'+iconHtml+'<span class="nav-label">'+label+'</span></button>';
@@ -3139,7 +3114,6 @@ function renderHome() {
   const budget = sessionBudget(session);
   const encounter = session.encounter;
   const groups = sessionEncounterCreatureGroups(encounter);
-  const totalOccurrences = groups.reduce((sum, group) => sum + group.total, 0);
   const remainingOccurrences = groups.reduce((sum, group) => sum + group.remaining, 0);
   const quest = findById("quests", session.questId);
   const currentBrouhaha = session.brouhaha.current;
@@ -3272,10 +3246,6 @@ function renderHome() {
     </section>
   `);
 }
-function statCard(label, value, icon) {
-  return `<div class="stat-card"><div class="stat-icon">${icon}</div><div><div class="stat-value">${value}</div><div class="stat-label">${label}</div></div></div>`;
-}
-
 function renderCodexTabs(type) {
   return `<div class="segmented wrap codex-family-tabs">
     ${ENTITY_ORDER.map(t => `<button class="tab ${t === type ? "active" : ""}" data-action="set-codex-type" data-type="${t}">${getLabel(t)}</button>`).join("")}
@@ -5014,11 +4984,6 @@ function renderCreatureDetail(item) {
   `;
 }
 
-function renderLootList(list) {
-  if (!list.length) return `<div class="empty small">Aucun loot.</div>`;
-  return `<div class="loot-list">${list.map(l => `<div class="loot-chip"><strong>${escapeHtml(l.name)}</strong><span>${escapeHtml(l.type || "")}${l.effect ? ` · ${escapeHtml(l.effect)}` : ""}</span><em>${l.gold_value || 0} or</em></div>`).join("")}</div>`;
-}
-
 function renderHeroDetail(item) {
   const group = heroGroupByKey(heroBaseKey(item));
   return renderHeroDetailV6(group || { key: heroBaseKey(item), baseName: item?.hero_base_name || item?.name || "Héros sans nom", levels: item ? [item] : [] });
@@ -5259,10 +5224,6 @@ function renderEncounterResult(encounter) {
       </section>` : ""}
     </article>
   `;
-}
-
-function renderEncounterMiniPanel() {
-  return "";
 }
 
 function queueBrouhahaLevelFeedback(previousLevel, nextLevel) {
@@ -6514,26 +6475,6 @@ function applySafeImportRelations(type,entity,row,existing){
   return entity;
 }
 
-function normalizeConflictPreview(type, rows) {
-  const existing = state.data[type] || [];
-  const results = rows.map(row => {
-    const key = entityConflictKey(type, row);
-    const conflict = existing.find(item => buildConflictKeyFromEntity(type, item) === key);
-    return {
-      label: row.name || row.title || row.hero_base_name || row.label || row.file_name || row.id || "",
-      status: conflict ? "conflit" : "nouveau",
-      row,
-      conflictId: conflict?.id || ""
-    };
-  });
-  return {
-    fileName: state.ui.import.fileName || "",
-    type,
-    rows: results,
-    conflicts: results.filter(r => r.status === "conflit")
-  };
-}
-
 async function applyImportPreview(){
   const preview=state.importRuntime.preview;if(!preview)return;const validRows=preview.rows.filter(r=>r.valid);if(!validRows.length)throw new Error("Aucune ligne valide à importer.");
   const type=preview.type,entities=[];let created=0,updated=0;
@@ -6550,29 +6491,6 @@ async function refreshData() {
   state.logs = await getLogs(100);
   await saveUiState(state.ui);
   render();
-}
-
-function newEntity(type) {
-  const item = blankEntity(type);
-  if (type === "creatures") {
-    item.dungeon_id = state.data.dungeons?.[0]?.id || "";
-    item.dungeon_name = state.data.dungeons?.[0]?.name || "";
-    item.dungeon_slug = state.data.dungeons?.[0]?.slug || "";
-  }
-  if (type === "quests") {
-    item.dungeon_id = state.data.dungeons?.[0]?.id || "";
-    item.dungeon_name = state.data.dungeons?.[0]?.name || "";
-  }
-  if (type === "loot_items") {
-    item.creature_id = state.data.creatures?.[0]?.id || "";
-    item.creature_name = state.data.creatures?.[0]?.name || "";
-  }
-  return item;
-}
-
-async function makeThumbnail(file, maxSize = 512, quality = 0.8) {
-  const blobData = await fileToOptimizedBlob(file, maxSize, quality);
-  return blobData;
 }
 
 async function fileToOptimizedBlob(file, maxSize = 1600, quality = 0.84) {
@@ -6609,12 +6527,6 @@ function canvasToBlob(canvas, type, quality) {
   return new Promise(resolve => {
     canvas.toBlob(blob => resolve(blob), type, quality);
   });
-}
-
-function resolveTargetEntityFromMediaForm() {
-  const type = state.ui.media.filterType || "gallery";
-  const id = state.ui.media.filterEntity || "";
-  return { type, id };
 }
 
 async function sha256Blob(blob) {
@@ -6698,14 +6610,6 @@ async function deleteEntityWithConfirm(type, id) {
   render();
 }
 
-function generateEncounter(dungeonId, floorIndex, bossChecked, miniBossChecked) {
-  const session = ensureSessionContext();
-  session.dungeonId = String(dungeonId || session.dungeonId || "");
-  session.floorIndex = Math.max(0, Number(floorIndex || 0));
-  session.mode = bossChecked ? "boss" : miniBossChecked ? "mini_boss" : "normal";
-  return generateSessionEncounter(session);
-}
-
 function rollCreatureLoot(creature) {
   const jokes = ["Rien… même pas une chaussette.", "Le monstre avait déjà tout vendu.", "Poches vides, ego intact."];
   const loots = (creature?.loot_items || []).filter(Boolean);
@@ -6713,23 +6617,6 @@ function rollCreatureLoot(creature) {
   if (!loots.length || r < 0.8) return { type: "none", text: jokes[Math.floor(Math.random() * jokes.length)] };
   if (loots.length === 1 || r < 0.9) return { type: "loot", text: `${loots[0].name || "Loot 1"}` };
   return { type: "loot", text: `${(loots[1] || loots[0]).name || "Loot 2"}` };
-}
-
-function rollInteractableEffect(obj, dungeonId) {
-  const raw = String(obj?.effect || "").trim();
-  if (!raw) return "";
-  const rules = raw.split(/[\\/;\n|]/).map(x => x.trim()).filter(Boolean);
-  const byType = {
-    porte: ["ouvrir", "fermer"],
-    tonneau: ["casser", "exploser"],
-    statue: ["casser", "tomber sur case voisine"],
-    pilier: ["casser", "éboulement"]
-  };
-  const typeKey = String(obj.type || "").trim().toLowerCase();
-  const registry = byType[typeKey] || [];
-  const dungeonBoost = dungeonId ? [`${dungeonId}: ${rules[0] || registry[0] || raw}`] : [];
-  const pool = [...rules, ...registry, ...dungeonBoost].filter(Boolean);
-  return pool[Math.floor(Math.random() * pool.length)] || raw;
 }
 
 function exactBudgetCombo(pool, remaining) {
@@ -6754,17 +6641,6 @@ function exactBudgetCombo(pool, remaining) {
   }
 
   return dfs(remaining);
-}
-
-function drawBrouhaha(level, dungeonId) {
-  const dungeon = findById("dungeons", dungeonId);
-  const pool = (state.data.brouhaha_effects || []).filter(effect => {
-    if (Number(effect.level) !== Number(level)) return false;
-    const universal = !String(effect.dungeon_id || "").trim() && !String(effect.dungeon_name || "").trim();
-    return universal || (dungeon && entityBelongsToDungeon(effect, dungeon));
-  });
-  const count = Number(level) >= 10 ? 2 : 1;
-  return shuffle(pool).slice(0, count).map(effect => effect.effect_text).filter(Boolean);
 }
 
 function shuffle(arr) {
@@ -6863,8 +6739,6 @@ async function exportFullBackupFile(){
   }finally{backupBusy=false;}
 }
 
-async function importFullBackupFile(){throw new Error("La restauration ZIP destructive historique est désactivée dans UI-5C. Utilise l'import JSON/XLSX avec preview, ou conserve le ZIP comme sauvegarde de sécurité.");}
-
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -6886,29 +6760,6 @@ async function parseImportFile(file,type,expectedFormat=""){
 
 function displayImportLabel(type, row) {
   return row.name || row.title || row.hero_base_name || row.label || row.file_name || row.id || "";
-}
-
-function copyWithDefaults(type, row, existing) {
-  return importRowToEntity(type, row, existing);
-}
-
-function renderMediaListForType(type) {
-  const rows = mediaRepository.getCatalog();
-  if (type === "gallery") return rows;
-  return rows.filter(a => a.entity_type === type);
-}
-
-async function setView(view) {
-  state.ui.view = view;
-  if (view === "atelier") {
-    state.ui.workshopType = state.ui.workshopType || "creatures";
-  }
-  await saveUiState(state.ui);
-  render();
-}
-
-function setToastAndRender(message, tone = "info") {
-  toast(message, tone);
 }
 
 function bindEvents() {
@@ -7886,10 +7737,6 @@ function bindEvents() {
       await reportError(err, `submit:${type}`);
     }
   });
-}
-
-async function saveEntityFromFormWrapper(type, form) {
-  return saveEntityFromForm(type, form);
 }
 
 async function reportError(err, context = "") {
