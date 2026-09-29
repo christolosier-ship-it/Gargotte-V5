@@ -1,6 +1,6 @@
 # V6-Map V2 — Dimension / donjon D8 : L'Enfer de la Sobriété Éternelle
 
-**STATUT : PITCH ET DEUX LOTS DE DOUZE ARBITRAGES EXPRESSÉMENT VALIDÉS LE 29/09/2026 ; TROISIÈME LOT DE STRUCTURE VISUELLE APPLIQUÉ SUR DÉLÉGATION « Applique directement tes reco et passe à la suite »  ; SEIZE TOPONYMES V2 EXPRESSÉMENT VALIDÉS LE 29/09/2026 ; PLACEMENT PRÉCIS, IMAGE PILOTE, DROITS ET INTÉGRATION EN ATTENTE.** Document de conception artistique seulement : aucun asset ni code créé ici.
+**STATUT : PITCH ET DEUX LOTS DE DOUZE ARBITRAGES EXPRESSÉMENT VALIDÉS LE 29/09/2026 ; TROISIÈME LOT DE STRUCTURE VISUELLE APPLIQUÉ SUR DÉLÉGATION « Applique directement tes reco et passe à la suite »  ; SEIZE TOPONYMES V2 ET COMPOSITION SPATIALE RELATIVE EXPRESSÉMENT VALIDÉS LE 29/09/2026 ; SCÈNES D'AMBIANCE, ANCRAGES SUR IMAGE RÉELLE, IMAGE PILOTE, DROITS ET INTÉGRATION EN ATTENTE.** Document de conception artistique seulement : aucun asset ni code créé ici.
 
 Références : `AGENTS.md`, [cadrage commun V2](V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md), [Entrevers](V6-MAP-V2-ENTREVERS.md), [pivot](V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md) et registre V2 sur `V5.3` à synchroniser plus tard. Sources visuelles consultées en lecture seule : `Projet Gargotte / Donjon 8 - L’enfer de la Sobriété Éternelle` (18 illustrations) et `Projet Gargotte / Archive / Enfer` (36 PNG, dont anciennes variantes et 20 illustrations narratives ; un `bestiaire_donjon8.xlsx` figure également dans le dossier mais son **contenu n'a pas été contrôlé** par cette revue). Les archives illustrent une intention esthétique ; ne pas convertir un objet d'archive en rôle/lieu canonique sans vérification métier.
 
@@ -92,13 +92,34 @@ L'utilisateur a demandé « Applique directement tes reco et passe à la suite �
 
 **Historique remplacé :** « La Citadelle de l'Abstinence » reste une appellation *V1*, non le nom de la nouvelle citadelle centrale V2, désormais **La Citadelle de la Mesure**. Les noms **Le Promontoire des Eaux** et **Le Parvis du Monolithe** désignent des repères visuels associés respectivement aux deux Léviathans généraux, sans inventer leur domicile ou une tradition cultuelle. N'incruster aucun nom dans le bitmap : labels/UI externes et soumis aux droits. Aucune position relative supplémentaire n'est encore validée par le présent catalogue.
 
-## 6. Gates et interdictions
+## 6. Composition spatiale relative VALIDÉE le 29/09/2026
+
+Le propriétaire a répondu **« Je valide »** à la proposition d'organisation du fragment **paysage 3:2**. Ces placements sont des **relations entre masses et éléments visuels**, pas des coordonnées X/Y ni une cartographie de la dimension infinie. Conserver la **diagonale processionnelle globale** tout en donnant aux ensembles construits une **forte symétrie locale**.
+
+| Élément | Implantation VALIDÉE dans le repère de l'image |
+|---|---|
+| **La Citadelle de la Mesure** | Cœur du fragment, légèrement vers l'arrière-plan, dominant le réseau architectural. |
+| **La Tour du Rappel** | En arrière de la citadelle, gigantesque signal vertical dominant l'horizon peint (pas de fin du monde). |
+| **Le Canal de la Juste Goutte** | Grand axe rectiligne **en diagonale depuis le premier plan vers la citadelle** ; suggérer sa continuité hors champ et préserver son allure méthodique. |
+| **Les Bassins du Miroir Froid** | Séries symétriques sur **les deux côtés du canal**. |
+| **Le Léviathan Hydrique** et **Le Promontoire des Eaux** | **Grand repère vivant à gauche**, associé visuellement à l'eau et au promontoire, sans inventer de résidence ou nouvelle identité métier. |
+| **Le Léviathan Monolithique** et **Le Parvis du Monolithe** | **Grand repère vivant à droite**, associé visuellement aux formations militaires et au parvis. **Deuxième général majeur : ne pas en faire une statue ni un accessoire de décor.** |
+
+**Secondaires, relations qualitatives validées :** Les Cloîtres de l'Équilibre et Le Tribunal de la Mesure près de la citadelle ; La Cour des Rangs et les ouvrages militaires organisés ; Les Écluses de Purification, Halles de Distribution et Galeries de Régulation raccordées à la trame géométrique et hydraulique ; Les Portiques du Contrôle, La File de l'Infini, Le Guichet des Dernières Gouttes et Le Banc de la Pause Autorisée accueillent les petites scènes de quotidien, sans localisations supplémentaires fixées à ce stade.
+
+**Deux généraux de même importance visuelle**, non nécessairement de taille physique identique, sans affrontement ou rapport hiérarchique inventé. La présence discrète de Poule Sobre/Huguette reste conditionnée à la vérification des fiches et autorisations, jamais un troisième monument. Tous les réseaux et paysages se prolongent visuellement au-delà du cadre ; aucun mur périmétrique ne prétend entourer l'infinie dimension. **La portion peinte est D8, sans marqueur D8 intérieur.**
+
+### 6.1 Prochaine étape, sans validation anticipée
+
+Préparer un catalogue **proposé de 24 Gargotteries** à densité moyenne, centré sur le comique bureaucratique, la discipline obsessionnelle, l'eau sous protocole et le quotidien des formations. Cette quantité et ces scènes n'ont **pas encore été acceptées** par le propriétaire. Préserver la majesté des deux généraux et une lecture architecturale paisible.
+
+## 7. Gates et interdictions
 
 - **D8-0 VALIDE** : concept infini, carte-fragment entièrement D8, premier lot de douze réponses.
 - **D8-1 VALIDE** : deuxième lot de douze réponses, dont 8.D et deux généraux majeurs.
 - **D8-2 APPLIQUÉ SUR DÉLÉGATION** : douze repères fonctionnels de la structure, sans noms officiels ni positions XY.
 - **D8-3 VALIDÉ 29/09/2026** : seize appellations V2 proposées acceptées toutes sans correction, sans géopoint ou emprise dessiné.
-- **D8-4 EN ATTENTE** : prochaine étape, arbitrer la disposition relative des seize repères (diagonale globale + symétries locales), puis répartition/scènes de Gargotteries et brief du pilote 3:2.
+- **D8-4 COMPOSITION RELATIVE VALIDÉE 29/09/2026** : six implantations majeures et relations secondaires ; **EN ATTENTE** : catalogue/quantité des Gargotteries, ancrages graphiques sur fond réel et brief du pilote 3:2.
 - **D8-5 EN ATTENTE** : vérifier les fichiers métier actifs D8 et permissions, contrôler source native réelle et lisibilité iPad, intégrer le fond seulement après validation, réconcilier le registre V2 sur branche synchronisée.
 
 **Pas d'image générée dans ce chantier documentaire, de texte peint, de nouveau donjon D16+, de nouvelle espèce, de secret MJ dans le fond public, de portail inventé, d'extrapolation de fin de dimension, de doublon D8 intérieur, de nouveau géopoint arbitraire, de modification de code ou UI, de migration `map_id`, IndexedDB, Blobs, backend ou V7.** Ni upscaling ni affirmation de pixels natifs non mesurés. D7 reste inchangé.
