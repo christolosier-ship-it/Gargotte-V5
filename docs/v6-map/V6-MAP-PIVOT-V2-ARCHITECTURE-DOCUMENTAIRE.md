@@ -1,13 +1,13 @@
 # V6-Map — Pivot V2 : architecture documentaire et plan de migration
 
-**NOTE DE CLÔTURE (29/09/2026) :** ce document décrit l'état préparatoire du pivot. La migration documentaire a été effectuée par la PR #60 : [maître V2 actif](V6-MAP-MAITRE-V2.md), [archive des quinze pièces V1](../archive/v6-map-v1/README.md). Les mentions ci-dessous de fichiers V2 « futurs » et de « traitement futur » sont historiques ; les fichiers V2 effectivement présents et leur statut sont donnés dans le maître V2. La Trame astrale n'est pas traitée par la présente clôture.
+**NOTE DE CLÔTURE ET DE DÉCOMMISSIONNEMENT (29/09/2026) :** document du pivot historique V2. [Maître V2 actif](V6-MAP-MAITRE-V2.md) et [socle géographique V2](V6-MAP-V2-SOCLE-GEOGRAPHIQUE-ARDERA.md). Après la PR #60, le propriétaire a demandé le retrait complet des quinze cahiers archivés V1 et des exécutables A1/A2 ; leurs traces ne subsistent que dans l'historique Git (#55–#60). Les « futurs fichiers » et anciennes étapes ci-dessous reflètent les décisions préparatoires, pas des tâches à rouvrir. Aucun nouveau brief Trame astrale ici.
 
 Statut : **PROPOSITION DOCUMENTAIRE EN REVUE ; REGISTRE D'AFFECTATIONS V2 CRÉÉ et validé pour les zones relatives le 28/09/2026**. Complément de `V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md` ; aucun remplacement immédiat du maître actif, aucune coordonnée précise ou implantation technique définitive, et aucun prompt de production continentale. Ne pas interpréter un fichier « à créer » ci-dessous comme déjà présent dans GitHub.
 
 ## 1. Principes d'organisation
 
 - Une **autorité V2 unique** pour les décisions pérennes, et des cahiers courts qui renvoient au maître plutôt que dupliquent son lore.
-- Un **registre indépendant des implantations** désormais présent : `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`. Les affectations et positions relatives ont été validées par le propriétaire ; **les quinze coordonnées, IDs métier et règles d'exposition restent en attente**, sans figement par rédaction automatique.
+- Un **registre indépendant des implantations** désormais présent : `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`. Les affectations et positions relatives ont été validées par le propriétaire ; **les coordonnées terrestres des treize implantations, IDs métier et règles d'exposition restent en attente**, sans figement par rédaction automatique.
 - Une fiche par **vue illustrée** : 1 Entrevers, 7 continents et 3 cartes dimensionnelles. Ardéra 4K est une illustration déjà approuvée : le maître et le contrat des fonds la référencent, sans la régénérer.
 - Distinguer **cosmologie / représentation graphique / navigation d'interface**. Une vue « Entrevers » en tête de navigation n'est ni la Trame astrale ni une preuve de portail ou de topologie spatiale.
 - Pas d'upscaling, jamais de promesse de « natif 4K/8K » sans dimensions réelles contrôlées. Le ratio/rendu natif de chaque carte continentale est décidé en fonction de sa morphologie et d'une génération techniquement démontrée, pas imposé arbitrairement à 4096².
@@ -68,22 +68,12 @@ Conserver pour chaque entrée le `placement_id` conceptuel stable, l'ID Dn édit
 **Ordre de finalisation géométrique recommandé :** Valdorie (D1, D2 proches de la Chope ; D3/D4 dans une même ville des Plaines de Valdor ; D5/D6 en superposition verticale ; D9 dans la Sylve ; D10 aux Côtes Grises ; D11 à l'est des Plaines), Ferrécime (D12 montagne, D14 continent confirmé et région V1 à reconfirmer, D15 Marches de Braise sans lien avec D5), Sylvaronde (D13 Delta), puis les deux dimensions homonymes D7/D8. Vérifier spécialement les deux fiches portant des noms égaux à leur dimension, la différence de titre D1 entre maître et seed, les niveaux souterrains D5/D6, les IDs réels et les droits par campagne.
 
 **Gate relative VALIDÉE (28/09/2026) ; Gate géopoints/IDs métier/confidentialité EN ATTENTE.** Les autres continents restent disponibles pour de futurs donjons ; aucune génération lancée.
-## 6. Migration des anciens cahiers après validation du pivot (plan historique, archivage exécuté par PR #60)
+## 6. Clôture de migration et retrait du corpus V1
 
-| Fichiers V1 actuellement présents | Traitement **futur**, pas dans cette PR |
-|---|---|
-| `../archive/v6-map-v1/V6-MAP-MAITRE.md` | Conserver lisible et historique ; basculer l'autorité active vers le maître V2 seulement après accord du propriétaire et revue des renvois. |
-| `../archive/v6-map-v1/V6-MAP-A0-CONTRAT.md`, `../archive/v6-map-v1/V6-MAP-A0-ANNEXE-CONTRATS.md` | Préserver preuves et registres V1 ; amender explicitement contrats de vue/hiérarchie et nombre de vues côté V2, sans réécrire rétroactivement la Gate. |
-| A1 et A2 : POC, validation et rapport iPad | Archiver comme preuve historique utile (moteur léger, cache, essais), mais leurs pyramides de tuiles n'obligent plus à produire des niveaux de zoom artistiques. |
-| `../archive/v6-map-v1/V6-MAP-B1-RESSOURCES-ARDERA.md` | Remplacer son plan 4K→8K→16K/tuiles par master 4K approuvé + sept fonds indépendants natifs, avec vérification de fidélité géographique. |
-| `../archive/v6-map-v1/V6-MAP-B2-INTERFACE.md` / `B3-TOPONYMIE.md` | Reprendre hotspots mondiaux, navigation parent/enfant et surcouches textuelles/visibilité par vue, sans progressivité de zoom inter-fonds. |
-| `../archive/v6-map-v1/V6-MAP-B4-DONJONS-CODEX.md` | Substituer les **affectations V2 validées** à la table V1 devenue historique ; attendre l'arbitrage des géopoints et IDs métier avant intégration, préserver confidentialité et marqueurs dynamiques. |
-| `../archive/v6-map-v1/V6-MAP-C1-DIMENSIONS.md` | Conserver trois cartes distinctes, actualiser **les noms de présentation** La Brasserie Céleste et L'Enfer de la Sobriété Éternelle, conserver provisoirement les IDs conceptuels historiques, ajouter leur accès depuis l'Entrevers ; ne pas confondre carte supérieure, Trame et donjons homonymes. |
-| `../archive/v6-map-v1/V6-MAP-C2-CAMPAGNES-SECRETS.md` | Préserver ses garanties de filtrage, à adapter au modèle de vues et au backend V7 réellement établi. |
-| `../archive/v6-map-v1/V6-MAP-C3-PWA-VALIDATION.md` | Requalifier cache/offline et essais Safari pour douze vues potentielles, pas quatre pyramides multi-résolution. |
-| `AGENTS.md` | Ne mettre à jour les références actives qu'après activation formelle de V2 ; aucun changement de la politique média/V7. |
-
-**Ne pas supprimer les anciens cahiers pendant l'étude** : les chemins de référence existants et la traçabilité des décisions doivent rester disponibles. Après acceptation V2, prévoir un commit de migration documentaire/renvois isolé, puis les lots d'implémentation séparés.
+- **PR #60** : maître et registre V2 réconciliés ; quinze cahiers V1 initialement transférés dans une archive pour vérification.
+- **Nettoyage demandé ensuite par le propriétaire** : quinze pièces V1 et index d'archive retirés de l'arborescence actuelle, ainsi que `poc/v6-map-a1/`, scripts, configurations, tests et CI A1/A2. Historique et preuves d'époque toujours consultables via les commits des PR #55 à #60 ; **pas** une Gate pour les futurs fonds artistiques.
+- La géographie encore utile a été reportée dans le [socle géographique V2](V6-MAP-V2-SOCLE-GEOGRAPHIQUE-ARDERA.md), sous l'autorité des arbitrages récents par continent. Les anciens modèles de pyramide d'images et géopoints D7/D8 n'ont plus de statut prescriptif.
+- [Maître V2](V6-MAP-MAITRE-V2.md), [cadrage commun](V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md), [registre unique](V6-MAP-V2-REGISTRE-IMPLANTATIONS.md) et cahiers de zones demeurent les seules sources actives de conception. Le code métier, les médias, IndexedDB, V7 et le Service Worker principal ne sont pas concernés.
 
 ## 7. Livrables et critères de fermeture de cette préparation
 
