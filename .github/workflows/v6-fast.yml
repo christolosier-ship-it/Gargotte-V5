@@ -36,12 +36,6 @@ jobs:
       - name: Run V6-Fast
         run: npm run test:v6fast:fast
 
-      - name: Validate isolated V6-Map A1
-        run: |
-          node --check poc/v6-map-a1/poc.mjs
-          node poc/v6-map-a1/generate-tiles.mjs --check
-          npm run test:v6map:a1
-
       - name: Upload failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4

@@ -1,12 +1,12 @@
 # V6-Map V2 — Six continents après Valdorie : cadrage et registre des arbitrages
 
-**Point d'entrée actif :** [maître V2](V6-MAP-MAITRE-V2.md) ; [archive V1 et preuves A0–A2](../archive/v6-map-v1/README.md). Ce cahier est une autorité de conception pour les choix V2, sans images générées ni automatisation de fusion.
+**Point d'entrée actif :** [maître V2](V6-MAP-MAITRE-V2.md) ; [socle géographique d'Ardéra](V6-MAP-V2-SOCLE-GEOGRAPHIQUE-ARDERA.md). Les anciens quinze documents V1 et POC A1/A2 ont été retirés de l'arborescence actuelle sur demande, l'historique étant consultable dans GitHub. Ce cahier demeure une autorité de conception V2, sans images générées ni automatisation de fusion.
 
 **STATUT AU 29/09/2026 : CADRAGE ARTISTIQUE ET GÉOGRAPHIQUE RELATIF TERMINÉ POUR LES SEPT CONTINENTS, L'ENTREVERS ET LES DIMENSIONS-DONJONS D7/D8.** Les six continents après Valdorie ont leurs arbitrages validés et Valdorie conserve les documents validés par #59. Entrevers : concept et brief graphique validés, variante de composition et futurs rendus/hotspots encore à soumettre. D7 : dimension infinie = donjon sur fragment, 16 noms, 36 Gargotteries et brief pilote rédigé. D8 : dimension infinie = donjon sur fragment, 16 noms, 24 Gargotteries et brief pilote rédigé. Les deux pilotes ne sont PAS générés. **Trame astrale hors du périmètre détaillé de #60** sans retrait de la navigation antérieure. Aucune donnée métier, code, rendu ou permission n'est modifiée par ce cadrage.
 
 **Synchronisation GitHub :** la PR #59 est fusionnée sur `V5.3` ; la PR de synchronisation #61 a intégré la base `V5.3` dans la branche de la PR #60 **sans réécrire ni perdre ses quinze cahiers**. Les cinq fichiers de base sont conservés ; le registre V2 a été réconcilié D7/D8 et les renvois historiques des documents de transition/Valdorie ont été mis à jour pour l'archive. Aucun changement runtime. La vérification finale de comparaison et de CI reste à effectuer avant le merge de #60.
 
-Sources contractuelles : `AGENTS.md`, `../archive/v6-map-v1/V6-MAP-MAITRE.md` (géographie canonique, PAS son ancien pipeline 8K/16K), `../archive/v6-map-v1/V6-MAP-A0-ANNEXE-CONTRATS.md`, et, une fois la PR #59 fusionnée, `V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md`, `V6-MAP-PIVOT-V2-ARCHITECTURE-DOCUMENTAIRE.md`, `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`, `V6-MAP-V2-CONTINENT-VALDORIE.md` et l'annexe des neuf illustrations validées.
+Sources contractuelles actives : `AGENTS.md`, `V6-MAP-MAITRE-V2.md`, `V6-MAP-V2-SOCLE-GEOGRAPHIQUE-ARDERA.md` (noms, eaux et reliefs préservés ; aucun pipeline 8K/16K), `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`, `V6-MAP-V2-CONTINENT-VALDORIE.md`, son annexe des neuf illustrations validées et les cahiers V2 des six autres continents. Les deux fichiers `V6-MAP-PIVOT-V2-*` ne sont conservés que comme historique de la transition.
 
 ## 1. Workflow commun, reproduit de Valdorie
 
