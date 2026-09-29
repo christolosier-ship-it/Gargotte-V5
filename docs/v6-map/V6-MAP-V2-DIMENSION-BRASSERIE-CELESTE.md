@@ -1,6 +1,6 @@
 # V6-Map V2 — Dimension / donjon D7 : La Brasserie Céleste
 
-**STATUT : PITCH, QUINZE ARBITRAGES, COMPOSITION GÉNÉRALE HYBRIDE D, SEPT REPÈRES MONUMENTAUX, SEIZE TOPONYMES ET CARACTÈRE INFINI DE LA DIMENSION VALIDÉS PAR LE PROPRIÉTAIRE LE 29/09/2026 ; PLACEMENT VISUEL DÉFINITIF, IMAGE NATIVE, RENDU FINAL ET IMPLÉMENTATION NON RÉALISÉS.** Fiche de conception artistique et cartographique seulement. Une décision sur une image ne crée pas de donnée métier, de coordonnées, de carte physique praticable ou de règle de visibilité.
+**STATUT : PITCH, QUINZE ARBITRAGES, COMPOSITION GÉNÉRALE HYBRIDE D, SEPT REPÈRES MONUMENTAUX, SEIZE TOPONYMES, CARACTÈRE INFINI DE LA DIMENSION ET SIX ARBITRAGES DE PLACEMENT RELATIF VALIDÉS PAR LE PROPRIÉTAIRE LE 29/09/2026 ; PLACEMENT VISUEL DÉFINITIF, IMAGE NATIVE, RENDU FINAL ET IMPLÉMENTATION NON RÉALISÉS.** Fiche de conception artistique et cartographique seulement. Une décision sur une image ne crée pas de donnée métier, de coordonnées, de carte physique praticable ou de règle de visibilité.
 
 Références : `AGENTS.md`, [cadrage V2 commun](V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md), [pivot V2](V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md), [registre V2 des donjons](V6-MAP-V2-REGISTRE-IMPLANTATIONS.md), [Entrevers](V6-MAP-V2-ENTREVERS.md). Sources d'inspiration visuelles inspectées en lecture seule sur Google Drive : `Projet Gargotte / Donjon 7 - La Brasserie Céleste` (y compris `Ordre du Houblon Pur` et `Culte de la Fermentation Sacrée`) ; `Projet Gargotte / Archive / Brasserie`, `Brasserie 2` et `Brasserie 3`. Les images d'archives sont des références de style, **pas des positions ou des salles cartographiques déjà approuvées**. Les deux classeurs historiques de `Brasserie 2` ne sont pas déclarés vérifiés pour le présent arbitrage artistique.
 
@@ -104,6 +104,23 @@ Les noms suivants sont des **repères, installations et micro-lieux d'une seule 
 
 Les noms restent hors bitmap, comme **toponymie de surcouche UI** après positionnement/validation du fond graphique. Leur approbation n'autorise pas à exposer des données conditionnelles, à fabriquer des IDs métier, ni à déclarer ces repères tous publics ou fonctionnels sans les contrats de visibilité requis.
 
+### 5.4 Composition spatiale relative : six recommandations VALIDÉES
+
+Après le choix **B, composition asymétrique ascendante** pour le fragment, le propriétaire a expressément validé **l'ensemble des six recommandations de placement** le 29/09/2026. Ceci arrête des relations visuelles dans une peinture **portrait 2:3/isométrique**, pas des coordonnées, limites cartographiques ni surfaces exclusives. Haut, bas, droite et gauche désignent exclusivement le **repère de lecture de l'image**, pas des directions physiques ou cardinales dans la dimension infinie.
+
+| Élément | Arbitrage | Placement artistique relatif VALIDÉ |
+|---|---|---|
+| **Le Grand Cœur Brassicole** | **1.A** | Centre-bas, légèrement décentré ; pôle de lecture principal mais non centre géométrique du monde. |
+| **L'Axe des Fermentations** | **2.A + C** | Au-dessus du Grand Cœur, élancé très haut, frôlant le bord supérieur et laissant supposer une continuité hors champ. |
+| **La Haute Ivresse** | **3.B** | À droite sur un repère latéral spectaculaire mais connecté ; la poule géante sur sa tête tient toujours la chope disproportionnée. **Le Grand Nid** reste associé à la poule, sans localisation autonome inventée. |
+| **Les Voûtes du Vieillissement** | **4.A** | En bas à gauche, masse architecturale dense, imbriquée dans le reste du fragment et non secteur clos. |
+| **La Coulée Ambrée** | **5.A** | Trajet sinueux descendant du haut gauche vers le bas droite, passant entre plusieurs installations et cascades ; peut continuer au-delà du cadre. |
+| **Les Treilles Hautes** | **6.C** | Végétation et terrasses présentes **partout**, avec concentration plus importante dans la partie haute ; jamais cantonnées à un territoire de l'Ordre du Houblon Pur. |
+
+**Relations indicatives déjà proposées et compatibles avec les choix retenus :** la Salle du Goût Dernier auprès du Grand Cœur ; Les Cuves Hautes dans l'entrelacement Grand Cœur/Voûtes ; Les Foudres Anciens et Les Forges de Cuisson avec les structures de vieillissement/transformation ; Les Clos du Cône au milieu des Treilles ; Les Aqueducs de Mousse et Les Liaisons Hautes relient les différentes altitudes ; Le Déversoir Joyeux à un débordement de la Coulée ; Le Pont des Mauvaises Humeurs comme friction locale entre installations, **jamais comme frontière factionnelle**. Ces voisinages restent descriptifs : l'image pilote établira les ancrages réels avant tout marqueur/UI.
+
+**Invariants de rendu :** ne pas transformer cette composition en carte de six secteurs ; conserver l'entremêlement gracieux des ordres et la présence des jardins/machines à tous niveaux. L'illustration est un **échantillon d'un plan divin infini** : bâtiments, treilles, ponts, réseaux et flux semblent se prolonger hors des quatre bords ; aucun encadrement naturel ne donne l'impression que le monde se termine. L'orientation de la Coulée dans l'image n'impose ni écoulement universel ni géographie exhaustive.
+
 ## 6. Visibilité publique, surcouches et limites lore
 
 - Le fond de carte est une **peinture sans texte, sans toponymie, sans lettres ni marques de fiche Codex**. Les labels et éventuels lieux autorisés sont gérés en calques indépendants et seulement après validation du fond réel.
@@ -111,17 +128,17 @@ Les noms restent hors bitmap, comme **toponymie de surcouche UI** après positio
 - La présence de guerre en fond public est validée comme **ambiance générale** ; une information secrète de campagne ne doit pas être cachée à moitié dans des formes distinctives, une légende, une URL publique ou le cache.
 - La **Poule Divine**, Aline la Paumée, Mireille la Désorientée et les représentations d'archive peuvent informer l'humour et les formes, mais **aucun rôle, placement exact ou apparition obligatoire sur la carte n'est déduit des seules images**. Consulter le bestiaire réel avant d'écrire qu'une présence ou un rôle est canonique.
 - La différence entre les ordres porte sur une doctrine de brassage **et ne constitue pas** une séparation géographique des populations.
-- Entrevers est la vue de navigation de l'univers ; il ouvre la **carte entière de la Brasserie Céleste**, pas un point D7 ajouté dans un autre fond. Consultation dans l'Atlas ≠ voyage narratif ni découverte automatique de campagne.
+- Entrevers est la vue de navigation de l'univers ; il ouvre la **carte-fragment de la Brasserie Céleste** (entièrement couverte par D7), pas un point D7 ajouté dans un autre fond. Consultation dans l'Atlas ≠ voyage narratif ni découverte automatique de campagne.
 
 ## 7. Gates restantes et contrat technique
 
 | Gate | Critère | État |
 |---|---|---|
 | **BC-0, pitch et arbitrages** | Pitch des deux ordres, genre des anges, fragment de dimension infinie intégralement couvert par D7, quinze choix et mélange sans frontières | **VALIDÉ 29/09/2026** |
-| **BC-1, composition préparatoire** | Silhouette hybride D et sept motifs structurants VALIDÉS ; **fragment ouvert sans bord cosmologique**, proposition graphique réelle 2:3/isométrique, continuités hors-cadre, confrontation aux références Drive, hiérarchie des volumes, éléments publics et lisibilité iPad | **INTENTION VALIDÉE ; COMPOSITION GRAPHIQUE À PRODUIRE ET SOUMETTRE** |
+| **BC-1, composition préparatoire** | Silhouette hybride D, organisation **B asymétrique ascendante**, sept motifs structurants et six placements relatifs VALIDÉS ; **fragment ouvert sans bord cosmologique**, proposition graphique réelle 2:3/isométrique, continuités hors-cadre, confrontation aux références Drive, hiérarchie des volumes, éléments publics et lisibilité iPad | **DIRECTION ET PLACEMENTS RELATIFS VALIDÉS ; COMPOSITION GRAPHIQUE À PRODUIRE ET SOUMETTRE** |
 | **BC-2, nouvelle toponymie** | Doctrine et catalogue de **seize noms validés**, sans reprendre les régions V1 ; emplacements graphiques, contours éventuels, visibilité et liens métier à établir sur le vrai fond | **NOMS VALIDÉS 29/09/2026 ; PLACEMENTS ET DROITS EN ATTENTE** |
 | **BC-3, capacité native / asset** | Sortie native réelle mesurée, format exact, dimensions de fichier, version, contrôle de l'image, **zéro upscaling**, pas de faux assemblage haute définition | **EN ATTENTE** |
-| **BC-4, consultation et données** | Traitement de D7 à emprise égale à sa dimension, contrat map_id stable, résolution entity_id Codex, labels indépendants, règles d'accès testées | **EN ATTENTE ; AUCUNE MODIFICATION RUNTIME ICI** |
+| **BC-4, consultation et données** | Traitement de D7 comme couvrant **l'emprise du fragment affiché** sans supposer les limites de la dimension infinie, contrat map_id stable, résolution entity_id Codex, labels indépendants, règles d'accès testées | **EN ATTENTE ; AUCUNE MODIFICATION RUNTIME ICI** |
 | **BC-5, audit documentaire** | Propagation du remplacement du point V1 D7 et des quatre territoires V1 dans le maître V2 et le registre central lors de leur réconciliation sur base synchronisée | **EN ATTENTE DE SYNCHRONISATION / REVUE** |
 
 **Interdictions absolues :** zéro upscaling ; ne pas déclarer 4K, 8K, 16K, ni une taille exacte sans preuve matérielle ; pas de nouveaux donjons, de frontières entre ordres, de région V1 ressuscitée, de nouvelle frontière ou toponymie ajoutée sans validation, de sexe masculin pour les anges brassicoles, de point D7 interne, de monde fini ou de clôture géographique du fragment, de migration `map_id`/IndexedDB/Blobs/V7, de mutation des données/permissions applicatives ou d'image générée dans ce lot documentaire.
