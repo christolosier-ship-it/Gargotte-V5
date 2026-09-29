@@ -1,6 +1,6 @@
 # V6-Map V2 — Dimension / donjon D7 : La Brasserie Céleste
 
-**STATUT : PITCH, QUINZE ARBITRAGES, COMPOSITION GÉNÉRALE HYBRIDE D, SEPT REPÈRES MONUMENTAUX, SEIZE TOPONYMES, CARACTÈRE INFINI DE LA DIMENSION ET SIX ARBITRAGES DE PLACEMENT RELATIF VALIDÉS PAR LE PROPRIÉTAIRE LE 29/09/2026 ; PLACEMENT VISUEL DÉFINITIF, IMAGE NATIVE, RENDU FINAL ET IMPLÉMENTATION NON RÉALISÉS.** Fiche de conception artistique et cartographique seulement. Une décision sur une image ne crée pas de donnée métier, de coordonnées, de carte physique praticable ou de règle de visibilité.
+**STATUT : PITCH, QUINZE ARBITRAGES, COMPOSITION GÉNÉRALE HYBRIDE D, SEPT REPÈRES MONUMENTAUX, SEIZE TOPONYMES, CARACTÈRE INFINI DE LA DIMENSION ET SIX ARBITRAGES DE PLACEMENT RELATIF ET CATALOGUE DE 36 GARGOTTERIES VALIDÉS PAR LE PROPRIÉTAIRE LE 29/09/2026 ; PLACEMENT VISUEL DÉFINITIF, IMAGE NATIVE, RENDU FINAL ET IMPLÉMENTATION NON RÉALISÉS.** Fiche de conception artistique et cartographique seulement. Une décision sur une image ne crée pas de donnée métier, de coordonnées, de carte physique praticable ou de règle de visibilité.
 
 Références : `AGENTS.md`, [cadrage V2 commun](V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md), [pivot V2](V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md), [registre V2 des donjons](V6-MAP-V2-REGISTRE-IMPLANTATIONS.md), [Entrevers](V6-MAP-V2-ENTREVERS.md). Sources d'inspiration visuelles inspectées en lecture seule sur Google Drive : `Projet Gargotte / Donjon 7 - La Brasserie Céleste` (y compris `Ordre du Houblon Pur` et `Culte de la Fermentation Sacrée`) ; `Projet Gargotte / Archive / Brasserie`, `Brasserie 2` et `Brasserie 3`. Les images d'archives sont des références de style, **pas des positions ou des salles cartographiques déjà approuvées**. Les deux classeurs historiques de `Brasserie 2` ne sont pas déclarés vérifiés pour le présent arbitrage artistique.
 
@@ -121,6 +121,16 @@ Après le choix **B, composition asymétrique ascendante** pour le fragment, le 
 
 **Invariants de rendu :** ne pas transformer cette composition en carte de six secteurs ; conserver l'entremêlement gracieux des ordres et la présence des jardins/machines à tous niveaux. L'illustration est un **échantillon d'un plan divin infini** : bâtiments, treilles, ponts, réseaux et flux semblent se prolonger hors des quatre bords ; aucun encadrement naturel ne donne l'impression que le monde se termine. L'orientation de la Coulée dans l'image n'impose ni écoulement universel ni géographie exhaustive.
 
+### 5.5 Les 36 Gargotteries : catalogue VALIDÉ et contrat du pilote
+
+Le propriétaire a répondu **« Pour les 36 Gargotteries de la Brasserie Céleste, je choisis A. »**, validant **les 36 scènes telles que proposées, sans correction**. Leur contenu exact, leur numérotation 01–36 et le brief de première génération sont centralisés dans le document exécutable :
+
+**[`V6-MAP-V2-BRASSERIE-CELESTE-BRIEF-PILOTE.md`](V6-MAP-V2-BRASSERIE-CELESTE-BRIEF-PILOTE.md)**.
+
+Groupes validés : 6 scènes de récolte, 6 accidents de fermentation, 6 scènes de guerre entre ordres, 6 scènes d'hydrologie/mousse, 6 situations de quotidien divin et 6 absurdités monumentales. **Total : 36 scènes**. Hiérarchisation proposée pour la production du pilote : **8 principales + 12 secondaires + 16 micro** ; ne jamais présenter cette répartition de priorité graphique comme une garantie de visibilité des 36 scènes à la résolution réelle du moteur. Conserver les scènes au niveau de détails que permet la sortie native, sans upscaling, et évaluer individuellement les manques. Leur validation artistique ne crée pas des personnages/lieux/événements nouveaux du lore.
+
+**Le brief pilote est prêt sur le plan documentaire, non exécuté graphiquement.** Toute première image attend un ordre explicite de lancement ; pas de prévalidation par la seule acceptation du brief.
+
 ## 6. Visibilité publique, surcouches et limites lore
 
 - Le fond de carte est une **peinture sans texte, sans toponymie, sans lettres ni marques de fiche Codex**. Les labels et éventuels lieux autorisés sont gérés en calques indépendants et seulement après validation du fond réel.
@@ -135,7 +145,7 @@ Après le choix **B, composition asymétrique ascendante** pour le fragment, le 
 | Gate | Critère | État |
 |---|---|---|
 | **BC-0, pitch et arbitrages** | Pitch des deux ordres, genre des anges, fragment de dimension infinie intégralement couvert par D7, quinze choix et mélange sans frontières | **VALIDÉ 29/09/2026** |
-| **BC-1, composition préparatoire** | Silhouette hybride D, organisation **B asymétrique ascendante**, sept motifs structurants et six placements relatifs VALIDÉS ; **fragment ouvert sans bord cosmologique**, proposition graphique réelle 2:3/isométrique, continuités hors-cadre, confrontation aux références Drive, hiérarchie des volumes, éléments publics et lisibilité iPad | **DIRECTION ET PLACEMENTS RELATIFS VALIDÉS ; COMPOSITION GRAPHIQUE À PRODUIRE ET SOUMETTRE** |
+| **BC-1, composition préparatoire** | Silhouette hybride D, organisation **B asymétrique ascendante**, sept motifs structurants, six placements relatifs et **36 Gargotteries** VALIDÉS ; brief pilote complet lié ci-dessus ; **fragment ouvert sans bord cosmologique**, proposition graphique réelle 2:3/isométrique, continuités hors-cadre, confrontation aux références Drive, hiérarchie des volumes, éléments publics et lisibilité iPad | **BRIEF DOCUMENTAIRE PRÊT ; IMAGE PILOTE À PRODUIRE UNIQUEMENT SUR ORDRE EXPRES ET SOUMETTRE** |
 | **BC-2, nouvelle toponymie** | Doctrine et catalogue de **seize noms validés**, sans reprendre les régions V1 ; emplacements graphiques, contours éventuels, visibilité et liens métier à établir sur le vrai fond | **NOMS VALIDÉS 29/09/2026 ; PLACEMENTS ET DROITS EN ATTENTE** |
 | **BC-3, capacité native / asset** | Sortie native réelle mesurée, format exact, dimensions de fichier, version, contrôle de l'image, **zéro upscaling**, pas de faux assemblage haute définition | **EN ATTENTE** |
 | **BC-4, consultation et données** | Traitement de D7 comme couvrant **l'emprise du fragment affiché** sans supposer les limites de la dimension infinie, contrat map_id stable, résolution entity_id Codex, labels indépendants, règles d'accès testées | **EN ATTENTE ; AUCUNE MODIFICATION RUNTIME ICI** |
