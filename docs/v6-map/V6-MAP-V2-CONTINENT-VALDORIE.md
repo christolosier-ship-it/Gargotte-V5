@@ -2,7 +2,7 @@
 
 **Statut : TREIZE ARBITRAGES VALDORIE VALIDÉS LE 28/09/2026 ; NEUF CONCEPTS D'ILLUSTRATION DES DONJONS VALIDÉS SANS RÉSERVE ; géopoints, IDs métier, capacités de génération et implémentation EN ATTENTE. Aucune image générée.** Première carte continentale pilote du nouveau parcours **Entrevers → Ardéra (mappemonde approuvée 4K) → Valdorie**. Ce cahier fixe les invariants déjà documentés, les décisions V2 de placement relatif et des **propositions artistiques clairement distinctes du lore canonique**. Il ne crée ni coordonnées définitives, ni identité technique de donjon, ni accès narratif.
 
-Références à consulter avant exécution : `AGENTS.md`, `V6-MAP-MAITRE.md` (géographie V1 et historiques), `V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md`, `V6-MAP-PIVOT-V2-ARCHITECTURE-DOCUMENTAIRE.md`, **`V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` (autorité actuelle sur les affectations)**, annexe A0 et la véritable illustration Ardéra V3 / 4K approuvée (inventaire de fichier/hash à faire avant génération). En cas de conflit : ne pas recopier l'ancienne répartition D1–D15 du maître V1 ; préserver l'historique et signaler le conflit.
+Références à consulter avant exécution : `AGENTS.md`, `../archive/v6-map-v1/V6-MAP-MAITRE.md` (géographie V1 et historiques), `V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md`, `V6-MAP-PIVOT-V2-ARCHITECTURE-DOCUMENTAIRE.md`, **`V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` (autorité actuelle sur les affectations)**, annexe A0 et la véritable illustration Ardéra V3 / 4K approuvée (inventaire de fichier/hash à faire avant génération). En cas de conflit : ne pas recopier l'ancienne répartition D1–D15 du maître V1 ; préserver l'historique et signaler le conflit.
 
 ## 0. Treize arbitrages VALIDÉS par le propriétaire le 28/09/2026
 
