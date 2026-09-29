@@ -1,8 +1,10 @@
 # V6-Map — Pivot V2 : feuille de route Entrevers → monde → continents
 
-Statut : **PIVOT DOCUMENTAIRE EN REVUE ; 13 ARBITRAGES VALDORIE VALIDÉS**. Affectations et positions relatives D1–D15 + noms des deux dimensions **VALIDÉS par le propriétaire le 28/09/2026** ; coordonnées numériques et géopoints toujours RÉSERVÉS. Ce document prépare la refonte, sans remplacer à lui seul `V6-MAP-MAITRE.md` ni révoquer ses décisions de lore. Aucun code, aucune image et aucune donnée de production ne sont modifiés par ce lot.
+**NOTE DE CLÔTURE (29/09/2026) :** feuille de route de transition conservée pour la traçabilité ; [maître V2 actif](V6-MAP-MAITRE-V2.md), [registre V2 réconcilié](V6-MAP-V2-REGISTRE-IMPLANTATIONS.md), [archive V1](../archive/v6-map-v1/README.md). Les notes « en revue » ou « à créer » ci-dessous décrivent leur date d'origine et ne révoquent pas les validations ultérieures des cahiers D7/D8.
 
-Références : `AGENTS.md`, `V6-MAP-MAITRE.md`, `V6-MAP-A0-ANNEXE-CONTRATS.md`, A1/A2, B1–B4, C1–C3 et `V6-MAP-PIVOT-V2-ARCHITECTURE-DOCUMENTAIRE.md` et `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`. La source visuelle approuvée de la mappemonde 4K doit encore être inventoriée comme asset réel ; ne pas présumer sa présence dans le dépôt.
+Statut : **PIVOT DOCUMENTAIRE EN REVUE ; 13 ARBITRAGES VALDORIE VALIDÉS**. Affectations et positions relatives D1–D15 + noms des deux dimensions **VALIDÉS par le propriétaire le 28/09/2026** ; coordonnées numériques et géopoints toujours RÉSERVÉS. Ce document prépare la refonte, sans remplacer à lui seul `../archive/v6-map-v1/V6-MAP-MAITRE.md` ni révoquer ses décisions de lore. Aucun code, aucune image et aucune donnée de production ne sont modifiés par ce lot.
+
+Références : `AGENTS.md`, `../archive/v6-map-v1/V6-MAP-MAITRE.md`, `../archive/v6-map-v1/V6-MAP-A0-ANNEXE-CONTRATS.md`, A1/A2, B1–B4, C1–C3 et `V6-MAP-PIVOT-V2-ARCHITECTURE-DOCUMENTAIRE.md` et `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md`. La source visuelle approuvée de la mappemonde 4K doit encore être inventoriée comme asset réel ; ne pas présumer sa présence dans le dépôt.
 
 ## 1. Décisions expresses du pivot
 
