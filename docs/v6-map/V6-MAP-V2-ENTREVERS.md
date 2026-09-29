@@ -2,7 +2,7 @@
 
 **STATUT : CONCEPT DE NAVIGATION ET DIRECTION ARTISTIQUE VALIDÉS PAR LE PROPRIÉTAIRE ; COMPOSITION EXACTE, HOTSPOTS, FORMAT NATIF ET RENDU FINAL EN ATTENTE.** Document de cadrage, pas un ordre de génération immédiate ni une modification du runtime.
 
-Références : `AGENTS.md`, `V6-MAP-MAITRE.md` pour les réalités géographiques et distinctions de lore, `V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md` et `V6-MAP-PIVOT-V2-ARCHITECTURE-DOCUMENTAIRE.md` pour l'arborescence V2, `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` pour D1–D15, `V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md` pour les continents. Brief de production graphique séparé : [`V6-MAP-V2-ENTREVERS-BRIEF-GRAPHIQUE.md`](V6-MAP-V2-ENTREVERS-BRIEF-GRAPHIQUE.md).
+Références : `AGENTS.md`, `../archive/v6-map-v1/V6-MAP-MAITRE.md` pour les réalités géographiques et distinctions de lore, `V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md` et `V6-MAP-PIVOT-V2-ARCHITECTURE-DOCUMENTAIRE.md` pour l'arborescence V2, `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` pour D1–D15, `V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md` pour les continents. Brief de production graphique séparé : [`V6-MAP-V2-ENTREVERS-BRIEF-GRAPHIQUE.md`](V6-MAP-V2-ENTREVERS-BRIEF-GRAPHIQUE.md).
 
 ## 1. Décisions utilisateur à préserver
 
