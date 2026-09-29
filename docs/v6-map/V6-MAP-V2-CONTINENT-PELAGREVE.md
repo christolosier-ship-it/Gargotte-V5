@@ -2,7 +2,7 @@
 
 **STATUT : DOUZE ARBITRAGES DE CONCEPTION VALIDÉS PAR LE PROPRIÉTAIRE LE 28/09/2026.** Pelagrève accueille une grande cité portuaire et **une cité sous-marine**, sans donjon D1–D15. **Cinq réserves d'extension validées en nombre ET dans leurs secteurs régionaux R1–R5** ; seul leur ancrage précis reste à fixer sur la vraie carte. **Cité sous-marine validée au large de la Ceinture des Lagons, hors Labyrinthe Corallien et ses abords, ET REPRÉSENTÉE PAR UN CALQUE PUBLIC INDÉPENDANT, relié à un repère sur la carte.** Cadrage portrait 2:3 validé comme choix artistique, résolution en pixels non promise. Aucune image générée, aucune modification d'application, aucun géopoint chiffré inventé.
 
-**Précédence :** `AGENTS.md`, véritable mappemonde PNG 4K approuvée, `V6-MAP-MAITRE.md` pour la géographie et six régions uniquement (ignorer répartition D3/D10 et ancien pipeline V1), `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` pour l'affectation V2 D1–D15, `V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md` pour la méthode, puis décisions expresses ci-dessous. La PR #59 V2 Valdorie est fusionnée ; ce document se situe dans la PR #60 documentaire.
+**Précédence :** `AGENTS.md`, véritable mappemonde PNG 4K approuvée, `../archive/v6-map-v1/V6-MAP-MAITRE.md` pour la géographie et six régions uniquement (ignorer répartition D3/D10 et ancien pipeline V1), `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` pour l'affectation V2 D1–D15, `V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md` pour la méthode, puis décisions expresses ci-dessous. La PR #59 V2 Valdorie est fusionnée ; ce document se situe dans la PR #60 documentaire.
 
 ## 0. Registre des douze arbitrages expressément VALIDÉS
 
