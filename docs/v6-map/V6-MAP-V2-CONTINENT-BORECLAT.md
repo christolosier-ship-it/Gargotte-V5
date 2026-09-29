@@ -2,7 +2,7 @@
 
 **STATUT : LES DOUZE CHOIX PRINCIPAUX, LES CINQ SECTEURS DE RÉSERVE R1–R5 ET L'EXCLUSION DES AIGUILLES BORÉALES ET DE LEURS ABORDS SONT VALIDÉS EXPLICITEMENT PAR LE PROPRIÉTAIRE LE 28/09/2026.** Restent uniquement les points singuliers précis, contours et coordonnées locales à fixer sur le véritable fond. Aucune image produite, aucun point local numérique inventé, aucune modification applicative.
 
-**Sources/précédence :** `AGENTS.md` ; `V6-MAP-MAITRE.md` pour le canon géographique, pas son ancienne répartition V1/pipeline 8K ; `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` pour 0 D1–D15 ; `V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md` pour la méthode ; réponses 1A 2A 3C 4A 5A 6B 7A 8C 9C 10C 11D 12A de l'utilisateur. La branche de la PR #60 a été créée avant la fusion de PR #59 et ne doit pas recréer son registre central V2 par erreur.
+**Sources/précédence :** `AGENTS.md` ; `../archive/v6-map-v1/V6-MAP-MAITRE.md` pour le canon géographique, pas son ancienne répartition V1/pipeline 8K ; `V6-MAP-V2-REGISTRE-IMPLANTATIONS.md` pour 0 D1–D15 ; `V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md` pour la méthode ; réponses 1A 2A 3C 4A 5A 6B 7A 8C 9C 10C 11D 12A de l'utilisateur. La branche de la PR #60 a été créée avant la fusion de PR #59 et ne doit pas recréer son registre central V2 par erreur.
 
 ## 0. Registre décisionnel
 
