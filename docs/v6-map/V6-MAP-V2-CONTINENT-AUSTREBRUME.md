@@ -2,7 +2,7 @@
 
 **STATUT (29/09/2026) : douze choix principaux et deux confirmations complémentaires VALIDÉS par le propriétaire.** Les cinq réserves sont VALIDÉES EN NOMBRE ET DANS LEURS SECTEURS RELATIFS R1–R5 par confirmation expresse ultérieure du propriétaire (« Je valide. »). Seuls les géopoints et contours exacts demeurent à fixer sur le véritable fond. Aucune image produite et aucune modification applicative.
 
-Références : `AGENTS.md`, `V6-MAP-MAITRE.md` pour la géographie (pas pour l'ancien pipeline de tuiles), registre V2 des implantations après PR #59 fusionnée : **aucun D1–D15 à Austrébrume**, cadrage général des six continents et réponses explicites du propriétaire : **1A 2C 3B + nordique viking, 4A + géants/peuples de brume et de glace, 5A peu civilisé et mystérieux, 6C 7A 8C 9A 10C 11A 12D ; Cascades de Brume et abords EXCLUS ; Falaises de Nacrelune ET Plateaux du Dernier Vent officialisés**.
+Références : `AGENTS.md`, `../archive/v6-map-v1/V6-MAP-MAITRE.md` pour la géographie (pas pour l'ancien pipeline de tuiles), registre V2 des implantations après PR #59 fusionnée : **aucun D1–D15 à Austrébrume**, cadrage général des six continents et réponses explicites du propriétaire : **1A 2C 3B + nordique viking, 4A + géants/peuples de brume et de glace, 5A peu civilisé et mystérieux, 6C 7A 8C 9A 10C 11A 12D ; Cascades de Brume et abords EXCLUS ; Falaises de Nacrelune ET Plateaux du Dernier Vent officialisés**.
 
 ## 0. Douze arbitrages VALIDÉS
 
