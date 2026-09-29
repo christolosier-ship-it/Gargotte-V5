@@ -1,5 +1,7 @@
 # V6-Map — Pivot V2 : architecture documentaire et plan de migration
 
+**NOTE DE CLÔTURE (29/09/2026) :** ce document décrit l'état préparatoire du pivot. La migration documentaire a été effectuée par la PR #60 : [maître V2 actif](V6-MAP-MAITRE-V2.md), [archive des quinze pièces V1](../archive/v6-map-v1/README.md). Les mentions ci-dessous de fichiers V2 « futurs » et de « traitement futur » sont historiques ; les fichiers V2 effectivement présents et leur statut sont donnés dans le maître V2. La Trame astrale n'est pas traitée par la présente clôture.
+
 Statut : **PROPOSITION DOCUMENTAIRE EN REVUE ; REGISTRE D'AFFECTATIONS V2 CRÉÉ et validé pour les zones relatives le 28/09/2026**. Complément de `V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md` ; aucun remplacement immédiat du maître actif, aucune coordonnée précise ou implantation technique définitive, et aucun prompt de production continentale. Ne pas interpréter un fichier « à créer » ci-dessous comme déjà présent dans GitHub.
 
 ## 1. Principes d'organisation
@@ -66,19 +68,19 @@ Conserver pour chaque entrée le `placement_id` conceptuel stable, l'ID Dn édit
 **Ordre de finalisation géométrique recommandé :** Valdorie (D1, D2 proches de la Chope ; D3/D4 dans une même ville des Plaines de Valdor ; D5/D6 en superposition verticale ; D9 dans la Sylve ; D10 aux Côtes Grises ; D11 à l'est des Plaines), Ferrécime (D12 montagne, D14 continent confirmé et région V1 à reconfirmer, D15 Marches de Braise sans lien avec D5), Sylvaronde (D13 Delta), puis les deux dimensions homonymes D7/D8. Vérifier spécialement les deux fiches portant des noms égaux à leur dimension, la différence de titre D1 entre maître et seed, les niveaux souterrains D5/D6, les IDs réels et les droits par campagne.
 
 **Gate relative VALIDÉE (28/09/2026) ; Gate géopoints/IDs métier/confidentialité EN ATTENTE.** Les autres continents restent disponibles pour de futurs donjons ; aucune génération lancée.
-## 6. Migration des anciens cahiers après validation du pivot
+## 6. Migration des anciens cahiers après validation du pivot (plan historique, archivage exécuté par PR #60)
 
 | Fichiers V1 actuellement présents | Traitement **futur**, pas dans cette PR |
 |---|---|
-| `V6-MAP-MAITRE.md` | Conserver lisible et historique ; basculer l'autorité active vers le maître V2 seulement après accord du propriétaire et revue des renvois. |
-| `V6-MAP-A0-CONTRAT.md`, `V6-MAP-A0-ANNEXE-CONTRATS.md` | Préserver preuves et registres V1 ; amender explicitement contrats de vue/hiérarchie et nombre de vues côté V2, sans réécrire rétroactivement la Gate. |
+| `../archive/v6-map-v1/V6-MAP-MAITRE.md` | Conserver lisible et historique ; basculer l'autorité active vers le maître V2 seulement après accord du propriétaire et revue des renvois. |
+| `../archive/v6-map-v1/V6-MAP-A0-CONTRAT.md`, `../archive/v6-map-v1/V6-MAP-A0-ANNEXE-CONTRATS.md` | Préserver preuves et registres V1 ; amender explicitement contrats de vue/hiérarchie et nombre de vues côté V2, sans réécrire rétroactivement la Gate. |
 | A1 et A2 : POC, validation et rapport iPad | Archiver comme preuve historique utile (moteur léger, cache, essais), mais leurs pyramides de tuiles n'obligent plus à produire des niveaux de zoom artistiques. |
-| `V6-MAP-B1-RESSOURCES-ARDERA.md` | Remplacer son plan 4K→8K→16K/tuiles par master 4K approuvé + sept fonds indépendants natifs, avec vérification de fidélité géographique. |
-| `V6-MAP-B2-INTERFACE.md` / `B3-TOPONYMIE.md` | Reprendre hotspots mondiaux, navigation parent/enfant et surcouches textuelles/visibilité par vue, sans progressivité de zoom inter-fonds. |
-| `V6-MAP-B4-DONJONS-CODEX.md` | Substituer les **affectations V2 validées** à la table V1 devenue historique ; attendre l'arbitrage des géopoints et IDs métier avant intégration, préserver confidentialité et marqueurs dynamiques. |
-| `V6-MAP-C1-DIMENSIONS.md` | Conserver trois cartes distinctes, actualiser **les noms de présentation** La Brasserie Céleste et L'Enfer de la Sobriété Éternelle, conserver provisoirement les IDs conceptuels historiques, ajouter leur accès depuis l'Entrevers ; ne pas confondre carte supérieure, Trame et donjons homonymes. |
-| `V6-MAP-C2-CAMPAGNES-SECRETS.md` | Préserver ses garanties de filtrage, à adapter au modèle de vues et au backend V7 réellement établi. |
-| `V6-MAP-C3-PWA-VALIDATION.md` | Requalifier cache/offline et essais Safari pour douze vues potentielles, pas quatre pyramides multi-résolution. |
+| `../archive/v6-map-v1/V6-MAP-B1-RESSOURCES-ARDERA.md` | Remplacer son plan 4K→8K→16K/tuiles par master 4K approuvé + sept fonds indépendants natifs, avec vérification de fidélité géographique. |
+| `../archive/v6-map-v1/V6-MAP-B2-INTERFACE.md` / `B3-TOPONYMIE.md` | Reprendre hotspots mondiaux, navigation parent/enfant et surcouches textuelles/visibilité par vue, sans progressivité de zoom inter-fonds. |
+| `../archive/v6-map-v1/V6-MAP-B4-DONJONS-CODEX.md` | Substituer les **affectations V2 validées** à la table V1 devenue historique ; attendre l'arbitrage des géopoints et IDs métier avant intégration, préserver confidentialité et marqueurs dynamiques. |
+| `../archive/v6-map-v1/V6-MAP-C1-DIMENSIONS.md` | Conserver trois cartes distinctes, actualiser **les noms de présentation** La Brasserie Céleste et L'Enfer de la Sobriété Éternelle, conserver provisoirement les IDs conceptuels historiques, ajouter leur accès depuis l'Entrevers ; ne pas confondre carte supérieure, Trame et donjons homonymes. |
+| `../archive/v6-map-v1/V6-MAP-C2-CAMPAGNES-SECRETS.md` | Préserver ses garanties de filtrage, à adapter au modèle de vues et au backend V7 réellement établi. |
+| `../archive/v6-map-v1/V6-MAP-C3-PWA-VALIDATION.md` | Requalifier cache/offline et essais Safari pour douze vues potentielles, pas quatre pyramides multi-résolution. |
 | `AGENTS.md` | Ne mettre à jour les références actives qu'après activation formelle de V2 ; aucun changement de la politique média/V7. |
 
 **Ne pas supprimer les anciens cahiers pendant l'étude** : les chemins de référence existants et la traçabilité des décisions doivent rester disponibles. Après acceptation V2, prévoir un commit de migration documentaire/renvois isolé, puis les lots d'implémentation séparés.
