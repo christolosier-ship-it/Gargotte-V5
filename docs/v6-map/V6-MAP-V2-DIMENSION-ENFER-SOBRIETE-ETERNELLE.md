@@ -1,6 +1,6 @@
 # V6-Map V2 — Dimension / donjon D8 : L'Enfer de la Sobriété Éternelle
 
-**STATUT : PITCH ET DEUX LOTS DE DOUZE ARBITRAGES EXPRESSÉMENT VALIDÉS LE 29/09/2026 ; TROISIÈME LOT DE STRUCTURE VISUELLE APPLIQUÉ SUR DÉLÉGATION « Applique directement tes reco et passe à la suite »  ; SEIZE TOPONYMES V2 ET COMPOSITION SPATIALE RELATIVE EXPRESSÉMENT VALIDÉS LE 29/09/2026 ; SCÈNES D'AMBIANCE, ANCRAGES SUR IMAGE RÉELLE, IMAGE PILOTE, DROITS ET INTÉGRATION EN ATTENTE.** Document de conception artistique seulement : aucun asset ni code créé ici.
+**STATUT : PITCH ET DEUX LOTS DE DOUZE ARBITRAGES EXPRESSÉMENT VALIDÉS LE 29/09/2026 ; TROISIÈME LOT DE STRUCTURE VISUELLE APPLIQUÉ SUR DÉLÉGATION « Applique directement tes reco et passe à la suite »  ; SEIZE TOPONYMES V2 ET COMPOSITION SPATIALE RELATIVE EXPRESSÉMENT VALIDÉS LE 29/09/2026 ; VINGT-QUATRE GARGOTTERIES EXPRESSÉMENT VALIDÉES SANS CORRECTION (OPTION A) ; BRIEF PILOTE DOCUMENTAIRE COMPLET PRÊT, IMAGE NON GÉNÉRÉE ; ANCRAGES SUR IMAGE RÉELLE, DROITS ET INTÉGRATION EN ATTENTE.** Document de conception artistique seulement : aucun asset ni code créé ici.
 
 Références : `AGENTS.md`, [cadrage commun V2](V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md), [Entrevers](V6-MAP-V2-ENTREVERS.md), [pivot](V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md) et registre V2 sur `V5.3` à synchroniser plus tard. Sources visuelles consultées en lecture seule : `Projet Gargotte / Donjon 8 - L’enfer de la Sobriété Éternelle` (18 illustrations) et `Projet Gargotte / Archive / Enfer` (36 PNG, dont anciennes variantes et 20 illustrations narratives ; un `bestiaire_donjon8.xlsx` figure également dans le dossier mais son **contenu n'a pas été contrôlé** par cette revue). Les archives illustrent une intention esthétique ; ne pas convertir un objet d'archive en rôle/lieu canonique sans vérification métier.
 
@@ -109,9 +109,13 @@ Le propriétaire a répondu **« Je valide »** à la proposition d'organisation
 
 **Deux généraux de même importance visuelle**, non nécessairement de taille physique identique, sans affrontement ou rapport hiérarchique inventé. La présence discrète de Poule Sobre/Huguette reste conditionnée à la vérification des fiches et autorisations, jamais un troisième monument. Tous les réseaux et paysages se prolongent visuellement au-delà du cadre ; aucun mur périmétrique ne prétend entourer l'infinie dimension. **La portion peinte est D8, sans marqueur D8 intérieur.**
 
-### 6.1 Prochaine étape, sans validation anticipée
+### 6.1 Gargotteries de D8 : VINGT-QUATRE SCÈNES VALIDÉES sans modification
 
-Préparer un catalogue **proposé de 24 Gargotteries** à densité moyenne, centré sur le comique bureaucratique, la discipline obsessionnelle, l'eau sous protocole et le quotidien des formations. Cette quantité et ces scènes n'ont **pas encore été acceptées** par le propriétaire. Préserver la majesté des deux généraux et une lecture architecturale paisible.
+Le propriétaire a explicitement choisi **l'option A** le 29/09/2026, validant les **24 Gargotteries proposées intégralement et sans correction**, en quatre familles de six : administration infernale (01–06), purification et eau sous contrôle (07–12), discipline militaire (13–18), vie quotidienne et sobriété excessive (19–24). Ton validé : humour bureaucratique infernal, obsession de la discipline, régulation démesurée de l'eau, gestes du quotidien austères poussés au ridicule, sans chaos similaire à D7.
+
+**Le catalogue exact mot pour mot 01–24, les seize noms validés, la composition relative, le prompt opératoire intégral et la QA pilote sont rassemblés dans le [brief autonome du premier rendu D8](V6-MAP-V2-ENFER-SOBRIETE-ETERNELLE-BRIEF-PILOTE.md).** La hiérarchie quantitative **6 scènes principales / 8 secondaires / 10 micro-scènes** a été approuvée avec l'option A ; les ID affectés à chaque strate dans le brief sont des priorités pratiques de production proposées, pas un nouvel arbitrage canonique.
+
+**Statut de sortie : BRIEF DOCUMENTAIRE PRÊT ; IMAGE PILOTE À PRODUIRE UNIQUEMENT SUR ORDRE DISTINCT ET À SOUMETTRE AU PROPRIÉTAIRE.** Ne pas déclarer vingt-quatre saynètes lisibles avant une vraie revue de l'original natif. Les ancrages UI sur les vrais pixels restent ouverts. La Trame astrale n'entre pas dans cette clôture D8, sans modifier sa navigation historique ni supprimer les documents existants.
 
 ## 7. Gates et interdictions
 
@@ -119,7 +123,7 @@ Préparer un catalogue **proposé de 24 Gargotteries** à densité moyenne, cent
 - **D8-1 VALIDE** : deuxième lot de douze réponses, dont 8.D et deux généraux majeurs.
 - **D8-2 APPLIQUÉ SUR DÉLÉGATION** : douze repères fonctionnels de la structure, sans noms officiels ni positions XY.
 - **D8-3 VALIDÉ 29/09/2026** : seize appellations V2 proposées acceptées toutes sans correction, sans géopoint ou emprise dessiné.
-- **D8-4 COMPOSITION RELATIVE VALIDÉE 29/09/2026** : six implantations majeures et relations secondaires ; **EN ATTENTE** : catalogue/quantité des Gargotteries, ancrages graphiques sur fond réel et brief du pilote 3:2.
+- **D8-4 DOCUMENTAIRE PRÊT 29/09/2026** : six implantations majeures et relations secondaires VALIDÉES ; 24 Gargotteries et hiérarchie 6/8/10 VALIDÉES ; brief autonome du pilote paysage 3:2 RÉDIGÉ, image non générée. **EN ATTENTE** : lancement distinct, examen de sortie native et ancrages graphiques sur fond réel.
 - **D8-5 EN ATTENTE** : vérifier les fichiers métier actifs D8 et permissions, contrôler source native réelle et lisibilité iPad, intégrer le fond seulement après validation, réconcilier le registre V2 sur branche synchronisée.
 
 **Pas d'image générée dans ce chantier documentaire, de texte peint, de nouveau donjon D16+, de nouvelle espèce, de secret MJ dans le fond public, de portail inventé, d'extrapolation de fin de dimension, de doublon D8 intérieur, de nouveau géopoint arbitraire, de modification de code ou UI, de migration `map_id`, IndexedDB, Blobs, backend ou V7.** Ni upscaling ni affirmation de pixels natifs non mesurés. D7 reste inchangé.
