@@ -25,7 +25,7 @@ Destinations réellement envisagées au lancement selon le pivot V2 :
 |---|---|---|
 | **Ardéra**, entrée principale | Mappemonde matérielle approuvée, puis **sept cartes continentales autonomes** depuis leurs zones sur Ardéra | Ardéra est le monde matériel, pas la totalité de l'Entrevers. |
 | **Trame astrale** | Carte indépendante de la Trame (Archipels d'Éther, Courants de Filaments, Nœud des Convergences, Voiles Sans Rive, Déchirure Immobile) | La Trame n'est ni le fond du hub ni un portail universel implicite. |
-| **La Brasserie Céleste**, dimension | Carte de la dimension divine complète, ancien nom de travail « Hautes Fermentations » | **Distincte de D7**, donjon homonyme placé dans les Terrasses des Brasseurs. |
+| **La Brasserie Céleste**, dimension | Carte de la dimension divine complète, ancien nom de travail « Hautes Fermentations » | **V2 du 29/09 : toute la carte de dimension constitue D7**, sans marqueur D7 interne ; conserver la distinction entre identité de vue et entité métier du Codex. Les « Terrasses des Brasseurs » sont une ancienne piste de découpage V1 abandonnée. |
 | **L'Enfer de la Sobriété Éternelle**, dimension | Carte de la dimension infernale complète, ancien nom de travail « Royaume des Soifs Éteintes » | **Distincte de D8**, donjon homonyme associé à la Citadelle de l'Abstinence. |
 
 Les catégories **Plans divins / Plans infernaux / éventuels Plans élémentaires** sont des familles de classement, **pas des cartes supplémentaires arbitraires**. Futures réalités : réservées, non ouvertes au clic tant qu'aucune carte réellement approuvée n'existe. Ne pas appeler une famille « destination » sans contenu défini.
@@ -33,6 +33,8 @@ Les catégories **Plans divins / Plans infernaux / éventuels Plans élémentair
 La représentation de la Trame peut être un **fragment visuel identifiable** d'archipels flottants et de filaments indépendant des autres objets de la fresque ; les filaments purement décoratifs dans tout l'Entrevers ne font pas de la fresque entière la Trame. Les deux dimensions ont des îlots/saynètes assez distincts pour être reconnus. Ne pas utiliser le bâtiment précis de D7/D8 en guise d'icône de toute la dimension.
 
 L'arborescence de référence demeure **une vue Entrevers + une mappemonde Ardéra + sept continents + trois cartes dimensionnelles = douze vues de consultation**. Le nouveau choix retire la nécessité d'une organisation graphique plus compliquée à l'entrée, mais **ne supprime ni la carte Trame, ni les autres fonds autonomes, ni leurs données**. La séparation existante entre cartes et surcouches reste d'actualité. Les clés `map_id` conceptuelles historiques citées en A0 ne doivent pas être renommées/migrées par simple modification documentaire : décision de mapping réservée au chantier d'implémentation.
+
+**Arbitrage D7 ultérieur au pivot :** voir [le cahier V2 de La Brasserie Céleste](V6-MAP-V2-DIMENSION-BRASSERIE-CELESTE.md). Une carte englobe toute la dimension et le donjon ; ne pas afficher un deuxième point D7 dans le fond. Cette décision ne s'étend pas à D8 ni aux autres dimensions, faute d'arbitrage équivalent.
 
 **Consultation ≠ voyage réel :** cliquer une destination change de carte dans l'Atlas ; cela ne téléporte pas les personnages, n'implique aucun accès de campagne, ni un nouveau réseau de portails. Les merveilles d'Ardéra ne deviennent pas des passages par simple analogie graphique.
 
