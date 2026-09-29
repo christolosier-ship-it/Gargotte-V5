@@ -1,6 +1,6 @@
 # V6-Map V2 — Registre de conception des quinze donjons
 
-**Statut : affectations et descriptions relatives D1–D15 VALIDÉES et affinements géographiques de Valdorie + règle des neuf donjons initialement cachés VALIDÉS le 28/09/2026 ; **réconciliation V2 du 29/09 : les dimensions infinies D7 et D8 sont chacune entièrement le donjon homonyme sur le fragment représenté, sans point intérieur** ; coordonnées des treize donjons terrestres, identifiants métier et permissions RÉSERVÉS.** Ce document reprend expressément les corrections communiquées après le registre V1 conservé dans [`V6-MAP-MAITRE.md`](../archive/v6-map-v1/V6-MAP-MAITRE.md). Les coordonnées V1, quand elles existent, ne sont ni transposées ni déclarées définitives. Cette mise à jour documentaire ne modifie aucun enregistrement du Codex.
+**Statut : affectations D1–D15 et affinements de Valdorie VALIDÉS le 28/09/2026 ; réconciliation V2 du 29/09 : les dimensions infinies D7 et D8 sont chacune entièrement le donjon homonyme sur le fragment représenté, sans point intérieur. Coordonnées des treize donjons terrestres, identifiants métier et permissions RÉSERVÉS.** Ce document reprend expressément les corrections communiquées après le registre V1 conservé dans [`V6-MAP-MAITRE.md`](../archive/v6-map-v1/V6-MAP-MAITRE.md). Les coordonnées V1, quand elles existent, ne sont ni transposées ni déclarées définitives. Cette mise à jour documentaire ne modifie aucun enregistrement du Codex.
 
 ## 1. Arbitrages de dénomination VALIDÉS
 
