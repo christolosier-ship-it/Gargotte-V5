@@ -1,6 +1,6 @@
 # V6-Map V2 — Dimension / donjon D8 : L'Enfer de la Sobriété Éternelle
 
-**STATUT : PITCH ET DEUX LOTS DE DOUZE ARBITRAGES EXPRESSÉMENT VALIDÉS LE 29/09/2026 ; TROISIÈME LOT DE STRUCTURE VISUELLE APPLIQUÉ SUR DÉLÉGATION « Applique directement tes reco et passe à la suite » ; TOPONYMIE, PLACEMENT PRÉCIS, IMAGE PILOTE, DROITS ET INTÉGRATION EN ATTENTE.** Document de conception artistique seulement : aucun asset ni code créé ici.
+**STATUT : PITCH ET DEUX LOTS DE DOUZE ARBITRAGES EXPRESSÉMENT VALIDÉS LE 29/09/2026 ; TROISIÈME LOT DE STRUCTURE VISUELLE APPLIQUÉ SUR DÉLÉGATION « Applique directement tes reco et passe à la suite »  ; SEIZE TOPONYMES V2 EXPRESSÉMENT VALIDÉS LE 29/09/2026 ; PLACEMENT PRÉCIS, IMAGE PILOTE, DROITS ET INTÉGRATION EN ATTENTE.** Document de conception artistique seulement : aucun asset ni code créé ici.
 
 Références : `AGENTS.md`, [cadrage commun V2](V6-MAP-V2-SIX-CONTINENTS-CADRAGE.md), [Entrevers](V6-MAP-V2-ENTREVERS.md), [pivot](V6-MAP-PIVOT-V2-FEUILLE-DE-ROUTE.md) et registre V2 sur `V5.3` à synchroniser plus tard. Sources visuelles consultées en lecture seule : `Projet Gargotte / Donjon 8 - L’enfer de la Sobriété Éternelle` (18 illustrations) et `Projet Gargotte / Archive / Enfer` (36 PNG, dont anciennes variantes et 20 illustrations narratives ; un `bestiaire_donjon8.xlsx` figure également dans le dossier mais son **contenu n'a pas été contrôlé** par cette revue). Les archives illustrent une intention esthétique ; ne pas convertir un objet d'archive en rôle/lieu canonique sans vérification métier.
 
@@ -67,11 +67,11 @@ L'utilisateur a demandé « Applique directement tes reco et passe à la suite �
 
 **Rapport spatial :** la composition globale reste **diagonale processionnelle (lot 1)**, tandis que citadelle, cours, bassins et réseaux restent **très symétriques dans leur architecture interne (lot 2)**. Deux exigences complémentaires, et non un retour forcé à une carte parfaitement centrée et frontale. Aucune faction géographique à délimiter par analogie avec D7.
 
-## 5. Étape suivante : toponymie À ARBITRER
+## 5. Toponymie V2 : SEIZE NOMS VALIDÉS
 
-**Aucun des noms ci-dessous n'est encore validé par l'utilisateur**. Ce sont seize appellations alternatives entièrement proposées pour les repères du fragment. Les groupes indiquent la priorité de lecture, jamais des régions closes. Éviter de répéter « infernal », « sobre » ou « éternel » partout : comme pour D7, le caractère infernal est normal pour les habitants du lieu.
+**VALIDATION EXPRESSE DU PROPRIÉTAIRE : « Je valide » le 29/09/2026**, après présentation des seize propositions de noms, acceptées **toutes sans modification**. Il s'agit du catalogue officiel des repères du fragment V2, pas de régions closes, de nouvelles salles jouables ni de coordonnées. Le caractère infernal est la réalité ordinaire de ce plan ; ne pas répéter mécaniquement « infernal », « sobre » ou « éternel » dans chaque nom. Les futurs libellés relèvent de surcouches et des contrats de visibilité, jamais du fond peint.
 
-| # | Niveau | Nom proposé, NON VALIDÉ | Élément concerné |
+| # | Niveau | Nom V2 VALIDÉ | Élément concerné |
 |---:|---|---|---|
 | 01 | Majeur | **La Citadelle de la Mesure** | Cœur de contrôle |
 | 02 | Majeur | **La Tour du Rappel** | Signal vertical disciplinaire |
@@ -90,15 +90,15 @@ L'utilisateur a demandé « Applique directement tes reco et passe à la suite �
 | 15 | Ambiance | **Le Guichet des Dernières Gouttes** | Distribution et contrôle |
 | 16 | Ambiance | **Le Banc de la Pause Autorisée** | Quotidien sous protocole |
 
-**Attention :** « La Citadelle de l'Abstinence » est une appellation *historique V1* mentionnée dans l'ancien maître pour un secteur autour du faux point D8 ; elle n'est pas devenue automatiquement le nom de la citadelle principale V2. Le propriétaire peut préférer la conserver, mais doit le confirmer explicitement. N'incruster aucun toponyme dans le bitmap : labels/UI externes et soumis aux droits.
+**Historique remplacé :** « La Citadelle de l'Abstinence » reste une appellation *V1*, non le nom de la nouvelle citadelle centrale V2, désormais **La Citadelle de la Mesure**. Les noms **Le Promontoire des Eaux** et **Le Parvis du Monolithe** désignent des repères visuels associés respectivement aux deux Léviathans généraux, sans inventer leur domicile ou une tradition cultuelle. N'incruster aucun nom dans le bitmap : labels/UI externes et soumis aux droits. Aucune position relative supplémentaire n'est encore validée par le présent catalogue.
 
 ## 6. Gates et interdictions
 
 - **D8-0 VALIDE** : concept infini, carte-fragment entièrement D8, premier lot de douze réponses.
 - **D8-1 VALIDE** : deuxième lot de douze réponses, dont 8.D et deux généraux majeurs.
 - **D8-2 APPLIQUÉ SUR DÉLÉGATION** : douze repères fonctionnels de la structure, sans noms officiels ni positions XY.
-- **D8-3 EN ATTENTE** : arbitrer les seize appellations V2 proposées ; ne pas officialiser par la seule présence dans ce document.
-- **D8-4 EN ATTENTE** : composition détaillée des repères, répartition/scènes de Gargotteries et brief du pilote 3:2.
+- **D8-3 VALIDÉ 29/09/2026** : seize appellations V2 proposées acceptées toutes sans correction, sans géopoint ou emprise dessiné.
+- **D8-4 EN ATTENTE** : prochaine étape, arbitrer la disposition relative des seize repères (diagonale globale + symétries locales), puis répartition/scènes de Gargotteries et brief du pilote 3:2.
 - **D8-5 EN ATTENTE** : vérifier les fichiers métier actifs D8 et permissions, contrôler source native réelle et lisibilité iPad, intégrer le fond seulement après validation, réconcilier le registre V2 sur branche synchronisée.
 
 **Pas d'image générée dans ce chantier documentaire, de texte peint, de nouveau donjon D16+, de nouvelle espèce, de secret MJ dans le fond public, de portail inventé, d'extrapolation de fin de dimension, de doublon D8 intérieur, de nouveau géopoint arbitraire, de modification de code ou UI, de migration `map_id`, IndexedDB, Blobs, backend ou V7.** Ni upscaling ni affirmation de pixels natifs non mesurés. D7 reste inchangé.
