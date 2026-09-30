@@ -93,6 +93,24 @@ self.addEventListener("activate", event => {
   })());
 });
 
+function isMapAsset(req) {
+  const url = new URL(req.url);
+  const scopePath = new URL(self.registration.scope).pathname;
+  if (url.origin !== self.location.origin || !url.pathname.startsWith(scopePath)) return false;
+  const assetPath = url.pathname.slice(scopePath.length);
+  return assetPath.startsWith("assets/maps/") || assetPath.startsWith("assets/sprites/");
+}
+
+async function fetchMapAsset(req) {
+  const generation = mapCacheGeneration;
+  const fresh = await fetch(req);
+  if (fresh && fresh.ok && generation === mapCacheGeneration) {
+    const cache = await caches.open(MAP_CACHE);
+    if (generation === mapCacheGeneration) await cache.put(req, fresh.clone());
+  }
+  return fresh;
+}
+
 async function fetchAndRefreshCache(req) {
   const fresh = await fetch(req, { cache: "no-cache" });
   if (fresh && fresh.ok) {
