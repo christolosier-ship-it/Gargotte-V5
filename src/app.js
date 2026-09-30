@@ -6788,8 +6788,9 @@ function bindEvents() {
       if (["map-open","map-back","map-toggle-dungeons","map-toggle-toponyms"].includes(action)) {
         const mapChanged = await handleMapAction(btn);
         if (!mapChanged) return;
-        if (action === "map-open" || action === "map-back") await evictMapAssetCache();
+        const eviction = action === "map-open" || action === "map-back" ? evictMapAssetCache() : null;
         render();
+        if (eviction) await eviction;
         return;
       }
       switch (action) {
