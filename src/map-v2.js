@@ -116,10 +116,13 @@ function bindMapViewActions(root = document) {
       }
       if (nearestDistance > 44 * 44) buttonElement = null;
     }
-    if (!buttonElement || !handleMapAction(buttonElement)) return;
-    const action = buttonElement.dataset.mapAction;
+    const action = buttonElement?.dataset?.mapAction || "";
+    const handled = Boolean(buttonElement && handleMapAction(buttonElement));
+    frame.dataset.mapActionResult = [buttonElement?.dataset?.mapId || "", action, handled, currentMap].join("|");
+    if (!handled) return;
     if (action === "open" || action === "back" || action === "map-back") void evictMapAssetCache();
     const page = document.querySelector("#main-content");
+    frame.dataset.mapPageFound = String(Boolean(page?.querySelector(".map-v2-page")));
     if (page?.querySelector(".map-v2-page")) {
       page.innerHTML = renderMapView();
       bindMapViewActions(page);
