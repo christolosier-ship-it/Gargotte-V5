@@ -87,12 +87,19 @@ function renderMapView(){
 async function evictMapAssetCache(){
   const controlled = navigator.serviceWorker?.controller;
   if (controlled && typeof MessageChannel !== "undefined") {
-    await new Promise(resolve => {
+    const acknowledged = await new Promise(resolve => {
       const channel = new MessageChannel();
-      const timer = setTimeout(() => { channel.port1.close(); resolve(); }, 1500);
-      channel.port1.onmessage = () => { clearTimeout(timer); channel.port1.close(); resolve(); };
-      controlled.postMessage({ type:"MAP_V2_EVICT" }, [channel.port2]);
+      const timer = setTimeout(() => { channel.port1.close(); resolve(false); }, 900);
+      channel.port1.onmessage = () => { clearTimeout(timer); channel.port1.close(); resolve(true); };
+      try {
+        controlled.postMessage({ type:"MAP_V2_EVICT" }, [channel.port2]);
+      } catch (_) {
+        clearTimeout(timer);
+        channel.port1.close();
+        resolve(false);
+      }
     });
+    if (!acknowledged && "caches" in window) await caches.delete(MAP_CACHE).catch(() => {});
   } else if ("caches" in window) {
     await caches.delete(MAP_CACHE).catch(() => {});
   }
