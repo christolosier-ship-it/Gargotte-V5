@@ -6768,7 +6768,6 @@ function displayImportLabel(type, row) {
 }
 
 function bindEvents() {
-  window.addEventListener("gargottex:map-render", () => render());
   app.addEventListener("click", async (ev) => {
     const mapButton = ev.target.closest("[data-map-action]");
     if (mapButton && handleMapAction(mapButton)) {
