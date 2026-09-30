@@ -10,6 +10,7 @@ const ASSETS = [
   "./manifest.webmanifest",
   "./seed-data.js",
   "./src/app.js",
+  "./src/map-v2.js",
   "./src/utils/common.js",
   "./src/utils/zip.js",
   "./src/utils/xlsx.js",
