@@ -1611,7 +1611,7 @@ test("Map V2 navigates the hierarchy and keeps dungeon markers presentation-only
   await expect(page.locator('[data-map-action="toggle-dungeons"]')).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator('img[src^="assets/sprites/"]')).toHaveCount(0);
   await page.locator('[data-map-action="toggle-dungeons"]').click();
-  await expect(page.locator(".map-dungeon-pin")).toHaveCount(9);
+  await expect(page.locator('img[src^="assets/sprites/"]')).toHaveCount(9);
   await page.locator('[data-map-action="toggle-toponyms"]').click();
   await expect(page.locator(".map-toponym")).toHaveCount(0);
   await page.locator('[data-map-action="toggle-toponyms"]').click();
