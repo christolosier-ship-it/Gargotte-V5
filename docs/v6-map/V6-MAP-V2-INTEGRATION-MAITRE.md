@@ -1,6 +1,6 @@
 # V6-Map V2 — plan maître d’intégration
 
-**Statut : plan documentaire proposé, prêt à servir de base à l’implémentation après revue.** Ce document décrit l’intégration des cartes déjà validées dans Gargotte-V5 ; il n’autorise aucun changement runtime, backend, IndexedDB ou média métier. Les lots détaillés sont liés ci-dessous.
+**Statut : plan documentaire proposé, prêt à servir de base à l’implémentation après revue. Les décisions « afficher/masquer les donjons » et « évincer la carte du cache après l’avoir quittée » sont ACTÉES ET VERROUILLÉES.** Ce document décrit l’intégration des cartes déjà validées dans Gargotte-V5 ; il n’autorise aucun changement runtime, backend, IndexedDB ou média métier. Les lots détaillés sont liés ci-dessous.
 
 ## Décisions de périmètre
 
@@ -32,7 +32,7 @@ Cela représente douze fonds de carte et treize sprites de donjons, selon l’in
 - L’ouverture montre la vue racine Entrevers ; depuis Entrevers, une dimension ouvre sa carte, Ardéra ouvre sa mappemonde, puis un continent ouvre son fond.
 - Depuis Pélagrève, une interaction identifiée sur la carte ouvre la carte fille de la cité sous-marine.
 - Les cartes filles ont un retour clair vers leur parent. La navigation ne signifie pas déplacement ou portail dans le lore.
-- Un contrôle simple sur la carte affiche ou masque les sprites de donjons. Il agit sur la présentation seulement, sans accès campagne ou permissions.
+- Le bouton afficher/masquer les donjons est ACTÉ et VERROUILLÉ : il agit simplement sur la présentation, sans accès campagne ou permissions.
 
 ## Placements cartographiques
 
@@ -41,14 +41,14 @@ Le registre des implantations conserve l’autorité sur les régions et positio
 ## Médias, chargement et cache
 
 - Charger le fond et les sprites seulement à l’ouverture de la vue concernée ; ne pas précharger toutes les cartes au démarrage.
-- À la sortie d’une vue, libérer ses ressources décodées et retirer ses fichiers de la zone de cache applicative dédiée aux cartes, sans toucher au cache général de l’application, aux données utilisateur, à IndexedDB ou aux Blobs.
+- L’éviction de la carte après l’avoir quittée est ACTÉE ET VERROUILLÉE : à la sortie d’une vue, libérer ses ressources décodées et retirer ses fichiers de la zone de cache applicative dédiée aux cartes, sans toucher au cache général de l’application, aux données utilisateur, à IndexedDB ou aux Blobs.
 - Ne pas promettre l’accès hors ligne après fermeture/quitte de la carte : selon la décision actuelle, les ressources cartographiques ne sont conservées que pendant leur consultation. Sans réseau et sans carte encore en mémoire/cache actif, la réouverture peut nécessiter une connexion.
 - Éviter que le Service Worker remette les cartes évincées dans le cache général. Le détail de réalisation doit être vérifié sur la stratégie de cache actuelle au lot 4.
 - Les cartes sont des assets applicatifs statiques, distincts des images de donjons métier et du pipeline média/IndexedDB.
 
 ## Transparence du bouton Donjons
 
-Le contrôle « afficher/masquer » n’est pas une barrière de confidentialité : les sprites intégrés au client peuvent être téléchargés ou inspectés, et le masquage visuel ne protège ni image ni emplacement. Le périmètre demandé est un affichage cartographique simple, pas une visibilité par campagne ou un filtrage autorisé serveur. Si ces donjons doivent rester secrets vis-à-vis des joueurs, ce choix devra être réarbitré avant publication/utilisation de la fonctionnalité dans ce contexte.
+Le contrôle « afficher/masquer » n’est pas une barrière de confidentialité : les sprites intégrés au client peuvent être téléchargés ou inspectés, et le masquage visuel ne protège ni image ni emplacement. Le périmètre demandé est un affichage cartographique simple, pas une visibilité par campagne ou un filtrage autorisé serveur. La conséquence est connue et acceptée dans ce périmètre : le toggle n’ajoute aucune confidentialité ou permission par campagne.
 
 ## Hors périmètre explicite
 
