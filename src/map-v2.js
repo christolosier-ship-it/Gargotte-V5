@@ -108,7 +108,7 @@ function openMap(id){ if(!MAPS[id]) return false; currentMap=id; return true; }
 function handleMapAction(buttonElement){
   const action=buttonElement?.dataset?.mapAction;
   if(action==="open") return openMap(buttonElement.dataset.mapId);
-  if(action==="back") return openMap(MAPS[currentMap]?.parent || "entrevers");
+  if(action==="back" || action==="map-back") return openMap(MAPS[currentMap]?.parent || "entrevers");
   if(action==="toggle-dungeons"){ showDungeons=!showDungeons; return true; }
   if(action==="toggle-toponyms"){ showToponyms=!showToponyms; return true; }
   return false;
@@ -119,9 +119,9 @@ document.addEventListener("click", event => {
   if (!buttonElement) return;
   const action = buttonElement.dataset.mapAction;
   if (!handleMapAction(buttonElement)) return;
-  const eviction = action === "open" || action === "back" ? evictMapAssetCache() : null;
-  window.dispatchEvent(new CustomEvent("gargottex:map-render"));
-  if (eviction) void eviction;
+  if (action === "open" || action === "back" || action === "map-back") void evictMapAssetCache();
+  const page = document.querySelector("#main-content");
+  if (page?.querySelector(".map-v2-page")) page.innerHTML = renderMapView();
 });
 window.addEventListener("pagehide", () => {
   if (document.querySelector(".map-v2-page")) void evictMapAssetCache();
