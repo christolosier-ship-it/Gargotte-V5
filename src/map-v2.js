@@ -96,14 +96,15 @@ function renderMapView(){
   return markup;
 }
 function bindMapViewActions(root = document) {
-  const frame = root.querySelector(".map-v2-frame");
-  if (!frame) return;
-  frame.addEventListener("click", event => {
+  const pageView = root.querySelector(".map-v2-page");
+  if (!pageView) return;
+  pageView.addEventListener("click", event => {
     let buttonElement = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-map-action]");
-    if (!frame.contains(buttonElement)) buttonElement = event.target?.closest?.("[data-map-action]");
-    let nearestDistance = Infinity;
-    if (!buttonElement) {
-      for (const candidate of frame.querySelectorAll(".map-hotspot[data-map-action]")) {
+    if (!pageView.contains(buttonElement)) buttonElement = event.target?.closest?.("[data-map-action]");
+    const mapFrame = event.target?.closest?.(".map-v2-frame") || pageView.querySelector(".map-v2-frame");
+    if (!buttonElement && mapFrame) {
+      let nearestDistance = Infinity;
+      for (const candidate of mapFrame.querySelectorAll(".map-hotspot[data-map-action]")) {
         const rect = candidate.getBoundingClientRect();
         const dx = event.clientX - (rect.left + rect.width / 2);
         const dy = event.clientY - (rect.top + rect.height / 2);
@@ -115,26 +116,16 @@ function bindMapViewActions(root = document) {
       }
       if (nearestDistance > 64 * 64) buttonElement = null;
     }
-    frame.dataset.mapActionDiag = JSON.stringify({
-      point: [event.clientX, event.clientY],
-      target: event.target?.className || event.target?.tagName,
-      hit: document.elementFromPoint(event.clientX, event.clientY)?.outerHTML?.slice(0, 100),
-      distance: Number.isFinite(nearestDistance) ? Math.sqrt(nearestDistance) : null,
-      candidate: buttonElement?.dataset?.mapId || "",
-      action: buttonElement?.dataset?.mapAction || ""
-    });
-    const action = buttonElement?.dataset?.mapAction || "";
-    const handled = Boolean(buttonElement && handleMapAction(buttonElement));
-    if (!handled) return;
+    if (!buttonElement || !handleMapAction(buttonElement)) return;
+    const action = buttonElement.dataset.mapAction;
     if (action === "open" || action === "back" || action === "map-back") void evictMapAssetCache();
-    const page = document.querySelector("#main-content");
-    if (page?.querySelector(".map-v2-page")) {
-      page.innerHTML = renderMapView();
-      bindMapViewActions(page);
+    const main = document.querySelector("#main-content");
+    if (main?.querySelector(".map-v2-page")) {
+      main.innerHTML = renderMapView();
+      bindMapViewActions(main);
     }
   }, true);
 }
-
 async function evictMapAssetCache(){
   const controlled = navigator.serviceWorker?.controller;
   if (controlled && typeof MessageChannel !== "undefined") {
