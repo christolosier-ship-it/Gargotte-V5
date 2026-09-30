@@ -98,7 +98,9 @@ function renderMapView(){
 function bindMapViewActions(root = document) {
   const frame = root.querySelector(".map-v2-frame");
   if (!frame) return;
+  frame.dataset.mapActionsBound = "true";
   frame.addEventListener("click", event => {
+    frame.dataset.mapActionClick = event.target?.closest?.("[data-map-action]")?.dataset?.mapId || "frame";
     let buttonElement = event.target?.closest?.("[data-map-action]");
     if (!buttonElement) {
       let nearestDistance = Infinity;
