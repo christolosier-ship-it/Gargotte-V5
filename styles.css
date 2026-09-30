@@ -3560,4 +3560,5 @@ body.cinematic-open{overflow:hidden}
   .map-dungeon-pin{width:34px}
 }
 
+.map-hotspots{pointer-events:auto}
 .map-v2-frame:not(.is-image-ready) .map-hotspots{visibility:hidden}
