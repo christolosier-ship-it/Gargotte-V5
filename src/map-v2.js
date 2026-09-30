@@ -6,26 +6,26 @@ const MAPS = {
     ["Mer Boréale",49,26,"water"],["Mer des Trois Couronnes",52,68,"water"],["Mer des Éclats",71,49,"water"],["Mer des Lanternes",83,75,"water"],["Mer aux Cent Passes",90,83,"water"]
   ] },
   austrebrume: { title:"Austrébrume", image:"assets/maps/Austrebrume.webp", type:"continent", parent:"ardera", toponyms:[
-    ["Les Fjords de Nacrelune",17,14],["Les Bois des Dernières Feuilles",48,14],["Les Monts du Voile",48,42],["Le Bassin des Lacs Sombres",77,24],["Les Landes du Grand Hiver",49,69],["La Couronne Blanche",50,91],["Falaises de Nacrelune",14,30,"secondary"],["Plateaux du Dernier Vent",60,81,"secondary"]
+    ["Les Fjords de Nacrelune",17,14],["Les Bois des Dernières Feuilles",48,14],["Les Monts du Voile",48,42],["Le Bassin des Lacs Sombres",77,24],["Les Landes du Grand Hiver",49,69],["La Couronne Blanche",50,91],["Cascades de Brume",76,60,"secondary"],["Falaises de Nacrelune",14,30,"secondary"],["Plateaux du Dernier Vent",60,81,"secondary"]
   ] },
   boreclat: { title:"Boréclat", image:"assets/maps/Boreclat.webp", type:"continent", parent:"ardera", toponyms:[
-    ["Les Fjords des Brisants",50,88],["La Grande Taïga",24,67],["Les Crêtes du Haut-Givre",51,48],["Le Plateau des Blancs Silences",50,17],["Le Pays des Sept Lacs",47,67],["Les Marches d’Écume",81,49]
+    ["Les Fjords des Brisants",50,88],["La Grande Taïga",24,67],["Les Crêtes du Haut-Givre",51,48],["Aiguilles Boréales",58,41,"secondary"],["Le Plateau des Blancs Silences",50,17],["Le Pays des Sept Lacs",47,67],["Les Marches d’Écume",81,49]
   ] },
   ferrecime: { title:"Ferrécime", image:"assets/maps/Ferrecime.webp", type:"continent", parent:"ardera", toponyms:[
-    ["Les Portes du Givre",50,12],["L’Échine d’Ardéra",50,44],["Les Hauts Plateaux de Silex",22,55],["Les Vallées des Mille Cascades",77,48],["Les Hautes Voûtes",61,65],["Les Marches de Braise",76,85]
+    ["Les Portes du Givre",50,12],["L’Échine d’Ardéra",50,44],["Les Hauts Plateaux de Silex",22,55],["Les Vallées des Mille Cascades",77,48],["Les Hautes Voûtes",61,65],["Cimes Suspendues",61,43,"secondary"],["Les Marches de Braise",76,85]
   ] },
   pelagreve: { title:"Pélagrève", image:"assets/maps/Pelagreve.webp", type:"continent", parent:"ardera", toponyms:[
-    ["Les Côtes des Éclats",20,23],["Les Mers Encloses",48,49],["La Dorsale des Fournaises",72,24],["Les Côtes des Alizés",83,51],["La Ceinture des Lagons",70,80],["Les Marches des Marées",24,79]
+    ["Les Côtes des Éclats",20,23],["Les Mers Encloses",48,49],["La Dorsale des Fournaises",72,24],["Le Labyrinthe Corallien",56,57,"secondary"],["Les Côtes des Alizés",83,51],["La Ceinture des Lagons",70,80],["Les Marches des Marées",24,79]
   ] },
   sahaldune: { title:"Sahaldune", image:"assets/maps/Sahaldune.webp", type:"continent", parent:"ardera", toponyms:[
-    ["Les Côtes d’Ambre",49,12],["Les Monts Fendus",16,50],["La Grande Dépression",49,52],["Les Vallées des Deux Fleuves",67,26],["Les Savanes d’Olvara",83,55],["Le Littoral des Moussons",50,88]
+    ["Les Côtes d’Ambre",49,12],["Les Monts Fendus",16,50],["La Grande Dépression",49,52],["La Couronne de Sel",47,56,"secondary"],["Les Vallées des Deux Fleuves",67,26],["Les Savanes d’Olvara",83,55],["Le Littoral des Moussons",50,88]
   ] },
   sylvaronde: { title:"Sylvaronde", image:"assets/maps/Sylvaronde.webp", type:"continent", parent:"ardera", toponyms:[
-    ["Le Delta des Mille Bras",17,20],["Le Bassin des Grandes Eaux",39,53],["La Forêt des Hautes Couronnes",59,30],["Les Monts des Orages",83,49],["Les Hautes Brumes",77,19],["Les Marches du Sud",51,87]
+    ["Le Delta des Mille Bras",17,20],["Le Bassin des Grandes Eaux",39,53],["La Forêt des Hautes Couronnes",59,30],["La Canopée-Monde",64,35,"secondary"],["Les Monts des Orages",83,49],["Les Hautes Brumes",77,19],["Les Marches du Sud",51,87]
   ] },
   valdorie: { title:"Valdorie", image:"assets/maps/Valdorie.webp", type:"continent", parent:"ardera", toponyms:[
     ["Les Côtes Grises",13,39],["Les Hautes Marches",49,19],["La Sylve des Anciens",80,34],["Les Plaines de Valdor",50,59],["Les Bassins de l’Est",78,68],["Les Terres de Cendre",25,79],
-    ["L’Avelorne",67,58,"secondary"],["La Rivombre",24,48,"secondary"],["Ruisseau des Saules",41,51,"secondary"],["Lac d’Ysambre",82,59,"secondary"],["Collines de la Vieille Lande",33,57,"secondary"],["Monts d’Escarbelle",25,85,"secondary"]
+    ["Arbres-Colosses",82,24,"secondary"],["Saint-Fût-le-Petit",39,54,"secondary"],["La Chope Qui Colle",43,58,"secondary"],["L’Avelorne",67,58,"secondary"],["La Rivombre",24,48,"secondary"],["Ruisseau des Saules",41,51,"secondary"],["Lac d’Ysambre",82,59,"secondary"],["Collines de la Vieille Lande",33,57,"secondary"],["Monts d’Escarbelle",25,85,"secondary"]
   ] },
   brasserie: { title:"La Brasserie Céleste", image:"assets/maps/La Brasserie Céleste.webp", type:"dimension", parent:"entrevers", toponyms:[
     ["Le Grand Cœur Brassicole",52,53,"major"],["L’Axe des Fermentations",49,30,"major"],["Les Treilles Hautes",31,41,"major"],["La Coulée Ambrée",18,56,"major"],["Les Voûtes du Vieillissement",70,55,"major"],["La Haute Ivresse",80,72,"major"],["Le Grand Nid",84,66,"secondary"],
@@ -104,4 +104,8 @@ async function handleMapAction(buttonElement){
   if(action==="map-toggle-toponyms"){ showToponyms=!showToponyms; return true; }
   return false;
 }
+window.addEventListener("pagehide", () => {
+  if (document.querySelector(".map-v2-page")) void evictMapAssetCache();
+});
+
 export { renderMapView, handleMapAction, evictMapAssetCache, openMap };
