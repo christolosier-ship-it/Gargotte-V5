@@ -1212,7 +1212,12 @@ function queueDungeonCinematic(dungeon) {
 function queueWhaouPageReveal() {
   requestAnimationFrame(() => {
     const page = document.querySelector(".v6-main");
-    if (!page || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    if (!page) return;
+    if (page.querySelector(".map-v2-page")) {
+      page.classList.remove("whaou-page-enter");
+      return;
+    }
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
     page.classList.remove("whaou-page-enter");
     void page.offsetWidth;
     page.classList.add("whaou-page-enter");
