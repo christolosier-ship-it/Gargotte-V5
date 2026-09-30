@@ -6768,6 +6768,7 @@ function displayImportLabel(type, row) {
 }
 
 function bindEvents() {
+  window.addEventListener("gargottex:map-render", () => render());
   app.addEventListener("click", async (ev) => {
     const btn = ev.target.closest("[data-action]");
     if (!btn) return;
@@ -6784,14 +6785,6 @@ function bindEvents() {
           render();
           return;
         }
-      }
-      if (["map-open","map-back","map-toggle-dungeons","map-toggle-toponyms"].includes(action)) {
-        const mapChanged = await handleMapAction(btn);
-        if (!mapChanged) return;
-        const eviction = action === "map-open" || action === "map-back" ? evictMapAssetCache() : null;
-        render();
-        if (eviction) await eviction;
-        return;
       }
       switch (action) {
         case "go-home":
