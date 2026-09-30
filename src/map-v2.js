@@ -98,10 +98,9 @@ function renderMapView(){
 function bindMapViewActions(root = document) {
   const frame = root.querySelector(".map-v2-frame");
   if (!frame) return;
-  frame.dataset.mapActionsBound = "true";
   frame.addEventListener("click", event => {
-    frame.dataset.mapActionClick = event.target?.closest?.("[data-map-action]")?.dataset?.mapId || "frame";
-    let buttonElement = event.target?.closest?.("[data-map-action]");
+    let buttonElement = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-map-action]");
+    if (!frame.contains(buttonElement)) buttonElement = event.target?.closest?.("[data-map-action]");
     if (!buttonElement) {
       let nearestDistance = Infinity;
       for (const candidate of frame.querySelectorAll(".map-hotspot[data-map-action]")) {
@@ -118,11 +117,9 @@ function bindMapViewActions(root = document) {
     }
     const action = buttonElement?.dataset?.mapAction || "";
     const handled = Boolean(buttonElement && handleMapAction(buttonElement));
-    frame.dataset.mapActionResult = [buttonElement?.dataset?.mapId || "", action, handled, currentMap].join("|");
     if (!handled) return;
     if (action === "open" || action === "back" || action === "map-back") void evictMapAssetCache();
     const page = document.querySelector("#main-content");
-    frame.dataset.mapPageFound = String(Boolean(page?.querySelector(".map-v2-page")));
     if (page?.querySelector(".map-v2-page")) {
       page.innerHTML = renderMapView();
       bindMapViewActions(page);
