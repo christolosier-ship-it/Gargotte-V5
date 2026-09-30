@@ -101,8 +101,8 @@ function bindMapViewActions(root = document) {
   frame.addEventListener("click", event => {
     let buttonElement = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-map-action]");
     if (!frame.contains(buttonElement)) buttonElement = event.target?.closest?.("[data-map-action]");
+    let nearestDistance = Infinity;
     if (!buttonElement) {
-      let nearestDistance = Infinity;
       for (const candidate of frame.querySelectorAll(".map-hotspot[data-map-action]")) {
         const rect = candidate.getBoundingClientRect();
         const dx = event.clientX - (rect.left + rect.width / 2);
@@ -113,8 +113,16 @@ function bindMapViewActions(root = document) {
           buttonElement = candidate;
         }
       }
-      if (nearestDistance > 44 * 44) buttonElement = null;
+      if (nearestDistance > 64 * 64) buttonElement = null;
     }
+    frame.dataset.mapActionDiag = JSON.stringify({
+      point: [event.clientX, event.clientY],
+      target: event.target?.className || event.target?.tagName,
+      hit: document.elementFromPoint(event.clientX, event.clientY)?.outerHTML?.slice(0, 100),
+      distance: Number.isFinite(nearestDistance) ? Math.sqrt(nearestDistance) : null,
+      candidate: buttonElement?.dataset?.mapId || "",
+      action: buttonElement?.dataset?.mapAction || ""
+    });
     const action = buttonElement?.dataset?.mapAction || "";
     const handled = Boolean(buttonElement && handleMapAction(buttonElement));
     if (!handled) return;
