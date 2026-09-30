@@ -15,7 +15,7 @@
 
 ## Politique de hotspots
 
-Les zones cliquables doivent suivre les formes et l’échelle de l’image réellement affichée, fonctionner au redimensionnement et être activables au pointeur comme au toucher. Utiliser des cibles accessibles (nom accessible, focus clavier et activation clavier) sans texte peint dans les bitmaps. Préserver le ratio de l’image et éviter qu’une zone ne se décale lors de la mise à l’échelle.
+Les zones cliquables doivent suivre les formes et l’échelle de l’image réellement affichée, fonctionner au redimensionnement et être activables au pointeur comme au toucher. La couche de toponymie est traitée séparément au [lot 5](V6-MAP-V2-INTEGRATION-LOT-5-TOPONYMIE.md) ; ce lot 2 ne fixe pas de libellés. Utiliser des cibles accessibles (nom accessible, focus clavier et activation clavier) sans texte peint dans les bitmaps. Préserver le ratio de l’image et éviter qu’une zone ne se décale lors de la mise à l’échelle.
 
 La forme, l’emprise et l’identifiant des hotspots doivent rester une couche de données distincte du fond illustré ; ne pas retoucher le bitmap pour ajouter les comportements.
 
