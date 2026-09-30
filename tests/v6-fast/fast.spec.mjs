@@ -1599,18 +1599,25 @@ test("Map V2 navigates the hierarchy and keeps dungeon markers presentation-only
   await expect(page.locator("#map-page-title")).toHaveText("L’Entrevers");
   await expect(page.locator(".map-toponym")).toHaveCount(0);
 
+  const mapClickProbe = await page.locator('[data-map-action="open"][data-map-id="ardera"]').evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    const top = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+    return { rect: [rect.x, rect.y, rect.width, rect.height], top: top?.outerHTML?.slice(0, 350) || "" };
+  });
   await page.evaluate(() => {
     document.addEventListener("click", event => {
       const target = event.target;
       window.__mapV2ClickProbe = {
         tag: target?.tagName || "",
+        className: target?.className || "",
+        html: target?.outerHTML?.slice(0, 350) || "",
         action: target?.closest?.("[data-map-action]")?.dataset?.mapAction || "",
         mapId: target?.closest?.("[data-map-action]")?.dataset?.mapId || ""
       };
     }, { capture: true, once: true });
   });
   await page.locator('[data-map-action="open"][data-map-id="ardera"]').click();
-  console.log("MAP_V2_CLICK_PROBE", JSON.stringify(await page.evaluate(() => window.__mapV2ClickProbe || null)));
+  console.log("MAP_V2_CLICK_PROBE", JSON.stringify({ before: mapClickProbe, after: await page.evaluate(() => window.__mapV2ClickProbe || null) }));
   await expect(page.locator("#map-page-title")).toHaveText("Ardéra");
   await expect(page.locator(".map-hotspot-continent")).toHaveCount(7);
 
