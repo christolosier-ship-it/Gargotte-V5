@@ -1610,7 +1610,7 @@ test("Map V2 navigates the hierarchy and keeps dungeon markers presentation-only
   await expect.poll(() => page.locator(".map-dungeon-pin img").first().evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
   await page.locator('[data-map-action="toggle-dungeons"]').click();
   await expect(page.locator('[data-map-action="toggle-dungeons"]')).toHaveAttribute("aria-pressed", "false");
-  await expect(page.locator('img[src^="assets/sprites/"]')).toHaveCount(0);
+  await expect(page.locator(".map-dungeon-pin").first()).toHaveCSS("display", "none");
   await page.locator('[data-map-action="toggle-dungeons"]').click();
   await expect(page.locator('img[src^="assets/sprites/"]')).toHaveCount(9);
   await page.locator('[data-map-action="toggle-toponyms"]').click();
@@ -1629,6 +1629,7 @@ test("Map V2 navigates the hierarchy and keeps dungeon markers presentation-only
 test("Map V2 offers both dimensions and groups the mobile entry with Brouhaha", async ({ page }) => {
   await ready(page);
   await gotoView(page, "map");
+  await expect(page.locator(".map-v2-frame.is-image-ready")).toHaveCount(1);
   await page.locator('[data-map-action="open"][data-map-id="brasserie"]').click();
   await expect(page.locator("#map-page-title")).toHaveText("La Brasserie Céleste");
   await expect(page.locator(".map-toponym")).toHaveCount(16);
