@@ -3526,7 +3526,11 @@ body.cinematic-open{overflow:hidden}
 .map-dungeon-pin{position:absolute;z-index:4;left:var(--x);top:var(--y);width:clamp(38px,5.2vw,72px);transform:translate(-50%,-50%);display:grid;justify-items:center;gap:3px;pointer-events:none}
 .map-dungeon-pin img{display:block;width:100%;height:auto;max-height:clamp(38px,5.2vw,72px);object-fit:contain;filter:drop-shadow(0 0 1.4px #fff6d7) drop-shadow(0 0 3px #e8b968) drop-shadow(0 2px 5px #000d)}
 .map-dungeon-label{max-width:180px;padding:2px 5px;border:1px solid rgba(243,199,125,.36);border-radius:4px;background:rgba(21,14,10,.84);color:#fff0d8;font:700 clamp(9px,.72vw,11px)/1.12 Alegreya,Georgia,serif;text-align:center;text-wrap:balance;box-shadow:0 1px 4px #0009}
-.is-dungeons-hidden .map-dungeon-pin{display:none}
+.map-dungeon-pair{position:absolute;z-index:4;left:var(--x);top:var(--y);transform:translate(-50%,-50%);display:grid;justify-items:center;gap:3px;pointer-events:none}
+.map-dungeon-pair-icons{display:flex;align-items:center;gap:4px}
+.map-dungeon-pair-icons img{display:block;width:clamp(36px,3.6vw,50px);height:auto;max-height:50px;object-fit:contain;filter:drop-shadow(0 0 1.4px #fff6d7) drop-shadow(0 0 3px #e8b968) drop-shadow(0 2px 5px #000d)}
+.map-dungeon-pair .map-dungeon-label{max-width:250px}
+.is-dungeons-hidden .map-dungeon-pin,.is-dungeons-hidden .map-dungeon-pair{display:none}
 .map-v2-footer{display:flex;justify-content:space-between;gap:12px;margin:10px 2px 0;color:var(--color-text-secondary);font-size:11px}
 .map-v2-footer span:first-child{color:#e8c58f;font-weight:700}
 .is-entrevers .map-toponym{display:none}
@@ -3545,6 +3549,8 @@ body.cinematic-open{overflow:hidden}
   .map-dungeon-pin{width:clamp(34px,10vw,52px)}
   .map-dungeon-pin img{max-height:52px}
   .map-dungeon-label{max-width:118px;font-size:9px}
+  .map-dungeon-pair-icons img{width:clamp(28px,8vw,38px);max-height:38px}
+  .map-dungeon-pair .map-dungeon-label{max-width:140px}
   .map-v2-footer{flex-direction:column;gap:3px}
 }
 @media(max-width:420px){
