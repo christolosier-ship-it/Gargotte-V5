@@ -114,22 +114,7 @@ function handleMapAction(buttonElement){
   return false;
 }
 
-document.addEventListener("click", event => {
-  const buttonElement = event.composedPath?.().find(node => node instanceof Element && node.matches("[data-map-action]"))
-    || event.target?.closest?.("[data-map-action]");
-  if (!buttonElement) return;
-  const action = buttonElement.dataset.mapAction;
-  document.documentElement.dataset.mapV2DebugAction = action;
-  const handled = handleMapAction(buttonElement);
-  document.documentElement.dataset.mapV2DebugHandled = String(handled);
-  document.documentElement.dataset.mapV2DebugCurrent = currentMap;
-  if (!handled) return;
-  if (action === "open" || action === "back" || action === "map-back") void evictMapAssetCache();
-  queueMicrotask(() => {
-    const page = document.querySelector("#main-content");
-    if (page?.querySelector(".map-v2-page")) page.innerHTML = renderMapView();
-  });
-}, true);
+
 window.addEventListener("pagehide", () => {
   if (document.querySelector(".map-v2-page")) void evictMapAssetCache();
 });
