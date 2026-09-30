@@ -1,5 +1,5 @@
 
-import { renderMapView, evictMapAssetCache, openMap, handleMapAction } from "./map-v2.js";
+import { renderMapView, evictMapAssetCache, openMap } from "./map-v2.js";
 
 import {
   uid,
@@ -6774,30 +6774,6 @@ function displayImportLabel(type, row) {
 
 function bindEvents() {
   app.addEventListener("click", async (ev) => {
-    let mapButton = ev.target.closest("[data-map-action]");
-    if (!mapButton) {
-      const mapFrame = ev.target.closest(".map-v2-frame");
-      if (mapFrame) {
-        let nearestDistance = Infinity;
-        for (const candidate of mapFrame.querySelectorAll(".map-hotspot[data-map-action]")) {
-          const rect = candidate.getBoundingClientRect();
-          const dx = ev.clientX - (rect.left + rect.width / 2);
-          const dy = ev.clientY - (rect.top + rect.height / 2);
-          const distance = dx * dx + dy * dy;
-          if (distance < nearestDistance) {
-            nearestDistance = distance;
-            mapButton = candidate;
-          }
-        }
-        if (nearestDistance > 44 * 44) mapButton = null;
-      }
-    }
-    if (mapButton && handleMapAction(mapButton)) {
-      const mapAction = mapButton.dataset.mapAction;
-      if (mapAction === "open" || mapAction === "back" || mapAction === "map-back") void evictMapAssetCache();
-      render();
-      return;
-    }
     const btn = ev.target.closest("[data-action]");
     if (!btn) return;
     const action = btn.dataset.action;
