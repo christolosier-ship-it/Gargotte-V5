@@ -1600,13 +1600,7 @@ test("Map V2 navigates the hierarchy and keeps dungeon markers presentation-only
   await expect(page.locator(".map-toponym")).toHaveCount(0);
 
   await expect(page.locator(".map-v2-frame.is-image-ready")).toHaveCount(1);
-  const clickProbe = await page.locator('[data-map-action="open"][data-map-id="ardera"]').evaluate(el => {
-    const r = el.getBoundingClientRect();
-    return { rect: [r.x,r.y,r.width,r.height], hit: document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.outerHTML?.slice(0,200) };
-  });
-  await page.evaluate(() => document.addEventListener("click", e => { window.__mapClickAfter = { tag:e.target?.tagName, cls:e.target?.className, action:e.target?.closest?.("[data-map-action]")?.dataset?.mapAction }; }, {capture:true,once:true}));
   await page.locator('[data-map-action="open"][data-map-id="ardera"]').click();
-  console.log("MAP_CLICK_AFTER_STABILIZE", JSON.stringify({ before:clickProbe, after:await page.evaluate(()=>window.__mapClickAfter||null) }));
   await expect(page.locator("#map-page-title")).toHaveText("Ardéra");
   await expect(page.locator(".map-hotspot-continent")).toHaveCount(7);
 
