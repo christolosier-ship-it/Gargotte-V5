@@ -1,5 +1,5 @@
 
-import { renderMapView, evictMapAssetCache, openMap } from "./map-v2.js";
+import { renderMapView, evictMapAssetCache, openMap, handleMapAction } from "./map-v2.js";
 
 import {
   uid,
@@ -6770,6 +6770,13 @@ function displayImportLabel(type, row) {
 function bindEvents() {
   window.addEventListener("gargottex:map-render", () => render());
   app.addEventListener("click", async (ev) => {
+    const mapButton = ev.target.closest("[data-map-action]");
+    if (mapButton && handleMapAction(mapButton)) {
+      const mapAction = mapButton.dataset.mapAction;
+      if (mapAction === "open" || mapAction === "back" || mapAction === "map-back") void evictMapAssetCache();
+      render();
+      return;
+    }
     const btn = ev.target.closest("[data-action]");
     if (!btn) return;
     const action = btn.dataset.action;
