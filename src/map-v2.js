@@ -67,22 +67,22 @@ let currentMap = "entrevers";
 let showDungeons = true;
 let showToponyms = true;
 const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[char]);
-const button = (label, action, attrs="", icon="") => '<button type="button" class="map-action-button" data-action="'+action+'" '+attrs+'>'+icon+'<span>'+esc(label)+'</span></button>';
+const button = (label, action, attrs="", icon="") => '<button type="button" class="map-action-button" data-map-action="'+action+'" '+attrs+'>'+icon+'<span>'+esc(label)+'</span></button>';
 function renderMapView(){
   const map = MAPS[currentMap] || MAPS.entrevers;
   const isHub = map.type === "hub";
   const parent = map.parent && MAPS[map.parent];
   const nav = isHub
-    ? '<button class="map-hotspot map-hotspot-dimension" style="--x:27%;--y:55%" data-action="map-open" data-map-id="brasserie" aria-label="Ouvrir la carte La Brasserie Céleste"><span>La Brasserie Céleste</span></button><button class="map-hotspot map-hotspot-dimension" style="--x:71%;--y:50%" data-action="map-open" data-map-id="enfer" aria-label="Ouvrir la carte L’Enfer de la Sobriété Éternelle"><span>L’Enfer de la Sobriété Éternelle</span></button><button class="map-hotspot map-hotspot-world" style="--x:51%;--y:48%" data-action="map-open" data-map-id="ardera" aria-label="Ouvrir la mappemonde d’Ardéra"><span>Ardéra</span></button>'
+    ? '<button class="map-hotspot map-hotspot-dimension" style="--x:27%;--y:55%" data-map-action="open" data-map-id="brasserie" aria-label="Ouvrir la carte La Brasserie Céleste"><span>La Brasserie Céleste</span></button><button class="map-hotspot map-hotspot-dimension" style="--x:71%;--y:50%" data-map-action="open" data-map-id="enfer" aria-label="Ouvrir la carte L’Enfer de la Sobriété Éternelle"><span>L’Enfer de la Sobriété Éternelle</span></button><button class="map-hotspot map-hotspot-world" style="--x:51%;--y:48%" data-map-action="open" data-map-id="ardera" aria-label="Ouvrir la mappemonde d’Ardéra"><span>Ardéra</span></button>'
     : currentMap === "ardera"
-      ? CONTINENTS.map(([id,name,x,y]) => '<button class="map-hotspot map-hotspot-continent" style="--x:'+x+'%;--y:'+y+'%" data-action="map-open" data-map-id="'+id+'" aria-label="Ouvrir le continent '+esc(name)+'"><span>'+esc(name)+'</span></button>').join("")
+      ? CONTINENTS.map(([id,name,x,y]) => '<button class="map-hotspot map-hotspot-continent" style="--x:'+x+'%;--y:'+y+'%" data-map-action="open" data-map-id="'+id+'" aria-label="Ouvrir le continent '+esc(name)+'"><span>'+esc(name)+'</span></button>').join("")
       : currentMap === "pelagreve"
-        ? '<button class="map-hotspot map-hotspot-child" style="--x:54%;--y:59%" data-action="map-open" data-map-id="cite_sous_marine" aria-label="Ouvrir la carte de la cité sous-marine"><span>Cité sous-marine</span></button>'
+        ? '<button class="map-hotspot map-hotspot-child" style="--x:54%;--y:59%" data-map-action="open" data-map-id="cite_sous_marine" aria-label="Ouvrir la carte de la cité sous-marine"><span>Cité sous-marine</span></button>'
         : "";
   const toponyms = showToponyms ? map.toponyms.map(([name,x,y,kind="region"]) => '<span class="map-toponym map-toponym-'+kind+'" style="--x:'+x+'%;--y:'+y+'%" title="'+esc(name)+'">'+esc(name)+'</span>').join("") : "";
   const dungeonList = DUNGEONS[currentMap] || [];
   const dungeonPins = dungeonList.filter(([id]) => id !== "D05" && id !== "D06").map(([id,name,file,x,y]) => '<div class="map-dungeon-pin" style="--x:'+x+'%;--y:'+y+'%" role="img" aria-label="'+esc(id+" — "+name+" (placement provisoire à annoter)")+'"><img src="assets/sprites/'+file+'" alt="" loading="eager" decoding="async"><span class="map-dungeon-label">'+esc(name)+'</span></div>').join("") + (currentMap === "valdorie" ? '<div class="map-dungeon-pair" style="--x:58%;--y:24%" role="img" aria-label="D05 — Le Sanctuaire du Houblon Noir et D06 — Le Panthéon des Fermentations Interdites partagent une ancre planimétrique provisoire à annoter"><div class="map-dungeon-pair-icons"><img src="assets/sprites/Valdorie_D05_Sanctuaire_Houblon_Noir.webp" alt="" loading="eager" decoding="async"><img src="assets/sprites/Valdorie_D06_Pantheon_Fermentations_Interdites.webp" alt="" loading="eager" decoding="async"></div><span class="map-dungeon-label">D05 · Le Sanctuaire du Houblon Noir<br>D06 · Le Panthéon des Fermentations Interdites</span></div>' : "");
-  return '<section class="map-v2-page" aria-labelledby="map-page-title"><header class="map-v2-header"><div><p class="map-eyebrow">Atlas · consultation</p><h1 id="map-page-title">'+esc(map.title)+'</h1><p class="map-status-note">Les ancres de toponymie et de donjons marquées dans cette première intégration sont des propositions visuelles à annoter.</p></div><div class="map-toolbar">'+(parent?button("Retour à "+parent.title,"map-back",'aria-label="Retour à '+esc(parent.title)+'"'):"")+(map.toponyms.length?'<button type="button" class="map-action-button '+(showToponyms?"is-on":"")+'" data-action="map-toggle-toponyms" aria-pressed="'+showToponyms+'"><span>Toponymes</span><span class="map-toggle-state">'+(showToponyms?"affichés":"masqués")+'</span></button>':"")+(DUNGEONS[currentMap]?'<button type="button" class="map-action-button '+(showDungeons?"is-on":"")+'" data-action="map-toggle-dungeons" aria-label="'+(showDungeons?"Masquer les donjons":"Afficher les donjons")+'" aria-pressed="'+showDungeons+'"><span>'+(showDungeons?"Masquer les donjons":"Afficher les donjons")+'</span><span class="map-toggle-state">'+(showDungeons?"visibles":"masqués")+'</span></button>':"")+'</div></header><div class="map-v2-frame '+(isHub?"is-entrevers":"")+' '+(showDungeons?"":"is-dungeons-hidden")+'"><img class="map-v2-image" src="'+esc(map.image)+'" alt="Carte illustrée : '+esc(map.title)+'" loading="eager" decoding="async">'+toponyms+'<div class="map-hotspots" aria-label="Destinations cartographiques">'+nav+'</div>'+dungeonPins+'</div><footer class="map-v2-footer"><span>'+esc(map.title)+'</span><span>Les repères de donjon ne sont pas encore ouvrants.</span></footer></section>';
+  return '<section class="map-v2-page" aria-labelledby="map-page-title"><header class="map-v2-header"><div><p class="map-eyebrow">Atlas · consultation</p><h1 id="map-page-title">'+esc(map.title)+'</h1><p class="map-status-note">Les ancres de toponymie et de donjons marquées dans cette première intégration sont des propositions visuelles à annoter.</p></div><div class="map-toolbar">'+(parent?button("Retour à "+parent.title,"map-back",'aria-label="Retour à '+esc(parent.title)+'"'):"")+(map.toponyms.length?'<button type="button" class="map-action-button '+(showToponyms?"is-on":"")+'" data-map-action="toggle-toponyms" aria-pressed="'+showToponyms+'"><span>Toponymes</span><span class="map-toggle-state">'+(showToponyms?"affichés":"masqués")+'</span></button>':"")+(DUNGEONS[currentMap]?'<button type="button" class="map-action-button '+(showDungeons?"is-on":"")+'" data-map-action="toggle-dungeons" aria-label="'+(showDungeons?"Masquer les donjons":"Afficher les donjons")+'" aria-pressed="'+showDungeons+'"><span>'+(showDungeons?"Masquer les donjons":"Afficher les donjons")+'</span><span class="map-toggle-state">'+(showDungeons?"visibles":"masqués")+'</span></button>':"")+'</div></header><div class="map-v2-frame '+(isHub?"is-entrevers":"")+' '+(showDungeons?"":"is-dungeons-hidden")+'"><img class="map-v2-image" src="'+esc(map.image)+'" alt="Carte illustrée : '+esc(map.title)+'" loading="eager" decoding="async">'+toponyms+'<div class="map-hotspots" aria-label="Destinations cartographiques">'+nav+'</div>'+dungeonPins+'</div><footer class="map-v2-footer"><span>'+esc(map.title)+'</span><span>Les repères de donjon ne sont pas encore ouvrants.</span></footer></section>';
 }
 async function evictMapAssetCache(){
   const controlled = navigator.serviceWorker?.controller;
@@ -105,14 +105,24 @@ async function evictMapAssetCache(){
   }
 }
 function openMap(id){ if(!MAPS[id]) return false; currentMap=id; return true; }
-async function handleMapAction(buttonElement){
-  const action=buttonElement?.dataset?.action;
-  if(action==="map-open") return openMap(buttonElement.dataset.mapId);
-  if(action==="map-back") return openMap(MAPS[currentMap]?.parent || "entrevers");
-  if(action==="map-toggle-dungeons"){ showDungeons=!showDungeons; return true; }
-  if(action==="map-toggle-toponyms"){ showToponyms=!showToponyms; return true; }
+function handleMapAction(buttonElement){
+  const action=buttonElement?.dataset?.mapAction;
+  if(action==="open") return openMap(buttonElement.dataset.mapId);
+  if(action==="back") return openMap(MAPS[currentMap]?.parent || "entrevers");
+  if(action==="toggle-dungeons"){ showDungeons=!showDungeons; return true; }
+  if(action==="toggle-toponyms"){ showToponyms=!showToponyms; return true; }
   return false;
 }
+
+document.addEventListener("click", event => {
+  const buttonElement = event.target?.closest?.("[data-map-action]");
+  if (!buttonElement) return;
+  const action = buttonElement.dataset.mapAction;
+  if (!handleMapAction(buttonElement)) return;
+  const eviction = action === "open" || action === "back" ? evictMapAssetCache() : null;
+  window.dispatchEvent(new CustomEvent("gargottex:map-render"));
+  if (eviction) void eviction;
+});
 window.addEventListener("pagehide", () => {
   if (document.querySelector(".map-v2-page")) void evictMapAssetCache();
 });
