@@ -116,7 +116,15 @@ function bindMapViewActions(root = document) {
       }
       if (nearestDistance > 100 * 100) buttonElement = null;
     }
-    if (!buttonElement || !handleMapAction(buttonElement)) return;
+    const handled = Boolean(buttonElement && handleMapAction(buttonElement));
+    document.documentElement.dataset.mapActionProbe = JSON.stringify({
+      candidate: buttonElement?.dataset?.mapId || "",
+      action: buttonElement?.dataset?.mapAction || "",
+      handled,
+      current: currentMap,
+      target: event.target?.className || event.target?.tagName
+    });
+    if (!handled) return;
     const action = buttonElement.dataset.mapAction;
     if (action === "open" || action === "back" || action === "map-back") void evictMapAssetCache();
     const main = document.querySelector("#main-content");
