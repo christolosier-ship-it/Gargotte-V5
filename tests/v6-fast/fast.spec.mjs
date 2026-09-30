@@ -1635,6 +1635,7 @@ test("Map V2 offers both dimensions and groups the mobile entry with Brouhaha", 
   await expect(page.locator(".map-toponym")).toHaveCount(16);
   await expect(page.locator('[data-map-action="toggle-dungeons"]')).toHaveCount(0);
   await page.locator('[data-map-action="back"]').click();
+  await expect(page.locator(".map-v2-frame.is-image-ready")).toHaveCount(1);
   await page.locator('[data-map-action="open"][data-map-id="enfer"]').click();
   await expect(page.locator("#map-page-title")).toHaveText("L’Enfer de la Sobriété Éternelle");
 
