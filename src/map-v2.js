@@ -87,9 +87,32 @@ function renderMapView(){
     const image = document.querySelector(".map-v2-image");
     if (!image) return;
     const frame = image.closest(".map-v2-frame");
-    const markReady = () => frame?.classList.add("is-image-ready");
+    if (!frame) return;
+    const markReady = () => frame.classList.add("is-image-ready");
     if (image.complete && image.naturalWidth > 0) markReady();
     else image.addEventListener("load", markReady, { once: true });
+    frame.addEventListener("click", event => {
+      let buttonElement = event.target?.closest?.("[data-map-action]");
+      if (!buttonElement) {
+        let nearestDistance = Infinity;
+        for (const candidate of frame.querySelectorAll(".map-hotspot[data-map-action]")) {
+          const rect = candidate.getBoundingClientRect();
+          const dx = event.clientX - (rect.left + rect.width / 2);
+          const dy = event.clientY - (rect.top + rect.height / 2);
+          const distance = dx * dx + dy * dy;
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            buttonElement = candidate;
+          }
+        }
+        if (nearestDistance > 44 * 44) buttonElement = null;
+      }
+      if (!buttonElement || !handleMapAction(buttonElement)) return;
+      const action = buttonElement.dataset.mapAction;
+      if (action === "open" || action === "back" || action === "map-back") void evictMapAssetCache();
+      const page = document.querySelector("#main-content");
+      if (page?.querySelector(".map-v2-page")) page.innerHTML = renderMapView();
+    }, true);
   });
   return markup;
 }
