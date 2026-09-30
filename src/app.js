@@ -6177,7 +6177,7 @@ function renderPage() {
     case "codex": return renderCodex();
     case "generator": return renderGenerator();
     case "brouhaha": return renderBrouhaha();
-    case "map": return renderMapView();
+    case "map": return renderShell(renderMapView());
     case "quests": return renderQuests();
     case "atelier": return renderAtelier();
     case "media": return renderMedia();
