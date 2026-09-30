@@ -64,8 +64,11 @@ Le contrôle « afficher/masquer » n’est pas une barrière de confidentialit�
 2. [Lot 2 — hiérarchie, interactions et placements](V6-MAP-V2-INTEGRATION-LOT-2-INTERACTIONS-PLACEMENTS.md)
 3. [Lot 3 — affichage des sprites de donjons](V6-MAP-V2-INTEGRATION-LOT-3-DONJONS.md)
 4. [Lot 4 — chargement, éviction et validation](V6-MAP-V2-INTEGRATION-LOT-4-CACHE-VALIDATION.md)
+5. [Lot 5 — toponymie des cartes hors Entrevers](V6-MAP-V2-INTEGRATION-LOT-5-TOPONYMIE.md)
 
-Les validations doivent rester ciblées et légères : inventaire/manifeste exact, navigation bout-en-bout, affichage/masquage des sprites, cycle d’entrée/sortie de carte, responsive tablette/desktop/téléphone, et absence de régression dans les parcours existants. Pas d’assertions fragiles de pixels ou de durée. Aucune gate ne doit impliquer d’effacement de cache global, d’IndexedDB ou de données utilisateur.
+Le lot 5 couvre les libellés des fonds Ardéra, des sept continents, des deux dimensions et de la carte fille de la cité sous-marine. L’Entrevers est explicitement exclu de la couche de toponymie cartographique.
+
+Les validations doivent rester ciblées et légères : inventaire/manifeste exact, navigation bout-en-bout, affichage/masquage, taille et contour des sprites, toponymie, cycle d’entrée/sortie de carte, responsive tablette/desktop/téléphone, et absence de régression dans les parcours existants. Pas d’assertions fragiles de pixels ou de durée. Aucune gate ne doit impliquer d’effacement de cache global, d’IndexedDB ou de données utilisateur.
 
 ## Sources d’autorité
 
