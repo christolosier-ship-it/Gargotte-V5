@@ -102,8 +102,8 @@ function bindMapViewActions(root = document) {
     let buttonElement = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-map-action]");
     if (!pageView.contains(buttonElement)) buttonElement = event.target?.closest?.("[data-map-action]");
     const mapFrame = event.target?.closest?.(".map-v2-frame") || pageView.querySelector(".map-v2-frame");
+    let nearestDistance = Infinity;
     if (!buttonElement && mapFrame) {
-      let nearestDistance = Infinity;
       for (const candidate of mapFrame.querySelectorAll(".map-hotspot[data-map-action]")) {
         const rect = candidate.getBoundingClientRect();
         const dx = event.clientX - (rect.left + rect.width / 2);
@@ -118,6 +118,9 @@ function bindMapViewActions(root = document) {
     }
     const handled = Boolean(buttonElement && handleMapAction(buttonElement));
     document.documentElement.dataset.mapActionProbe = JSON.stringify({
+      point: [event.clientX, event.clientY],
+      frame: mapFrame ? [mapFrame.getBoundingClientRect().x, mapFrame.getBoundingClientRect().y, mapFrame.getBoundingClientRect().width, mapFrame.getBoundingClientRect().height] : null,
+      nearestDistance: Number.isFinite(nearestDistance) ? Math.sqrt(nearestDistance) : null,
       candidate: buttonElement?.dataset?.mapId || "",
       action: buttonElement?.dataset?.mapAction || "",
       handled,
