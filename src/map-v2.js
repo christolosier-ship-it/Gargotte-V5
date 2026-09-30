@@ -115,14 +115,17 @@ function handleMapAction(buttonElement){
 }
 
 document.addEventListener("click", event => {
-  const buttonElement = event.target?.closest?.("[data-map-action]");
+  const buttonElement = event.composedPath?.().find(node => node instanceof Element && node.matches("[data-map-action]"))
+    || event.target?.closest?.("[data-map-action]");
   if (!buttonElement) return;
   const action = buttonElement.dataset.mapAction;
   if (!handleMapAction(buttonElement)) return;
   if (action === "open" || action === "back" || action === "map-back") void evictMapAssetCache();
-  const page = document.querySelector("#main-content");
-  if (page?.querySelector(".map-v2-page")) page.innerHTML = renderMapView();
-});
+  queueMicrotask(() => {
+    const page = document.querySelector("#main-content");
+    if (page?.querySelector(".map-v2-page")) page.innerHTML = renderMapView();
+  });
+}, true);
 window.addEventListener("pagehide", () => {
   if (document.querySelector(".map-v2-page")) void evictMapAssetCache();
 });
