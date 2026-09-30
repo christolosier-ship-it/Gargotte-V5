@@ -104,10 +104,12 @@ function bindMapViewActions(root = document) {
     const mapFrame = event.target?.closest?.(".map-v2-frame") || pageView.querySelector(".map-v2-frame");
     let nearestDistance = Infinity;
     if (!buttonElement && mapFrame) {
+      const frameRect = mapFrame.getBoundingClientRect();
       for (const candidate of mapFrame.querySelectorAll(".map-hotspot[data-map-action]")) {
-        const rect = candidate.getBoundingClientRect();
-        const dx = event.clientX - (rect.left + rect.width / 2);
-        const dy = event.clientY - (rect.top + rect.height / 2);
+        const x = Number.parseFloat(candidate.style.getPropertyValue("--x"));
+        const y = Number.parseFloat(candidate.style.getPropertyValue("--y"));
+        const dx = event.clientX - (frameRect.left + frameRect.width * x / 100);
+        const dy = event.clientY - (frameRect.top + frameRect.height * y / 100);
         const distance = dx * dx + dy * dy;
         if (distance < nearestDistance) {
           nearestDistance = distance;
