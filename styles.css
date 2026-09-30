@@ -3507,18 +3507,18 @@ body.cinematic-open{overflow:hidden}
 .map-v2-header h1{margin:0;color:#fff0dd;font:800 clamp(30px,4vw,48px)/1.04 Alegreya,Georgia,serif}
 .map-status-note{max-width:680px;margin:8px 0 0;color:var(--color-text-secondary);font-size:13px}
 .map-toolbar{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
-.map-action-button{min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border:1px solid var(--color-border);border-radius:10px;background:rgba(255,255,255,.035);color:var(--color-text-primary);font:700 12px/1.2 inherit;cursor:pointer}
+.map-action-button{min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border:1px solid var(--color-border);border-radius:10px;background:rgba(255,255,255,.035);color:var(--color-text-primary);font:inherit;font-size:12px;font-weight:700;line-height:1.2;cursor:pointer}
 .map-action-button:hover,.map-action-button:focus-visible{border-color:var(--color-accent-gold-soft);outline:none}
 .map-action-button.is-on{border-color:rgba(212,164,95,.55);background:rgba(212,164,95,.12);color:#ffe3b6}
 .map-toggle-state{color:var(--color-text-secondary);font-size:11px;font-weight:600}
-.map-v2-frame{position:relative;width:100%;max-height:76vh;overflow:hidden;border:1px solid rgba(227,184,120,.38);border-radius:14px;background:#140f0b;box-shadow:0 18px 50px rgba(0,0,0,.34);isolation:isolate}
-.map-v2-image{display:block;width:100%;height:auto;max-height:76vh;object-fit:contain;margin:auto}
+ .map-v2-frame{position:relative;display:block;width:fit-content;max-width:100%;max-height:76vh;margin:0 auto;overflow:hidden;border:1px solid rgba(227,184,120,.38);border-radius:14px;background:#140f0b;box-shadow:0 18px 50px rgba(0,0,0,.34);isolation:isolate}
+.map-v2-image{display:block;width:auto;height:auto;max-width:100%;max-height:76vh;object-fit:contain;margin:auto}
 .map-toponym{position:absolute;z-index:2;left:var(--x);top:var(--y);max-width:min(24%,220px);transform:translate(-50%,-50%);padding:3px 6px;border:1px solid rgba(248,221,177,.22);border-radius:5px;background:rgba(25,18,13,.78);box-shadow:0 1px 4px #000a;color:#fff2d9;font:700 clamp(9px,.82vw,13px)/1.15 Alegreya,Georgia,serif;text-align:center;text-wrap:balance;pointer-events:none}
 .map-toponym-water{color:#d4f2ff;background:rgba(5,30,43,.8);font-style:italic;font-weight:600}
 .map-toponym-secondary{font-size:clamp(9px,.72vw,11px);font-style:italic}
 .map-toponym-major{padding:4px 7px;border-color:rgba(255,213,132,.58);color:#ffe1a6;font-size:clamp(10px,.95vw,15px);font-weight:800}
 .map-hotspots{position:absolute;z-index:3;inset:0;pointer-events:none}
-.map-hotspot{position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);max-width:22%;min-height:35px;padding:6px 9px;border:1px solid rgba(255,219,160,.85);border-radius:999px;background:rgba(20,15,10,.86);box-shadow:0 2px 10px #000b;color:#fff0d6;font:800 clamp(10px,.94vw,14px)/1.1 inherit;text-align:center;cursor:pointer;pointer-events:auto}
+.map-hotspot{position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);max-width:22%;min-height:35px;padding:6px 9px;border:1px solid rgba(255,219,160,.85);border-radius:999px;background:rgba(20,15,10,.86);box-shadow:0 2px 10px #000b;color:#fff0d6;font:inherit;font-size:clamp(10px,.94vw,14px);font-weight:800;line-height:1.1;text-align:center;cursor:pointer;pointer-events:auto}
 .map-hotspot:hover,.map-hotspot:focus-visible{outline:2px solid #ffe2a6;outline-offset:2px;background:#332318}
 .map-hotspot-world{border-color:#ffe1a6;background:rgba(117,68,26,.92);font-size:clamp(14px,1.5vw,21px)}
 .map-hotspot-dimension{border-color:rgba(204,194,255,.8);background:rgba(41,35,72,.9)}
@@ -3535,8 +3535,8 @@ body.cinematic-open{overflow:hidden}
   .map-v2-header{align-items:flex-start;flex-direction:column}
   .map-toolbar{width:100%;justify-content:flex-start}
   .map-action-button{min-height:40px;padding:0 10px}
-  .map-v2-frame{max-height:none}
-  .map-v2-image{max-height:none}
+  .map-v2-frame{width:100%;max-height:none}
+  .map-v2-image{width:100%;max-height:none}
   .map-toponym{max-width:29%;padding:2px 4px;font-size:9px}
   .map-toponym-secondary{font-size:8px}
   .map-toponym-major{font-size:10px}
