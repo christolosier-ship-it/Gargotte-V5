@@ -1606,7 +1606,7 @@ test("Map V2 navigates the hierarchy and keeps dungeon markers presentation-only
   await page.locator('[data-action="map-open"][data-map-id="valdorie"]').click();
   await expect(page.locator("#map-page-title")).toHaveText("Valdorie");
   await expect(page.locator(".map-dungeon-pin")).toHaveCount(9);
-  await expect(page.locator(".map-dungeon-pin img").first()).toHaveJSProperty("complete", true);
+  await expect.poll(() => page.locator(".map-dungeon-pin img").first().evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
   await page.locator('[data-action="map-toggle-dungeons"]').click();
   await expect(page.locator('[data-action="map-toggle-dungeons"]')).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator(".map-dungeon-pin")).toHaveCount(0);
