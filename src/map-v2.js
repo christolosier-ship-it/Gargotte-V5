@@ -119,7 +119,11 @@ document.addEventListener("click", event => {
     || event.target?.closest?.("[data-map-action]");
   if (!buttonElement) return;
   const action = buttonElement.dataset.mapAction;
-  if (!handleMapAction(buttonElement)) return;
+  document.documentElement.dataset.mapV2DebugAction = action;
+  const handled = handleMapAction(buttonElement);
+  document.documentElement.dataset.mapV2DebugHandled = String(handled);
+  document.documentElement.dataset.mapV2DebugCurrent = currentMap;
+  if (!handled) return;
   if (action === "open" || action === "back" || action === "map-back") void evictMapAssetCache();
   queueMicrotask(() => {
     const page = document.querySelector("#main-content");
