@@ -1,5 +1,5 @@
 
-import { renderMapView, evictMapAssetCache, openMap } from "./map-v2.js";
+import { renderMapView, bindMapViewActions, evictMapAssetCache, openMap } from "./map-v2.js";
 
 import {
   uid,
@@ -6397,6 +6397,7 @@ function render() {
   const hadDialog = previousDialog instanceof HTMLElement;
   const focusBefore = hadDialog ? null : focusDescriptor(document.activeElement);
   app.innerHTML = renderPage();
+  if (state.ui.view === "map") bindMapViewActions(app);
   restoreBestiaryScrollAfterRender();
   restoreCodexFamilyScrollAfterRender();
   wireLazyMediaImages();
