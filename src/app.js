@@ -1,5 +1,5 @@
 
-import { renderMapView, handleMapAction, evictMapAssetCache, openMap } from "./map-v2.js";
+import { renderMapView, evictMapAssetCache, openMap } from "./map-v2.js";
 
 import {
   uid,
