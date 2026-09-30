@@ -119,16 +119,6 @@ function bindMapViewActions(root = document) {
       if (nearestDistance > 100 * 100) buttonElement = null;
     }
     const handled = Boolean(buttonElement && handleMapAction(buttonElement));
-    document.documentElement.dataset.mapActionProbe = JSON.stringify({
-      point: [event.clientX, event.clientY],
-      frame: mapFrame ? [mapFrame.getBoundingClientRect().x, mapFrame.getBoundingClientRect().y, mapFrame.getBoundingClientRect().width, mapFrame.getBoundingClientRect().height] : null,
-      nearestDistance: Number.isFinite(nearestDistance) ? Math.sqrt(nearestDistance) : null,
-      candidate: buttonElement?.dataset?.mapId || "",
-      action: buttonElement?.dataset?.mapAction || "",
-      handled,
-      current: currentMap,
-      target: event.target?.className || event.target?.tagName
-    });
     if (!handled) return;
     const action = buttonElement.dataset.mapAction;
     if (action === "open" || action === "back" || action === "map-back") void evictMapAssetCache();
