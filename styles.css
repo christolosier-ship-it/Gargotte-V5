@@ -3559,3 +3559,5 @@ body.cinematic-open{overflow:hidden}
   .map-toponym-secondary{font-size:7.5px}
   .map-dungeon-pin{width:34px}
 }
+
+.map-v2-frame:not(.is-image-ready) .map-hotspots{visibility:hidden}
