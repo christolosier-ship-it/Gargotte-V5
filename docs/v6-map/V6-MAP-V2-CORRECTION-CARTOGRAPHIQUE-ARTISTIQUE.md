@@ -229,21 +229,47 @@ Repère visuel : Port ouest ; hautes montagnes ; arbres géants nord-est ; cité
 
 | Libellé (nom validé) | Catégorie | x % | y % | Ancre |
 |---|---|---:|---:|---|
-| Les Côtes Grises | region | 18 | 30 | Proposition à annoter |
-| Les Hautes Marches | region | 43 | 13 | Proposition à annoter |
-| La Sylve des Anciens | region | 84 | 20 | Proposition à annoter |
-| Les Plaines de Valdor | region | 50 | 64 | Proposition à annoter |
-| Les Bassins de l’Est | region | 81 | 64 | Proposition à annoter |
-| Les Terres de Cendre | region | 28 | 66 | Proposition à annoter |
-| Arbres-Colosses | secondary | 68 | 8 | Proposition à annoter |
-| Saint-Fût-le-Petit | secondary | 46 | 38 | Proposition à annoter |
-| La Chope Qui Colle | secondary | 50 | 34 | Proposition à annoter |
-| L’Avelorne | secondary | 60 | 42 | Proposition à annoter |
-| La Rivombre | secondary | 30 | 32 | Proposition à annoter |
-| Ruisseau des Saules | secondary | 41 | 43 | Proposition à annoter |
-| Lac d’Ysambre | secondary | 77 | 60 | Proposition à annoter |
-| Collines de la Vieille Lande | secondary | 37 | 46 | Proposition à annoter |
-| Monts d’Escarbelle | secondary | 24 | 77 | Proposition à annoter |
+| Les Côtes Grises | region | 18 | 17 | Côte du port occidental |
+| Les Hautes Marches | region | 46.5 | 13 | Chaîne montagneuse septentrionale |
+| La Sylve des Anciens | region | 83 | 14 | Forêt des arbres géants |
+| Les Plaines de Valdor | region | 53 | 46 | Champs au nord de la cité |
+| Les Bassins de l’Est | region | 84 | 62 | Bassins orientaux |
+| Les Terres de Cendre | region | 18 | 65 | Péninsule aride occidentale |
+| Arbres-Colosses | secondary | 79 | 19 | Groupe de grands troncs et cascade |
+| Saint-Fût-le-Petit | secondary | 77 | 39 | Hameau oriental près du vieux pont |
+| La Chope Qui Colle | secondary | 83 | 47 | Auberge à l’est du hameau |
+| L’Avelorne | secondary | 55 | 29 | Rivière descendant des montagnes |
+| La Rivombre | secondary | 12 | 39 | Embouchure occidentale près du port |
+| Ruisseau des Saules | secondary | 87 | 38 | Branche d’eau à l’est du hameau |
+| Lac d’Ysambre | secondary | 88 | 70 | Plan d’eau du bassin sud-est |
+| Collines de la Vieille Lande | secondary | 36 | 42 | Collines derrière le moulin occidental |
+| Monts d’Escarbelle | secondary | 22 | 73 | Roches côtières du sud-ouest |
+
+#### Premier recalage sur les planches MJ fournies — 2026-10-01
+
+Source : planche « Valdorie — Toponymie & implantations de référence » fournie par le propriétaire (1536 × 1024), comparée au fond existant (3072 × 2048). Les centres de texte ci-dessus sont des placements de lecture à proximité des éléments peints, pas des coordonnées canoniques ni une copie des cartouches de la planche. Les noms, la police, les tailles et les fonds sont conservés ; aucun cartouche, code D ni légende MJ n’est ajouté à la carte publique.
+
+Les pointes des repères de la planche donnent les ancrages visuels suivants, approximatifs en pourcentage de l’image de référence :
+
+| Lieu | Ancre x % | Ancre y % |
+|---|---:|---:|
+| Arbres-Colosses | 72.5 | 17.2 |
+| Saint-Fût-le-Petit | 77.0 | 41.5 |
+| La Chope Qui Colle | 81.4 | 43.8 |
+| L’Avelorne | 52.9 | 33.5 |
+| La Rivombre | 11.3 | 31.6 |
+| Ruisseau des Saules | 87.6 | 41.2 |
+| Lac d’Ysambre | 82.4 | 69.1 |
+| Collines de la Vieille Lande | 37.5 | 45.0 |
+| Monts d’Escarbelle | 17.6 | 72.0 |
+
+La planche prime pour ce premier placement visuel des Collines de la Vieille Lande, malgré l’indication relative « près de Saint-Fût » du cahier initial : cette divergence reste signalée, sans réécriture du canon. Les deux illustrations ne constituent pas un relevé géographique exact ; la validation artistique finale reste au propriétaire.
+
+La planche « Ferrécime — Implantations proposées des donjons » renseigne D12 (plateau ouest, environ 21.3/38.0), D14 (roche ordinaire sous les îles flottantes, environ 53.2/55.3), D15 (flanc volcanique, environ 67.8/78.5). Elle ne situe pas les libellés régionaux : la toponymie de Ferrécime n’est donc pas déplacée sur cette seule base.
+
+**Passe sprites différée :** aucune position, largeur, ancre de pied, surbrillance ou image de donjon n’est modifiée ici. Le décalage des anciens sprites D01/D02 par rapport à la nouvelle implantation orientale de la Chope reste connu et non résolu. Le prochain lot doit recaler les sites Valdorie/Ferrécime sur les planches et dimensionner chaque silhouette visible par comparaison avec les bâtiments et le relief voisins ; en particulier Bastognac ne doit pas apparaître plus petit qu’une maison. Ne pas appliquer un agrandissement global arbitraire.
+
+Traçabilité : `src/map-v2-cartography.js` modifie uniquement les quinze centres de libellés de Valdorie. Le test ciblé vérifie notamment la localisation orientale de Saint-Fût/Chope/Saules et la conservation des placements de donjons. L’Entrevers sans texte, le bouton afficher/masquer et l’éviction du fond au départ restent inchangés.
 
 ### La Brasserie Céleste
 

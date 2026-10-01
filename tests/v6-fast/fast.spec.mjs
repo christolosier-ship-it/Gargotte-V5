@@ -1697,6 +1697,21 @@ test("Map V2 artistic correction separates painted hit areas, labels and sprite 
   // Clicking the NW painted landmass must open Valdorie, not Austrébrume.
   await page.mouse.click(world.x+world.width*.30,world.y+world.height*.31);
   await expect(page.locator('#map-page-title')).toHaveText('Valdorie');
+  // Owner's MJ reference: the hamlet, inn and stream are in the eastern sector,
+  // not the central farming settlement. Check local label centres, not screen pixels.
+  const recalage=await page.evaluate(async()=>{
+    const {MAPS}=await import('./src/map-v2-data.js');
+    const {SPRITE_PLACEMENTS}=await import('./src/map-v2-cartography.js');
+    return {
+      places:MAPS.valdorie.toponyms.filter(([name])=>['Saint-Fût-le-Petit','La Chope Qui Colle','Ruisseau des Saules'].includes(name)).map(([name,x,y])=>[name,x,y]),
+      sprite:SPRITE_PLACEMENTS.D01
+    };
+  });
+  expect(recalage.places).toEqual([
+    ['Saint-Fût-le-Petit',77,39],['La Chope Qui Colle',83,47],['Ruisseau des Saules',87,38]
+  ]);
+  // Sprite placement/scaling is intentionally deferred in this toponymy-only pass.
+  expect(recalage.sprite).toEqual([40,37,4.8,50,93,35,36]);
   await expect(page.locator('.map-v2-frame [data-placement-id="D06"]')).toHaveCount(0);
   await expect(page.locator('.map-underground img')).toHaveCount(1);
   await page.evaluate(()=>{ window.mapReviewImage=document.querySelector('.map-v2-image'); });
