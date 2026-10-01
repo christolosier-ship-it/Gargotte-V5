@@ -11,6 +11,8 @@ const ASSETS = [
   "./seed-data.js",
   "./src/app.js",
   "./src/map-v2.js",
+  "./src/map-v2-data.js",
+  "./src/map-v2-cartography.js",
   "./src/utils/common.js",
   "./src/utils/zip.js",
   "./src/utils/xlsx.js",
