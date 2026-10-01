@@ -1,6 +1,8 @@
 
 const CACHE = "gargottex-v6-whaou-final-v1";
 const CACHE_PREFIX = "gargottex-";
+const MAP_CACHE = "map-v2-active-v1";
+let mapCacheGeneration = 0;
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +10,7 @@ const ASSETS = [
   "./manifest.webmanifest",
   "./seed-data.js",
   "./src/app.js",
+  "./src/map-v2.js",
   "./src/utils/common.js",
   "./src/utils/zip.js",
   "./src/utils/xlsx.js",
@@ -90,6 +93,24 @@ self.addEventListener("activate", event => {
   })());
 });
 
+function isMapAsset(req) {
+  const url = new URL(req.url);
+  const scopePath = new URL(self.registration.scope).pathname;
+  if (url.origin !== self.location.origin || !url.pathname.startsWith(scopePath)) return false;
+  const assetPath = url.pathname.slice(scopePath.length);
+  return assetPath.startsWith("assets/maps/") || assetPath.startsWith("assets/sprites/");
+}
+
+async function fetchMapAsset(req) {
+  const generation = mapCacheGeneration;
+  const fresh = await fetch(req);
+  if (fresh && fresh.ok && generation === mapCacheGeneration) {
+    const cache = await caches.open(MAP_CACHE);
+    if (generation === mapCacheGeneration) await cache.put(req, fresh.clone());
+  }
+  return fresh;
+}
+
 async function fetchAndRefreshCache(req) {
   const fresh = await fetch(req, { cache: "no-cache" });
   if (fresh && fresh.ok) {
@@ -102,6 +123,18 @@ async function fetchAndRefreshCache(req) {
 self.addEventListener("fetch", event => {
   const req = event.request;
   if (req.method !== "GET") return;
+
+  if (isMapAsset(req)) {
+    const response = fetchMapAsset(req).catch(async () => {
+      const cache = await caches.open(MAP_CACHE);
+      return await cache.match(req, { ignoreSearch: true }) || new Response("Offline", {
+        status: 503,
+        headers: { "Content-Type": "text/plain" }
+      });
+    });
+    event.respondWith(response);
+    return;
+  }
 
   const refreshPromise = fetchAndRefreshCache(req);
   event.waitUntil(refreshPromise.then(() => undefined).catch(() => undefined));
@@ -128,5 +161,13 @@ self.addEventListener("fetch", event => {
 self.addEventListener("message", event => {
   if (event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
+    return;
+  }
+  if (event.data?.type === "MAP_V2_EVICT") {
+    event.waitUntil((async () => {
+      mapCacheGeneration += 1;
+      await caches.delete(MAP_CACHE);
+      event.ports?.[0]?.postMessage({ ok: true });
+    })());
   }
 });

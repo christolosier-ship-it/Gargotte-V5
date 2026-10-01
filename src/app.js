@@ -1,4 +1,6 @@
 
+import { renderMapView, bindMapViewActions, evictMapAssetCache, openMap } from "./map-v2.js";
+
 import {
   uid,
   nowISO,
@@ -1210,7 +1212,12 @@ function queueDungeonCinematic(dungeon) {
 function queueWhaouPageReveal() {
   requestAnimationFrame(() => {
     const page = document.querySelector(".v6-main");
-    if (!page || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+    if (!page) return;
+    if (page.querySelector(".map-v2-page")) {
+      page.classList.remove("whaou-page-enter");
+      return;
+    }
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
     page.classList.remove("whaou-page-enter");
     void page.offsetWidth;
     page.classList.add("whaou-page-enter");
@@ -2884,6 +2891,7 @@ function shellIcon(name, className = "") {
     home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     book: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3Z"/><path d="M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3v15a3 3 0 0 1 3-3Z"/>',
     game: '<rect width="12" height="12" x="2" y="10" rx="2"/><path d="m14.92 14.92 4.5-4.5a2.12 2.12 0 0 0 0-3l-2.34-2.34a2.12 2.12 0 0 0-3 0L9.58 9.58"/><path d="m6 14 .01 0"/><path d="m10 18 .01 0"/><path d="m17 7 .01 0"/><path d="m14 10 .01 0"/>',
+    map: '<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/>',
     waveform: '<path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/>',
     scroll: '<path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h8a3 3 0 0 0 3-3v-1H7v1a3 3 0 0 1-6 0V5a2 2 0 0 1 2-2h1"/>',
     tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/>',
@@ -2908,11 +2916,11 @@ function mobileNavButton(view,label,iconHtml){
   return '<button class="mobile-nav-item '+active+'" data-action="set-view" data-view="'+view+'" '+(active?'aria-current="page"':'')+'>'+iconHtml+'<span>'+label+'</span></button>';
 }
 function renderShell(content){
-  const gameActive=["generator","brouhaha"].includes(state.ui.view);
+  const gameActive=["generator","brouhaha","map"].includes(state.ui.view);
   const moreActive=["atelier","media","import"].includes(state.ui.view);
   const shellMood = state.ui.view === "home"
     ? "home"
-    : ["generator","brouhaha","quests"].includes(state.ui.view)
+    : ["generator","brouhaha","map","quests"].includes(state.ui.view)
       ? "game"
       : ["atelier","media","import"].includes(state.ui.view)
         ? "admin"
@@ -2926,6 +2934,7 @@ function renderShell(content){
           navButton("codex","Codex",shellIcon("book")),
           navButton("generator","Générateur",shellIcon("game")),
           navButton("brouhaha","Brouhaha",shellIcon("waveform")),
+          navButton("map","Map",shellIcon("map")),
           navButton("quests","Quêtes",shellIcon("scroll")),
         '</nav><div class="nav-title">Administration</div><nav class="v6-nav">',
           navButton("atelier","Atelier",shellIcon("tool")),
@@ -2941,7 +2950,7 @@ function renderShell(content){
       '<nav class="mobile-bottom" aria-label="Navigation téléphone">',
         mobileNavButton("home","Accueil",shellIcon("home")),
         mobileNavButton("codex","Codex",shellIcon("book")),
-        '<details class="mobile-nav-group '+(gameActive?"active":"")+'"><summary>'+shellIcon("game")+'<span>Jeu</span></summary><div class="mobile-nav-popover" role="menu"><button data-action="set-view" data-view="generator" role="menuitem">'+shellIcon("game")+'<span>Générateur</span></button><button data-action="set-view" data-view="brouhaha" role="menuitem">'+shellIcon("waveform")+'<span>Brouhaha</span></button></div></details>',
+        '<details class="mobile-nav-group '+(gameActive?"active":"")+'"><summary>'+shellIcon("game")+'<span>Jeu</span></summary><div class="mobile-nav-popover" role="menu"><button data-action="set-view" data-view="generator" role="menuitem">'+shellIcon("game")+'<span>Générateur</span></button><button data-action="set-view" data-view="brouhaha" role="menuitem">'+shellIcon("waveform")+'<span>Brouhaha</span></button><button data-action="set-view" data-view="map" role="menuitem">'+shellIcon("map")+'<span>Map</span></button></div></details>',
         mobileNavButton("quests","Quêtes",shellIcon("scroll")),
         '<details class="mobile-nav-group '+(moreActive?"active":"")+'"><summary>'+shellIcon("more")+'<span>Plus</span></summary><div class="mobile-nav-popover mobile-nav-popover-right" role="menu"><button data-action="set-view" data-view="atelier" role="menuitem">'+shellIcon("tool")+'<span>Atelier</span></button><button data-action="set-view" data-view="media" role="menuitem">'+shellIcon("image")+'<span>Médias</span></button><button data-action="set-view" data-view="import" role="menuitem">'+shellIcon("transfer")+'<span>Import / Export</span></button><button data-action="toggle-journal" role="menuitem">'+shellIcon("journal")+'<span>Journal</span></button></div></details>',
       '</nav></div></div>'
@@ -6173,6 +6182,7 @@ function renderPage() {
     case "codex": return renderCodex();
     case "generator": return renderGenerator();
     case "brouhaha": return renderBrouhaha();
+    case "map": return renderShell(renderMapView());
     case "quests": return renderQuests();
     case "atelier": return renderAtelier();
     case "media": return renderMedia();
@@ -6387,6 +6397,7 @@ function render() {
   const hadDialog = previousDialog instanceof HTMLElement;
   const focusBefore = hadDialog ? null : focusDescriptor(document.activeElement);
   app.innerHTML = renderPage();
+  if (state.ui.view === "map") bindMapViewActions(app);
   restoreBestiaryScrollAfterRender();
   restoreCodexFamilyScrollAfterRender();
   wireLazyMediaImages();
@@ -6784,6 +6795,8 @@ function bindEvents() {
         case "go-home":
         case "set-view": {
           const nextView = btn.dataset.view || "home";
+          const leavingMap = state.ui.view === "map" && nextView !== "map";
+          if (nextView === "map" && state.ui.view !== "map") openMap("entrevers");
           if (nextView !== state.ui.view) resetMediaRuntimeContext();
           clearCodexContext(true);
           state.ui.view = nextView;
@@ -6792,6 +6805,7 @@ function bindEvents() {
           if (nextView === "media") await ensureMediaCatalog();
           await saveUiState(state.ui);
           render();
+          if (leavingMap) await evictMapAssetCache();
           queueWhaouPageReveal();
           if (nextView === "import" && !state.diagnostic) {
             void refreshDiagnostic(true).catch(err => reportError(err, "diagnostic:open"));

@@ -3498,3 +3498,67 @@ body.cinematic-open{overflow:hidden}
   .workshop-family-menu button,.workshop-list-card{transition:none!important}
   .workshop-save-state[data-state="saved"]{animation:none!important}
 }
+
+
+/* V6-Map V2 — consultation cartographique */
+.map-v2-page{max-width:1680px;margin:0 auto;padding:clamp(12px,2vw,28px)}
+.map-v2-header{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:0 auto 16px}
+.map-eyebrow{margin:0 0 5px;color:var(--color-accent-gold-soft);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.map-v2-header h1{margin:0;color:#fff0dd;font:800 clamp(30px,4vw,48px)/1.04 Alegreya,Georgia,serif}
+.map-status-note{max-width:680px;margin:8px 0 0;color:var(--color-text-secondary);font-size:13px}
+.map-toolbar{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.map-action-button{min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border:1px solid var(--color-border);border-radius:10px;background:rgba(255,255,255,.035);color:var(--color-text-primary);font:inherit;font-size:12px;font-weight:700;line-height:1.2;cursor:pointer}
+.map-action-button:hover,.map-action-button:focus-visible{border-color:var(--color-accent-gold-soft);outline:none}
+.map-action-button.is-on{border-color:rgba(212,164,95,.55);background:rgba(212,164,95,.12);color:#ffe3b6}
+.map-toggle-state{color:var(--color-text-secondary);font-size:11px;font-weight:600}
+ .map-v2-frame{position:relative;display:block;width:fit-content;max-width:100%;max-height:76vh;margin:0 auto;overflow:hidden;border:1px solid rgba(227,184,120,.38);border-radius:14px;background:#140f0b;box-shadow:0 18px 50px rgba(0,0,0,.34);isolation:isolate}
+.map-v2-image{display:block;width:auto;height:auto;max-width:100%;max-height:76vh;object-fit:contain;margin:auto}
+.map-toponym{position:absolute;z-index:2;left:var(--x);top:var(--y);max-width:min(24%,220px);transform:translate(-50%,-50%);padding:3px 6px;border:1px solid rgba(248,221,177,.22);border-radius:5px;background:rgba(25,18,13,.78);box-shadow:0 1px 4px #000a;color:#fff2d9;font:700 clamp(9px,.82vw,13px)/1.15 Alegreya,Georgia,serif;text-align:center;text-wrap:balance;pointer-events:none}
+.map-toponym-water{color:#d4f2ff;background:rgba(5,30,43,.8);font-style:italic;font-weight:600}
+.map-toponym-secondary{font-size:clamp(9px,.72vw,11px);font-style:italic}
+.map-toponym-major{padding:4px 7px;border-color:rgba(255,213,132,.58);color:#ffe1a6;font-size:clamp(10px,.95vw,15px);font-weight:800}
+.map-hotspots{position:absolute;z-index:3;inset:0;pointer-events:none}
+.map-hotspot{position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);max-width:22%;min-height:35px;padding:6px 9px;border:1px solid rgba(255,219,160,.85);border-radius:999px;background:rgba(20,15,10,.86);box-shadow:0 2px 10px #000b;color:#fff0d6;font:inherit;font-size:clamp(10px,.94vw,14px);font-weight:800;line-height:1.1;text-align:center;cursor:pointer;pointer-events:auto}
+.map-hotspot:hover,.map-hotspot:focus-visible{outline:2px solid #ffe2a6;outline-offset:2px;background:#332318}
+.map-hotspot-world{border-color:#ffe1a6;background:rgba(117,68,26,.92);font-size:clamp(14px,1.5vw,21px)}
+.map-hotspot-dimension{border-color:rgba(204,194,255,.8);background:rgba(41,35,72,.9)}
+.map-hotspot-child{border-color:rgba(141,229,236,.88);background:rgba(10,67,79,.92)}
+.map-dungeon-pin{position:absolute;z-index:4;left:var(--x);top:var(--y);width:clamp(38px,5.2vw,72px);transform:translate(-50%,-50%);display:grid;justify-items:center;gap:3px;pointer-events:none}
+.map-dungeon-pin img{display:block;width:100%;height:auto;max-height:clamp(38px,5.2vw,72px);object-fit:contain;filter:drop-shadow(0 0 1.4px #fff6d7) drop-shadow(0 0 3px #e8b968) drop-shadow(0 2px 5px #000d)}
+.map-dungeon-label{max-width:180px;padding:2px 5px;border:1px solid rgba(243,199,125,.36);border-radius:4px;background:rgba(21,14,10,.84);color:#fff0d8;font:700 clamp(9px,.72vw,11px)/1.12 Alegreya,Georgia,serif;text-align:center;text-wrap:balance;box-shadow:0 1px 4px #0009}
+.map-dungeon-pair{position:absolute;z-index:4;left:var(--x);top:var(--y);transform:translate(-50%,-50%);display:grid;justify-items:center;gap:3px;pointer-events:none}
+.map-dungeon-pair-icons{display:flex;align-items:center;gap:4px}
+.map-dungeon-pair-icons img{display:block;width:clamp(36px,3.6vw,50px);height:auto;max-height:50px;object-fit:contain;filter:drop-shadow(0 0 1.4px #fff6d7) drop-shadow(0 0 3px #e8b968) drop-shadow(0 2px 5px #000d)}
+.map-dungeon-pair .map-dungeon-label{max-width:250px}
+.is-dungeons-hidden .map-dungeon-pin,.is-dungeons-hidden .map-dungeon-pair{display:none}
+.map-v2-footer{display:flex;justify-content:space-between;gap:12px;margin:10px 2px 0;color:var(--color-text-secondary);font-size:11px}
+.map-v2-footer span:first-child{color:#e8c58f;font-weight:700}
+.is-entrevers .map-toponym{display:none}
+@media(max-width:760px){
+  .map-v2-page{padding:12px 10px calc(96px + env(safe-area-inset-bottom))}
+  .map-v2-header{align-items:flex-start;flex-direction:column}
+  .map-toolbar{width:100%;justify-content:flex-start}
+  .map-action-button{min-height:40px;padding:0 10px}
+  .map-v2-frame{width:100%;max-height:none}
+  .map-v2-image{width:100%;max-height:none}
+  .map-toponym{max-width:29%;padding:2px 4px;font-size:9px}
+  .map-toponym-secondary{font-size:8px}
+  .map-toponym-major{font-size:10px}
+  .map-hotspot{max-width:29%;min-height:30px;padding:5px 7px;font-size:10px}
+  .map-hotspot-world{font-size:13px}
+  .map-dungeon-pin{width:clamp(34px,10vw,52px)}
+  .map-dungeon-pin img{max-height:52px}
+  .map-dungeon-label{max-width:118px;font-size:9px}
+  .map-dungeon-pair-icons img{width:clamp(28px,8vw,38px);max-height:38px}
+  .map-dungeon-pair .map-dungeon-label{max-width:140px}
+  .map-v2-footer{flex-direction:column;gap:3px}
+}
+@media(max-width:420px){
+  .map-toggle-state{display:none}
+  .map-toponym{max-width:31%;font-size:8px}
+  .map-toponym-secondary{font-size:7.5px}
+  .map-dungeon-pin{width:34px}
+}
+
+.map-hotspots{pointer-events:auto}
+.map-v2-frame:not(.is-image-ready) .map-hotspots{visibility:hidden}

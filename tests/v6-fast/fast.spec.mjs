@@ -34,7 +34,7 @@ async function gotoView(page, view) {
   if (["atelier", "media", "import"].includes(view)) {
     const more = page.locator(".mobile-nav-group").filter({ hasText: "Plus" }).locator("summary");
     if (await more.isVisible()) await more.click();
-  } else if (["generator", "brouhaha"].includes(view)) {
+  } else if (["generator", "brouhaha", "map"].includes(view)) {
     const game = page.locator(".mobile-nav-group").filter({ hasText: "Jeu" }).locator("summary");
     if (await game.isVisible()) await game.click();
   }
@@ -1591,3 +1591,89 @@ test("axe smoke covers home and Codex collection", async ({ page }) => {
   await runAxe(page, "Codex collection");
 });
 
+
+
+test("Map V2 navigates the hierarchy and keeps dungeon markers presentation-only", async ({ page }) => {
+  await ready(page);
+  await gotoView(page, "map");
+  await expect(page.locator("#map-page-title")).toHaveText("L’Entrevers");
+  await expect(page.locator(".map-toponym")).toHaveCount(0);
+
+  await expect(page.locator(".map-v2-frame.is-image-ready")).toHaveCount(1);
+  await page.locator('[data-map-action="open"][data-map-id="ardera"]').click();
+  await expect(page.locator("#map-page-title")).toHaveText("Ardéra");
+  await expect(page.locator(".map-hotspot-continent")).toHaveCount(7);
+
+  await page.locator('[data-map-action="open"][data-map-id="valdorie"]').click();
+  await expect(page.locator("#map-page-title")).toHaveText("Valdorie");
+  await expect(page.locator('img[src^="assets/sprites/"]')).toHaveCount(9);
+  await expect.poll(() => page.locator(".map-dungeon-pin img").first().evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
+  await page.locator('[data-map-action="toggle-dungeons"]').click();
+  await expect(page.locator('[data-map-action="toggle-dungeons"]')).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator(".map-dungeon-pin").first()).toHaveCSS("display", "none");
+  await page.locator('[data-map-action="toggle-dungeons"]').click();
+  await expect(page.locator('img[src^="assets/sprites/"]')).toHaveCount(9);
+  await page.locator('[data-map-action="toggle-toponyms"]').click();
+  await expect(page.locator(".map-toponym")).toHaveCount(0);
+  await page.locator('[data-map-action="toggle-toponyms"]').click();
+  await expect(page.locator(".map-toponym").first()).toBeVisible();
+
+  await page.locator('[data-map-action="back"]').click();
+  await expect(page.locator("#map-page-title")).toHaveText("Ardéra");
+  await page.locator('[data-map-action="open"][data-map-id="pelagreve"]').click();
+  await expect(page.locator("#map-page-title")).toHaveText("Pélagrève");
+  await page.locator('[data-map-action="open"][data-map-id="cite_sous_marine"]').click();
+  await expect(page.locator("#map-page-title")).toHaveText("Cité sous-marine de Pélagrève");
+});
+
+test("Map V2 offers both dimensions and groups the mobile entry with Brouhaha", async ({ page }) => {
+  await ready(page);
+  await gotoView(page, "map");
+  await expect(page.locator(".map-v2-frame.is-image-ready")).toHaveCount(1);
+  await page.locator('[data-map-action="open"][data-map-id="brasserie"]').click();
+  await expect(page.locator("#map-page-title")).toHaveText("La Brasserie Céleste");
+  await expect(page.locator(".map-toponym")).toHaveCount(16);
+  await expect(page.locator('[data-map-action="toggle-dungeons"]')).toHaveCount(0);
+  await page.locator('[data-map-action="back"]').click();
+  await expect(page.locator(".map-v2-frame.is-image-ready")).toHaveCount(1);
+  await page.locator('[data-map-action="open"][data-map-id="enfer"]').click();
+  await expect(page.locator("#map-page-title")).toHaveText("L’Enfer de la Sobriété Éternelle");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await ready(page);
+  const gameMenu = page.locator(".mobile-nav-group").filter({ hasText: "Jeu" });
+  await gameMenu.locator("summary").click();
+  await expect(gameMenu.locator('[data-action="set-view"][data-view="map"]')).toBeVisible();
+  await expect(gameMenu.locator('[data-action="set-view"][data-view="brouhaha"]')).toBeVisible();
+});
+
+
+test("Map V2 caches only the active map and evicts the cache on exit", async ({ page }) => {
+  await ready(page);
+  await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".v6-app")).toBeVisible();
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+
+  const cachedMapPaths = async () => page.evaluate(async () => {
+    const cacheName = "map-v2-active-v1";
+    if (!(await caches.keys()).includes(cacheName)) return [];
+    const cache = await caches.open(cacheName);
+    return (await cache.keys()).map(request => new URL(request.url).pathname);
+  });
+
+  await gotoView(page, "map");
+  await expect(page.locator(".map-v2-frame.is-image-ready")).toHaveCount(1);
+  await expect.poll(cachedMapPaths).toContainEqual(expect.stringContaining("Entrevers"));
+
+  await page.locator('[data-map-action="open"][data-map-id="ardera"]').click();
+  await expect(page.locator("#map-page-title")).toHaveText("Ardéra");
+  await expect(page.locator(".map-v2-frame.is-image-ready")).toHaveCount(1);
+  await expect.poll(cachedMapPaths).toContainEqual(expect.stringContaining("Ardera.webp"));
+  await expect.poll(cachedMapPaths).not.toContainEqual(expect.stringContaining("Entrevers"));
+
+  await gotoView(page, "home");
+  await expect(page.locator(".map-v2-page")).toHaveCount(0);
+  await expect.poll(cachedMapPaths).toEqual([]);
+});
