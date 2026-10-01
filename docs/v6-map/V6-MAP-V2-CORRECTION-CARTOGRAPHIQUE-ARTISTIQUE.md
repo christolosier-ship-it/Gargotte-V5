@@ -81,6 +81,7 @@ Les contours exacts sont dans `DESTINATIONS` ; ils correspondent à des zones de
 - Workflow `V6-Map artistic review` : exécute ce contrôle sur les modifications Map et publie l'artefact `v6-map-art-review` pendant 14 jours. Fast garde son job indépendant.
 - Les douze compositions desktop ont été inspectées visuellement ; téléphone/tablette et détails sont contrôlés par captures et mesures, avec inspection ciblée. Ne pas confondre revue visuelle ciblée et inspection humaine exhaustive des 72 images.
 - Limite : WebKit local non vérifié, car dépendances système manquantes et installation refusée par l'environnement. Chromium en format tablette **n'est pas** une preuve Safari/iPad réel.
+- Le scénario Map mobile porte aussi le tag `@webkit` : il est exécuté par le moteur WebKit dans la CI Full existante, en complément de Chromium Fast. Son résultat CI doit être lu séparément ; même réussi, il ne remplace pas un Safari/iPad physique.
 
 ### Revue propriétaire attendue
 

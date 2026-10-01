@@ -1721,7 +1721,7 @@ test("Map V2 artistic correction separates painted hit areas, labels and sprite 
   await expect(text).toHaveCSS('font-weight','400');
 });
 
-test("Map V2 detail reading is bounded and does not reload map assets on mobile", async ({ page }) => {
+test("Map V2 detail reading is bounded and does not reload map assets on mobile @webkit", async ({ page }) => {
   await page.setViewportSize({width:390,height:844});
   await ready(page); await gotoView(page,'map');
   await expect(page.locator('.map-v2-frame.is-image-ready')).toHaveCount(1);
