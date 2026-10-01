@@ -1691,7 +1691,9 @@ test("Map V2 artistic correction separates painted hit areas, labels and sprite 
   await brasserie.focus(); await page.keyboard.press('Enter');
   await expect(page.locator('#map-page-title')).toHaveText('La Brasserie Céleste');
   await page.locator('[data-map-action="back"]').click();
+  await expect(page.locator('#map-page-title')).toHaveText('L’Entrevers');
   await page.locator('.map-hotspot[data-map-id="ardera"]').click();
+  await expect(page.locator('#map-page-title')).toHaveText('Ardéra');
   await expect(page.locator('.map-v2-frame.is-image-ready')).toHaveCount(1);
   const world=await page.locator('.map-v2-frame').boundingBox();
   // Clicking the NW painted landmass must open Valdorie, not Austrébrume.
