@@ -32,3 +32,9 @@ Le contrôle est une préférence d’affichage et non une règle d’accès. Il
 - L’état initial du bouton et sa persistance éventuelle doivent être décidés explicitement pendant l’implémentation, puis être identiques entre le libellé, l’état visuel et l’état accessible. Ne pas inférer une préférence utilisateur non exprimée.
 - Pas de clic ouvrant un donjon, pas de fuite de comportement implicite.
 - Vérification visuelle sur une carte dense et sur une carte ayant un seul marqueur ; les 13 fichiers se chargent correctement à la demande.
+
+## Amendement de correction du 01/10/2026
+
+Chaque sprite utilise sa largeur relative et son point d'appui propres ; le texte est indépendant. D6 est présenté en coupe sous la fresque, explicitement sous D5 et sur la même planimétrie, jamais comme un second site de surface. Le bouton verrouillé masque sprites, coupe et noms de donjons, y compris l'index externe. Les WebP restent inchangés.
+
+Voir [méthode, registre et vérification](V6-MAP-V2-CORRECTION-CARTOGRAPHIQUE-ARTISTIQUE.md). Les points numériques ne deviennent pas canoniques par cette implémentation.

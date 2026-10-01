@@ -91,7 +91,17 @@ Audit effectué le 1er octobre 2026 sur le code de la branche `feat/v6-map-v2-in
 - **Hors périmètre et inchangé** : optimisation/re-encodage des WebP, édition des fonds, données métier, IndexedDB, Blobs, backend et droits de campagne.
 - La PR est **non fusionnée**. Le statut « Ready for review » concerne uniquement l’ouverture de la revue du code ; les réserves cartographiques ci-dessus restent visibles et annotables.
 
-## Sources d’autorité
+## Amendement du 01/10/2026 — correction après revue visuelle
+
+La PR #65 est désormais fusionnée. La traçabilité ci-dessus décrit **son état historique**, avant la correction dédiée ; ses positions et son appréciation artistique ne valent pas validation propriétaire.
+
+La [séquence de correction cartographique et artistique](V6-MAP-V2-CORRECTION-CARTOGRAPHIQUE-ARTISTIQUE.md) détaille les corrections réalisées, les sources, les treize ancrages de sprites, le registre complet des libellés et les limites de QA. Elle remplace la présentation initiale à cartouches et boutons nommés sur l'Entrevers, mais **ne remplace aucune des deux décisions verrouillées**.
+
+Traçabilité actuelle : noms/médias dans `src/map-v2-data.js` ; points, échelles, dimensions et polygones dans `src/map-v2-cartography.js` ; DOM/interactions dans `src/map-v2.js` ; typographie et points d'appui dans `styles.css`. Les deux nouveaux modules font partie du cache de shell, sans précharger les images. La navigation attend l'éviction de l'ancien cache Map avant de créer les requêtes du nouveau fond. Les toggles et Détails conservent le DOM des images.
+
+Les contrôles de correction complètent les cinq lots ; les coordonnées restent proposées et la revue Safari/iPad réelle ainsi que l'approbation artistique restent attendues.
+
+### Références d'autorité conservées
 
 - [Maître documentaire V2](V6-MAP-MAITRE-V2.md) et [registre des implantations](V6-MAP-V2-REGISTRE-IMPLANTATIONS.md).
 - [Socle géographique d’Ardéra](V6-MAP-V2-SOCLE-GEOGRAPHIQUE-ARDERA.md) et cahiers continentaux/dimensionnels cités par le maître.

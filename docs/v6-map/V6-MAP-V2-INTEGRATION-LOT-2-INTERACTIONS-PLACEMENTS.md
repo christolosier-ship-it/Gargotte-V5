@@ -35,3 +35,9 @@ Le registre V2 établit des continents, régions et relations relatives mais ne 
 - Les hotspots restent alignés à plusieurs tailles d’affichage et répondent au toucher/clavier.
 - Chaque emplacement sans coordonnées canoniques est visiblement marqué comme proposition dans les livrables d’implémentation.
 - Les clics sur les sprites de donjons ne prétendent pas encore ouvrir de donjon ou de fiche.
+
+## Amendement de correction du 01/10/2026
+
+Les boutons nommés de la fresque sont remplacés par des polygones cliquables sans texte. Le comptoir ambré représente Ardéra sur l'Entrevers validé ; jardin brassicole à droite, cité froide en bas à droite. Aucun clic de proximité sur les zones vides. Les alternatives clavier et listes de destinations restent hors peinture.
+
+Voir [méthode, registre et vérification](V6-MAP-V2-CORRECTION-CARTOGRAPHIQUE-ARTISTIQUE.md). Les points numériques ne deviennent pas canoniques par cette implémentation.
