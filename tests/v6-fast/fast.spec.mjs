@@ -1677,3 +1677,71 @@ test("Map V2 caches only the active map and evicts the cache on exit", async ({ 
   await expect(page.locator(".map-v2-page")).toHaveCount(0);
   await expect.poll(cachedMapPaths).toEqual([]);
 });
+
+test("Map V2 artistic correction separates painted hit areas, labels and sprite feet", async ({ page }) => {
+  await ready(page);
+  await gotoView(page, "map");
+  await expect(page.locator('.map-v2-frame.is-image-ready')).toHaveCount(1);
+  await expect(page.locator('.map-v2-frame button, .map-v2-frame span')).toHaveCount(0);
+  // The violet scene is decor, not a fourth dimension or a nearest-point fallback.
+  const frame=await page.locator('.map-v2-frame').boundingBox();
+  await page.mouse.click(frame.x+frame.width*.60,frame.y+frame.height*.27);
+  await expect(page.locator('#map-page-title')).toHaveText('L’Entrevers');
+  const brasserie=page.locator('.map-hotspot[data-map-id="brasserie"]');
+  await brasserie.focus(); await page.keyboard.press('Enter');
+  await expect(page.locator('#map-page-title')).toHaveText('La Brasserie Céleste');
+  await page.locator('[data-map-action="back"]').click();
+  await page.locator('.map-hotspot[data-map-id="ardera"]').click();
+  await expect(page.locator('.map-v2-frame.is-image-ready')).toHaveCount(1);
+  const world=await page.locator('.map-v2-frame').boundingBox();
+  // Clicking the NW painted landmass must open Valdorie, not Austrébrume.
+  await page.mouse.click(world.x+world.width*.30,world.y+world.height*.31);
+  await expect(page.locator('#map-page-title')).toHaveText('Valdorie');
+  await expect(page.locator('.map-v2-frame [data-placement-id="D06"]')).toHaveCount(0);
+  await expect(page.locator('.map-underground img')).toHaveCount(1);
+  await page.evaluate(()=>{ window.mapReviewImage=document.querySelector('.map-v2-image'); });
+  await page.locator('[data-map-action="toggle-dungeons"]').click();
+  await expect(page.locator('.map-underground')).toBeHidden();
+  await page.locator('[data-map-action="toggle-dungeons"]').click();
+  await page.locator('[data-map-action="toggle-toponyms"]').click();
+  await page.locator('[data-map-action="toggle-toponyms"]').click();
+  expect(await page.evaluate(()=>window.mapReviewImage===document.querySelector('.map-v2-image'))).toBe(true);
+  const anchors=await page.evaluate(async()=>{
+    const { SPRITE_PLACEMENTS }=await import('/src/map-v2-cartography.js');
+    const frame=document.querySelector('.map-v2-frame').getBoundingClientRect();
+    return [...document.querySelectorAll('.map-dungeon-pin')].map(pin=>{
+      const p=SPRITE_PLACEMENTS[pin.dataset.placementId], r=pin.getBoundingClientRect();
+      return Math.max(Math.abs(r.left+r.width*p[3]/100-frame.left-frame.width*p[0]/100),Math.abs(r.top+r.height*p[4]/100-frame.top-frame.height*p[1]/100));
+    });
+  });
+  expect(Math.max(...anchors)).toBeLessThan(2);
+  const text=page.locator('.map-toponym').first();
+  await expect(text).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
+  await expect(text).toHaveCSS('border-top-width','0px');
+  await expect(text).toHaveCSS('font-weight','400');
+});
+
+test("Map V2 detail reading is bounded and does not reload map assets on mobile @webkit", async ({ page }) => {
+  await page.setViewportSize({width:390,height:844});
+  await ready(page); await gotoView(page,'map');
+  await expect(page.locator('.map-v2-frame.is-image-ready')).toHaveCount(1);
+  await page.locator('.map-hotspot[data-map-id="ardera"]').click();
+  await page.locator('.map-hotspot[data-map-id="valdorie"]').click();
+  await expect(page.locator('#map-page-title')).toHaveText('Valdorie');
+  await expect(page.locator('.map-v2-frame.is-image-ready')).toHaveCount(1);
+  await page.locator('.map-v2-page img').evaluateAll(imgs=>Promise.all(imgs.map(img=>img.decode())));
+  const requests=[];
+  page.on('request',request=>{if(/assets\/(maps|sprites)\//.test(request.url())) requests.push(request.url());});
+  await page.locator('[data-map-action="toggle-detail"]').click();
+  await expect(page.locator('.map-v2-page')).toHaveClass(/is-detail-view/);
+  await expect(page.locator('.map-toponym-secondary').first()).toBeVisible();
+  await assertNoHorizontalOverflow(page);
+  const dimensions=await page.locator('.map-v2-frame').boundingBox();
+  expect(dimensions.width).toBeGreaterThan(850);
+  await page.locator('[data-map-action="toggle-detail"]').click();
+  await expect(page.locator('.map-toponym-secondary').first()).toBeHidden();
+  await assertNoHorizontalOverflow(page);
+  expect(requests).toEqual([]);
+  await page.locator('.map-name-index summary').click();
+  await expect(page.locator('.map-name-index')).toContainText('La Chope Qui Colle');
+});

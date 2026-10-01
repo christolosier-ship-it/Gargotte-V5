@@ -55,3 +55,9 @@ Ne pas fixer arbitrairement une valeur typographique unique avant inspection des
 5. Validation utilisateur des ancres proposées et signalement explicite des noms réservés encore absents.
 
 **Gate :** graphies conformes aux sources ; aucune invention ou survivance V1 ; aucune toponymie sur Entrevers ; textes lisibles à l’échelle d’usage et non chevauchés ; ancres non canonisées avant revue. Aucun bitmap n’est réédité par ce lot.
+
+## Amendement de correction du 01/10/2026
+
+Les cartouches sont supprimés ; serif classique légère, texte proportionnel au fond et faible halo de contraste. Sur téléphone en vue d'ensemble, les libellés secondaires et noms de donjons se lisent dans Détails (carte agrandie localement, sans recharge) ou dans l'index externe. Aucune suppression du catalogue des noms validés. Le registre complet des textes et les sources figurent dans l'amendement.
+
+Voir [méthode, registre et vérification](V6-MAP-V2-CORRECTION-CARTOGRAPHIQUE-ARTISTIQUE.md). Les points numériques ne deviennent pas canoniques par cette implémentation.

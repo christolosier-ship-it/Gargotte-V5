@@ -1,0 +1,39 @@
+name: V6-Map artistic review
+on:
+  pull_request:
+    branches: [V5.3]
+    paths:
+      - 'src/map-v2*.js'
+      - 'styles.css'
+      - 'assets/maps/**'
+      - 'assets/sprites/**'
+      - 'scripts/verify-map-art.mjs'
+      - '.github/workflows/v6-map-art.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v6-map-art-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  cartography:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Capture all maps at three viewport sizes
+        run: node scripts/verify-map-art.mjs
+      - name: Publish review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v6-map-art-review
+          path: map-review-results/
+          retention-days: 14
+          if-no-files-found: warn

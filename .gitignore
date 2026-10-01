@@ -17,3 +17,4 @@ node_modules/
 # Local Playwright reports; keep generated artifacts out of source control
 test-results/
 playwright-report/
+map-review-results/

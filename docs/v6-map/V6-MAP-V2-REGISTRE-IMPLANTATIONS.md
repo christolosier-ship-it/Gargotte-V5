@@ -26,9 +26,9 @@
 | D9 / `placement:d09` | Le Bastion du Sauciflard | Ardéra / Valdorie | **Partie profonde de la Sylve des Anciens, distincte des Arbres-Colosses** | Ancienne proposition « région frontalière des Hautes Marches » remplacée. |
 | D10 / `placement:d10` | Les Thermes de la Bonne Trempette | Ardéra / Valdorie | **Littoral rocheux des Côtes Grises** | Sort de Pelagrève / Dorsale des Fournaises. |
 | D11 / `placement:d11` | La Ruche Royale | Ardéra / Valdorie | **Transition prairies fleuries / forêt à l'est des Plaines de Valdor** | Ancienne proposition confirmée et précisée. |
-| D12 / `placement:d12` | Le Monastère des Dénaturées | Ardéra / Ferrécime | **Région montagneuse de Ferrécime** | L'Échine d'Ardéra est une piste ancienne, pas une sous-région définitivement reconfirmée ici. |
-| D13 / `placement:d13` | Les Marécages Infectés | Ardéra / Sylvaronde | **Delta des Mille Bras** | Ancienne proposition confirmée. |
-| D14 / `placement:d14` | La Citadelle des Tonneaux Perchés | Ardéra / Ferrécime | **Ferrécime** | Les Hautes Voûtes restent la piste régionale V1 ; la confirmation explicite porte sur le continent. |
+| D12 / `placement:d12` | Le Monastère des Dénaturées | Ardéra / Ferrécime | **Hauts Plateaux de Silex** | Réconciliation avec le cahier Ferrécime §0/§3 et les concepts artistiques validés ; l'Échine n'est plus le secteur opérationnel. Point précis proposé, non canonique. |
+| D13 / `placement:d13` | Les Marécages Infectés | Ardéra / Sylvaronde | **Îlot marécageux du Delta des Mille Bras, encerclé de chenaux, à l'écart des grands parcours commerciaux et de la Canopée-Monde** | Précision du cahier et du concept D13 validé ; point précis proposé, non canonique. |
+| D14 / `placement:d14` | La Citadelle des Tonneaux Perchés | Ardéra / Ferrécime | **Hautes Voûtes, roche ordinaire à distance des Cimes Suspendues** | Réconciliation avec le cahier Ferrécime §0/§3 et les concepts artistiques validés ; jamais sur une île flottante. Point précis proposé, non canonique. |
 | D15 / `placement:d15` | Le Gynécotron du Gnome Tordu | Ardéra / Ferrécime | **Les Marches de Braise, secteur volcanique** | Aucun lien avec D5. Ancienne hypothèse du complexe souterrain des Hautes Marches **abandonnée**. |
 
 **Comptage validé des quinze entités D1–D15 :** Valdorie **9** (D1, D2, D3, D4, D5, D6, D9, D10, D11) ; Ferrécime **3** (D12, D14, D15) ; Sylvaronde **1** (D13) ; La Brasserie Céleste **1** (D7) ; L'Enfer de la Sobriété Éternelle **1** (D8). **13 implantations ponctuelles ou étagées prévues sur Ardéra + 2 associations dimensionnelles D7/D8 sans point intérieur = 15.** Boréclat, Sahaldune, Pelagrève et Austrébrume ne reçoivent aucun D1–D15 à ce stade, mais restent ouverts aux contenus futurs. Pas de donjon D1–D15 affecté à la Trame ou à la vue générale de l'Entrevers.
@@ -39,7 +39,7 @@
 2. L'identité technique `entity_type/entity_id` de chaque donjon dans les données de production ; D1…D15 sont des références éditoriales, pas des IDs supposés existants.
 3. Les itinéraires, entrées, portails et connexions de scénario ; **D6 sous D5** ne démontre aucun accès direct, et **D15 n'a aucun lien avec D5** selon l'arbitrage présent.
 4. Pour la vue Map, le comportement ACTÉ ET VERROUILLÉ est un bouton simple d’affichage/masquage des sprites, sans permission campagne ni filtrage serveur. Le clic sur un sprite n’ouvre pas de donjon dans cette version. Cela ne change pas les règles métier du Codex.
-5. Les anciennes implantations internes **D7/Terrasses et D8/Citadelle sont ABANDONNÉES pour V2** par les décisions dimension=donjon du 29/09 ; **D14/Hautes Voûtes et D12/Échine d'Ardéra** restent de simples hypothèses V1 non reconfirmées.
+5. Les anciennes implantations internes **D7/Terrasses et D8/Citadelle sont ABANDONNÉES pour V2** par les décisions dimension=donjon du 29/09. **Réconciliation du 01/10 : D12/Silex et D14/Hautes Voûtes sur roche ordinaire sont déjà validés dans les cahiers V2 spécifiques** ; l'ancienne réserve générique de ce registre était en retard. Cette synchronisation ne valide aucune coordonnée numérique.
 6. La position des infrastructures futures et des décors Gargotte. Le masquage visuel des sprites est une préférence d’affichage, non une confidentialité.
 
 ## 4. Contrat d’affichage pour l’intégration Map V2
