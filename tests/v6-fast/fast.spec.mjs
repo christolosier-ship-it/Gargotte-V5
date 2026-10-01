@@ -1646,3 +1646,34 @@ test("Map V2 offers both dimensions and groups the mobile entry with Brouhaha", 
   await expect(gameMenu.locator('[data-action="set-view"][data-view="map"]')).toBeVisible();
   await expect(gameMenu.locator('[data-action="set-view"][data-view="brouhaha"]')).toBeVisible();
 });
+
+
+test("Map V2 caches only the active map and evicts the cache on exit", async ({ page }) => {
+  await ready(page);
+  await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".v6-app")).toBeVisible();
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+
+  const cachedMapPaths = async () => page.evaluate(async () => {
+    const cacheName = "map-v2-active-v1";
+    if (!(await caches.keys()).includes(cacheName)) return [];
+    const cache = await caches.open(cacheName);
+    return (await cache.keys()).map(request => new URL(request.url).pathname);
+  });
+
+  await gotoView(page, "map");
+  await expect(page.locator(".map-v2-frame.is-image-ready")).toHaveCount(1);
+  await expect.poll(cachedMapPaths).toContainEqual(expect.stringContaining("Entrevers"));
+
+  await page.locator('[data-map-action="open"][data-map-id="ardera"]').click();
+  await expect(page.locator("#map-page-title")).toHaveText("Ardéra");
+  await expect(page.locator(".map-v2-frame.is-image-ready")).toHaveCount(1);
+  await expect.poll(cachedMapPaths).toContainEqual(expect.stringContaining("Ardera.webp"));
+  await expect.poll(cachedMapPaths).not.toContainEqual(expect.stringContaining("Entrevers"));
+
+  await gotoView(page, "home");
+  await expect(page.locator(".map-v2-page")).toHaveCount(0);
+  await expect.poll(cachedMapPaths).toEqual([]);
+});
