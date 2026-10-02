@@ -1,5 +1,7 @@
 # V6-Map V2 — plan maître d’intégration
 
+**Amendement de lecture du 02/10/2026 :** [surface utile et zoom progressif des sept continents](V6-MAP-V2-LECTURE-ZOOM-CONTINENTS.md), avec réduction de 25 % des libellés superposés sur toutes les cartes. Les noms, points, affichage/masquage et éviction du cache ne changent pas.
+
 **Amendement propriétaire du 02/10/2026 :** les [repères MJ de donjons](V6-MAP-V2-DONJONS-CARTOUCHES-MJ.md) remplacent l’affichage des sprites sur toutes les cartes : pastilles, traits, cartouches avec noms seuls. Les points de Valdorie et Ferrécime suivent les nouvelles planches fournies. Les sprites restent conservés, hors affichage ; les descriptions de rendu sprite ci-dessous sont historiques. Les décisions afficher/masquer et éviction restent verrouillées.
 
 **Statut : implémentation réalisée sur la PR #65, en attente de revue.** Les décisions « afficher/masquer les donjons » et « évincer la carte du cache après l’avoir quittée » restent ACTÉES ET VERROUILLÉES. Ce document conserve le contrat initial et ajoute en fin de document la traçabilité du code, des tests et des limites de vérification. Ce document décrit l’intégration des cartes déjà validées dans Gargotte-V5 ; il n’autorise aucun changement runtime, backend, IndexedDB ou média métier. Les lots détaillés sont liés ci-dessous.

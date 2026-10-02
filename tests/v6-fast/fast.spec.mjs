@@ -1866,6 +1866,43 @@ test("Map V2 uses named cartouches on every registered dungeon without fetching 
   expect(spriteRequests).toEqual([]);
 });
 
+test("Map V2 continental progressive zoom preserves image and scales all lettering by 25 percent", async ({page,browserName})=>{
+  await ready(page);await page.setViewportSize({width:834,height:1112});
+  const ids=['valdorie','ferrecime','sylvaronde','pelagreve','boreclat','sahaldune','austrebrume'];
+  for(const id of ids){
+    await page.evaluate(async id=>{const m=await import('./src/map-v2.js');m.openMap(id);const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);},id);
+    await expect(page.locator('.map-zoom-range')).toHaveValue('100');
+    await expect(page.locator('.map-status-note')).toBeHidden();
+    await page.locator('.map-v2-image').evaluate(async img=>{await img.decode();window.zoomImage=img;});
+    const oldWidth=await page.locator('.map-v2-frame').evaluate(e=>e.clientWidth);
+    await page.getByRole('button',{name:'Augmenter le zoom',exact:true}).click();
+    await expect(page.locator('.map-zoom-range')).toHaveValue('125');
+    expect(await page.locator('.map-v2-frame').evaluate(e=>e.clientWidth)).toBeGreaterThan(oldWidth);
+    await page.locator('.map-zoom-range').evaluate(e=>{e.value='400';e.dispatchEvent(new Event('input',{bubbles:true}));});
+    await expect(page.getByRole('button',{name:'Augmenter le zoom',exact:true})).toBeDisabled();
+    await page.locator('[data-map-action=toggle-detail]').click();
+    await expect(page.locator('.map-zoom-range')).toHaveValue('100');
+    expect(await page.evaluate(()=>window.zoomImage===document.querySelector('.map-v2-image'))).toBe(true);
+    await assertNoHorizontalOverflow(page);
+  }
+  // Compare against the prior responsive formula at the SAME map width.
+  await page.evaluate(async()=>{const m=await import('./src/map-v2.js');m.openMap('valdorie');const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);await document.fonts.ready;});
+  const fonts=await page.evaluate(async()=>{
+    const {MAP_TEXT_SCALE}=await import('./src/map-v2-toponyms.js');const w=document.querySelector('.map-v2-frame').clientWidth;
+    return {scale:MAP_TEXT_SCALE,place:Number(document.querySelector('[data-mj-text="Brassefort"]').dataset.fontSize),expectedPlace:.75*Math.min(23,w*.0136),dungeon:parseFloat(getComputedStyle(document.querySelector('.map-dungeon-label')).fontSize),expectedDungeon:.75*Math.max(4.5,Math.min(16,document.querySelector('.map-v2-frame').getBoundingClientRect().width*.0155))};
+  });
+  expect(fonts.scale).toBe(.75);expect(fonts.place).toBeCloseTo(fonts.expectedPlace,1);expect(fonts.dungeon).toBeCloseTo(fonts.expectedDungeon,2);
+  if(browserName==='chromium'){
+    const cdp=await page.context().newCDPSession(page),r=await page.locator('.map-v2-viewport').boundingBox();
+    const x=r.x+r.width/2,y=r.y+Math.min(100,r.height/2);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:x-30,y,id:1},{x:x+30,y,id:2}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x-60,y,id:1},{x:x+60,y,id:2}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    expect(Number(await page.locator('.map-zoom-range').inputValue())).toBeGreaterThan(100);
+    await cdp.detach();
+  }
+});
+
 test("Map V2 detail reading is bounded and does not reload map assets on mobile @webkit", async ({ page }) => {
   await page.setViewportSize({width:390,height:844});
   await ready(page); await gotoView(page,'map');
