@@ -1,5 +1,6 @@
 import { MAPS, DUNGEONS } from "./map-v2-data.js";
 import { CARTOGRAPHY, DESTINATIONS, SPRITE_PLACEMENTS } from "./map-v2-cartography.js";
+import { bindMapToponyms, disposeMapToponyms } from "./map-v2-toponyms.js";
 const MAP_CACHE = "map-v2-active-v1";
 // Display preferences are session-only. No database writes or campaign permissions.
 let currentMap = "entrevers";
@@ -9,8 +10,14 @@ const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&am
 const button = (label, action, attrs="") => '<button type="button" class="map-action-button" data-map-action="'+action+'" '+attrs+'>'+esc(label)+'</button>';
 function labelsMarkup(id) {
   if (!showToponyms || id === "entrevers") return "";
-  const labels = MAPS[id].toponyms.map(([name,x,y,kind]) =>
-    '<span class="map-toponym map-toponym-'+kind+'" style="--x:'+x+'%;--y:'+y+'%" title="'+esc(name)+'">'+esc(name)+'</span>').join("");
+  const labels = MAPS[id].toponyms.map(([name,x,y,kind]) => {
+    if(id==='valdorie'){
+      const style=kind==='region'?'region':kind==='water'?(name.startsWith('Mer ')?'ocean':'river'):'place';
+      const secondary=style==='river'?' map-toponym-secondary':'';
+      return '<span class="map-toponym map-toponym-'+kind+secondary+' map-mj-label" data-mj-kind="'+style+'" data-mj-text="'+esc(name)+'" role="img" aria-label="'+esc(name)+'" style="--x:'+x+'%;--y:'+y+'%" title="'+esc(name)+'">'+esc(name)+'</span>';
+    }
+    return '<span class="map-toponym map-toponym-'+kind+'" style="--x:'+x+'%;--y:'+y+'%" title="'+esc(name)+'">'+esc(name)+'</span>';
+  }).join("");
   const destinations=(DESTINATIONS[id]||[]).map(d =>
     '<span class="map-toponym map-toponym-destination" style="--x:'+d.label[0]+'%;--y:'+d.label[1]+'%">'+esc(MAPS[d.id].title)+'</span>').join("");
   const dungeonLabels=(DUNGEONS[id]||[]).filter(([d])=>d!=="D06").map(([d,name])=>{
@@ -39,6 +46,7 @@ function bindMapViewActions(root = document) {
   const pageView=root.querySelector(".map-v2-page");
   if (!pageView) return;
   const image=pageView.querySelector(".map-v2-image"), frame=image.closest(".map-v2-frame");
+  const toponyms=bindMapToponyms(frame);
   const ready=()=>frame.classList.add("is-image-ready");
   if (image.complete && image.naturalWidth>0) ready();
   else image.addEventListener("load",ready,{once:true});
@@ -52,12 +60,16 @@ function bindMapViewActions(root = document) {
       element.textContent=detail?"Vue d’ensemble":"Détails de la carte";
       const viewport=pageView.querySelector('.map-v2-viewport');
       viewport.scrollTo({left:0,top:0});
+      toponyms?.redraw();
       return;
     }
     if (action==="toggle-dungeons" || action==="toggle-toponyms") {
       handleMapAction(element);
       pageView.classList.toggle("is-dungeons-hidden",!showDungeons);
+      // Destroy CircleType before replacing its lettering, then rebuild locally.
+      toponyms?.clear();
       pageView.querySelector(".map-labels").innerHTML=labelsMarkup(currentMap);
+      toponyms?.redraw();
       element.setAttribute("aria-pressed",action==="toggle-dungeons"?showDungeons:showToponyms);
       element.textContent=action==="toggle-dungeons"?(showDungeons?"Masquer les donjons":"Afficher les donjons"):("Toponymes : "+(showToponyms?"affichés":"masqués"));
       return;
@@ -89,6 +101,7 @@ function bindMapViewActions(root = document) {
   });
 }
 async function evictMapAssetCache(){
+  disposeMapToponyms();
   const controlled = navigator.serviceWorker?.controller;
   if (controlled && typeof MessageChannel !== "undefined") {
     const acknowledged = await new Promise(resolve => {

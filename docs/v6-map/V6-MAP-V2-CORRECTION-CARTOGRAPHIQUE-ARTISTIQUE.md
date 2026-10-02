@@ -2,6 +2,8 @@
 
 Statut au 01/10/2026 : implémentation sur branche dédiée après fusion de la PR #65 ; revue propriétaire encore attendue. Ce document complète les cinq lots, sans relancer le chantier des fonds. Il décrit la séquence de correction et distingue les décisions approuvées des placements proposés.
 
+**Amendement 02/10/2026 :** le propriétaire valide une nouvelle maquette HTML, intégrée sur **Valdorie seulement** dans la PR #67 : parchemins en arc, eau bleue, mer souple avec volutes. Les mentions historiques ci-dessous « sans cartouche », « police/tailles/fonds conservés » décrivent la passe précédente, pas le rendu Valdorie courant. Les sprites restent inchangés ; la revue des placements et Safari/iPad demeure distincte. [Décision actuelle et traçabilité](V6-MAP-V2-VALDORIE-TOPONYMIE-MJ.md).
+
 ## Décisions inchangées
 
 - Les douze fonds et treize sprites sont conservés octet pour octet ; aucune génération, retouche ou réoptimisation.
