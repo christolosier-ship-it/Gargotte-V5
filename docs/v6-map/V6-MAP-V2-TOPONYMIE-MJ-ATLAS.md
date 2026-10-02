@@ -62,6 +62,7 @@ Commandes : `npm run test:v6fast:fast` et `node scripts/verify-map-art.mjs`. Ins
 ### Contrôles locaux du 02/10/2026
 
 - Tests ciblés Map : **7/7 réussis**, dont navigation, cache, toggles et catalogue illustré de l’atlas.
+- Suite Fast complète finale : **28/28 réussis** après les derniers décalages de lecture.
 - Revue finale : **72 captures**, aucun chevauchement de libellés affichés, aucun débordement horizontal ni erreur page/HTTP détecté.
 - Inspection des compositions desktop des neuf cartes nouvellement stylées, puis vues ciblées tablette Pélagrève et téléphone Ardéra/Brasserie. Les décalages d’Austrébrume ont été réinspectés après correction. Sur téléphone, Détails reste nécessaire à la lecture confortable des petits noms.
 - Guide `agent-browser-verify` utilisé pour la vérification : le CLI agent-browser échoue au démarrage du daemon ; repli sur le script Playwright du dépôt avec Chromium et profil jetable. Aucun contrôle Safari natif n’est revendiqué.
