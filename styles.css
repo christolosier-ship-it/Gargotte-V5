@@ -3566,7 +3566,7 @@ body.cinematic-open{overflow:hidden}
   .map-v2-frame{width:100%}
   .is-detail-view .map-v2-viewport{max-height:60svh;scroll-margin-bottom:calc(96px + env(safe-area-inset-bottom))}
   .map-v2-page:not(.is-detail-view) .map-toponym-secondary,.map-v2-page:not(.is-detail-view) .map-dungeon-label{display:none}
-  .map-v2-page[data-map-current="valdorie"]:not(.is-detail-view) .map-toponym-secondary{display:block}
+  .map-v2-page:not(.is-detail-view) .map-toponym-secondary.map-mj-label{display:block}
   .map-name-index ul{columns:1}
   .map-v2-footer{flex-direction:column;gap:3px}
 }

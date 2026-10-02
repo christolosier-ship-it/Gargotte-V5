@@ -1768,8 +1768,37 @@ test("Map V2 Valdorie reproduces approved parchment, water and organic sea label
   await expect(page.locator('.map-v2-image')).toHaveAttribute('src',immutableImage.replace(new URL(immutableImage).origin+'/',''));
   await page.locator('[data-map-action="back"]').click();
   await expect(page.locator('#map-page-title')).toHaveText('Ardéra');
-  await expect(labels).toHaveCount(0);
-  await expect(page.locator('.map-mj-probe')).toHaveCount(0);
+  await expect(labels).toHaveCount(16);
+  await expect(page.locator('[data-mj-kind=ocean]')).toHaveCount(9);
+  await expect(page.locator('[data-mj-kind=region]')).toHaveCount(7);
+  await expect(page.locator('.map-mj-probe')).toHaveCount(1);
+});
+
+test("Map V2 approved MJ lettering covers atlas, dimensions have places only, Entrevers stays empty", async ({page})=>{
+  await ready(page);
+  await page.setViewportSize({width:390,height:844});
+  const results=await page.evaluate(async()=>{
+    const {MAPS}=await import('./src/map-v2-data.js');
+    const {DESTINATIONS}=await import('./src/map-v2-cartography.js');
+    const m=await import('./src/map-v2.js'),main=document.querySelector('#main-content'),results=[];
+    await document.fonts.load('23px "IM Fell English"');
+    for(const [id,map] of Object.entries(MAPS)){
+      m.openMap(id);main.innerHTML=m.renderMapView();m.bindMapViewActions(main);
+      const labels=[...main.querySelectorAll('.map-mj-label')];
+      results.push({id,expected:id==='entrevers'?0:map.toponyms.length+(DESTINATIONS[id]||[]).length,
+        count:labels.length,visible:labels.filter(el=>el.getClientRects().length).length,
+        kinds:labels.map(el=>el.dataset.mjKind),names:labels.map(el=>el.dataset.mjText),
+        catalogue:map.toponyms.map(([name])=>name),probe:main.querySelectorAll('.map-mj-probe').length});
+    }
+    return results;
+  });
+  for(const r of results){
+    expect(r.count,r.id).toBe(r.expected);expect(r.visible,r.id).toBe(r.expected);
+    expect(r.probe,r.id).toBe(r.expected?1:0);
+    for(const name of r.catalogue)expect(r.names).toContain(name);
+    if(['brasserie','enfer'].includes(r.id))expect(r.kinds).toEqual(Array(16).fill('place'));
+    if(r.id==='entrevers')expect(r.names).toEqual([]);
+  }
 });
 
 test("Map V2 detail reading is bounded and does not reload map assets on mobile @webkit", async ({ page }) => {

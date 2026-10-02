@@ -1,5 +1,7 @@
 # Valdorie — reproduction de la maquette de toponymie MJ
 
+**Extension ultérieure approuvée le même jour :** ce rendu est désormais réutilisé sur l’atlas, sans texte sur Entrevers et sans régions sur Brasserie/Enfer. Les mentions « Valdorie uniquement » ci-dessous décrivent la livraison historique, pas le périmètre courant. Voir [extension, décalages et vérification](V6-MAP-V2-TOPONYMIE-MJ-ATLAS.md).
+
 Décision propriétaire du **02/10/2026** : reproduire sur Valdorie la maquette HTML validée, puis son cartouche maritime aux extrémités souples et volutes. Cet amendement remplace, **pour Valdorie uniquement**, la suppression des cartouches décidée lors de la première correction. Les autres cartes gardent leur rendu actuel ; l’Entrevers reste sans toponymie.
 
 ## Rendu livré

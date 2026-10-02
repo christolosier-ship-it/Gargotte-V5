@@ -5,13 +5,21 @@ const segmenter=typeof Intl.Segmenter==='function'?new Intl.Segmenter('fr',{gran
 const split=text=>segmenter?Array.from(segmenter.segment(text),s=>s.segment):Array.from(text);
 // Presentation offsets (%) keep the approved reference anchors separate from lettering.
 const offsets={'Arbres-Colosses':[0,2],'Collines de la Vieille Lande':[-1,-3.5],'Saint-Fût-le-Petit':[-5,-2],'Ruisseau des Saules':[0,2],'La Chope Qui Colle':[1,1],'L’Avelorne':[-2,7],'La Rivombre':[0,2]};
+const atlasOffsets={
+  valdorie:offsets,
+  ardera:{'Mer Boréale':[-2,-2]},
+  austrebrume:{'Les Fjords de Nacrelune':[0,4],'Les Bois des Dernières Feuilles':[0,-3],'Les Monts du Voile':[-3,1],'Les Landes du Grand Hiver':[2,2],'Falaises de Nacrelune':[0,5],'Plateaux du Dernier Vent':[0,3],'Cascades de Brume':[0,-2],'Le Bassin des Lacs Sombres':[0,-4]},
+  ferrecime:{'L’Échine d’Ardéra':[1,-3]},
+  enfer:{'Le Tribunal de la Mesure':[0,2]}
+};
 let active=null;
 
 export function disposeMapToponyms(){active?.dispose();active=null;}
 
 export function bindMapToponyms(frame){
   disposeMapToponyms();
-  if(frame.closest('[data-map-current]')?.dataset.mapCurrent!=='valdorie') return null;
+  const mapId=frame.closest('[data-map-current]')?.dataset.mapCurrent;
+  if(mapId==='entrevers'||!frame.querySelector('.map-mj-label')) return null;
   const probe=document.createElement('span');
   probe.className='map-mj-probe';probe.setAttribute('aria-hidden','true');frame.append(probe);
   const instances=new Map();
@@ -20,7 +28,7 @@ export function bindMapToponyms(frame){
   function renderLabel(el,mapWidth){
     const kind=el.dataset.mjKind,config=configs[kind],text=el.dataset.mjText;
     const chars=split(text);
-    const [dx,dy]=offsets[text]||[0,0];
+    const [dx,dy]=atlasOffsets[mapId]?.[text]||[0,0];
     el.style.left='calc(var(--x) + '+dx+'%)';el.style.top='calc(var(--y) + '+dy+'%)';
     el.replaceChildren();
     let font=Math.min(config.font,mapWidth*config.ratio);
@@ -126,7 +134,7 @@ export function bindMapToponyms(frame){
     // Only the presentation of these existing dungeon names moves. Sprite feet stay put.
     const dungeonOffsets={'Le Château Bastognac':[-4,-2],'Les Thermes de la Bonne Trempette':[-2,-2],'La Ruche Royale':[-7,3]};
     for(const el of frame.querySelectorAll('.map-dungeon-label')){
-      const [dx,dy]=dungeonOffsets[el.textContent]||[0,0];
+      const [dx,dy]=(mapId==='valdorie'?dungeonOffsets[el.textContent]:null)||[0,0];
       el.style.left='calc(var(--x) + '+dx+'%)';el.style.top='calc(var(--y) + '+dy+'%)';
     }
   }
