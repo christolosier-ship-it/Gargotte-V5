@@ -1748,7 +1748,7 @@ test("Map V2 Valdorie reproduces approved parchment, water and organic sea label
     await document.fonts.load('23px "IM Fell English"');
   });
   const labels=page.locator('.map-mj-label');
-  await expect(labels).toHaveCount(16);
+  await expect(labels).toHaveCount(18);
   await expect(page.locator('[data-mj-kind=region]')).toHaveCount(6);
   await expect(page.locator('[data-mj-kind=river]')).toHaveCount(4);
   await expect(page.locator('[data-mj-kind=ocean]')).toHaveAttribute('aria-label','Mer des Trois Couronnes');
@@ -1760,10 +1760,10 @@ test("Map V2 Valdorie reproduces approved parchment, water and organic sea label
   await page.locator('[data-map-action="toggle-toponyms"]').click();
   await expect(labels).toHaveCount(0);
   await page.locator('[data-map-action="toggle-toponyms"]').click();
-  await expect(labels).toHaveCount(16);
+  await expect(labels).toHaveCount(18);
   await page.locator('[data-map-action="toggle-dungeons"]').click();
   await expect(page.locator('.map-dungeon-pin').first()).toBeHidden();
-  await expect(labels).toHaveCount(16);
+  await expect(labels).toHaveCount(18);
   expect(await page.evaluate(()=>window.mjImage===document.querySelector('.map-v2-image'))).toBe(true);
   await expect(page.locator('.map-v2-image')).toHaveAttribute('src',immutableImage.replace(new URL(immutableImage).origin+'/',''));
   await page.locator('[data-map-action="back"]').click();
@@ -1790,7 +1790,15 @@ test("Map V2 detail reading is bounded and does not reload map assets on mobile 
   const dimensions=await page.locator('.map-v2-frame').boundingBox();
   expect(dimensions.width).toBeGreaterThan(850);
   await page.locator('[data-map-action="toggle-detail"]').click();
-  await expect(page.locator('.map-toponym-secondary').first()).toBeHidden();
+  // Owner wants Valdorie's public places and waters present even in overview.
+  for(const width of [320,390,834]){
+    await page.setViewportSize({width,height:844});
+    for(const name of ['Arbres-Colosses','Saint-Fût-le-Petit','La Chope Qui Colle','L’Avelorne','La Rivombre','Ruisseau des Saules','Lac d’Ysambre','Collines de la Vieille Lande','Monts d’Escarbelle','Brassefort','Port-Rivombre']){
+      await expect(page.getByRole('img',{name,exact:true})).toBeVisible();
+    }
+    await expect(page.locator('[data-mj-kind=region]')).toHaveCount(6);
+    if(width<=760)await expect(page.locator('.map-dungeon-label').first()).toBeHidden();
+  }
   await assertNoHorizontalOverflow(page);
   expect(requests).toEqual([]);
   await page.locator('.map-name-index summary').click();
