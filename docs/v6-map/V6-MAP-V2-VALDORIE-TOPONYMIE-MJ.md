@@ -7,7 +7,7 @@ Décision propriétaire du **02/10/2026** : reproduire sur Valdorie la maquette 
 | Catégorie | Traitement | Taille de référence relative à la largeur affichée |
 |---|---|---|
 | Six régions | Parchemin illustré, extrémités roulées, texte brun foncé en léger arc | 2 %, plafond 34 px |
-| Six lieux / reliefs secondaires | Même parchemin, plus petit, arc plus discret | 1,36 %, plafond 23 px |
+| Sept lieux / reliefs / agglomérations secondaires | Même parchemin, plus petit, arc plus discret | 1,36 %, plafond 23 px |
 | Avelorne, Rivombre, Saules, Ysambre | Cartouche bleu en arc, texte ivoire | 1,36 %, plafond 23 px |
 | Mer des Trois Couronnes | Cartouche bleu à contour légèrement ondulé, bouts arrondis et volutes | 1,8 %, plafond 28 px |
 
@@ -17,9 +17,22 @@ Le texte est **brun `#301608` sur parchemin** et **ivoire `#fff3d6` sur bleu**. 
 
 ## Catalogue et source
 
-Les quinze noms précédents sont conservés. Les quatre noms hydrologiques passent de la catégorie technique `secondary` à `water`, tout en restant secondaires en vue d’ensemble téléphone.
+Les quinze noms précédents sont conservés. Les quatre noms hydrologiques passent de la catégorie technique `secondary` à `water`. Suite au retour propriétaire du 02/10/2026, les lieux-dits, rivières et lacs restent **affichés en vue d’ensemble aussi sur téléphone** ; ils ne sont plus masqués automatiquement sur Valdorie. Les six régions approuvées restent inchangées.
 
-Ajout du seizième nom : **Mer des Trois Couronnes**, déjà présent dans le cahier continental (§2 : mer, écoulement de l’Avelorne) et la planche MJ propriétaire. Il ne s’agit pas d’un nouvel océan inventé. Ancre de lecture proposée **50 / 93 %**, dans la marge maritime sud de la planche, à annoter comme les autres centres. Aucun port ou cité sans nom propre validé n’est nommé.
+Ajout du seizième nom : **Mer des Trois Couronnes**, déjà présent dans le cahier continental (§2 : mer, écoulement de l’Avelorne) et la planche MJ propriétaire. Il ne s’agit pas d’un nouvel océan inventé. Ancre de lecture proposée **50 / 93 %**, dans la marge maritime sud de la planche, à annoter comme les autres centres.
+
+### Agglomérations nommées sous mandat du propriétaire
+
+Le propriétaire demande expressément le 02/10/2026 d’inventer les deux noms jusque-là réservés. Le catalogue contient désormais **18 noms : 6 régions, 7 lieux/reliefs/agglomérations, 4 eaux intérieures et 1 mer**. Ces deux créations ne sont pas attribuées rétrospectivement aux anciens cahiers ou à la planche MJ.
+
+| Nom intégré | Élément de la planche | Ancre de lecture x / y % | Origine du nom |
+|---|---|---|---|
+| **Brassefort** | Grande cité fortifiée centrale des Plaines de Valdor | 54 / 53 | Création pour la demande propriétaire : brassage + fortifications |
+| **Port-Rivombre** | Grand port commercial à l’ouest, Côtes Grises | 22 / 26 | Création pour la demande propriétaire, rattachée au fleuve Rivombre déjà documenté |
+
+Les noms sont utilisés comme libellés publics de la carte, pas comme nouvelles fiches métier ou destinations cliquables. Les positions restent proposées, ajustables après revue. Aucun nom des autres bourgs n’est inventé. L’ancien statut réservé de ces deux agglomérations est levé uniquement pour leur nom ; aucun lore supplémentaire n’est ajouté.
+
+Contrôle du complément : **6/6 tests Map réussis**, dont présence des lieux et eaux en vue d’ensemble aux largeurs 320, 390 et 834 px ; réaffichage après toggle et éviction du cache toujours contrôlés. **72 captures sans collision de libellés ni débordement horizontal**, sans erreur page/HTTP détectée. Inspection ciblée Valdorie desktop et téléphone en vue d’ensemble. Sur téléphone ajusté à l’écran, les petits noms sont présents mais la lecture confortable demande Détails. Le rendu des six régions et les sprites ne sont pas modifiés.
 
 ## Ancres et décalages de présentation
 
@@ -53,11 +66,13 @@ Les autres libellés ne reçoivent aucun décalage supplémentaire. Ces position
 
 ## Validation
 
-Contrôles reproductibles : `npm run test:v6fast:fast` et `node scripts/verify-map-art.mjs`. Les captures doivent être inspectées à l’échelle de la carte, pas uniquement les libellés isolés. La vue Détails conserve le même fond, sans rechargement ; les noms secondaires sont masqués dans la petite vue d’ensemble téléphone, mais restent présents dans l’index et en Détails.
+Contrôles reproductibles : `npm run test:v6fast:fast` et `node scripts/verify-map-art.mjs`. Les captures doivent être inspectées à l’échelle de la carte, pas uniquement les libellés isolés. La vue Détails conserve le même fond, sans rechargement. Tous les toponymes publics de Valdorie restent affichés en vue d’ensemble ; sur téléphone, leur taille proportionnelle demeure petite, et Détails permet une lecture agrandie. La règle de masquage des noms de donjons sur petite vue reste inchangée.
 
 La validation locale Chromium et les captures aux dimensions tablette ne remplacent pas une validation Safari/iPad physique. La reproductibilité du composant est démontrable ; une identité de pixels entre navigateurs et une validation artistique humaine exhaustive ne sont pas garanties.
 
 ### Bilan local du 02/10/2026
+
+Le bilan ci-dessous décrit la PR #67 fusionnée, avant la restauration de visibilité et la nomination des deux agglomérations. Les contrôles de ce complément sont consignés dans la nouvelle PR.
 
 - Fast complète : **27/27** réussis ; après le dernier ajustement des décalages, les **6 tests Map** ont été rejoués avec succès.
 - Contrôle cartographique final : **72 captures** (12 cartes × 3 formats × 2 modes), **aucun chevauchement de libellés affichés**, aucun débordement horizontal ni erreur page/HTTP détecté.

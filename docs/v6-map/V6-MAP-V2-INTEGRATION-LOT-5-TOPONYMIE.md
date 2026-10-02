@@ -65,3 +65,5 @@ Voir [méthode, registre et vérification](V6-MAP-V2-CORRECTION-CARTOGRAPHIQUE-A
 ## Amendement Valdorie du 02/10/2026 — maquette MJ approuvée
 
 Pour **Valdorie uniquement**, la décision propriétaire suivante remplace l’absence de cartouches : régions sur parchemin illustré en arc, lieux plus petits, eaux sur bleu et mer à contour souple avec volutes. Le texte reste HTML, mesuré et adapté au fond. Les quinze noms sont conservés et la Mer des Trois Couronnes documentée est ajoutée. Aucun changement de sprites, de droits, d’IndexedDB ou de l’éviction du fond. Voir [rendu, ressources, décalages et traçabilité](V6-MAP-V2-VALDORIE-TOPONYMIE-MJ.md).
+
+**Complément propriétaire du même jour :** les lieux-dits, rivières et lacs de Valdorie restent visibles en vue d’ensemble, y compris sur petit écran. Le propriétaire autorise expressément l’invention des deux noms réservés : **Brassefort** (cité fortifiée) et **Port-Rivombre** (grand port commercial). Catalogue public porté à 18 noms ; aucune autre création de nom ni modification des régions. La règle générale « ne pas inventer les noms réservés » reste applicable hors de ces deux créations autorisées et tracées.
