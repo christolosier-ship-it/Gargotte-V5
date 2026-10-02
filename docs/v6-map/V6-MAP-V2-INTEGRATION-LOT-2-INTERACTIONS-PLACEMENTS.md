@@ -1,5 +1,7 @@
 # V6-Map V2 — lot 2 : hiérarchie, interactions et placements
 
+**Amendement courant du 02/10/2026 :** les [cartouches MJ de donjons](V6-MAP-V2-DONJONS-CARTOUCHES-MJ.md) remplacent les sprites et la coupe souterraine. Les noms seuls sont raccordés aux pastilles, avec un point partagé pour Sanctuaire/Panthéon. Les planches propriétaire de Valdorie et Ferrécime priment sur les anciens placements. Les mentions de clics sur sprites ci-dessous s’entendent désormais comme repères non ouvrants ; navigation et éviction ne changent pas.
+
 **But :** rendre les fonds consultables par navigation hiérarchique et relier les destinations connues. La carte reste un outil de consultation, pas une carte de déplacement.
 
 ## Parcours hiérarchique

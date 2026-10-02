@@ -1,5 +1,5 @@
 import { MAPS, DUNGEONS } from "./map-v2-data.js";
-import { CARTOGRAPHY, DESTINATIONS, SPRITE_PLACEMENTS } from "./map-v2-cartography.js";
+import { CARTOGRAPHY, DESTINATIONS, DUNGEON_MARKERS, DUNGEON_COLORS } from "./map-v2-cartography.js";
 import { bindMapToponyms, disposeMapToponyms } from "./map-v2-toponyms.js";
 const MAP_CACHE = "map-v2-active-v1";
 // Display preferences are session-only. No database writes or campaign permissions.
@@ -20,27 +20,30 @@ function labelsMarkup(id) {
   }).join("");
   const destinations=(DESTINATIONS[id]||[]).map(d =>
     illustratedLabel(MAPS[d.id].title,d.label[0],d.label[1],'destination',id==='ardera'?'region':'place')).join("");
-  const dungeonLabels=(DUNGEONS[id]||[]).filter(([d])=>d!=="D06").map(([d,name])=>{
-    const p=SPRITE_PLACEMENTS[d];
-    return '<span class="map-toponym map-dungeon-label" style="--x:'+p[5]+'%;--y:'+p[6]+'%">'+esc(name)+'</span>';
-  }).join("");
-  return labels+destinations+dungeonLabels;
+  return labels+destinations;
+}
+function dungeonMarkup(id){
+  const groups=new Map();
+  for(const [d,name] of DUNGEONS[id]||[]){
+    const p=DUNGEON_MARKERS[d],group=p.group||d;
+    if(!groups.has(group))groups.set(group,[]);
+    groups.get(group).push({d,name,p});
+  }
+  return [...groups.entries()].map(([group,entries])=>{
+    const p=DUNGEON_MARKERS[group],[accent,deep,shine]=DUNGEON_COLORS[p.color];
+    return '<div class="map-dungeon-pin" data-placement-id="'+group+'" style="--x:'+p.anchor[0]+'%;--y:'+p.anchor[1]+'%;--dungeon-accent:'+accent+';--dungeon-deep:'+deep+';--dungeon-shine:'+shine+'"><span class="map-dungeon-dot" aria-hidden="true"></span>'+entries.map(({d,name,p})=>'<span class="map-dungeon-leader" data-dungeon-line="'+d+'" aria-hidden="true"></span><span class="map-toponym map-dungeon-label" data-dungeon-id="'+d+'" data-label-x="'+p.label[0]+'" data-label-y="'+p.label[1]+'" role="img" aria-label="'+esc(name)+'">'+esc(name)+'</span>').join('')+'</div>';
+  }).join('');
 }
 function renderMapView() {
   const id=currentMap, map=MAPS[id], spec=CARTOGRAPHY[id], parent=MAPS[map.parent];
   const destinations=DESTINATIONS[id]||[], dungeonList=DUNGEONS[id]||[];
   const hasLabels=id!=="entrevers" && (map.toponyms.length || destinations.length || dungeonList.length);
   const paths=destinations.map(d=>'<polygon class="map-hotspot map-hotspot-'+d.kind+'" points="'+d.points+'" role="button" tabindex="0" data-map-action="open" data-map-id="'+d.id+'" aria-label="Ouvrir '+esc(MAPS[d.id].title)+'"><title>'+esc(MAPS[d.id].title)+'</title></polygon>').join("");
-  const pins=dungeonList.filter(([d])=>d!=="D06").map(([d,name,file])=>{
-    const p=SPRITE_PLACEMENTS[d];
-    return '<div class="map-dungeon-pin" data-placement-id="'+d+'" style="--x:'+p[0]+'%;--y:'+p[1]+'%;--sprite-width:'+p[2]+'%;--foot-x:'+p[3]+'%;--foot-y:'+p[4]+'%" role="img" aria-label="'+esc(d+" — "+name+" (placement proposé, non canonique)")+'"><img src="assets/sprites/'+file+'" alt="" loading="eager" decoding="async"></div>';
-  }).join("");
-  const underground=dungeonList.find(([d])=>d==="D06");
-  const cutaway=underground?'<aside class="map-underground" aria-label="Niveau souterrain sous D05"><img src="assets/sprites/'+underground[2]+'" alt="D06 — '+esc(underground[1])+'" loading="eager" decoding="async"><p>D06 · '+esc(underground[1])+'<br><small>Coupe souterraine · directement sous D05, même emplacement.</small></p></aside>':"";
+  const pins=dungeonMarkup(id);
   const links=destinations.length?'<details class="map-destinations"><summary>Destinations accessibles ('+destinations.length+')</summary><nav aria-label="Destinations de '+esc(map.title)+'">'+destinations.map(d=>button(MAPS[d.id].title,"destination",'data-map-id="'+d.id+'"')).join("")+'</nav></details>':"";
-  const names=hasLabels?'<details class="map-name-index"><summary>Noms et repères de la carte</summary><ul>'+[...map.toponyms.map(([name])=>name),...destinations.map(d=>MAPS[d.id].title)].map(name=>'<li>'+esc(name)+'</li>').join('')+dungeonList.map(([d,name])=>'<li class="map-dungeon-index">'+esc(d+' · '+name)+'</li>').join('')+'</ul></details>':'';
+  const names=hasLabels?'<details class="map-name-index"><summary>Noms et repères de la carte</summary><ul>'+[...map.toponyms.map(([name])=>name),...destinations.map(d=>MAPS[d.id].title)].map(name=>'<li>'+esc(name)+'</li>').join('')+dungeonList.map(([,name])=>'<li class="map-dungeon-index">'+esc(name)+'</li>').join('')+'</ul></details>':'';
   const detailControl=button('Détails de la carte','toggle-detail','aria-pressed="false"');
-  return '<section class="map-v2-page '+(showDungeons?"":"is-dungeons-hidden")+'" data-map-current="'+id+'" aria-labelledby="map-page-title"><header class="map-v2-header"><div><p class="map-eyebrow">Atlas · consultation</p><h1 id="map-page-title">'+esc(map.title)+'</h1><p class="map-status-note">Placements proposés sur les fonds validés, à annoter ; coordonnées non canoniques.</p></div><div class="map-toolbar">'+(parent?button("Retour à "+parent.title,"back"):"")+(hasLabels?button("Toponymes : "+(showToponyms?"affichés":"masqués"),"toggle-toponyms",'aria-pressed="'+showToponyms+'"'):"")+detailControl+(dungeonList.length?button(showDungeons?"Masquer les donjons":"Afficher les donjons","toggle-dungeons",'aria-pressed="'+showDungeons+'"'):"")+'</div></header><p class="map-reading-hint">'+(id!=='entrevers'?'Tous les lieux et les eaux restent affichés. Sur petit écran, « Détails » agrandit la carte pour faciliter leur lecture.':'Les dimensions sont accessibles par leurs zones cliquables et la liste de destinations.')+' La carte agrandie se parcourt par défilement.</p><div class="map-v2-viewport" tabindex="0" role="region" aria-label="Carte défilante"><div class="map-v2-frame '+(id==="entrevers"?"is-entrevers":"")+'" style="--map-ratio:'+spec.size[0]/spec.size[1]+'"><img class="map-v2-image" src="'+esc(map.image)+'" width="'+spec.size[0]+'" height="'+spec.size[1]+'" alt="Carte illustrée : '+esc(map.title)+'" loading="eager" decoding="async">'+pins+'<div class="map-labels">'+labelsMarkup(id)+'</div><svg class="map-hotspots" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Zones cliquables de '+esc(map.title)+'">'+paths+'</svg></div></div>'+cutaway+links+names+'<footer class="map-v2-footer"><span>'+esc(map.title)+'</span><span>Les repères de donjon ne sont pas encore ouvrants.</span></footer></section>';
+  return '<section class="map-v2-page '+(showDungeons?"":"is-dungeons-hidden")+'" data-map-current="'+id+'" aria-labelledby="map-page-title"><header class="map-v2-header"><div><p class="map-eyebrow">Atlas · consultation</p><h1 id="map-page-title">'+esc(map.title)+'</h1><p class="map-status-note">Placements proposés sur les fonds validés, à annoter ; coordonnées non canoniques.</p></div><div class="map-toolbar">'+(parent?button("Retour à "+parent.title,"back"):"")+(hasLabels?button("Toponymes : "+(showToponyms?"affichés":"masqués"),"toggle-toponyms",'aria-pressed="'+showToponyms+'"'):"")+detailControl+(dungeonList.length?button(showDungeons?"Masquer les donjons":"Afficher les donjons","toggle-dungeons",'aria-pressed="'+showDungeons+'"'):"")+'</div></header><p class="map-reading-hint">'+(id!=='entrevers'?'Tous les lieux et les eaux restent affichés. Sur petit écran, « Détails » agrandit la carte pour faciliter leur lecture.':'Les dimensions sont accessibles par leurs zones cliquables et la liste de destinations.')+' La carte agrandie se parcourt par défilement.</p><div class="map-v2-viewport" tabindex="0" role="region" aria-label="Carte défilante"><div class="map-v2-frame '+(id==="entrevers"?"is-entrevers":"")+'" style="--map-ratio:'+spec.size[0]/spec.size[1]+'"><img class="map-v2-image" src="'+esc(map.image)+'" width="'+spec.size[0]+'" height="'+spec.size[1]+'" alt="Carte illustrée : '+esc(map.title)+'" loading="eager" decoding="async">'+pins+'<div class="map-labels">'+labelsMarkup(id)+'</div><svg class="map-hotspots" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Zones cliquables de '+esc(map.title)+'">'+paths+'</svg></div></div>'+links+names+'<footer class="map-v2-footer"><span>'+esc(map.title)+'</span><span>Les repères de donjon ne sont pas encore ouvrants.</span></footer></section>';
 }
 function bindMapViewActions(root = document) {
   const pageView=root.querySelector(".map-v2-page");

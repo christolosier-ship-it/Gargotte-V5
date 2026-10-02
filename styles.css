@@ -3543,18 +3543,16 @@ body.cinematic-open{overflow:hidden}
 .map-mj-ornament::before{content:'';position:absolute;left:2px;top:3px;width:16px;height:16px;border:1.2px solid currentColor;border-right-color:transparent;border-radius:57% 48% 52% 43%;transform:rotate(-28deg)}
 .map-mj-ornament::after{content:'';position:absolute;left:8px;top:8px;width:19px;height:11px;border-bottom:1.2px solid currentColor;border-radius:0 0 64% 70%;transform:rotate(-18deg)}
 .map-mj-ornament i{position:absolute;left:8px;top:7px;width:7px;height:7px;border:1px solid currentColor;border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;transform:rotate(18deg)}
-.map-dungeon-label{max-width:14%;font-size:clamp(6px,.72cqw,9px);font-style:italic}
+.map-dungeon-label.map-toponym{z-index:2;width:max-content;max-width:25%;padding:.35em .65em .4em;border:1.6px solid var(--dungeon-accent);border-radius:5px;background:radial-gradient(ellipse at 17% 100%,#b7803130,transparent 60%),linear-gradient(105deg,#ecd3a5,#fff1d8 35%,#f2deb9);box-shadow:inset 0 0 0 1px #fff7e6,0 0 0 1px var(--dungeon-deep),0 2px 5px #20120b60;color:#27150e;font-family:"IM Fell English",Georgia,serif;font-style:normal;line-height:1.12;text-shadow:0 1px #fff6df;text-wrap:balance;overflow-wrap:break-word}
 .map-hotspots{position:absolute;z-index:4;inset:0;width:100%;height:100%;pointer-events:none}
 .map-hotspot{fill:transparent;stroke:none;cursor:pointer;pointer-events:fill}
 .map-hotspot:hover,.map-hotspot:focus-visible{fill:rgba(255,235,190,.08);stroke:#ffe2a6;stroke-width:1.5;vector-effect:non-scaling-stroke;outline:none}
 .map-v2-frame:not(.is-image-ready) .map-hotspots{visibility:hidden}
-.map-dungeon-pin{position:absolute;z-index:2;left:var(--x);top:var(--y);width:var(--sprite-width);transform:translate(calc(-1 * var(--foot-x)),calc(-1 * var(--foot-y)));pointer-events:none}
-.map-dungeon-pin img{display:block;width:100%;height:auto;filter:drop-shadow(.45px 0 .15px #ffefd2) drop-shadow(-.45px 0 .15px #ffefd2) drop-shadow(0 .45px .15px #ffefd2);opacity:.97}
-.map-underground{display:flex;align-items:center;justify-content:center;gap:14px;max-width:620px;margin:14px auto;color:var(--color-text-secondary);font-size:12px}
-.map-underground img{width:90px;height:auto}
-.map-underground p{margin:0;line-height:1.4}
-.map-underground small{font-size:11px}
-.is-dungeons-hidden .map-dungeon-pin,.is-dungeons-hidden .map-dungeon-label,.is-dungeons-hidden .map-dungeon-index,.is-dungeons-hidden .map-underground{display:none}
+.map-dungeon-pin{position:absolute;inset:0;pointer-events:none}
+.map-dungeon-pin .map-dungeon-label{z-index:5}
+.map-dungeon-dot{position:absolute;z-index:6;left:var(--x);top:var(--y);width:clamp(7px,1.6cqw,20px);aspect-ratio:1;transform:translate(-50%,-50%);border:1.5px solid #fff4d8;border-radius:50%;background:radial-gradient(circle at 32% 26%,#fff 0%,var(--dungeon-shine) 12%,var(--dungeon-accent) 42%,var(--dungeon-deep) 83%);box-shadow:0 0 0 1px var(--dungeon-deep),0 0 0 2px var(--dungeon-accent),0 1px 5px #15091099,0 0 6px var(--dungeon-shine)}
+.map-dungeon-leader{position:absolute;z-index:1;height:2px;border-radius:3px;transform-origin:0 50%;background:#fff1cf;box-shadow:0 0 0 1px var(--dungeon-accent),0 1px 3px #1b0d1280}
+.is-dungeons-hidden .map-dungeon-pin,.is-dungeons-hidden .map-dungeon-index{display:none}
 .map-destinations{max-width:900px;margin:14px auto;color:var(--color-text-secondary);font-size:12px}
 .map-destinations summary{width:fit-content;min-height:44px;display:flex;align-items:center;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .map-destinations nav{display:flex;flex-wrap:wrap;gap:8px}
@@ -3565,7 +3563,7 @@ body.cinematic-open{overflow:hidden}
   .map-toolbar{width:100%;justify-content:flex-start}
   .map-v2-frame{width:100%}
   .is-detail-view .map-v2-viewport{max-height:60svh;scroll-margin-bottom:calc(96px + env(safe-area-inset-bottom))}
-  .map-v2-page:not(.is-detail-view) .map-toponym-secondary,.map-v2-page:not(.is-detail-view) .map-dungeon-label{display:none}
+  .map-v2-page:not(.is-detail-view) .map-toponym-secondary{display:none}
   .map-v2-page:not(.is-detail-view) .map-toponym-secondary.map-mj-label{display:block}
   .map-name-index ul{columns:1}
   .map-v2-footer{flex-direction:column;gap:3px}

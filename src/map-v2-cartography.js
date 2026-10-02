@@ -64,6 +64,32 @@ export const SPRITE_EVIDENCE = {
   D13:'Îlot périphérique du delta, à distance du quai commercial peint'
 };
 
+// Approved MJ plates, 2026-10-02: point coordinates, not lettering centres.
+// D06 is underground at D05's point. Sprite metadata above is retained as archive.
+export const DUNGEON_MARKERS = {
+  D01:{anchor:[74.5,45.7],label:[66,41],color:0},
+  D02:{anchor:[80.9,41.4],label:[85,34],color:1},
+  D03:{anchor:[46.2,55.7],label:[39,51],color:2},
+  D04:{anchor:[52.7,59.3],label:[60,61],color:3},
+  D05:{anchor:[48.9,20.8],label:[41,23],color:4},
+  D06:{anchor:[48.9,20.8],label:[58,24],color:4,group:'D05'},
+  D09:{anchor:[89.5,26.7],label:[86,21],color:5},
+  D10:{anchor:[6.7,19.3],label:[10,12],color:6},
+  D11:{anchor:[75.2,48.5],label:[72,55],color:7},
+  D12:{anchor:[21.3,38.1],label:[29,39],color:0},
+  D14:{anchor:[53.2,55.2],label:[54,60],color:1},
+  D15:{anchor:[67.8,78.6],label:[82,85],color:4},
+  D13:{anchor:[10,13],label:[13,7],color:8}
+};
+// Arbitrary decorative colours: stable across navigation, with no gameplay meaning.
+export const DUNGEON_COLORS = [
+  ['#a10c20','#48040d','#ff6571'],['#075ba8','#032e62','#52c8ff'],
+  ['#287447','#103822','#8dd699'],['#b05218','#54230a','#ffb76d'],
+  ['#87149e','#3d0550','#fa79ff'],['#186e76','#083a40','#80e1df'],
+  ['#9d345f','#51182f','#ff9bc4'],['#827013','#403606','#f3da6c'],
+  ['#475ea1','#202d5b','#a3baff']
+];
+
 // Revised six MJ plates approved by the owner on 2026-10-02.
 // Names are validated. Feature anchors and label centres remain separate, annotatable.
 export const PUBLIC_LOCATIONS = {
@@ -1003,8 +1029,8 @@ export function applyCartography(maps, dungeons) {
     }
   }
   for (const list of Object.values(dungeons)) for (const dungeon of list) {
-    const p=SPRITE_PLACEMENTS[dungeon[0]];
-    if (!p) throw new Error(`Missing sprite placement: ${dungeon[0]}`);
-    dungeon[3]=p[0]; dungeon[4]=p[1];
+    const p=DUNGEON_MARKERS[dungeon[0]];
+    if (!p) throw new Error(`Missing dungeon marker: ${dungeon[0]}`);
+    dungeon[3]=p.anchor[0]; dungeon[4]=p.anchor[1];
   }
 }
