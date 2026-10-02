@@ -1,6 +1,7 @@
 // Local reproduction of the approved HTML mockup. No network API or bitmap text.
 import './vendor/circletype-2.3.1.js';
 import { PUBLIC_LOCATIONS } from './map-v2-cartography.js';
+export const MAP_TEXT_SCALE=.75;
 const configs={region:{font:34,pad:94,arc:12,weight:'700',ratio:.020,max:.24},place:{font:23,pad:66,arc:4,weight:'400',ratio:.0136,max:.20},river:{font:23,pad:30,arc:3,weight:'400',ratio:.0136,max:.17},ocean:{font:28,pad:78,arc:5,weight:'400',ratio:.018,max:.29}};
 const segmenter=typeof Intl.Segmenter==='function'?new Intl.Segmenter('fr',{granularity:'grapheme'}):null;
 const split=text=>segmenter?Array.from(segmenter.segment(text),s=>s.segment):Array.from(text);
@@ -51,6 +52,8 @@ export function bindMapToponyms(frame){
       const scale=Math.max(0,available)/Math.max(1,length+padding);
       font*=scale;padding*=scale;metrics=measure();length=metrics.reduce((a,b)=>a+b,0);
     }
+    // Owner decision: exactly 25% below the previous fitted lettering, at equal map width.
+    font*=MAP_TEXT_SCALE;padding*=MAP_TEXT_SCALE;metrics=measure();length=metrics.reduce((a,b)=>a+b,0);
     const width=Math.min(available,length+padding);
     const sag=Math.min(config.arc*font/config.font,length*.032);
     const radius=length>0&&sag>0?length*length/(8*sag)+sag/2:10000;
@@ -165,7 +168,7 @@ function layoutDungeonCartouches(frame){
   const rectangle=el=>{const r=el.getBoundingClientRect();return {x:r.left-bounds.left,y:r.top-bounds.top,w:r.width,h:r.height};};
   const occupied=[...frame.querySelectorAll('.map-mj-label,.map-dungeon-dot')].filter(el=>el.getClientRects().length).map(rectangle);
   const overlaps=(a,b)=>a.x<b.x+b.w+gap&&a.x+a.w+gap>b.x&&a.y<b.y+b.h+gap&&a.y+a.h+gap>b.y;
-  for(const el of labels){el.style.fontSize=Math.max(4.5,Math.min(16,w*.0155))+'px';el.style.maxWidth=Math.min(w*.22,220)+'px';}
+  for(const el of labels){el.style.fontSize=(MAP_TEXT_SCALE*Math.max(4.5,Math.min(16,w*.0155)))+'px';el.style.maxWidth=(MAP_TEXT_SCALE*Math.min(w*.22,220))+'px';}
   labels.sort((a,b)=>b.getBoundingClientRect().width*b.getBoundingClientRect().height-a.getBoundingClientRect().width*a.getBoundingClientRect().height);
   for(const el of labels){
     const size=el.getBoundingClientRect(),cx=Number(el.dataset.labelX)*w/100,cy=Number(el.dataset.labelY)*h/100;
