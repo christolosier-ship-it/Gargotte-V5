@@ -1,5 +1,7 @@
 # V6-Map V2 — lot 5 : toponymie des cartes hors Entrevers
 
+**Amendement courant du 02/10/2026 :** le propriétaire demande l’extension du rendu MJ approuvé à tout l’atlas, sauf Entrevers. Brasserie et Enfer utilisent uniquement des lieux-dits, sans traitement de régions. Tous les libellés publics restent visibles en vue d’ensemble. Ce choix remplace les restrictions de rendu des amendements antérieurs ci-dessous. Voir [couverture, exceptions et traçabilité de l’extension](V6-MAP-V2-TOPONYMIE-MJ-ATLAS.md).
+
 **But :** intégrer les noms validés comme libellés lisibles sur les cartes, dans une couche d’interface indépendante. **L’Entrevers est explicitement exclu de cette couche de toponymie.** Les commandes, noms accessibles ou liste de destinations nécessaires à son fonctionnement restent de l’interface de navigation, pas des toponymes superposés à sa fresque.
 
 ## Cartes couvertes
