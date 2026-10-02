@@ -25,7 +25,7 @@ const MAPS = {
   ] },
   valdorie: { title:"Valdorie", image:"assets/maps/Valdorie.webp", type:"continent", parent:"ardera", toponyms:[
     ["Les Côtes Grises"],["Les Hautes Marches"],["La Sylve des Anciens"],["Les Plaines de Valdor"],["Les Bassins de l’Est"],["Les Terres de Cendre"],
-    ["Arbres-Colosses","secondary"],["Saint-Fût-le-Petit","secondary"],["La Chope Qui Colle","secondary"],["L’Avelorne","secondary"],["La Rivombre","secondary"],["Ruisseau des Saules","secondary"],["Lac d’Ysambre","secondary"],["Collines de la Vieille Lande","secondary"],["Monts d’Escarbelle","secondary"]
+    ["Arbres-Colosses","secondary"],["Saint-Fût-le-Petit","secondary"],["La Chope Qui Colle","secondary"],["L’Avelorne","water"],["La Rivombre","water"],["Ruisseau des Saules","water"],["Lac d’Ysambre","water"],["Collines de la Vieille Lande","secondary"],["Monts d’Escarbelle","secondary"],["Mer des Trois Couronnes","water"]
   ] },
   brasserie: { title:"La Brasserie Céleste", image:"assets/maps/La Brasserie Céleste.webp", type:"dimension", parent:"entrevers", toponyms:[
     ["Le Grand Cœur Brassicole","major"],["L’Axe des Fermentations","major"],["Les Treilles Hautes","major"],["La Coulée Ambrée","major"],["Les Voûtes du Vieillissement","major"],["La Haute Ivresse","major"],["Le Grand Nid","secondary"],

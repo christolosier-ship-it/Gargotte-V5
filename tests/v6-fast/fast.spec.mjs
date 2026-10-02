@@ -1691,12 +1691,29 @@ test("Map V2 artistic correction separates painted hit areas, labels and sprite 
   await brasserie.focus(); await page.keyboard.press('Enter');
   await expect(page.locator('#map-page-title')).toHaveText('La Brasserie Céleste');
   await page.locator('[data-map-action="back"]').click();
+  await expect(page.locator('#map-page-title')).toHaveText('L’Entrevers');
   await page.locator('.map-hotspot[data-map-id="ardera"]').click();
+  await expect(page.locator('#map-page-title')).toHaveText('Ardéra');
   await expect(page.locator('.map-v2-frame.is-image-ready')).toHaveCount(1);
   const world=await page.locator('.map-v2-frame').boundingBox();
   // Clicking the NW painted landmass must open Valdorie, not Austrébrume.
   await page.mouse.click(world.x+world.width*.30,world.y+world.height*.31);
   await expect(page.locator('#map-page-title')).toHaveText('Valdorie');
+  // Owner's MJ reference: the hamlet, inn and stream are in the eastern sector,
+  // not the central farming settlement. Check local label centres, not screen pixels.
+  const recalage=await page.evaluate(async()=>{
+    const {MAPS}=await import('./src/map-v2-data.js');
+    const {SPRITE_PLACEMENTS}=await import('./src/map-v2-cartography.js');
+    return {
+      places:MAPS.valdorie.toponyms.filter(([name])=>['Saint-Fût-le-Petit','La Chope Qui Colle','Ruisseau des Saules'].includes(name)).map(([name,x,y])=>[name,x,y]),
+      sprite:SPRITE_PLACEMENTS.D01
+    };
+  });
+  expect(recalage.places).toEqual([
+    ['Saint-Fût-le-Petit',77,39],['La Chope Qui Colle',83,47],['Ruisseau des Saules',87,38]
+  ]);
+  // Sprite placement/scaling is intentionally deferred in this toponymy-only pass.
+  expect(recalage.sprite).toEqual([40,37,4.8,50,93,35,36]);
   await expect(page.locator('.map-v2-frame [data-placement-id="D06"]')).toHaveCount(0);
   await expect(page.locator('.map-underground img')).toHaveCount(1);
   await page.evaluate(()=>{ window.mapReviewImage=document.querySelector('.map-v2-image'); });
@@ -1719,6 +1736,40 @@ test("Map V2 artistic correction separates painted hit areas, labels and sprite 
   await expect(text).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
   await expect(text).toHaveCSS('border-top-width','0px');
   await expect(text).toHaveCSS('font-weight','400');
+  await expect(text).toHaveAttribute('data-mj-kind','region');
+  await expect(text.locator('.map-mj-text')).toHaveCSS('font-weight','700');
+});
+
+test("Map V2 Valdorie reproduces approved parchment, water and organic sea labels", async ({page})=>{
+  await ready(page);
+  await page.evaluate(async()=>{
+    const map=await import('./src/map-v2.js');map.openMap('valdorie');
+    const main=document.querySelector('#main-content');main.innerHTML=map.renderMapView();map.bindMapViewActions(main);
+    await document.fonts.load('23px "IM Fell English"');
+  });
+  const labels=page.locator('.map-mj-label');
+  await expect(labels).toHaveCount(16);
+  await expect(page.locator('[data-mj-kind=region]')).toHaveCount(6);
+  await expect(page.locator('[data-mj-kind=river]')).toHaveCount(4);
+  await expect(page.locator('[data-mj-kind=ocean]')).toHaveAttribute('aria-label','Mer des Trois Couronnes');
+  await expect(page.locator('[data-mj-kind=ocean] .map-mj-ornament')).toHaveCount(2);
+  await expect(page.locator('[data-mj-kind=region]').first().locator('.map-mj-text')).toHaveCSS('color','rgb(48, 22, 8)');
+  await expect(page.locator('[data-mj-kind=river]').first().locator('.map-mj-text')).toHaveCSS('color','rgb(255, 243, 214)');
+  await expect.poll(()=>labels.first().locator('.map-mj-text span').count()).toBeGreaterThan(0);
+  const immutableImage=await page.locator('.map-v2-image').evaluate(img=>{window.mjImage=img;return img.src;});
+  await page.locator('[data-map-action="toggle-toponyms"]').click();
+  await expect(labels).toHaveCount(0);
+  await page.locator('[data-map-action="toggle-toponyms"]').click();
+  await expect(labels).toHaveCount(16);
+  await page.locator('[data-map-action="toggle-dungeons"]').click();
+  await expect(page.locator('.map-dungeon-pin').first()).toBeHidden();
+  await expect(labels).toHaveCount(16);
+  expect(await page.evaluate(()=>window.mjImage===document.querySelector('.map-v2-image'))).toBe(true);
+  await expect(page.locator('.map-v2-image')).toHaveAttribute('src',immutableImage.replace(new URL(immutableImage).origin+'/',''));
+  await page.locator('[data-map-action="back"]').click();
+  await expect(page.locator('#map-page-title')).toHaveText('Ardéra');
+  await expect(labels).toHaveCount(0);
+  await expect(page.locator('.map-mj-probe')).toHaveCount(0);
 });
 
 test("Map V2 detail reading is bounded and does not reload map assets on mobile @webkit", async ({ page }) => {

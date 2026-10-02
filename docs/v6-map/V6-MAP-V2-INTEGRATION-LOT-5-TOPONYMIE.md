@@ -61,3 +61,7 @@ Ne pas fixer arbitrairement une valeur typographique unique avant inspection des
 Les cartouches sont supprimés ; serif classique légère, texte proportionnel au fond et faible halo de contraste. Sur téléphone en vue d'ensemble, les libellés secondaires et noms de donjons se lisent dans Détails (carte agrandie localement, sans recharge) ou dans l'index externe. Aucune suppression du catalogue des noms validés. Le registre complet des textes et les sources figurent dans l'amendement.
 
 Voir [méthode, registre et vérification](V6-MAP-V2-CORRECTION-CARTOGRAPHIQUE-ARTISTIQUE.md). Les points numériques ne deviennent pas canoniques par cette implémentation.
+
+## Amendement Valdorie du 02/10/2026 — maquette MJ approuvée
+
+Pour **Valdorie uniquement**, la décision propriétaire suivante remplace l’absence de cartouches : régions sur parchemin illustré en arc, lieux plus petits, eaux sur bleu et mer à contour souple avec volutes. Le texte reste HTML, mesuré et adapté au fond. Les quinze noms sont conservés et la Mer des Trois Couronnes documentée est ajoutée. Aucun changement de sprites, de droits, d’IndexedDB ou de l’éviction du fond. Voir [rendu, ressources, décalages et traçabilité](V6-MAP-V2-VALDORIE-TOPONYMIE-MJ.md).

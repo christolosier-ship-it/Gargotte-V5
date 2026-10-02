@@ -3526,6 +3526,23 @@ body.cinematic-open{overflow:hidden}
 .map-toponym-secondary{font-size:clamp(6px,.78cqw,10px);font-style:italic}
 .map-toponym-major,.map-toponym-destination{font-size:clamp(8px,1.2cqw,15px);letter-spacing:.04em}
 .map-toponym-destination{font-variant:small-caps}
+/* Valdorie only: approved illustrated parchment and local HTML curved lettering. */
+@font-face{font-family:"IM Fell English";font-style:normal;font-weight:400;font-display:swap;src:url("assets/map-labels/IM-Fell-English.ttf") format("truetype")}
+.map-mj-label.map-toponym{max-width:none;font-family:"IM Fell English",Georgia,serif;font-style:normal;text-shadow:none;text-wrap:nowrap;line-height:1;color:#301608}
+.map-mj-probe{position:absolute;visibility:hidden;white-space:pre;font-family:"IM Fell English",Georgia,serif;line-height:1;pointer-events:none}
+.map-mj-art{position:absolute;inset:0;filter:drop-shadow(0 2px 1px #45231050)}
+.map-mj-slice{position:absolute;background-image:url("assets/map-labels/parchment.webp");background-repeat:no-repeat}
+.map-mj-shape{position:absolute;inset:0}
+.map-mj-edge{background:#f5e9bf}
+.map-mj-paper{background:repeating-linear-gradient(4deg,#d2efe407 0 1px,transparent 1px 4px),linear-gradient(0deg,#092942,#174b70 50%,#2e627d)}
+.map-mj-text{display:block;position:absolute;left:0;width:100%;margin:0;padding:0;font-family:"IM Fell English",Georgia,serif;line-height:1;font-style:normal;text-shadow:none}
+.map-mj-label[data-mj-kind=region] .map-mj-text,.map-mj-label[data-mj-kind=place] .map-mj-text{color:#301608;-webkit-text-fill-color:#301608}
+.map-mj-label[data-mj-kind=river] .map-mj-text,.map-mj-label[data-mj-kind=ocean] .map-mj-text{color:#fff3d6;-webkit-text-fill-color:#fff3d6;text-shadow:0 1px 1px #00182b}
+.map-mj-label[data-mj-kind=ocean] .map-mj-text{letter-spacing:.045em}
+.map-mj-ornament{position:absolute;width:25px;height:24px;z-index:2;color:#eadbb2;transform-origin:center}
+.map-mj-ornament::before{content:'';position:absolute;left:2px;top:3px;width:16px;height:16px;border:1.2px solid currentColor;border-right-color:transparent;border-radius:57% 48% 52% 43%;transform:rotate(-28deg)}
+.map-mj-ornament::after{content:'';position:absolute;left:8px;top:8px;width:19px;height:11px;border-bottom:1.2px solid currentColor;border-radius:0 0 64% 70%;transform:rotate(-18deg)}
+.map-mj-ornament i{position:absolute;left:8px;top:7px;width:7px;height:7px;border:1px solid currentColor;border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;transform:rotate(18deg)}
 .map-dungeon-label{max-width:14%;font-size:clamp(6px,.72cqw,9px);font-style:italic}
 .map-hotspots{position:absolute;z-index:4;inset:0;width:100%;height:100%;pointer-events:none}
 .map-hotspot{fill:transparent;stroke:none;cursor:pointer;pointer-events:fill}

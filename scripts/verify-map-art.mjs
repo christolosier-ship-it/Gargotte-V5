@@ -34,6 +34,8 @@ try {
       },id);
       await page.locator('.map-v2-frame.is-image-ready').waitFor();
       await page.locator('.map-v2-page img').evaluateAll(imgs=>Promise.all(imgs.map(img=>img.decode())));
+      // Labels are measured with their local font, not a transient fallback serif.
+      await page.evaluate(()=>document.fonts.ready);
       for(const mode of ['overview','detail']) {
       if(mode==='detail') await page.locator('[data-map-action="toggle-detail"]').click();
       await page.mouse.move(0,0);
