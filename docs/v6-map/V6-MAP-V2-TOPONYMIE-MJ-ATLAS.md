@@ -2,7 +2,9 @@
 
 Décision propriétaire du 02/10/2026 : étendre aux autres cartes le rendu validé sur Valdorie. **Entrevers reste sans texte cartographique. Brasserie et Enfer n’ont que des lieux-dits : aucun parchemin de région.** Cet amendement remplace la restriction « Valdorie uniquement » des amendements précédents, sans réouvrir les décisions afficher/masquer les donjons et éviction du fond au départ.
 
-## Rendu et couverture
+**Extension ultérieure validée :** les [48 lieux-dits des six continents](V6-MAP-V2-LIEUX-DITS-SIX-CONTINENTS.md) portent le total courant à **159**. Les comptes et l’absence de nouveaux noms ci-dessous décrivent le socle initial de 111 libellés, avant cet ajout.
+
+## Rendu et couverture initiale
 
 Le composant de [Valdorie](V6-MAP-V2-VALDORIE-TOPONYMIE-MJ.md) est réutilisé, sans duplication des ressources : police IM Fell English locale, texte HTML courbé par CircleType, parchemin illustré pour les régions, parchemin plus petit pour les lieux-dits, cartouche bleu pour les eaux intérieures, contour maritime souple et volutes pour les mers/océans. Brun sur beige, ivoire sur bleu. Mesure des chaînes et adaptation à la largeur affichée, avec recalcul au redimensionnement et au toggle.
 

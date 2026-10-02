@@ -1,5 +1,6 @@
 // Local reproduction of the approved HTML mockup. No network API or bitmap text.
 import './vendor/circletype-2.3.1.js';
+import { PUBLIC_LOCATIONS } from './map-v2-cartography.js';
 const configs={region:{font:34,pad:94,arc:12,weight:'700',ratio:.020,max:.24},place:{font:23,pad:66,arc:4,weight:'400',ratio:.0136,max:.20},river:{font:23,pad:30,arc:3,weight:'400',ratio:.0136,max:.17},ocean:{font:28,pad:78,arc:5,weight:'400',ratio:.018,max:.29}};
 const segmenter=typeof Intl.Segmenter==='function'?new Intl.Segmenter('fr',{granularity:'grapheme'}):null;
 const split=text=>segmenter?Array.from(segmenter.segment(text),s=>s.segment):Array.from(text);
@@ -13,6 +14,10 @@ const atlasOffsets={
   enfer:{'Le Tribunal de la Mesure':[0,2]}
 };
 let active=null;
+
+for(const [id,locations] of Object.entries(PUBLIC_LOCATIONS)){
+  atlasOffsets[id]={...atlasOffsets[id],...Object.fromEntries(locations.map(l=>[l.name,[l.label[0]-l.anchor[0],l.label[1]-l.anchor[1]]]))};
+}
 
 export function disposeMapToponyms(){active?.dispose();active=null;}
 

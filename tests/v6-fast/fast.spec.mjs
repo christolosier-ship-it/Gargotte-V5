@@ -1801,6 +1801,32 @@ test("Map V2 approved MJ lettering covers atlas, dimensions have places only, En
   }
 });
 
+test("Map V2 integrates all 48 owner-approved places while preserving regions and display controls", async ({page})=>{
+  const approved={"austrebrume":["Escale de Brumegarde","Lac de Sombreverre","Le Géant à la Petite Chope","Col de Veillebrume","Banquise du Retour Tardif","Halte du Banc Trop Court","Îlot de Nacregivre","Passe des Lanternes Éteintes"],"boreclat":["Port Cuivregivre","Hameau de Clairpin","Bains de la Buée Douce","Lac de Longueveille","Chutes du Fût Échappé","Col de Pierre-Sourde","Relais du Traîneau Sans Frein","Île des Trois Feux"],"ferrecime":["Pont du Pas-de-Panique","Foire de la Belle Étape","Lac d’Émeraude-Froide","Col des Veilleurs","Corniche du Héros Assis","Gué des Bottes Pleines","Coulées de Rougecendre","Îlot du Tonneau Couronné"],"pelagreve":["Port des Lanternes d’Écume","Fort de la Voile Noire","Crique du Dernier Toast","Phare de Jadebrume","Bassin de Perlebleue","Îlots des Sept Rubans","Passe du Capitaine Perdu","Dent de Cendrelune"],"sahaldune":["Ambrefleuve","Olvarane","Port de la Pluie Tiède","Pont des Comptes Ronds","Oasis de la Chope Miraculeuse","Défilé des Longues Ombres","Phare des Moussons","Chutes du Banquet Retardé"],"sylvaronde":["La Chope sous la Souche","Hameau de Liseronce","Gué du Tonneau Têtu","Jetée des Rameurs du Dimanche","Îlot de Brumefeuille","Clairière de la Belle Rencontre","Dent de Pierreveille","Col du Tonnerre Distrait"]};
+  await ready(page);
+  await page.setViewportSize({width:390,height:844});
+  for(const [id,names] of Object.entries(approved)){
+    await page.evaluate(async id=>{
+      const m=await import('./src/map-v2.js');m.openMap(id);
+      const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);
+    },id);
+    await expect(page.locator('[data-mj-kind=region]')).toHaveCount(6);
+    for(const name of names){
+      const label=page.getByRole('img',{name,exact:true});
+      await expect(label).toBeVisible();
+      await expect(label).not.toHaveAttribute('data-mj-kind','region');
+    }
+    const index=await page.locator('.map-name-index li').allTextContents();
+    for(const name of names)expect(index).toContain(name);
+    await page.locator('.map-v2-image').evaluate(img=>window.placesImage=img);
+    await page.locator('[data-map-action=toggle-toponyms]').click();
+    await expect(page.locator('.map-mj-label')).toHaveCount(0);
+    await page.locator('[data-map-action=toggle-toponyms]').click();
+    for(const name of names)await expect(page.getByRole('img',{name,exact:true})).toBeVisible();
+    expect(await page.evaluate(()=>window.placesImage===document.querySelector('.map-v2-image'))).toBe(true);
+  }
+});
+
 test("Map V2 detail reading is bounded and does not reload map assets on mobile @webkit", async ({ page }) => {
   await page.setViewportSize({width:390,height:844});
   await ready(page); await gotoView(page,'map');
