@@ -24,11 +24,11 @@ export function disposeMapToponyms(){active?.dispose();active=null;}
 export function bindMapToponyms(frame){
   disposeMapToponyms();
   const mapId=frame.closest('[data-map-current]')?.dataset.mapCurrent;
-  if(mapId==='entrevers'||!frame.querySelector('.map-mj-label')) return null;
+  if(mapId==='entrevers'||!frame.querySelector('.map-mj-label,.map-dungeon-label')) return null;
   const probe=document.createElement('span');
   probe.className='map-mj-probe';probe.setAttribute('aria-hidden','true');frame.append(probe);
   const instances=new Map();
-  let disposed=false,lastWidth=0;
+  let disposed=false,lastWidth=0,lastHeight=0,layoutFrame=0;
   function destroy(){for(const circle of instances.values()) circle.destroy();instances.clear();}
   function renderLabel(el,mapWidth){
     const kind=el.dataset.mjKind,config=configs[kind],text=el.dataset.mjText;
@@ -134,25 +134,60 @@ export function bindMapToponyms(frame){
   }
   function redraw(){
     if(disposed||!frame.isConnected)return;
-    destroy();lastWidth=frame.clientWidth;
+    destroy();lastWidth=frame.clientWidth;lastHeight=frame.clientHeight;
     for(const el of frame.querySelectorAll('.map-mj-label'))renderLabel(el,lastWidth);
-    // Only the presentation of these existing dungeon names moves. Sprite feet stay put.
-    const dungeonOffsets={'Le Château Bastognac':[-4,-2],'Les Thermes de la Bonne Trempette':[-2,-2],'La Ruche Royale':[-7,3]};
-    for(const el of frame.querySelectorAll('.map-dungeon-label')){
-      const [dx,dy]=(mapId==='valdorie'?dungeonOffsets[el.textContent]:null)||[0,0];
-      el.style.left='calc(var(--x) + '+dx+'%)';el.style.top='calc(var(--y) + '+dy+'%)';
-    }
+    layoutDungeonCartouches(frame);
+    cancelAnimationFrame(layoutFrame);
+    // CircleType finishes its geometry on the next animation frame.
+    layoutFrame=requestAnimationFrame(()=>{if(!disposed)layoutDungeonCartouches(frame);});
   }
-  const resize=new ResizeObserver(()=>{if(frame.clientWidth!==lastWidth)redraw();});resize.observe(frame);
+  const resize=new ResizeObserver(()=>{if(frame.clientWidth!==lastWidth||frame.clientHeight!==lastHeight)redraw();});resize.observe(frame);
   // A view can be removed by the application shell, not only by Map navigation.
   const removal=new MutationObserver(()=>{if(!frame.isConnected)controller.dispose();});
   const main=frame.closest('#main-content');
   if(main){removal.observe(main,{childList:true});if(main.parentElement)removal.observe(main.parentElement,{childList:true});}
   const controller={redraw,clear:destroy,dispose(){
-    if(disposed)return;disposed=true;resize.disconnect();removal.disconnect();destroy();probe.remove();
+    if(disposed)return;disposed=true;cancelAnimationFrame(layoutFrame);resize.disconnect();removal.disconnect();destroy();probe.remove();
     if(active===controller)active=null;
   }};
   active=controller;redraw();
   document.fonts.load('23px "IM Fell English"').then(redraw).catch(()=>{});
   return controller;
+}
+
+// Only lettering moves to a nearby free slot. Feature points never move.
+function layoutDungeonCartouches(frame){
+  if(frame.closest('.is-dungeons-hidden'))return;
+  const bounds=frame.getBoundingClientRect(),w=bounds.width,h=bounds.height;
+  const labels=[...frame.querySelectorAll('.map-dungeon-label')];
+  if(!w||!h||!labels.length)return;
+  const gap=Math.max(3,w*.005);
+  const rectangle=el=>{const r=el.getBoundingClientRect();return {x:r.left-bounds.left,y:r.top-bounds.top,w:r.width,h:r.height};};
+  const occupied=[...frame.querySelectorAll('.map-mj-label,.map-dungeon-dot')].filter(el=>el.getClientRects().length).map(rectangle);
+  const overlaps=(a,b)=>a.x<b.x+b.w+gap&&a.x+a.w+gap>b.x&&a.y<b.y+b.h+gap&&a.y+a.h+gap>b.y;
+  for(const el of labels){el.style.fontSize=Math.max(4.5,Math.min(16,w*.0155))+'px';el.style.maxWidth=Math.min(w*.22,220)+'px';}
+  labels.sort((a,b)=>b.getBoundingClientRect().width*b.getBoundingClientRect().height-a.getBoundingClientRect().width*a.getBoundingClientRect().height);
+  for(const el of labels){
+    const size=el.getBoundingClientRect(),cx=Number(el.dataset.labelX)*w/100,cy=Number(el.dataset.labelY)*h/100;
+    let best=null;
+    // Deterministic, bounded search, also rerun after fonts/toggles/resizing.
+    for(const range of [20,40]){
+    for(let dx=-range;dx<=range;dx+=2)for(let dy=-range;dy<=range;dy+=2){
+      const r={x:cx+dx*w/100-size.width/2,y:cy+dy*h/100-size.height/2,w:size.width,h:size.height};
+      if(r.x<gap||r.y<gap||r.x+r.w>w-gap||r.y+r.h>h-gap)continue;
+      const collisions=occupied.filter(o=>overlaps(r,o)).length;
+      const score=collisions*100000+dx*dx+dy*dy*.8;
+      if(!best||score<best.score)best={...r,score,collisions};
+    }
+    if(best?.collisions===0)break;
+    }
+    // Keep text in the image even on exceptionally narrow displays.
+    best ||= {x:Math.max(gap,Math.min(w-size.width-gap,cx-size.width/2)),y:Math.max(gap,Math.min(h-size.height-gap,cy-size.height/2)),w:size.width,h:size.height,collisions:0};
+    el.style.left=(best.x+best.w/2)+'px';el.style.top=(best.y+best.h/2)+'px';
+    el.dataset.layoutCollisions=String(best.collisions);occupied.push(best);
+    const pin=el.closest('.map-dungeon-pin'),x=parseFloat(pin.style.getPropertyValue('--x'))*w/100,y=parseFloat(pin.style.getPropertyValue('--y'))*h/100;
+    const tx=Math.max(best.x,Math.min(x,best.x+best.w)),ty=Math.max(best.y,Math.min(y,best.y+best.h));
+    const line=pin.querySelector('[data-dungeon-line="'+el.dataset.dungeonId+'"]');
+    Object.assign(line.style,{left:x+'px',top:(y-1)+'px',width:Math.hypot(tx-x,ty-y)+'px',transform:'rotate('+Math.atan2(ty-y,tx-x)+'rad)'});
+  }
 }

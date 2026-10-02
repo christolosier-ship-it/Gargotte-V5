@@ -1606,15 +1606,17 @@ test("Map V2 navigates the hierarchy and keeps dungeon markers presentation-only
 
   await page.locator('[data-map-action="open"][data-map-id="valdorie"]').click();
   await expect(page.locator("#map-page-title")).toHaveText("Valdorie");
-  await expect(page.locator('img[src^="assets/sprites/"]')).toHaveCount(9);
-  await expect.poll(() => page.locator(".map-dungeon-pin img").first().evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
+  await expect(page.locator('img[src^="assets/sprites/"]')).toHaveCount(0);
+  await expect(page.locator('.map-dungeon-dot')).toHaveCount(8);
+  await expect(page.locator('.map-dungeon-label')).toHaveCount(9);
   await page.locator('[data-map-action="toggle-dungeons"]').click();
   await expect(page.locator('[data-map-action="toggle-dungeons"]')).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator(".map-dungeon-pin").first()).toHaveCSS("display", "none");
   await page.locator('[data-map-action="toggle-dungeons"]').click();
-  await expect(page.locator('img[src^="assets/sprites/"]')).toHaveCount(9);
+  await expect(page.locator('img[src^="assets/sprites/"]')).toHaveCount(0);
   await page.locator('[data-map-action="toggle-toponyms"]').click();
-  await expect(page.locator(".map-toponym")).toHaveCount(0);
+  await expect(page.locator(".map-mj-label")).toHaveCount(0);
+  await expect(page.locator('.map-dungeon-label').first()).toBeVisible();
   await page.locator('[data-map-action="toggle-toponyms"]').click();
   await expect(page.locator(".map-toponym").first()).toBeVisible();
 
@@ -1678,7 +1680,7 @@ test("Map V2 caches only the active map and evicts the cache on exit", async ({ 
   await expect.poll(cachedMapPaths).toEqual([]);
 });
 
-test("Map V2 artistic correction separates painted hit areas, labels and sprite feet", async ({ page }) => {
+test("Map V2 artistic correction separates painted hit areas, labels and dungeon points", async ({ page }) => {
   await ready(page);
   await gotoView(page, "map");
   await expect(page.locator('.map-v2-frame.is-image-ready')).toHaveCount(1);
@@ -1703,36 +1705,36 @@ test("Map V2 artistic correction separates painted hit areas, labels and sprite 
   // not the central farming settlement. Check local label centres, not screen pixels.
   const recalage=await page.evaluate(async()=>{
     const {MAPS}=await import('./src/map-v2-data.js');
-    const {SPRITE_PLACEMENTS}=await import('./src/map-v2-cartography.js');
+    const {DUNGEON_MARKERS}=await import('./src/map-v2-cartography.js');
     return {
       places:MAPS.valdorie.toponyms.filter(([name])=>['Saint-Fût-le-Petit','La Chope Qui Colle','Ruisseau des Saules'].includes(name)).map(([name,x,y])=>[name,x,y]),
-      sprite:SPRITE_PLACEMENTS.D01
+      marker:DUNGEON_MARKERS.D01.anchor
     };
   });
   expect(recalage.places).toEqual([
     ['Saint-Fût-le-Petit',77,39],['La Chope Qui Colle',83,47],['Ruisseau des Saules',87,38]
   ]);
-  // Sprite placement/scaling is intentionally deferred in this toponymy-only pass.
-  expect(recalage.sprite).toEqual([40,37,4.8,50,93,35,36]);
+  expect(recalage.marker).toEqual([74.5,45.7]);
   await expect(page.locator('.map-v2-frame [data-placement-id="D06"]')).toHaveCount(0);
-  await expect(page.locator('.map-underground img')).toHaveCount(1);
+  await expect(page.locator('[data-placement-id="D05"] .map-dungeon-label')).toHaveCount(2);
+  await expect(page.locator('.map-underground')).toHaveCount(0);
   await page.evaluate(()=>{ window.mapReviewImage=document.querySelector('.map-v2-image'); });
   await page.locator('[data-map-action="toggle-dungeons"]').click();
-  await expect(page.locator('.map-underground')).toBeHidden();
+  await expect(page.locator('[data-placement-id="D05"]')).toBeHidden();
   await page.locator('[data-map-action="toggle-dungeons"]').click();
   await page.locator('[data-map-action="toggle-toponyms"]').click();
   await page.locator('[data-map-action="toggle-toponyms"]').click();
   expect(await page.evaluate(()=>window.mapReviewImage===document.querySelector('.map-v2-image'))).toBe(true);
   const anchors=await page.evaluate(async()=>{
-    const { SPRITE_PLACEMENTS }=await import('/src/map-v2-cartography.js');
+    const { DUNGEON_MARKERS }=await import('/src/map-v2-cartography.js');
     const frame=document.querySelector('.map-v2-frame').getBoundingClientRect();
     return [...document.querySelectorAll('.map-dungeon-pin')].map(pin=>{
-      const p=SPRITE_PLACEMENTS[pin.dataset.placementId], r=pin.getBoundingClientRect();
-      return Math.max(Math.abs(r.left+r.width*p[3]/100-frame.left-frame.width*p[0]/100),Math.abs(r.top+r.height*p[4]/100-frame.top-frame.height*p[1]/100));
+      const p=DUNGEON_MARKERS[pin.dataset.placementId].anchor, r=pin.querySelector('.map-dungeon-dot').getBoundingClientRect();
+      return Math.max(Math.abs(r.left+r.width/2-frame.left-frame.width*p[0]/100),Math.abs(r.top+r.height/2-frame.top-frame.height*p[1]/100));
     });
   });
   expect(Math.max(...anchors)).toBeLessThan(2);
-  const text=page.locator('.map-toponym').first();
+  const text=page.locator('.map-mj-label').first();
   await expect(text).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
   await expect(text).toHaveCSS('border-top-width','0px');
   await expect(text).toHaveCSS('font-weight','400');
@@ -1827,6 +1829,43 @@ test("Map V2 integrates all 48 owner-approved places while preserving regions an
   }
 });
 
+test("Map V2 uses named cartouches on every registered dungeon without fetching sprites", async ({page})=>{
+  await ready(page);
+  const spriteRequests=[];
+  page.on('request',r=>{if(r.url().includes('/assets/sprites/'))spriteRequests.push(r.url());});
+  const registry=await page.evaluate(async()=>{
+    const {MAPS,DUNGEONS}=await import('./src/map-v2-data.js');
+    const {DUNGEON_MARKERS}=await import('./src/map-v2-cartography.js');
+    return {ids:Object.keys(MAPS),dungeons:DUNGEONS,markers:DUNGEON_MARKERS};
+  });
+  expect(Object.keys(registry.markers)).toHaveLength(13);
+  expect(registry.markers.D05.anchor).toEqual(registry.markers.D06.anchor);
+  expect(registry.markers.D12.anchor).toEqual([21.3,38.1]);
+  expect(registry.markers.D14.anchor).toEqual([53.2,55.2]);
+  expect(registry.markers.D15.anchor).toEqual([67.8,78.6]);
+  for(const id of registry.ids){
+    await page.evaluate(async id=>{const m=await import('./src/map-v2.js');m.openMap(id);const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);},id);
+    const list=registry.dungeons[id]||[];
+    await expect(page.locator('.map-dungeon-label')).toHaveCount(list.length);
+    await expect(page.locator('img[src*="/sprites/"]')).toHaveCount(0);
+    for(const [d,name] of list){
+      const label=page.locator('[data-dungeon-id="'+d+'"]');
+      await expect(label).toHaveText(name);
+      await expect(label).toHaveAttribute('aria-label',name);
+      await expect(label).toBeVisible();
+    }
+    if(list.length){
+      const colors=await page.locator('.map-dungeon-pin').evaluateAll(pins=>pins.map(p=>p.style.getPropertyValue('--dungeon-accent')));
+      if(list.length>2)expect(new Set(colors).size).toBeGreaterThan(2);
+      await page.locator('[data-map-action=toggle-dungeons]').click();
+      await expect(page.locator('.map-dungeon-pin').first()).toBeHidden();
+      await page.locator('[data-map-action=toggle-dungeons]').click();
+      expect(await page.locator('.map-dungeon-pin').evaluateAll(pins=>pins.map(p=>p.style.getPropertyValue('--dungeon-accent')))).toEqual(colors);
+    }
+  }
+  expect(spriteRequests).toEqual([]);
+});
+
 test("Map V2 detail reading is bounded and does not reload map assets on mobile @webkit", async ({ page }) => {
   await page.setViewportSize({width:390,height:844});
   await ready(page); await gotoView(page,'map');
@@ -1852,7 +1891,7 @@ test("Map V2 detail reading is bounded and does not reload map assets on mobile 
       await expect(page.getByRole('img',{name,exact:true})).toBeVisible();
     }
     await expect(page.locator('[data-mj-kind=region]')).toHaveCount(6);
-    if(width<=760)await expect(page.locator('.map-dungeon-label').first()).toBeHidden();
+    await expect(page.locator('.map-dungeon-label').first()).toBeVisible();
   }
   await assertNoHorizontalOverflow(page);
   expect(requests).toEqual([]);
