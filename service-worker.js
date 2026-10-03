@@ -1,4 +1,4 @@
-// Atlas 03/10/2026: continental zoom layers and local dungeon dialogs.
+// Atlas 04/10/2026: compact dungeon paper, unchanged type and 44px hit areas.
 
 const CACHE = "gargottex-v6-whaou-final-v1";
 const CACHE_PREFIX = "gargottex-";

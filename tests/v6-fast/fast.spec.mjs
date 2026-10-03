@@ -1985,6 +1985,45 @@ test("Map V2 zoom switches continental layers exactly and keeps independent disp
   await expect(page.locator('.map-dungeon-label').first()).toBeVisible();
 });
 
+test("Map V2 compact dungeon paper keeps unchanged type, complete names and separate touch targets @webkit", async ({page})=>{
+  await ready(page);
+  for(const width of [390,834,1440]){
+    await page.setViewportSize({width,height:1112});
+    for(const id of ['valdorie','ferrecime','sylvaronde']){
+      await page.evaluate(async id=>{const m=await import('./src/map-v2.js');m.openMap(id);const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);},id);
+      await page.locator('[data-map-action=zoom-in]').click();
+      await page.evaluate(async()=>{await document.fonts.ready;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));});
+      const metrics=await page.evaluate(()=>{
+        const w=document.querySelector('.map-v2-frame').getBoundingClientRect().width;
+        const labels=[...document.querySelectorAll('.map-dungeon-label')].map(el=>{
+          const css=getComputedStyle(el),hit=getComputedStyle(el,'::after'),r=el.getBoundingClientRect();
+          const extra=parseFloat(css.paddingTop)+parseFloat(css.paddingBottom)+parseFloat(css.borderTopWidth)+parseFloat(css.borderBottomWidth);
+          const hw=Math.max(44,r.width),hh=Math.max(44,r.height);
+          return {font:parseFloat(css.fontSize),expected:.75*Math.max(4.5,Math.min(16,w*.0155)),height:r.height,maxHeight:2*parseFloat(css.lineHeight)+extra+1,minHeight:css.minHeight,hitWidth:parseFloat(hit.width),hitHeight:parseFloat(hit.height),text:el.textContent,name:el.getAttribute('aria-label'),rect:{x:r.x+(r.width-hw)/2,y:r.y+(r.height-hh)/2,w:hw,h:hh}};
+        });
+        const overlaps=[];
+        for(let i=0;i<labels.length;i++)for(let j=i+1;j<labels.length;j++){
+          const a=labels[i].rect,b=labels[j].rect;
+          if(a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y)overlaps.push([labels[i].name,labels[j].name]);
+        }
+        return {labels,overlaps};
+      });
+      expect(metrics.overlaps,id+'/'+width).toEqual([]);
+      for(const label of metrics.labels){
+        expect(label.font).toBeCloseTo(label.expected,2);expect(label.minHeight).toBe('0px');
+        expect(label.height,label.name).toBeLessThanOrEqual(label.maxHeight);
+        expect(label.hitWidth).toBeGreaterThanOrEqual(44);expect(label.hitHeight).toBeGreaterThanOrEqual(44);
+        expect(label.text).toBe(label.name);
+      }
+      const trigger=page.locator('.map-dungeon-label').first();await trigger.scrollIntoViewIfNeeded();
+      const r=await trigger.boundingBox(),x=r.x+r.width/2,y=r.y-2;
+      expect(await page.evaluate(({x,y})=>!!document.elementFromPoint(x,y)?.closest('.map-dungeon-label'),{x,y})).toBe(true);
+      await page.mouse.click(x,y);await expect(page.getByRole('dialog')).toBeVisible();
+      await page.getByRole('dialog').getByRole('button',{name:'Fermer la fenêtre du donjon'}).click();
+    }
+  }
+});
+
 test("Map V2 dungeon dialogs preserve map, zoom, cache and focus, including shared anchors @webkit", async ({page})=>{
   await ready(page);await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
   await page.reload();await page.waitForFunction(()=>document.documentElement.dataset.gargottexReady==='true'&&!!navigator.serviceWorker.controller);

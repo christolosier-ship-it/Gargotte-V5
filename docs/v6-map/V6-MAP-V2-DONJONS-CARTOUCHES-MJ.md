@@ -40,9 +40,19 @@ La planche propriétaire prévaut ici sur les anciennes propositions de placemen
 
 Le point est fixe. Le cartouche possède un centre de présentation préféré et un trait calculé jusqu’à son bord. La largeur s’adapte à la chaîne ; les noms longs peuvent revenir à la ligne. Une recherche locale bornée évite les libellés publics, les autres cartouches et les pastilles, puis se recalcule au changement de largeur/hauteur, au chargement de la police et après les toggles. Les points ne sont jamais déplacés pour résoudre une collision de texte.
 
-Les cartouches restent présents en vue d’ensemble sur téléphone. Leur taille est proportionnelle au fond avec un plancher ; Détails agrandit le fond et les textes sans recharger les images. Les traits passent sous la toponymie publique, les cartouches sont au-dessus. Les couleurs ne remplacent pas les noms. Chaque cartouche possède un nom accessible ; les pastilles et traits sont décoratifs.
+Sur les sept continents, les cartouches apparaissent uniquement en Détails (> 100 %) et selon le bouton Donjons. Leur taille est proportionnelle au fond avec un plancher ; Détails agrandit le fond et les textes sans recharger les images. Les traits passent sous la toponymie publique, les cartouches sont au-dessus. Les couleurs ne remplacent pas les noms. Chaque cartouche possède un nom accessible ; les pastilles et traits sont décoratifs.
 
 Le bouton Donjons masque ensemble les points, traits, cartouches et entrées de donjon dans l’index. Le bouton Toponymes commande uniquement les noms publics : il ne masque pas les donjons. Les deux commandes ne modifient ni données ni fond d’image.
+
+## Compactage du 04/10/2026
+
+La hauteur minimale de 44 px héritée des boutons généraux est retirée du cartouche visible. Les marges passent de `.35em .65em .4em` à `.16em .48em .2em`. La largeur est mesurée avec la police courante : une ligne quand le nom tient, sinon une largeur ajustée à deux lignes équilibrées dans la limite responsive existante. Aucun nom n'est tronqué, aucune taille de police n'est réduite.
+
+Une zone transparente d'au moins 44 × 44 px reste cliquable autour du nom. Le placement réserve ces zones pour qu'elles ne se chevauchent pas entre donjons et restent dans le fond. Le trait se termine au bord du papier visible, pas au bord de la zone invisible. La modale, le clavier, les couleurs, les points et les préférences d'affichage ne changent pas.
+
+Implémentation : `styles.css` (papier compact et zone transparente), `src/map-v2-toponyms.js` (mesure, largeur et placement des zones de clic). Le test compactage dans `tests/v6-fast/fast.spec.mjs` contrôle les treize noms sur trois formats, la police inchangée, les noms complets, les zones séparées et le clic en dehors du papier visible. Les vérifications de modale, de zoom et de cache restent actives.
+
+Validation locale de ce compactage : **13/13 tests Map**, dont les zones de clic sur les trois formats et les treize noms enregistrés. La revue artistique produit **72 captures sans chevauchement de libellés, débordement horizontal ou erreur de page/ressource** ; inspection visuelle complémentaire de Valdorie en détail sur tablette. Les fonds, coordonnées, noms et données utilisateur sont inchangés. WebKit est couvert par le test marqué `@webkit` dans la CI Full.
 
 ## Traçabilité de l’implémentation
 
