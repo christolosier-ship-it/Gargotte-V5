@@ -1,5 +1,7 @@
 # V6-Map V2 — plan maître d’intégration
 
+**Amendement prioritaire du 03/10/2026 :** sur les sept continents, zoom 100 % = régions et mers/océans ; zoom > 100 % = lieux-dits, rivières/lacs et donjons selon le bouton Donjons. Chaque nom de donjon ouvre une modale locale avec son titre, sans contenu métier pour le moment. Cette décision remplace les anciennes mentions « tous les libellés visibles » et « repères non ouvrants ». Entrevers reste sans texte ; les autres cartes conservent leur consultation. [Décision et traçabilité](V6-MAP-V2-LECTURE-ZOOM-CONTINENTS.md#évolution-du-03102026--couches-liées-au-zoom-et-modale).
+
 **Amendement de lecture du 02/10/2026 :** [surface utile et zoom progressif des sept continents](V6-MAP-V2-LECTURE-ZOOM-CONTINENTS.md), avec réduction de 25 % des libellés superposés sur toutes les cartes. Les noms, points, affichage/masquage et éviction du cache ne changent pas.
 
 **Amendement propriétaire du 02/10/2026 :** les [repères MJ de donjons](V6-MAP-V2-DONJONS-CARTOUCHES-MJ.md) remplacent l’affichage des sprites sur toutes les cartes : pastilles, traits, cartouches avec noms seuls. Les points de Valdorie et Ferrécime suivent les nouvelles planches fournies. Les sprites restent conservés, hors affichage ; les descriptions de rendu sprite ci-dessous sont historiques. Les décisions afficher/masquer et éviction restent verrouillées.

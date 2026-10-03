@@ -31,7 +31,7 @@ function dungeonMarkup(id){
   }
   return [...groups.entries()].map(([group,entries])=>{
     const p=DUNGEON_MARKERS[group],[accent,deep,shine]=DUNGEON_COLORS[p.color];
-    return '<div class="map-dungeon-pin" data-placement-id="'+group+'" style="--x:'+p.anchor[0]+'%;--y:'+p.anchor[1]+'%;--dungeon-accent:'+accent+';--dungeon-deep:'+deep+';--dungeon-shine:'+shine+'"><span class="map-dungeon-dot" aria-hidden="true"></span>'+entries.map(({d,name,p})=>'<span class="map-dungeon-leader" data-dungeon-line="'+d+'" aria-hidden="true"></span><span class="map-toponym map-dungeon-label" data-dungeon-id="'+d+'" data-label-x="'+p.label[0]+'" data-label-y="'+p.label[1]+'" role="img" aria-label="'+esc(name)+'">'+esc(name)+'</span>').join('')+'</div>';
+    return '<div class="map-dungeon-pin" data-placement-id="'+group+'" style="--x:'+p.anchor[0]+'%;--y:'+p.anchor[1]+'%;--dungeon-accent:'+accent+';--dungeon-deep:'+deep+';--dungeon-shine:'+shine+'"><span class="map-dungeon-dot" aria-hidden="true"></span>'+entries.map(({d,name,p})=>'<span class="map-dungeon-leader" data-dungeon-line="'+d+'" aria-hidden="true"></span><button type="button" class="map-toponym map-dungeon-label" data-map-action="open-dungeon" aria-haspopup="dialog" data-dungeon-id="'+d+'" data-label-x="'+p.label[0]+'" data-label-y="'+p.label[1]+'" aria-label="'+esc(name)+'">'+esc(name)+'</button>').join('')+'</div>';
   }).join('');
 }
 function renderMapView() {
@@ -44,8 +44,8 @@ function renderMapView() {
   const names=hasLabels?'<details class="map-name-index"><summary>Noms et repères de la carte</summary><ul>'+[...map.toponyms.map(([name])=>name),...destinations.map(d=>MAPS[d.id].title)].map(name=>'<li>'+esc(name)+'</li>').join('')+dungeonList.map(([,name])=>'<li class="map-dungeon-index">'+esc(name)+'</li>').join('')+'</ul></details>':'';
   const detailControl=button('Détails de la carte','toggle-detail','aria-pressed="false"');
   const continental=map.type==='continent';
-  const zoomControl=continental?'<div class="map-zoom-controls" role="group" aria-label="Zoom de la carte">'+button('−','zoom-out','aria-label="Réduire le zoom"')+'<input class="map-zoom-range" type="range" min="100" max="400" step="5" value="100" aria-label="Zoom de la carte"><output class="map-zoom-value" aria-live="polite">100 %</output>'+button('+','zoom-in','aria-label="Augmenter le zoom"')+'</div>':'';
-  return '<section class="map-v2-page '+(showDungeons?"":"is-dungeons-hidden")+(continental?" is-continent-map":"")+'" data-map-current="'+id+'" aria-labelledby="map-page-title"><header class="map-v2-header"><div><p class="map-eyebrow">Atlas · consultation</p><h1 id="map-page-title">'+esc(map.title)+'</h1><p class="map-status-note">Placements proposés sur les fonds validés, à annoter ; coordonnées non canoniques.</p></div><div class="map-toolbar">'+(parent?button("Retour à "+parent.title,"back"):"")+(hasLabels?button("Toponymes : "+(showToponyms?"affichés":"masqués"),"toggle-toponyms",'aria-pressed="'+showToponyms+'"'):"")+detailControl+(dungeonList.length?button(showDungeons?"Masquer les donjons":"Afficher les donjons","toggle-dungeons",'aria-pressed="'+showDungeons+'"'):"")+zoomControl+'</div></header><p class="map-reading-hint">'+(id!=='entrevers'?'Tous les lieux et les eaux restent affichés. Agrandissez la carte pour lire les noms.':'Les dimensions sont accessibles par leurs zones cliquables et la liste de destinations.')+' La carte agrandie se parcourt par défilement.</p><div class="map-v2-viewport" tabindex="0" role="region" aria-label="Carte défilante"><div class="map-v2-frame '+(id==="entrevers"?"is-entrevers":"")+'" style="--map-ratio:'+spec.size[0]/spec.size[1]+'"><img class="map-v2-image" src="'+esc(map.image)+'" width="'+spec.size[0]+'" height="'+spec.size[1]+'" alt="Carte illustrée : '+esc(map.title)+'" loading="eager" decoding="async">'+pins+'<div class="map-labels">'+labelsMarkup(id)+'</div><svg class="map-hotspots" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Zones cliquables de '+esc(map.title)+'">'+paths+'</svg></div></div>'+links+names+'<footer class="map-v2-footer"><span>'+esc(map.title)+'</span><span>Les repères de donjon ne sont pas encore ouvrants.</span></footer></section>';
+  const zoomControl=continental?'<div class="map-zoom-controls" role="group" aria-label="Zoom de la carte">'+button('−','zoom-out','aria-label="Réduire le zoom"')+'<input class="map-zoom-range" type="range" min="100" max="400" step="1" value="100" aria-label="Zoom de la carte"><output class="map-zoom-value" aria-live="polite">100 %</output>'+button('+','zoom-in','aria-label="Augmenter le zoom"')+'</div>':'';
+  return '<section class="map-v2-page '+(showDungeons?"":"is-dungeons-hidden")+(continental?" is-continent-map":"")+'" data-map-current="'+id+'" aria-labelledby="map-page-title"><header class="map-v2-header"><div><p class="map-eyebrow">Atlas · consultation</p><h1 id="map-page-title">'+esc(map.title)+'</h1><p class="map-status-note">Placements proposés sur les fonds validés, à annoter ; coordonnées non canoniques.</p></div><div class="map-toolbar">'+(parent?button("Retour à "+parent.title,"back"):"")+(hasLabels?button("Toponymes : "+(showToponyms?"affichés":"masqués"),"toggle-toponyms",'aria-pressed="'+showToponyms+'"'):"")+detailControl+(dungeonList.length?button(showDungeons?"Masquer les donjons":"Afficher les donjons","toggle-dungeons",'aria-pressed="'+showDungeons+'"'):"")+zoomControl+'</div></header><p class="map-reading-hint">'+(continental?'À 100 % : régions, mers et océans. Au-delà : lieux-dits, rivières, lacs et donjons.':id!=='entrevers'?'Agrandissez la carte pour lire les noms.':'Les dimensions sont accessibles par leurs zones cliquables et la liste de destinations.')+' La carte agrandie se parcourt par défilement.</p><div class="map-v2-viewport" tabindex="0" role="region" aria-label="Carte défilante"><div class="map-v2-frame '+(id==="entrevers"?"is-entrevers":"")+'" style="--map-ratio:'+spec.size[0]/spec.size[1]+'"><img class="map-v2-image" src="'+esc(map.image)+'" width="'+spec.size[0]+'" height="'+spec.size[1]+'" alt="Carte illustrée : '+esc(map.title)+'" loading="eager" decoding="async">'+pins+'<div class="map-labels">'+labelsMarkup(id)+'</div><svg class="map-hotspots" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Zones cliquables de '+esc(map.title)+'">'+paths+'</svg></div></div>'+links+names+'<footer class="map-v2-footer"><span>'+esc(map.title)+'</span><span>Sélectionnez le nom d’un donjon pour ouvrir sa fenêtre.</span></footer></section>';
 }
 function bindMapViewActions(root = document) {
   const pageView=root.querySelector(".map-v2-page");
@@ -60,6 +60,10 @@ function bindMapViewActions(root = document) {
   const activate=async element=>{
     if (!element || navigating) return;
     const action=element.dataset.mapAction;
+    if(action==='open-dungeon'){
+      openDungeonDialog(pageView,element);
+      return;
+    }
     if(zoom&&['zoom-in','zoom-out','toggle-detail'].includes(action)){
       if(action==='toggle-detail')zoom.set(zoom.value()>1?1:Math.min(4,Math.max(1.5,900/pageView.querySelector('.map-v2-viewport').clientWidth)));
       else zoom.set(zoom.value()+(action==='zoom-in'?.25:-.25));
@@ -111,22 +115,60 @@ function bindMapViewActions(root = document) {
     }
   });
 }
+// Atlas IDs are presentation identifiers, not inferred Codex/database relationships.
+function openDungeonDialog(page,trigger){
+  const entry=(DUNGEONS[page.dataset.mapCurrent]||[]).find(([id])=>id===trigger.dataset.dungeonId);
+  if(!entry || !trigger.getClientRects().length)return;
+  let dialog=page.querySelector('.map-dungeon-dialog');
+  if(!dialog){
+    dialog=document.createElement('dialog');
+    dialog.className='map-dungeon-dialog';
+    dialog.setAttribute('aria-labelledby','map-dungeon-dialog-title');
+    dialog.innerHTML='<header class="map-dungeon-dialog-header"><h2 id="map-dungeon-dialog-title"></h2><button type="button" class="map-action-button" data-dialog-close aria-label="Fermer la fenêtre du donjon" autofocus>Fermer</button></header><div class="map-dungeon-dialog-content"></div>';
+    page.append(dialog);
+    dialog.querySelector('[data-dialog-close]').addEventListener('click',()=>dialog.close());
+    dialog.addEventListener('click',event=>{
+      if(event.target!==dialog)return;
+      const r=dialog.getBoundingClientRect();
+      if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();
+    });
+    // Let the native dialog handle Escape, without closing another application overlay.
+    dialog.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){event.stopPropagation();return;}
+      if(event.key!=='Tab')return;
+      const focusable=[...dialog.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex="0"]')].filter(el=>el.getClientRects().length);
+      const first=focusable[0],last=focusable.at(-1);
+      if(first && (event.shiftKey?document.activeElement===first:document.activeElement===last)){
+        event.preventDefault();(event.shiftKey?last:first).focus({preventScroll:true});
+      }
+    });
+    dialog.addEventListener('close',()=>{
+      const previous=dialog.returnTrigger;
+      if(previous?.isConnected)previous.focus({preventScroll:true});
+      dialog.returnTrigger=null;
+    });
+  }
+  dialog.dataset.dungeonId=entry[0];
+  dialog.querySelector('h2').textContent=entry[1];
+  dialog.returnTrigger=trigger;
+  if(!dialog.open)dialog.showModal();
+}
 function bindContinentalZoom(page,frame,toponyms){
   const viewport=page.querySelector('.map-v2-viewport'),range=page.querySelector('.map-zoom-range'),output=page.querySelector('.map-zoom-value');
   let zoom=1,gesture=null,dragged=false;
   const pointers=new Map();
   function set(value,anchor){
-    const next=Math.max(1,Math.min(4,value));
+    const next=Math.max(1,Math.min(4,Math.round(value*100)/100));
     const bottom=window.matchMedia('(max-width:760px)').matches?96:24;
     viewport.style.maxHeight=Math.max(160,window.innerHeight-viewport.getBoundingClientRect().top-bottom)+'px';
     const x=anchor?.x??viewport.clientWidth/2,y=anchor?.y??viewport.clientHeight/2;
     const oldWidth=frame.clientWidth||viewport.clientWidth;
     const worldX=(viewport.scrollLeft+x)/oldWidth,worldY=(viewport.scrollTop+y)/oldWidth;
     zoom=next;frame.style.width=(viewport.clientWidth*zoom)+'px';
-    page.classList.toggle('is-detail-view',zoom>1.001);
+    page.classList.toggle('is-detail-view',zoom>1);
     range.value=String(Math.round(zoom*100));output.value=Math.round(zoom*100)+' %';
     const detail=page.querySelector('[data-map-action=toggle-detail]');
-    detail.setAttribute('aria-pressed',String(zoom>1.001));detail.textContent=zoom>1.001?'Vue d’ensemble':'Détails de la carte';
+    detail.setAttribute('aria-pressed',String(zoom>1));detail.textContent=zoom>1?'Vue d’ensemble':'Détails de la carte';
     page.querySelector('[data-map-action=zoom-out]').disabled=zoom<=1;
     page.querySelector('[data-map-action=zoom-in]').disabled=zoom>=4;
     toponyms?.redraw();

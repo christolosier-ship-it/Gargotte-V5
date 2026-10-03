@@ -1593,7 +1593,7 @@ test("axe smoke covers home and Codex collection", async ({ page }) => {
 
 
 
-test("Map V2 navigates the hierarchy and keeps dungeon markers presentation-only", async ({ page }) => {
+test("Map V2 navigates the hierarchy and preserves dungeon controls and destination navigation", async ({ page }) => {
   await ready(page);
   await gotoView(page, "map");
   await expect(page.locator("#map-page-title")).toHaveText("L’Entrevers");
@@ -1609,6 +1609,7 @@ test("Map V2 navigates the hierarchy and keeps dungeon markers presentation-only
   await expect(page.locator('img[src^="assets/sprites/"]')).toHaveCount(0);
   await expect(page.locator('.map-dungeon-dot')).toHaveCount(8);
   await expect(page.locator('.map-dungeon-label')).toHaveCount(9);
+  await page.locator('[data-map-action=toggle-detail]').click();
   await page.locator('[data-map-action="toggle-dungeons"]').click();
   await expect(page.locator('[data-map-action="toggle-dungeons"]')).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator(".map-dungeon-pin").first()).toHaveCSS("display", "none");
@@ -1618,7 +1619,7 @@ test("Map V2 navigates the hierarchy and keeps dungeon markers presentation-only
   await expect(page.locator(".map-mj-label")).toHaveCount(0);
   await expect(page.locator('.map-dungeon-label').first()).toBeVisible();
   await page.locator('[data-map-action="toggle-toponyms"]').click();
-  await expect(page.locator(".map-toponym").first()).toBeVisible();
+  await expect(page.locator(".map-mj-label[data-mj-kind=place]").first()).toBeVisible();
 
   await page.locator('[data-map-action="back"]').click();
   await expect(page.locator("#map-page-title")).toHaveText("Ardéra");
@@ -1725,6 +1726,7 @@ test("Map V2 artistic correction separates painted hit areas, labels and dungeon
   await page.locator('[data-map-action="toggle-toponyms"]').click();
   await page.locator('[data-map-action="toggle-toponyms"]').click();
   expect(await page.evaluate(()=>window.mapReviewImage===document.querySelector('.map-v2-image'))).toBe(true);
+  await page.locator('[data-map-action=toggle-detail]').click();
   const anchors=await page.evaluate(async()=>{
     const { DUNGEON_MARKERS }=await import('/src/map-v2-cartography.js');
     const frame=document.querySelector('.map-v2-frame').getBoundingClientRect();
@@ -1734,6 +1736,7 @@ test("Map V2 artistic correction separates painted hit areas, labels and dungeon
     });
   });
   expect(Math.max(...anchors)).toBeLessThan(2);
+  await page.locator('[data-map-action=toggle-detail]').click();
   const text=page.locator('.map-mj-label').first();
   await expect(text).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
   await expect(text).toHaveCSS('border-top-width','0px');
@@ -1756,7 +1759,9 @@ test("Map V2 Valdorie reproduces approved parchment, water and organic sea label
   await expect(page.locator('[data-mj-kind=ocean]')).toHaveAttribute('aria-label','Mer des Trois Couronnes');
   await expect(page.locator('[data-mj-kind=ocean] .map-mj-ornament')).toHaveCount(2);
   await expect(page.locator('[data-mj-kind=region]').first().locator('.map-mj-text')).toHaveCSS('color','rgb(48, 22, 8)');
+  await page.locator('[data-map-action=toggle-detail]').click();
   await expect(page.locator('[data-mj-kind=river]').first().locator('.map-mj-text')).toHaveCSS('color','rgb(255, 243, 214)');
+  await page.locator('[data-map-action=toggle-detail]').click();
   await expect.poll(()=>labels.first().locator('.map-mj-text span').count()).toBeGreaterThan(0);
   const immutableImage=await page.locator('.map-v2-image').evaluate(img=>{window.mjImage=img;return img.src;});
   await page.locator('[data-map-action="toggle-toponyms"]').click();
@@ -1787,15 +1792,16 @@ test("Map V2 approved MJ lettering covers atlas, dimensions have places only, En
     for(const [id,map] of Object.entries(MAPS)){
       m.openMap(id);main.innerHTML=m.renderMapView();m.bindMapViewActions(main);
       const labels=[...main.querySelectorAll('.map-mj-label')];
+      const expectedVisible=map.type==='continent'?labels.filter(el=>['region','ocean'].includes(el.dataset.mjKind)).length:labels.length;
       results.push({id,expected:id==='entrevers'?0:map.toponyms.length+(DESTINATIONS[id]||[]).length,
-        count:labels.length,visible:labels.filter(el=>el.getClientRects().length).length,
+        count:labels.length,expectedVisible,visible:labels.filter(el=>el.getClientRects().length).length,
         kinds:labels.map(el=>el.dataset.mjKind),names:labels.map(el=>el.dataset.mjText),
         catalogue:map.toponyms.map(([name])=>name),probe:main.querySelectorAll('.map-mj-probe').length});
     }
     return results;
   });
   for(const r of results){
-    expect(r.count,r.id).toBe(r.expected);expect(r.visible,r.id).toBe(r.expected);
+    expect(r.count,r.id).toBe(r.expected);expect(r.visible,r.id).toBe(r.expectedVisible);
     expect(r.probe,r.id).toBe(r.expected?1:0);
     for(const name of r.catalogue)expect(r.names).toContain(name);
     if(['brasserie','enfer'].includes(r.id))expect(r.kinds).toEqual(Array(16).fill('place'));
@@ -1813,6 +1819,7 @@ test("Map V2 integrates all 48 owner-approved places while preserving regions an
       const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);
     },id);
     await expect(page.locator('[data-mj-kind=region]')).toHaveCount(6);
+    await page.locator('[data-map-action=zoom-in]').click();
     for(const name of names){
       const label=page.getByRole('img',{name,exact:true});
       await expect(label).toBeVisible();
@@ -1846,6 +1853,7 @@ test("Map V2 uses named cartouches on every registered dungeon without fetching 
   for(const id of registry.ids){
     await page.evaluate(async id=>{const m=await import('./src/map-v2.js');m.openMap(id);const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);},id);
     const list=registry.dungeons[id]||[];
+    if(list.length)await page.locator('[data-map-action=toggle-detail]').click();
     await expect(page.locator('.map-dungeon-label')).toHaveCount(list.length);
     await expect(page.locator('img[src*="/sprites/"]')).toHaveCount(0);
     for(const [d,name] of list){
@@ -1853,6 +1861,9 @@ test("Map V2 uses named cartouches on every registered dungeon without fetching 
       await expect(label).toHaveText(name);
       await expect(label).toHaveAttribute('aria-label',name);
       await expect(label).toBeVisible();
+      await label.click();
+      await expect(page.getByRole('dialog').getByRole('heading')).toHaveText(name);
+      await page.getByRole('dialog').getByRole('button',{name:'Fermer la fenêtre du donjon'}).click();
     }
     if(list.length){
       const colors=await page.locator('.map-dungeon-pin').evaluateAll(pins=>pins.map(p=>p.style.getPropertyValue('--dungeon-accent')));
@@ -1887,6 +1898,7 @@ test("Map V2 continental progressive zoom preserves image and scales all letteri
   }
   // Compare against the prior responsive formula at the SAME map width.
   await page.evaluate(async()=>{const m=await import('./src/map-v2.js');m.openMap('valdorie');const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);await document.fonts.ready;});
+  await page.locator('[data-map-action=zoom-in]').click();
   const fonts=await page.evaluate(async()=>{
     const {MAP_TEXT_SCALE}=await import('./src/map-v2-toponyms.js');const w=document.querySelector('.map-v2-frame').clientWidth;
     return {scale:MAP_TEXT_SCALE,place:Number(document.querySelector('[data-mj-text="Brassefort"]').dataset.fontSize),expectedPlace:.75*Math.min(23,w*.0136),dungeon:parseFloat(getComputedStyle(document.querySelector('.map-dungeon-label')).fontSize),expectedDungeon:.75*Math.max(4.5,Math.min(16,document.querySelector('.map-v2-frame').getBoundingClientRect().width*.0155))};
@@ -1921,17 +1933,94 @@ test("Map V2 detail reading is bounded and does not reload map assets on mobile 
   const dimensions=await page.locator('.map-v2-frame').boundingBox();
   expect(dimensions.width).toBeGreaterThan(850);
   await page.locator('[data-map-action="toggle-detail"]').click();
-  // Owner wants Valdorie's public places and waters present even in overview.
+  // Regions/seas appear at 100%; places/inland waters/dungeons require detail.
   for(const width of [320,390,834]){
     await page.setViewportSize({width,height:844});
+    await page.locator('[data-map-action=zoom-in]').click();
     for(const name of ['Arbres-Colosses','Saint-Fût-le-Petit','La Chope Qui Colle','L’Avelorne','La Rivombre','Ruisseau des Saules','Lac d’Ysambre','Collines de la Vieille Lande','Monts d’Escarbelle','Brassefort','Port-Rivombre']){
       await expect(page.getByRole('img',{name,exact:true})).toBeVisible();
     }
     await expect(page.locator('[data-mj-kind=region]')).toHaveCount(6);
     await expect(page.locator('.map-dungeon-label').first()).toBeVisible();
+    await page.locator('[data-map-action=toggle-detail]').click();
+    await expect(page.locator('[data-mj-kind=region]').first()).toBeVisible();
+    await expect(page.locator('[data-mj-kind=ocean]')).toBeVisible();
+    await expect(page.locator('.map-dungeon-label').first()).toBeHidden();
   }
   await assertNoHorizontalOverflow(page);
   expect(requests).toEqual([]);
   await page.locator('.map-name-index summary').click();
   await expect(page.locator('.map-name-index')).toContainText('La Chope Qui Colle');
+});
+
+
+
+test("Map V2 zoom switches continental layers exactly and keeps independent display preferences", async ({page})=>{
+  await ready(page);
+  for(const id of ['valdorie','ferrecime','sylvaronde','pelagreve','boreclat','sahaldune','austrebrume']){
+    await page.evaluate(async id=>{const m=await import('./src/map-v2.js');m.openMap(id);const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);},id);
+    const state=()=>page.evaluate(()=>[...document.querySelectorAll('.map-mj-label')].map(el=>({kind:el.dataset.mjKind,visible:!!el.getClientRects().length})));
+    for(const zoom of [100,101,125,400,100]){
+      await page.locator('.map-zoom-range').evaluate((e,value)=>{e.value=String(value);e.dispatchEvent(new Event('input',{bubbles:true}));},zoom);
+      await expect(page.locator('.map-zoom-value')).toHaveText(zoom+' %');
+      for(const label of await state())expect(label.visible,id+'/'+zoom+'/'+label.kind).toBe(zoom===100?['region','ocean'].includes(label.kind):['place','river'].includes(label.kind));
+      for(const pin of await page.locator('.map-dungeon-pin').all()){
+        if(zoom===100)await expect(pin).toBeHidden();else await expect(pin).toBeVisible();
+      }
+    }
+  }
+  await page.evaluate(async()=>{const m=await import('./src/map-v2.js');m.openMap('valdorie');const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);});
+  await page.locator('[data-map-action=toggle-dungeons]').click();
+  await page.locator('[data-map-action=zoom-in]').click();
+  await expect(page.locator('.map-dungeon-label').first()).toBeHidden();
+  await page.locator('[data-map-action=toggle-detail]').click();
+  await page.locator('[data-map-action=toggle-detail]').click();
+  await expect(page.locator('[data-map-action=toggle-dungeons]')).toHaveAttribute('aria-pressed','false');
+  await page.locator('[data-map-action=toggle-dungeons]').click();
+  await expect(page.locator('.map-dungeon-label').first()).toBeVisible();
+  await page.locator('[data-map-action=toggle-toponyms]').click();
+  await page.locator('[data-map-action=toggle-detail]').click();
+  await page.locator('[data-map-action=toggle-detail]').click();
+  await expect(page.locator('.map-mj-label')).toHaveCount(0);
+  await expect(page.locator('.map-dungeon-label').first()).toBeVisible();
+});
+
+test("Map V2 dungeon dialogs preserve map, zoom, cache and focus, including shared anchors @webkit", async ({page})=>{
+  await ready(page);await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
+  await page.reload();await page.waitForFunction(()=>document.documentElement.dataset.gargottexReady==='true'&&!!navigator.serviceWorker.controller);
+  await gotoView(page,'map');
+  await page.evaluate(async()=>{const m=await import('./src/map-v2.js');m.openMap('valdorie');const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);});
+  await page.locator('.map-v2-image').evaluate(img=>img.decode());
+  await expect.poll(()=>page.evaluate(async()=>{const c=await caches.open('map-v2-active-v1');return (await c.keys()).length;})).toBeGreaterThan(0);
+  await page.locator('[data-map-action=zoom-in]').click();
+  await page.evaluate(()=>{window.dialogImage=document.querySelector('.map-v2-image');});
+  const cached=()=>page.evaluate(async()=>{const c=await caches.open('map-v2-active-v1');return (await c.keys()).map(r=>r.url).sort();});
+  const cacheBefore=await cached();const requests=[];
+  page.on('request',r=>{if(r.url().includes('/assets/maps/'))requests.push(r.url());});
+  for(const [id,close] of [['D01','button'],['D05','escape'],['D06','backdrop']]){
+    const trigger=page.locator('.map-dungeon-label[data-dungeon-id="'+id+'"]');
+    await trigger.scrollIntoViewIfNeeded();
+    const before=await page.locator('.map-v2-viewport').evaluate(el=>({left:el.scrollLeft,top:el.scrollTop}));
+    const name=await trigger.textContent();
+    if(close==='button')await trigger.click();else{await trigger.focus();await page.keyboard.press('Enter');}
+    const dialog=page.getByRole('dialog');
+    await expect(dialog).toBeVisible();await expect(dialog).toHaveAttribute('data-dungeon-id',id);
+    await expect(dialog.getByRole('heading')).toHaveText(name);
+    await page.keyboard.press('Tab');expect(await dialog.evaluate(el=>el.contains(document.activeElement))).toBe(true);
+    if(close==='button')await dialog.getByRole('button',{name:'Fermer la fenêtre du donjon'}).click();
+    else if(close==='escape')await page.keyboard.press('Escape');
+    else await page.mouse.click(2,2);
+    await expect(dialog).toBeHidden();await expect(trigger).toBeFocused();
+    expect(await page.locator('.map-v2-viewport').evaluate(el=>({left:el.scrollLeft,top:el.scrollTop}))).toEqual(before);
+    await expect(page.locator('.map-zoom-range')).toHaveValue('125');
+    expect(await page.evaluate(()=>window.dialogImage===document.querySelector('.map-v2-image'))).toBe(true);
+    expect(await cached()).toEqual(cacheBefore);
+  }
+  expect(requests).toEqual([]);
+  // A pan starting on a cartouche must not open a modal.
+  const trigger=page.locator('.map-dungeon-label[data-dungeon-id=D01]');await trigger.scrollIntoViewIfNeeded();
+  const r=await trigger.boundingBox();await page.mouse.move(r.x+r.width/2,r.y+r.height/2);await page.mouse.down();await page.mouse.move(r.x+r.width/2-40,r.y+r.height/2,{steps:5});await page.mouse.up();
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await gotoView(page,'home');
+  await expect.poll(cached).toEqual([]);
 });

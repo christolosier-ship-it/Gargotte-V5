@@ -1,5 +1,7 @@
 # V6-Map V2 — lot 2 : hiérarchie, interactions et placements
 
+**Amendement prioritaire du 03/10/2026 :** sur les sept continents, zoom 100 % = régions et mers/océans ; zoom > 100 % = lieux-dits, rivières/lacs et donjons selon le bouton Donjons. Chaque nom de donjon ouvre une modale locale avec son titre, sans contenu métier pour le moment. Cette décision remplace les anciennes mentions « tous les libellés visibles » et « repères non ouvrants ». Entrevers reste sans texte ; les autres cartes conservent leur consultation. [Décision et traçabilité](V6-MAP-V2-LECTURE-ZOOM-CONTINENTS.md#évolution-du-03102026--couches-liées-au-zoom-et-modale).
+
 **Amendement courant du 02/10/2026 :** les [cartouches MJ de donjons](V6-MAP-V2-DONJONS-CARTOUCHES-MJ.md) remplacent les sprites et la coupe souterraine. Les noms seuls sont raccordés aux pastilles, avec un point partagé pour Sanctuaire/Panthéon. Les planches propriétaire de Valdorie et Ferrécime priment sur les anciens placements. Les mentions de clics sur sprites ci-dessous s’entendent désormais comme repères non ouvrants ; navigation et éviction ne changent pas.
 
 **But :** rendre les fonds consultables par navigation hiérarchique et relier les destinations connues. La carte reste un outil de consultation, pas une carte de déplacement.

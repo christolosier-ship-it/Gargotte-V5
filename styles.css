@@ -3579,3 +3579,21 @@ body.cinematic-open{overflow:hidden}
   .map-name-index ul{columns:1}
   .map-v2-footer{flex-direction:column;gap:3px}
 }
+
+
+/* Continental layers follow the zoom: 100% overview, >100% detail. */
+.is-continent-map:not(.is-detail-view) .map-mj-label[data-mj-kind=place],
+.is-continent-map:not(.is-detail-view) .map-mj-label[data-mj-kind=river],
+.is-continent-map:not(.is-detail-view) .map-dungeon-pin,
+.is-continent-map:not(.is-detail-view) .map-dungeon-index,
+.is-continent-map.is-detail-view .map-mj-label[data-mj-kind=region],
+.is-continent-map.is-detail-view .map-mj-label[data-mj-kind=ocean]{display:none}
+.map-dungeon-pin .map-dungeon-label{pointer-events:auto;cursor:pointer;appearance:none;letter-spacing:normal;transform:translate(-50%,-50%);transition:none}
+.map-dungeon-label:focus-visible{outline:3px solid #fff4d8;outline-offset:3px}
+.map-dungeon-label:hover{filter:brightness(1.06)}
+.map-dungeon-dialog{width:min(640px,calc(100vw - 32px));max-height:calc(100svh - 40px);box-sizing:border-box;overflow:auto;padding:24px;border:1px solid #d4a45f80;border-radius:16px;background:#211810;color:#fff0dd;box-shadow:0 24px 90px #0009}
+.map-dungeon-dialog::backdrop{background:#090604b3}
+.map-dungeon-dialog-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.map-dungeon-dialog-header h2{margin:0;font:600 clamp(24px,4vw,34px)/1.15 Alegreya,Georgia,serif}
+.map-dungeon-dialog-content{min-height:100px}
+@media(max-width:760px){.map-dungeon-dialog{padding:18px}.map-dungeon-dialog-header{flex-wrap:wrap}}

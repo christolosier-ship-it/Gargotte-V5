@@ -138,7 +138,9 @@ export function bindMapToponyms(frame){
   function redraw(){
     if(disposed||!frame.isConnected)return;
     destroy();lastWidth=frame.clientWidth;lastHeight=frame.clientHeight;
-    for(const el of frame.querySelectorAll('.map-mj-label'))renderLabel(el,lastWidth);
+    for(const el of frame.querySelectorAll('.map-mj-label')){
+      if(el.getClientRects().length)renderLabel(el,lastWidth);
+    }
     layoutDungeonCartouches(frame);
     cancelAnimationFrame(layoutFrame);
     // CircleType finishes its geometry on the next animation frame.
@@ -162,7 +164,7 @@ export function bindMapToponyms(frame){
 function layoutDungeonCartouches(frame){
   if(frame.closest('.is-dungeons-hidden'))return;
   const bounds=frame.getBoundingClientRect(),w=bounds.width,h=bounds.height;
-  const labels=[...frame.querySelectorAll('.map-dungeon-label')];
+  const labels=[...frame.querySelectorAll('.map-dungeon-label')].filter(el=>el.getClientRects().length);
   if(!w||!h||!labels.length)return;
   const gap=Math.max(3,w*.005);
   const rectangle=el=>{const r=el.getBoundingClientRect();return {x:r.left-bounds.left,y:r.top-bounds.top,w:r.width,h:r.height};};
