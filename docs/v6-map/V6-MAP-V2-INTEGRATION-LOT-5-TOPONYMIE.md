@@ -1,5 +1,7 @@
 # V6-Map V2 — lot 5 : toponymie des cartes hors Entrevers
 
+**Amendement prioritaire du 03/10/2026 :** sur les sept continents, zoom 100 % = régions et mers/océans ; zoom > 100 % = lieux-dits, rivières/lacs et donjons selon le bouton Donjons. Chaque nom de donjon ouvre une modale locale avec son titre, sans contenu métier pour le moment. Cette décision remplace les anciennes mentions « tous les libellés visibles » et « repères non ouvrants ». Entrevers reste sans texte ; les autres cartes conservent leur consultation. [Décision et traçabilité](V6-MAP-V2-LECTURE-ZOOM-CONTINENTS.md#évolution-du-03102026--couches-liées-au-zoom-et-modale).
+
 **Ajout validé du 02/10/2026 :** intégrer les 48 nouveaux noms des six continents hors Valdorie. Le [registre des lieux-dits et sa traçabilité](V6-MAP-V2-LIEUX-DITS-SIX-CONTINENTS.md) complète les sources historiques : ces noms sont désormais autorisés par le propriétaire.
 
 **Amendement courant du 02/10/2026 :** le propriétaire demande l’extension du rendu MJ approuvé à tout l’atlas, sauf Entrevers. Brasserie et Enfer utilisent uniquement des lieux-dits, sans traitement de régions. Tous les libellés publics restent visibles en vue d’ensemble. Ce choix remplace les restrictions de rendu des amendements antérieurs ci-dessous. Voir [couverture, exceptions et traçabilité de l’extension](V6-MAP-V2-TOPONYMIE-MJ-ATLAS.md).
