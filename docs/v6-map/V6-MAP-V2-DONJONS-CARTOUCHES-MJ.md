@@ -6,7 +6,7 @@ Remplacer les sprites dans toutes les vues Map par le rendu validé dans la maqu
 
 Les couleurs sont arbitraires, variées et stables, sans signification de gameplay. Les sprites sont conservés dans `assets/sprites/`, mais ne sont ni chargés ni affichés par Map. La coupe illustrée souterraine est également retirée. Aucun asset, média métier ou enregistrement utilisateur n’est supprimé.
 
-Cette décision remplace les prescriptions historiques d’intégration, de mise à l’échelle et de contour des sprites, pas les décisions de navigation. Afficher/masquer les donjons et éviction de la carte au départ restent verrouillés. Les donjons restent non ouvrants : aucun bouton factice, aucune navigation vers une fiche n’est ajouté.
+Cette décision remplace les prescriptions historiques d’intégration, de mise à l’échelle et de contour des sprites, pas les décisions de navigation. Afficher/masquer les donjons et éviction de la carte au départ restent verrouillés. Depuis la décision du 03/10/2026, les noms ouvrent une modale locale avec le titre du donjon et un contenu réservé pour la suite. Aucune relation avec une fiche Codex n’est déduite. Voir `V6-MAP-V2-LECTURE-ZOOM-CONTINENTS.md` pour le filtrage lié au zoom et les garanties de la modale.
 
 ## Couverture
 
