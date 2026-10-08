@@ -1912,9 +1912,10 @@ test("Map V2 uses named cartouches on every registered dungeon without fetching 
   });
   expect(Object.keys(registry.markers)).toHaveLength(13);
   expect(registry.markers.D05.anchor).toEqual(registry.markers.D06.anchor);
-  expect(registry.markers.D12.anchor).toEqual([21.3,38.1]);
-  expect(registry.markers.D14.anchor).toEqual([53.2,55.2]);
-  expect(registry.markers.D15.anchor).toEqual([67.8,78.6]);
+  expect(registry.markers.D12.anchor).toEqual([34.5,20]);
+  expect(registry.markers.D13.anchor).toEqual([68,15.8]);
+  expect(registry.markers.D14.anchor).toEqual([39.8,44.9]);
+  expect(registry.markers.D15.anchor).toEqual([59.4,86.8]);
   for(const id of registry.ids){
     await page.evaluate(async id=>{const m=await import('./src/map-v2.js');m.openMap(id);const main=document.querySelector('#main-content');main.innerHTML=m.renderMapView();m.bindMapViewActions(main);},id);
     const list=registry.dungeons[id]||[];
