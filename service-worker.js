@@ -1,4 +1,4 @@
-// Atlas 04/10/2026: compact dungeon paper, unchanged type and 44px hit areas.
+// Codex 08/10/2026: dungeon narrative order and optional arc metadata.
 
 const CACHE = "gargottex-v6-whaou-final-v1";
 const CACHE_PREFIX = "gargottex-";
