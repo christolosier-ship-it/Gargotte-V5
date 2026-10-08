@@ -497,7 +497,8 @@ test("Dungeon order and optional arc metadata persist across Codex and Atelier",
   await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
 
   const cards=page.locator('[data-action="select-family-codex"][data-type="dungeons"]');
-  expect(await cards.evaluateAll(nodes=>nodes.slice(0,2).map(node=>node.dataset.id))).toEqual([
+  await expect(cards.first()).toBeVisible();
+  await expect.poll(() => cards.evaluateAll(nodes=>nodes.slice(0,2).map(node=>node.dataset.id))).toEqual([
     "whaou-dungeon-order-2",
     "whaou-dungeon-order-7"
   ]);
@@ -525,7 +526,9 @@ test("Dungeon order and optional arc metadata persist across Codex and Atelier",
     return row ? {sort_order:row.sort_order,arc_name:row.arc_name} : null;
   })).toEqual({sort_order:5,arc_name:"Arc Atelier"});
 
-  expect(await page.locator('[data-action="select-workshop"][data-type="dungeons"]').evaluateAll(nodes=>nodes.slice(0,3).map(node=>node.dataset.id))).toEqual([
+  const workshopCards=page.locator('[data-action="select-workshop"][data-type="dungeons"]');
+  await expect(workshopCards.first()).toBeVisible();
+  await expect.poll(() => workshopCards.evaluateAll(nodes=>nodes.slice(0,3).map(node=>node.dataset.id))).toEqual([
     "whaou-dungeon-order-2",
     "whaou-dungeon-order-none",
     "whaou-dungeon-order-7"
