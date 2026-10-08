@@ -2809,8 +2809,8 @@ function normalizeTemplateRow(type, row) {
     case "dungeons":
       return {
         name: row.name || "",
-        sort_order: row.sort_order ?? "",
-        arc_name: row.arc_name || "",
+        sort_order: Object.prototype.hasOwnProperty.call(row, "sort_order") ? row.sort_order : undefined,
+        arc_name: Object.prototype.hasOwnProperty.call(row, "arc_name") ? row.arc_name : undefined,
         description: row.description || "",
         floor_budgets: row.floor_budgets || "",
         boss_name: row.boss_name || "",
@@ -6484,7 +6484,10 @@ function validateImportRow(type,row){
   const errors=[],warnings=[],text=v=>String(v??"").trim(),number=v=>Number(v);
   const rel=(store,value,label,optional=false)=>{const name=text(value);if(!name){if(!optional)warnings.push(`${label} non renseigné : relation laissée vide.`);return;}const m=uniqueEntityByName(store,name);if(m.count===0)warnings.push(`${label} « ${name} » introuvable : relation ID non résolue.`);if(m.count>1)warnings.push(`${label} « ${name} » ambigu : relation ID conservée/vide.`);};
   switch(type){
-    case"dungeons":if(!text(row.name))errors.push("Nom obligatoire.");break;
+    case"dungeons":
+      if(!text(row.name))errors.push("Nom obligatoire.");
+      if(text(row.sort_order)&&(!Number.isInteger(number(row.sort_order))||number(row.sort_order)<1))errors.push("Ordre Donjon attendu comme entier positif.");
+      break;
     case"creatures":{
       if(!text(row.name))errors.push("Nom obligatoire.");rel("dungeons",row.dungeon_name,"Donjon");
       if(text(row.category)){const raw=normalizeBestiaryText(row.category).replace(/ /g,"_");if(!new Set(["basique","tactique","speciale","brute","mini_boss","boss"]).has(raw))errors.push(`Catégorie inconnue : ${row.category}.`);}
