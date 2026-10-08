@@ -76,10 +76,10 @@ export const DUNGEON_MARKERS = {
   D09:{anchor:[89.5,26.7],label:[86,21],color:5},
   D10:{anchor:[6.7,19.3],label:[10,12],color:6},
   D11:{anchor:[75.2,48.5],label:[72,55],color:7},
-  D12:{anchor:[21.3,38.1],label:[29,39],color:0},
-  D14:{anchor:[53.2,55.2],label:[54,60],color:1},
-  D15:{anchor:[67.8,78.6],label:[82,85],color:4},
-  D13:{anchor:[10,13],label:[13,7],color:8}
+  D12:{anchor:[34.5,20],label:[42.2,20.9],color:0},
+  D14:{anchor:[39.8,44.9],label:[40.6,49.7],color:1},
+  D15:{anchor:[59.4,86.8],label:[73.6,93.2],color:4},
+  D13:{anchor:[68,15.8],label:[71,9.8],color:8}
 };
 // Arbitrary decorative colours: stable across navigation, with no gameplay meaning.
 export const DUNGEON_COLORS = [
