@@ -53,7 +53,7 @@ Peindre **quelques villages éparpillés** dans des vallées ou sur plateaux où
 | **D14 / `placement:d14`** Citadelle des Tonneaux Perchés | **Hautes Voûtes, escarpement rocheux ORDINAIRE**, à distance de la merveille Cimes Suspendues. | Ne pas la peindre en cité volante ni l'incruster sur la merveille. Concept approuvé : citadelle avec tonneaux arrimés et monte-charge improbable. Image indépendante, cachée initialement. |
 | **D15 / `placement:d15`** Gynécotron du Gnome Tordu | **Marches de Braise : complexe industriel SEMI-ENTERRÉ dans le flanc d'un volcan**. | Aucun lien avec D5 ; concept approuvé : atelier gnome basaltique/cuivré intégré au relief, sans dévoiler le boss, la machine ou l'intrigue. Image indépendante, cachée initialement. |
 
-Les trois concepts précis sont figés dans l'[annexe](V6-MAP-V2-FERRECIME-ILLUSTRATIONS-DONJONS.md). Les trois sites sont **distincts**, sans liaison/portail implicite et sans point local numérique inventé. Les images propres des donjons et leurs marqueurs seront servis en fonction des droits réellement établis par campagne et de l'acte explicite du MJ, jamais par simple masque DOM d'une URL publique ou d'un cache public.
+Les trois concepts précis sont figés dans l'[annexe](V6-MAP-V2-FERRECIME-ILLUSTRATIONS-DONJONS.md). Les trois sites sont **distincts**, sans liaison/portail implicite ; leurs points locaux cartographiques ont été validés puis recalés par annotations propriétaire, dernier recalage le 08/10/2026. Les images propres des donjons et leurs marqueurs seront servis en fonction des droits réellement établis par campagne et de l'acte explicite du MJ, jamais par simple masque DOM d'une URL publique ou d'un cache public.
 
 ## 4. Catalogue indicatif de gargotteries publiques
 
