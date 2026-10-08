@@ -29,12 +29,12 @@ Références : `AAE35D49-83CA-4C4A-A777-93EC706B90C8(2).jpeg` (Valdorie) et `C9B
 | Valdorie | D09 | Le Bastion du Sauciflard | 89,5 / 26,7 |
 | Valdorie | D10 | Les Thermes de la Bonne Trempette | 6,7 / 19,3 |
 | Valdorie | D11 | La Ruche Royale | 75,2 / 48,5 |
-| Ferrécime | D12 | Le Monastère des Dénaturées | 21,3 / 38,1 |
-| Ferrécime | D14 | La Citadelle des Tonneaux Perchés | 53,2 / 55,2 |
-| Ferrécime | D15 | Le Gynécotron du Gnome Tordu | 67,8 / 78,6 |
-| Sylvaronde | D13 | Les Marécages Infectés | 10 / 13, conservé |
+| Ferrécime | D12 | Le Monastère des Dénaturées | 34,5 / 20,0 |
+| Ferrécime | D14 | La Citadelle des Tonneaux Perchés | 39,8 / 44,9 |
+| Ferrécime | D15 | Le Gynécotron du Gnome Tordu | 59,4 / 86,8 |
+| Sylvaronde | D13 | Les Marécages Infectés | 68,0 / 15,8 |
 
-La planche propriétaire prévaut ici sur les anciennes propositions de placement des sprites. Le point des Thermes est celui figurant au large du secteur nord-ouest sur la planche, pas l’ancienne proposition à l’est du port. La Citadelle est au point bleu de la planche de Ferrécime, pas à l’ancien point oriental. Le Panthéon reste souterrain, directement sous le Sanctuaire : deux noms raccordés au même point, pas deux sites de surface.
+La planche propriétaire prévaut ici sur les anciennes propositions de placement des sprites. Le point des Thermes est celui figurant au large du secteur nord-ouest sur la planche, pas l’ancienne proposition à l’est du port. Les positions D12, D13, D14 et D15 ont été recalées sur les annotations propriétaire du 8 octobre 2026 ; les coordonnées ci-dessus correspondent aux centres des nouveaux repères. Le Panthéon reste souterrain, directement sous le Sanctuaire : deux noms raccordés au même point, pas deux sites de surface.
 
 ## Présentation adaptative
 
