@@ -1,4 +1,4 @@
-// Codex 08/10/2026: dungeon narrative order and optional arc metadata.
+// Map 08/10/2026: owner-approved dungeon marker recalibration on Ferrécime and Sylvaronde.
 
 const CACHE = "gargottex-v6-whaou-final-v1";
 const CACHE_PREFIX = "gargottex-";
