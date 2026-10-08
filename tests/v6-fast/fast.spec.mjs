@@ -470,6 +470,68 @@ test("Dungeon WHAOU bounds collection markers and preserves a long expedition tr
   await assertNoHorizontalOverflow(page);
 });
 
+test("Dungeon order and optional arc metadata persist across Codex and Atelier", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
+
+  await page.evaluate(async () => {
+    const db = await new Promise((resolve,reject) => {
+      const req=indexedDB.open("gargottex-v5-offline");
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error);
+    });
+    await new Promise((resolve,reject) => {
+      const tx=db.transaction("dungeons","readwrite");
+      const store=tx.objectStore("dungeons");
+      store.put({id:"whaou-dungeon-order-2",slug:"whaou-dungeon-order-2",name:"WHAOU Donjon Deux",sort_order:2,arc_name:"Arc WHAOU",floor_budgets:[3],boss_name:"",tags:[]});
+      store.put({id:"whaou-dungeon-order-7",slug:"whaou-dungeon-order-7",name:"WHAOU Donjon Sept",sort_order:7,arc_name:"",floor_budgets:[3],boss_name:"",tags:[]});
+      store.put({id:"whaou-dungeon-order-none",slug:"whaou-dungeon-order-none",name:"WHAOU Donjon Sans Ordre",floor_budgets:[3],boss_name:"",tags:[]});
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+    db.close();
+  });
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => document.documentElement.dataset.gargottexReady === "true");
+  await gotoView(page, "codex");
+  await page.locator('[data-action="set-codex-type"][data-type="dungeons"]').first().click();
+
+  const cards=page.locator('[data-action="select-family-codex"][data-type="dungeons"]');
+  expect(await cards.evaluateAll(nodes=>nodes.slice(0,2).map(node=>node.dataset.id))).toEqual([
+    "whaou-dungeon-order-2",
+    "whaou-dungeon-order-7"
+  ]);
+  const ordered=page.locator('[data-id="whaou-dungeon-order-2"][data-type="dungeons"]').first();
+  await expect(ordered.locator(".dungeon-collection-copy small")).toContainText("D2");
+  await expect(ordered.locator(".dungeon-collection-copy em")).toHaveText("Arc WHAOU");
+  const unnumbered=page.locator('[data-id="whaou-dungeon-order-none"][data-type="dungeons"]').first();
+  await expect(unnumbered.locator(".dungeon-collection-copy small")).toContainText("Donjon");
+  await expect(unnumbered.locator(".dungeon-collection-copy em")).toHaveCount(0);
+
+  await gotoView(page, "atelier");
+  await page.locator('[data-action="set-workshop-type"][data-type="dungeons"]').click();
+  await page.locator('[data-action="select-workshop"][data-type="dungeons"][data-id="whaou-dungeon-order-none"]').click();
+  const form=page.locator('form[data-workshop-form="true"][data-id="whaou-dungeon-order-none"]');
+  await expect(form.locator('[name="sort_order"]')).toBeVisible();
+  await expect(form.locator('[name="arc_name"]')).toBeVisible();
+  await form.locator('[name="sort_order"]').fill("5");
+  await form.locator('[name="arc_name"]').fill("Arc Atelier");
+  await form.locator('[data-workshop-save]').click();
+
+  await expect.poll(() => page.evaluate(async () => {
+    const db=await new Promise((resolve,reject)=>{const req=indexedDB.open("gargottex-v5-offline");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const row=await new Promise((resolve,reject)=>{const tx=db.transaction("dungeons","readonly"),req=tx.objectStore("dungeons").get("whaou-dungeon-order-none");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    db.close();
+    return row ? {sort_order:row.sort_order,arc_name:row.arc_name} : null;
+  })).toEqual({sort_order:5,arc_name:"Arc Atelier"});
+
+  expect(await page.locator('[data-action="select-workshop"][data-type="dungeons"]').evaluateAll(nodes=>nodes.slice(0,3).map(node=>node.dataset.id))).toEqual([
+    "whaou-dungeon-order-2",
+    "whaou-dungeon-order-none",
+    "whaou-dungeon-order-7"
+  ]);
+});
+
 test("Creature WHAOU keeps tabletop staging lazy and readable", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await ready(page);
