@@ -110,7 +110,7 @@ function entitySheetNames(type) {
 }
 
 const TEMPLATE_HEADERS = {
-  dungeons: ["name", "description", "floor_budgets", "boss_name", "tags", "image_path"],
+  dungeons: ["name", "sort_order", "arc_name", "description", "floor_budgets", "boss_name", "tags", "image_path"],
   creatures: ["name", "dungeon_name", "category", "menace", "pv", "atk", "def", "zone", "actions", "special_attack_name", "special_attack_noise", "ai_behavior", "ai_target_priority", "lore", "socle", "tags", "image_path", "loot"],
   heroes: ["hero_base_name", "level", "name", "role", "title", "pv", "atk", "def", "zone", "actions", "ability_text", "effect_text", "brouhaha", "tags", "image_path"],
   npcs: ["name", "race", "tone", "role", "lore", "tags", "image_path"],
@@ -133,6 +133,8 @@ const CREATURE_CATEGORY_OPTIONS = [
 const FORM_FIELDS = {
   dungeons: [
     { name: "name", label: "Nom", type: "text" },
+    { name: "sort_order", label: "Ordre", type: "number", min: 1, step: 1, placeholder: "12" },
+    { name: "arc_name", label: "Arc narratif", type: "text", placeholder: "Optionnel" },
     { name: "description", label: "Description", type: "textarea", rows: 5 },
     { name: "floor_budgets", label: "Budgets d'étages", type: "text", placeholder: "3;5;7;9;11" },
     { name: "boss_name", label: "Boss final", type: "text" },
@@ -248,7 +250,7 @@ const WORKSHOP_SECTIONS = {
     { title: "Lore", fields: ["lore"] }
   ],
   dungeons: [
-    { title: "Identité", fields: ["name","tags","image_path"] },
+    { title: "Identité", fields: ["name","sort_order","arc_name","tags","image_path"] },
     { title: "Description", fields: ["description"] },
     { title: "Progression", fields: ["floor_budgets","boss_name"] }
   ],
@@ -1083,6 +1085,29 @@ function getHeroCollection() {
   return groups;
 }
 
+function dungeonSortOrder(item) {
+  const value = Number(item?.sort_order);
+  return Number.isFinite(value) && value > 0 ? Math.trunc(value) : null;
+}
+
+function compareDungeons(a, b) {
+  const aOrder = dungeonSortOrder(a);
+  const bOrder = dungeonSortOrder(b);
+  if (aOrder !== null && bOrder !== null && aOrder !== bOrder) return aOrder - bOrder;
+  if (aOrder !== null && bOrder === null) return -1;
+  if (aOrder === null && bOrder !== null) return 1;
+  return String(a?.name || "").localeCompare(String(b?.name || ""), "fr", { sensitivity: "base" });
+}
+
+function dungeonDisplayOrder(item) {
+  const order = dungeonSortOrder(item);
+  return order === null ? "Donjon" : `D${order}`;
+}
+
+function orderedDungeons() {
+  return [...(state.data.dungeons || [])].sort(compareDungeons);
+}
+
 function getDungeonCollection() {
   ensureCodexFamilyUi();
   const q = normalizeBestiaryText(state.ui.codexFamilies.dungeons.search);
@@ -1090,12 +1115,14 @@ function getDungeonCollection() {
   if (q) {
     items = items.filter(item => normalizeBestiaryText([
       item.name,
+      dungeonDisplayOrder(item),
+      item.arc_name,
       item.description,
       item.boss_name,
       ...tagsToArray(item.tags)
     ].filter(Boolean).join(" ")).includes(q));
   }
-  return items.sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "fr", { sensitivity: "base" }));
+  return items.sort(compareDungeons);
 }
 
 function familyCollectionInitialId(type) {
@@ -2264,6 +2291,9 @@ function getFilteredList(type, scope = "search") {
     }
   }
 
+  if (type === "dungeons" && (scope === "codex" || scope === "atelier")) {
+    list = [...list].sort(compareDungeons);
+  }
   if (type === "creatures" && (scope === "codex" || scope === "atelier")) {
     const categoryOrder = { basique: 1, tactique: 2, speciale: 3, brute: 4, mini_boss: 5, boss: 6 };
     list = [...list].sort((a, b) => {
@@ -2295,6 +2325,8 @@ function formatExportRow(type, entity) {
     case "dungeons":
       return {
         name: entity.name || "",
+        sort_order: dungeonSortOrder(entity) ?? "",
+        arc_name: entity.arc_name || "",
         description: entity.description || "",
         floor_budgets: (entity.floor_budgets || []).join(";"),
         boss_name: entity.boss_name || "",
@@ -2481,6 +2513,8 @@ function blankEntity(type) {
         id: uid("dungeon"),
         name: "",
         slug: "",
+        sort_order: null,
+        arc_name: "",
         description: "",
         floor_budgets: [3, 5, 7, 9, 11],
         base_floor_count: 5,
@@ -2621,6 +2655,12 @@ function importRowToEntity(type, row, existing) {
     case "dungeons":
       item.name = String(row.name || existing?.name || "").trim();
       item.slug = slugify(item.name);
+      {
+        const rawOrder = row.sort_order ?? existing?.sort_order ?? "";
+        const parsedOrder = Number(rawOrder);
+        item.sort_order = String(rawOrder).trim() && Number.isFinite(parsedOrder) && parsedOrder > 0 ? Math.trunc(parsedOrder) : null;
+      }
+      item.arc_name = String(row.arc_name ?? existing?.arc_name ?? "").trim();
       item.description = String(row.description || existing?.description || "").trim();
       item.floor_budgets = Array.isArray(row.floor_budgets)
         ? row.floor_budgets
@@ -2769,6 +2809,8 @@ function normalizeTemplateRow(type, row) {
     case "dungeons":
       return {
         name: row.name || "",
+        sort_order: row.sort_order ?? "",
+        arc_name: row.arc_name || "",
         description: row.description || "",
         floor_budgets: row.floor_budgets || "",
         boss_name: row.boss_name || "",
@@ -2979,7 +3021,7 @@ function globalSearchIndexText(type, item) {
       item.lore, item.socle, ...tagsToArray(item.tags)
     ];
   } else if (type === "dungeons") {
-    parts = [item.name, item.description, item.boss_name, ...tagsToArray(item.tags)];
+    parts = [item.name, dungeonDisplayOrder(item), item.arc_name, item.description, item.boss_name, ...tagsToArray(item.tags)];
   } else if (type === "heroes") {
     parts = [
       item.hero_base_name, item.name, item.level, `N${item.level ?? ""}`, item.role, item.title,
@@ -3030,7 +3072,7 @@ function globalSearchResultMeta(type, item) {
     const category = creatureCategoryMeta(item.category);
     return [category.label, item.dungeon_name, item.menace !== null && item.menace !== undefined ? `Menace ${item.menace}` : ""].filter(Boolean).join(" · ");
   }
-  if (type === "dungeons") return item.boss_name ? `Boss · ${item.boss_name}` : "Donjon";
+  if (type === "dungeons") return [dungeonDisplayOrder(item), item.arc_name, item.boss_name ? `Boss · ${item.boss_name}` : ""].filter(Boolean).join(" · ");
   if (type === "heroes") return [item.level !== null && item.level !== undefined ? `N${item.level}` : "", item.role, item.title].filter(Boolean).join(" · ");
   if (type === "npcs") return [item.race, item.role].filter(Boolean).join(" · ");
   if (type === "quests") return [questDifficultyMeta(item.difficulty)?.label, item.npc_name, item.dungeon_name].filter(Boolean).join(" · ");
@@ -3879,8 +3921,9 @@ function renderDungeonCollectionCard(item, mode = "gallery", active = false) {
         ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" data-safe-media><span class="relation-media-fallback" hidden>Couverture indisponible</span>` : `<span class="dungeon-cover-fallback"><img src="${V6_ICON_PATH}Icone_Gameplay_DONJON.webp" alt=""></span>`}
       </span>
       <span class="dungeon-collection-copy">
-        <small>Donjon · ${floors.length ? `${floors.length} étage${floors.length > 1 ? "s" : ""}` : "progression non renseignée"}</small>
+        <small>${escapeHtml(dungeonDisplayOrder(item))} · ${floors.length ? `${floors.length} étage${floors.length > 1 ? "s" : ""}` : "progression non renseignée"}</small>
         <strong>${escapeHtml(item.name || "Donjon sans nom")}</strong>
+        ${item.arc_name ? `<em>${escapeHtml(item.arc_name)}</em>` : ""}
         ${renderDungeonFloorSummary(floors)}
         ${boss.name ? `<span class="dungeon-card-boss"><img src="${V6_ICON_PATH}Sigil_Boss.webp" alt="" aria-hidden="true"><span><small>Boss</small><b>${escapeHtml(boss.name)}</b></span></span>` : ""}
       </span>
@@ -3957,6 +4000,7 @@ function renderDungeonDetailV6(item) {
         `}
         <div class="dungeon-cover-copy-v6">
           <h1>${escapeHtml(name)}</h1>
+          ${dungeonSortOrder(item) !== null || item.arc_name ? `<span>${escapeHtml([dungeonSortOrder(item) !== null ? dungeonDisplayOrder(item) : "", item.arc_name].filter(Boolean).join(" · "))}</span>` : ""}
         </div>
       </section>
 
@@ -4732,7 +4776,10 @@ function codexSubtitle(type, item) {
     case "heroes": return `${escapeHtml(item.role || "")} · niv ${item.level || 1}`;
     case "npcs": return `${escapeHtml(item.race || "")} · ${escapeHtml(item.role || "")}`;
     case "quests": return `${escapeHtml(item.dungeon_name || "")} · ${escapeHtml(item.npc_name || "PNJ facultatif")}`;
-    case "dungeons": return `${escapeHtml((item.floor_budgets || []).join(" · "))}`;
+    case "dungeons": {
+      const floors = dungeonFloorBudgets(item);
+      return [dungeonDisplayOrder(item), item.arc_name, floors.length ? `${floors.length} étage${floors.length > 1 ? "s" : ""}` : ""].filter(Boolean).join(" · ");
+    }
     case "loot_items": return `${escapeHtml(item.creature_name || "")} · ${item.gold_value || 0} or`;
     case "interactables": return `${escapeHtml(item.dungeon_name || "")} · ${escapeHtml(item.type || "")}`;
     case "brouhaha_effects": return `Niv ${item.level ?? 0}`;
@@ -4745,7 +4792,7 @@ function codexBadge(type, item) {
     case "creatures": return `⚔️ ${item.menace || 0}`;
     case "heroes": return `Niv ${item.level || 1}`;
     case "quests": return "⭐".repeat(clamp(item.difficulty || 1, 1, 5));
-    case "dungeons": return "Donjon";
+    case "dungeons": return dungeonDisplayOrder(item);
     case "loot_items": return item.type || "Loot";
     case "interactables": return item.type || "Objet";
     case "brouhaha_effects": return `Effet niveau ${item.level ?? 0}`;
@@ -4765,7 +4812,7 @@ function renderCreatureDungeonFilter(selectedId, action) {
       <span>Donjon</span>
       <select data-action="${action}">
         <option value="">Tous</option>
-        ${state.data.dungeons.map(d => `<option value="${d.id}" ${String(selectedId || "") === String(d.id) ? "selected" : ""}>${escapeHtml(d.name)}</option>`).join("")}
+        ${orderedDungeons().map(d => `<option value="${d.id}" ${String(selectedId || "") === String(d.id) ? "selected" : ""}>${escapeHtml(d.name)}</option>`).join("")}
       </select>
     </label>
   `;
@@ -4804,7 +4851,7 @@ function renderQuestDungeonFilter(selectedId, action) {
       <span>Donjon</span>
       <select data-action="${action}">
         <option value="">Tous</option>
-        ${state.data.dungeons.map(d => `<option value="${d.id}" ${String(selectedId || "") === String(d.id) ? "selected" : ""}>${escapeHtml(d.name)}</option>`).join("")}
+        ${orderedDungeons().map(d => `<option value="${d.id}" ${String(selectedId || "") === String(d.id) ? "selected" : ""}>${escapeHtml(d.name)}</option>`).join("")}
       </select>
     </label>
   `;
@@ -5883,7 +5930,7 @@ function renderField(field, item, type = state.ui.workshopType) {
     } else if (Array.isArray(field.options)) {
       options = field.options;
     } else {
-      options = state.data[field.options] || [];
+      options = field.options === "dungeons" ? orderedDungeons() : (state.data[field.options] || []);
     }
     const optionData = options.map(opt => {
       const isStatic = typeof opt === "string" || (opt && typeof opt === "object" && "value" in opt);
